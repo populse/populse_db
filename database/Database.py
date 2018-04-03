@@ -1,6 +1,7 @@
 import os
-from model.DatabaseModel import createDatabase, Base, Tag, Path_Initial, Path_Current, TAG_TYPE_STRING, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT
-from sqlalchemy import create_engine, Column, String, Integer, Float
+from model.DatabaseModel import createDatabase, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT
+from sqlalchemy import create_engine, Column, String, Integer, Float, MetaData, Table
+from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 
 class Database:
@@ -12,19 +13,24 @@ class Database:
         """
 
         self.path = path
+        self.classes = {}
+        self.base = automap_base()
 
         # We create the database file if it does not already exist
         if not os.path.exists(self.path):
             createDatabase(self.path)
 
         self.engine = create_engine('sqlite:///' + self.path)
-        Base.metadata.bind = self.engine
+        self.metadata = MetaData(bind=self.engine)
         DBSession = sessionmaker(bind=self.engine)
         self.session = DBSession()
+        self.base.prepare(self.engine, reflect=True)
+        self.classes["tag"] = self.base.classes.tag
+        self.classes["path"] = self.base.classes.path
 
     """ TAGS """
 
-    def add_tag(self, name, visible, origin, type, unit, default_value, description):
+    def add_tag(self, name, visible, origin, tag_type, unit, default_value, description):
         """
         Adds a tag to the database if it does not already exist
         :param name: Tag name
@@ -40,20 +46,20 @@ class Database:
         if self.get_tag(name) is None:
 
             # Adding the tag in the Tag table
-            tag = Tag(name=name, visible=visible, origin=origin, type=type, unit=unit, default_value=default_value, description=description)
+            tag = self.classes["tag"](name=name, visible=visible, origin=origin, type=tag_type, unit=unit,
+                                      default_value=default_value, description=description)
             self.session.add(tag)
 
-            # Adding the tag in the Path tables
-            if type == TAG_TYPE_INTEGER:
-                column = Column(name, Integer, nullable=True)
-            elif type == TAG_TYPE_FLOAT:
-                column = Column(name, Float, nullable=True)
-            else:
-                column = Column(name, String, nullable=True)
-            column_name = column.compile(dialect=self.engine.dialect)
-            column_type = column.type.compile(self.engine.dialect)
-            self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("path_initial", column_name, column_type))
-            self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("path_current", column_name, column_type))
+            tag_table = Table(name, self.metadata,
+                         Column("id", Integer, primary_key=True, autoincrement=True),
+                         Column("index", Integer, nullable=False),
+                         Column("initial_value", String),
+                         Column("current_value", String))
+            self.session.commit() #self.session.add(tag_table)
+            tag_table.create(self.engine)
+            self.base = automap_base()
+            self.base.prepare(self.engine, reflect=True)
+            self.classes[name] = getattr(self.base.classes, name)
 
     def remove_tag(self, name):
         """
@@ -62,7 +68,7 @@ class Database:
         """
 
         # Tag removed from the Tag table
-        tags = self.session.query(Tag).filter(Tag.name == name).all()
+        tags = self.session.query(self.classes["tag"]).filter(self.classes["tag"].name == name).all()
         if len(tags) == 1:
             self.session.delete(tags[0])
 
@@ -75,7 +81,7 @@ class Database:
         :return: The tag object if the tag exists, None otherwise
         """
 
-        tags = self.session.query(Tag).filter(Tag.name == name).all()
+        tags = self.session.query(self.classes["tag"]).filter(self.classes["tag"].name == name).all()
         if len(tags) == 1:
             return tags[0]
         else:
@@ -84,7 +90,12 @@ class Database:
     """ VALUES """
 
     def get_current_value(self, scan, tag):
-        pass
+        #print(getattr(Path_Current, tag))
+        scans = self.session.query(self.classes["path"]).filter(self.classes["path"].name == scan).all()
+        if len(scans) == 1:
+            scan = scans[0]
+        else:
+            return None
 
     def get_initial_value(self, scan, tag):
         pass
@@ -102,7 +113,7 @@ class Database:
         pass
 
     def add_value(self, scan, tag, value):
-        pass
+        values = self.session.query(Path_Current).filter(Path_Current.name == scan).all()
 
     """ SCANS """
 
@@ -110,4 +121,12 @@ class Database:
         pass
 
     def add_scan(self, scan, checksum):
-        pass
+        """
+        Adds a scan
+        :param scan: scan path
+        :param checksum: scan checksum
+        """
+
+        # Adding the scan in the Tag table
+        scan = self.classes["path"](name=scan, checksum=checksum)
+        self.session.add(scan)
