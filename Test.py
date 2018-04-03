@@ -74,5 +74,19 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(tag, None)
         os.remove(path)
 
+    def test_removetag(self):
+        """
+        Tests the method removing a tag
+        """
+
+        path = os.path.relpath(os.path.join(".", "test.db"))
+        if os.path.exists(path):
+            os.remove(path)
+        database = Database(path)
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.remove_tag("PatientName")
+        tag = database.get_tag("PatientName")
+        self.assertEqual(tag, None)
+
 if __name__ == '__main__':
     unittest.main()
