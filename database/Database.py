@@ -56,7 +56,17 @@ class Database:
             self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("path_current", column_name, column_type))
 
     def remove_tag(self, name):
-        pass
+        """
+        Removes a tag
+        :param name: Tag name
+        """
+
+        # Tag removed from the Tag table
+        tags = self.session.query(Tag).filter(Tag.name == name).all()
+        if len(tags) == 1:
+            self.session.delete(tags[0])
+
+            # Tag removed from the Path tables
 
     def get_tag(self, name):
         """
