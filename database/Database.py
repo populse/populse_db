@@ -7,8 +7,11 @@ class Database:
 
     def __init__(self, path):
         self.path = path
+
+        # We create the database file if it does not already exist
         if not os.path.exists(self.path):
             createDatabase(self.path)
+
         engine = create_engine('sqlite:///' + self.path)
         Base.metadata.bind = engine
         DBSession = sessionmaker(bind=engine)
