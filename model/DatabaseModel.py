@@ -63,7 +63,7 @@ class Tag(Base):
     Table that contains the tags properties
     """
     __tablename__ = 'tag'
-    tag = Column(String, primary_key=True)
+    name = Column(String, primary_key=True)
     visible = Column(Boolean, nullable=False)
     origin = Column(Enum(TAG_ORIGIN_RAW, TAG_ORIGIN_USER), nullable=False)
     type = Column(Enum(TAG_TYPE_STRING, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT, TAG_TYPE_DATE, TAG_TYPE_DATETIME, TAG_TYPE_TIME, TAG_TYPE_LIST_STRING, TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_TIME), nullable=False)
@@ -72,4 +72,4 @@ class Tag(Base):
     description = Column(String, nullable=True)
 
     def __repr__(self):
-        return "<Tag(tag='%s', visible='%s', origin='%s', type='%s', unit='%s', default_value='%s', description='%s')>" % (self.tag, self.visible, self.origin, self.type, self.unit, self.default_value, self.description)
+        return "<Tag(tag='%s', visible='%s', origin='%s', type='%s', unit='%s', default_value='%s', description='%s')>" % (self.name, self.visible, self.origin, self.type, self.unit, self.default_value, self.description)
