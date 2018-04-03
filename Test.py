@@ -1,7 +1,8 @@
 import os
-from model.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_STRING, Tag
+from model.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_STRING
 from database.Database import Database
 import unittest
+import shutil
 
 class TestDatabaseMethods(unittest.TestCase):
 
@@ -69,7 +70,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
         tag = database.get_tag("PatientName")
         self.assertNotEqual(tag, None)
-        self.assertIsInstance(tag, Tag)
+        self.assertIsInstance(tag, database.classes["tag"])
         tag = database.get_tag("Test")
         self.assertEqual(tag, None)
         os.remove(path)
@@ -87,6 +88,28 @@ class TestDatabaseMethods(unittest.TestCase):
         database.remove_tag("PatientName")
         tag = database.get_tag("PatientName")
         self.assertEqual(tag, None)
+        os.remove(path)
+
+    def test_addscan(self):
+        path = os.path.relpath(os.path.join(".", "test.db"))
+        if os.path.exists(path):
+            os.remove(path)
+        database = Database(path)
+        database.add_scan("scan1", "159abc")
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_scan("scan2", "def753")
+        os.remove(path)
+
+    def test_getcurrentvalue(self):
+        path = os.path.relpath(os.path.join(".", "test.db"))
+        if os.path.exists(path):
+            os.remove(path)
+        database = Database(path)
+        database.add_scan("scan1", "159abc")
+        database.add_scan("scan2", "def753")
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.get_current_value("scan1", "PatientName")
+        os.remove(path)
 
 if __name__ == '__main__':
     unittest.main()
