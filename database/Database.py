@@ -151,7 +151,24 @@ class Database:
         return None
 
     def is_value_modified(self, scan, tag):
-        pass
+        """
+        To know if a value has been modified
+        :param scan: scan name
+        :param tag: tag name
+        :return: True if the value has been modified, False otherwise
+        """
+
+        # Checking that the tag table exists
+        if tag in self.classes:
+            session = self.session_maker()
+            values = session.query(self.classes[tag]).join(self.classes["path"]).filter(
+                self.classes["path"].name == scan).filter(self.classes[tag].index == self.classes["path"].index).all()
+            session.close()
+            if len(values) is 1:
+                value = values[0]
+                return value.current_value != value.initial_value
+        return False
+
 
     def set_value(self, scan, tag, new_value):
         """
