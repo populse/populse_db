@@ -122,6 +122,7 @@ class Database:
         :return: The current value of <scan, tag>
         """
 
+        # Checking that the tag table exists
         if tag in self.classes:
             session = self.session_maker()
             values = session.query(self.classes[tag]).join(self.classes["path"]).filter(self.classes["path"].name == scan).filter(self.classes[tag].index == self.classes["path"].index).all()
@@ -139,12 +140,14 @@ class Database:
         :return: The initial value of <scan, tag>
         """
 
-        session = self.session_maker()
-        values = session.query(self.classes[tag]).join(self.classes["path"]).filter(self.classes["path"].name == scan).filter(self.classes[tag].index == self.classes["path"].index).all()
-        session.close()
-        if len(values) is 1:
-            value = values[0]
-            return value.initial_value
+        # Checking that the tag table exists
+        if tag in self.classes:
+            session = self.session_maker()
+            values = session.query(self.classes[tag]).join(self.classes["path"]).filter(self.classes["path"].name == scan).filter(self.classes[tag].index == self.classes["path"].index).all()
+            session.close()
+            if len(values) is 1:
+                value = values[0]
+                return value.initial_value
         return None
 
     def is_value_modified(self, scan, tag):
@@ -157,7 +160,23 @@ class Database:
         pass
 
     def remove_value(self, scan, tag):
-        pass
+        """
+        Removes the value associated to <scan, tag>
+        :param scan: scan name
+        :param tag: tag name
+        """
+
+        # Checking that the tag table exists
+        if tag in self.classes:
+            session = self.session_maker()
+            values = session.query(self.classes[tag]).join(self.classes["path"]).filter(
+                self.classes["path"].name == scan).filter(self.classes[tag].index == self.classes["path"].index).all()
+            if len(values) is 1:
+                value = values[0]
+                session.delete(value)
+                session.commit()
+            else:
+                session.close()
 
     def add_value(self, scan, tag, value):
         """
@@ -167,6 +186,7 @@ class Database:
         :param value: value
         """
 
+        # Checking that the tag table exists
         if tag in self.classes:
             session = self.session_maker()
             scans = session.query(self.classes["path"].index).filter(self.classes["path"].name == scan).all()
