@@ -111,7 +111,6 @@ class TestDatabaseMethods(unittest.TestCase):
             os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
-        database.add_scan("scan2", "def753")
         scan = database.get_scan("scan1")
         self.assertIsInstance(scan, database.classes["path"])
 
@@ -130,7 +129,6 @@ class TestDatabaseMethods(unittest.TestCase):
             os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
-        database.add_scan("scan2", "def753")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Testing that None is returned if the value does not exist
@@ -161,7 +159,6 @@ class TestDatabaseMethods(unittest.TestCase):
             os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
-        database.add_scan("scan2", "def753")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Testing that None is returned if the value does not exist
@@ -192,15 +189,10 @@ class TestDatabaseMethods(unittest.TestCase):
             os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
-        database.add_scan("scan2", "def753")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("SequenceName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, None)
-        database.add_tag("BandWidth", True, TAG_ORIGIN_RAW, TAG_TYPE_FLOAT, None, None, None)
 
-        # Adding values
+        # Adding the value
         database.add_value("scan1", "PatientName", "test")
-        database.add_value("scan2", "PatientName", "value")
-        database.add_value("scan1", "SequenceName", "seq")
 
         # Testing not crashing when the tag does not exist
         database.add_value("scan1", "NotExisting", "none")
@@ -214,14 +206,9 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing values actually added
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test")
-        value = database.get_current_value("scan2", "PatientName")
-        self.assertEqual(value, "value")
-        value = database.get_current_value("scan1", "SequenceName")
-        self.assertEqual(value, "seq")
 
         # Test value override
         database.add_value("scan1", "PatientName", "test2")
-        database.save_modifications()
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test")
 
@@ -235,12 +222,9 @@ class TestDatabaseMethods(unittest.TestCase):
             os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
-        database.add_scan("scan2", "def753")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("SequenceName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, None)
-        database.add_tag("BandWidth", True, TAG_ORIGIN_RAW, TAG_TYPE_FLOAT, None, None, None)
 
-        # Adding values
+        # Adding the value
         database.add_value("scan1", "PatientName", "test")
 
         # Removing the value
@@ -264,7 +248,6 @@ class TestDatabaseMethods(unittest.TestCase):
             os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
-        database.add_scan("scan2", "def753")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
         database.add_value("scan1", "PatientName", "test")
         shutil.copy(path, os.path.join(".", "test_origin.db"))
@@ -307,10 +290,8 @@ class TestDatabaseMethods(unittest.TestCase):
             os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
-        database.add_scan("scan2", "def753")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
         database.add_value("scan1", "PatientName", "test")
-        value = database.get_current_value("scan1", "PatientName")
         database.remove_scan("scan1")
 
         # Testing that the scan is removed from Path table
@@ -334,7 +315,6 @@ class TestDatabaseMethods(unittest.TestCase):
             os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
-        database.add_scan("scan2", "def753")
 
         # Testing that a scan is returned if it exists
         scan = database.get_scan("scan1")
@@ -343,6 +323,60 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing that None is returned if the scan does not exist
         scan = database.get_scan("scan3")
         self.assertIsNone(scan)
+
+    def test_reset_value(self):
+        """
+        Tests the method resetting a value
+        """
+        global path
+
+        if os.path.exists(path):
+            os.remove(path)
+        database = Database(path)
+        database.add_scan("scan1", "159abc")
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+
+        # Adding a value and changing it
+        database.add_value("scan1", "PatientName", "test")
+        database.set_value("scan1", "PatientName", "test2")
+
+        # Resetting the value
+        database.reset_value("scan1", "PatientName")
+
+        # Trying when not existing
+        database.reset_value("scan3", "PatientName")
+        database.reset_value("scan1", "NotExisting")
+        database.reset_value("scan3", "NotExisting")
+
+        # Testing that the value is actually resetted
+        value = database.get_current_value("scan1", "PatientName")
+        self.assertEqual(value, "test")
+
+    def test_set_value(self):
+        """
+        Tests the method setting a value
+        """
+        global path
+
+        if os.path.exists(path):
+            os.remove(path)
+        database = Database(path)
+        database.add_scan("scan1", "159abc")
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+
+        # Adding a value and changing it
+        database.add_value("scan1", "PatientName", "test")
+        database.set_value("scan1", "PatientName", "test2")
+
+        # Trying when not existing
+        database.set_value("scan3", "PatientName", None)
+        database.set_value("scan1", "NotExisting", None)
+        database.set_value("scan3", "NotExisting", None)
+
+        # Testing that the value is actually resetted
+        value = database.get_current_value("scan1", "PatientName")
+        self.assertEqual(value, "test2")
+
 
 if __name__ == '__main__':
     unittest.main(exit=False)
