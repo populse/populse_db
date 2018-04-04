@@ -1,6 +1,6 @@
 import os
 from model.DatabaseModel import createDatabase, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT
-from sqlalchemy import create_engine, Column, String, Integer, Float, MetaData, Table
+from sqlalchemy import create_engine, Column, String, Integer, Float, MetaData, Table, ForeignKey
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 import shutil
@@ -60,12 +60,20 @@ class Database:
             session.add(tag)
             session.commit()
 
+            # Setting the column type of the values
+            if tag_type is TAG_TYPE_INTEGER:
+                column_type = Integer
+            elif tag_type is TAG_TYPE_FLOAT:
+                column_type = Float
+            else:
+                column_type = String
+
             # Table and class associated creation
             tag_table = Table(name, self.metadata,
                          Column("id", Integer, primary_key=True, autoincrement=True),
-                         Column("index", Integer, nullable=False),
-                         Column("initial_value", String),
-                         Column("current_value", String))
+                         Column("index", Integer, ForeignKey(self.classes["path"].index), nullable=False),
+                         Column("initial_value", column_type),
+                         Column("current_value", column_type))
             self.base = automap_base(metadata=self.metadata)
             self.base.prepare()
             self.classes[name] = getattr(self.base.classes, name)
@@ -80,12 +88,13 @@ class Database:
         session = self.session_maker()
         # Tag removed from the Tag table
         tags = session.query(self.classes["tag"]).filter(self.classes["tag"].name == name).all()
-        if len(tags) == 1:
+        if len(tags) is 1:
             session.delete(tags[0])
             session.commit()
 
             # Tag table removed
             self.classes[name].__table__.drop()
+            self.classes[name] = None
         else:
             session.close()
 
@@ -99,10 +108,9 @@ class Database:
         session = self.session_maker()
         tags = session.query(self.classes["tag"]).filter(self.classes["tag"].name == name).all()
         session.close()
-        if len(tags) == 1:
+        if len(tags) is 1:
             return tags[0]
-        else:
-            return None
+        return None
 
     """ VALUES """
 
@@ -114,20 +122,14 @@ class Database:
         :return: The current value of <scan, tag>
         """
 
-        session = self.session_maker()
-        scans = session.query(self.classes["path"].index).filter(self.classes["path"].name == scan).all()
-        if len(scans) == 1:
-            scan = scans[0]
-            index = scan.index
-            values = session.query(self.classes[tag].current_value).filter(self.classes[tag].index == index).all()
+        if tag in self.classes:
+            session = self.session_maker()
+            values = session.query(self.classes[tag]).join(self.classes["path"]).filter(self.classes["path"].name == scan).filter(self.classes[tag].index == self.classes["path"].index).all()
             session.close()
-            if len(values) == 1:
+            if len(values) is 1:
                 value = values[0]
                 return value.current_value
-            else:
-                return None
-        else:
-            return None
+        return None
 
     def get_initial_value(self, scan, tag):
         """
@@ -138,19 +140,12 @@ class Database:
         """
 
         session = self.session_maker()
-        scans = session.query(self.classes["path"].index).filter(self.classes["path"].name == scan).all()
-        if len(scans) == 1:
-            scan = scans[0]
-            index = scan.index
-            values = session.query(self.classes[tag].initial_value).filter(self.classes[tag].index == index).all()
-            session.close()
-            if len(values) == 1:
-                value = values[0]
-                return value.initial_value
-            else:
-                return None
-        else:
-            return None
+        values = session.query(self.classes[tag]).join(self.classes["path"]).filter(self.classes["path"].name == scan).filter(self.classes[tag].index == self.classes["path"].index).all()
+        session.close()
+        if len(values) is 1:
+            value = values[0]
+            return value.initial_value
+        return None
 
     def is_value_modified(self, scan, tag):
         pass
@@ -172,16 +167,17 @@ class Database:
         :param value: value
         """
 
-        session = self.session_maker()
-        scans = session.query(self.classes["path"].index).filter(self.classes["path"].name == scan).all()
-        if len(scans) == 1:
-            scan = scans[0]
-            index = scan.index
-            value_to_add = self.classes[tag](index=index, initial_value=value, current_value=value)
-            session.add(value_to_add)
-            session.commit()
-        else:
-            session.close()
+        if tag in self.classes:
+            session = self.session_maker()
+            scans = session.query(self.classes["path"].index).filter(self.classes["path"].name == scan).all()
+            if len(scans) is 1:
+                scan = scans[0]
+                index = scan.index
+                value_to_add = self.classes[tag](index=index, initial_value=value, current_value=value)
+                session.add(value_to_add)
+                session.commit()
+            else:
+                session.close()
 
     """ SCANS """
 
@@ -194,11 +190,10 @@ class Database:
         session = self.session_maker()
         scans = session.query(self.classes["path"]).filter(self.classes["path"].name == scan).all()
         session.close()
-        if len(scans) == 1:
+        if len(scans) is 1:
             scan = scans[0]
             return scan
-        else:
-            return None
+        return None
 
     def remove_scan(self, scan):
         """
@@ -208,7 +203,7 @@ class Database:
 
         session = self.session_maker()
         scans = session.query(self.classes["path"]).filter(self.classes["path"].name == scan).all()
-        if len(scans) == 1:
+        if len(scans) is 1:
             scan = scans[0]
             index = scan.index
             session.delete(scan)
@@ -219,7 +214,7 @@ class Database:
                 if table_class != "tag" and table_class != "path":
                     session = self.session_maker()
                     values = session.query(self.classes[table_class]).filter(self.classes[table_class].index == index).all()
-                    if len(values) == 1:
+                    if len(values) is 1:
                         value = values[0]
                         session.delete(value)
                         session.commit()
