@@ -131,6 +131,48 @@ class TestDatabaseMethods(unittest.TestCase):
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test")
 
+    def test_savemodifications(self):
+        """
+        Tests the method saving the modifications
+        """
+
+        if os.path.exists(path):
+            os.remove(path)
+        database = Database(path)
+        database.add_scan("scan1", "159abc")
+        database.add_scan("scan2", "def753")
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_value("scan1", "PatientName", "test")
+        shutil.copy(path, os.path.join(".", "test_origin.db"))
+        shutil.copy(database.temp_file, os.path.join(".", "test_temp.db"))
+        database.save_modifications()
+        shutil.copy(path, os.path.join(".", "test_origin_after_commit.db"))
+
+        # Testing that the original file is empty
+        database = Database(os.path.join(".", "test_origin.db"))
+        tag = database.get_tag("PatientName")
+        self.assertIsNone(tag)
+        value = database.get_current_value("scan2", "PatientName")
+        self.assertIsNone(value)
+
+        # Testing that the temporary file was updated
+        database = Database(os.path.join(".", "test_temp.db"))
+        tag = database.get_tag("PatientName")
+        self.assertIsInstance(tag, database.classes["tag"])
+        value = database.get_current_value("scan1", "PatientName")
+        self.assertEqual(value, "test")
+
+        # Testing that the temporary file was updated
+        database = Database(os.path.join(".", "test_origin_after_commit.db"))
+        tag = database.get_tag("PatientName")
+        self.assertIsInstance(tag, database.classes["tag"])
+        value = database.get_current_value("scan1", "PatientName")
+        self.assertEqual(value, "test")
+
+        os.remove(os.path.join(".", "test_origin.db"))
+        os.remove(os.path.join(".", "test_temp.db"))
+        os.remove(os.path.join(".", "test_origin_after_commit.db"))
+
 if __name__ == '__main__':
     unittest.main(exit=False)
     os.remove(path)
