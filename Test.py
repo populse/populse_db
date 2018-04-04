@@ -58,6 +58,9 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertIsNone(tag.default_value)
         self.assertEqual(tag.description, "Name of the patient")
 
+        # Testing with a tag that elready exists
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+
         # TODO Testing tag table creation
 
     def test_get_tag(self):
@@ -93,6 +96,9 @@ class TestDatabaseMethods(unittest.TestCase):
         tag = database.get_tag("PatientName")
         self.assertIsNone(tag)
 
+        # Testing with a tag not existing
+        database.remove_tag("NotExisting")
+
         # TODO Testing tag table removal
 
     def test_add_scan(self):
@@ -108,6 +114,11 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_scan("scan2", "def753")
         scan = database.get_scan("scan1")
         self.assertIsInstance(scan, database.classes["path"])
+
+        # Testing when trying to add a scan that already exists
+        database.add_scan("scan1", "anotherChecksum")
+        scan = database.get_scan("scan1")
+        self.assertEqual(scan.checksum, "159abc")
 
     def test_get_current_value(self):
         """
@@ -263,6 +274,9 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing that the values associated are removed
         value = database.get_current_value("scan1", "PatientName")
         self.assertIsNone(value)
+
+        # Testing with a scan not existing
+        database.remove_scan("NotExisting")
 
     def test_get_scan(self):
         """
