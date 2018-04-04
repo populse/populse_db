@@ -2,7 +2,8 @@ import os
 from model.DatabaseModel import createDatabase, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT
 from sqlalchemy import create_engine, Column, String, Integer, Float, MetaData, Table
 from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.orm import sessionmaker, mapper
+from sqlalchemy.orm import sessionmaker
+import shutil
 
 class Database:
 
@@ -20,10 +21,14 @@ class Database:
         if not os.path.exists(self.path):
             createDatabase(self.path)
 
-        self.engine = create_engine('sqlite:///' + self.path)
-        self.metadata = MetaData(bind=self.engine)
-        DBSession = sessionmaker(bind=self.engine)
-        self.session = DBSession()
+        # Temporary database file created that will be kept updated
+        self.temp_file = os.path.join(os.path.dirname(self.path), os.path.splitext(self.path)[0] + "_temp.db")
+        shutil.copy(path, self.temp_file)
+
+        # Database opened (temporary file)
+        self.engine = create_engine('sqlite:///' + self.temp_file)
+        self.metadata = MetaData(bind=self.engine, reflect=True)
+        self.session_maker = sessionmaker(bind=self.engine)
         self.base.prepare(self.engine, reflect=True)
         self.classes["tag"] = self.base.classes.tag
         self.classes["path"] = self.base.classes.path
@@ -46,9 +51,11 @@ class Database:
         if self.get_tag(name) is None:
 
             # Adding the tag in the Tag table
+            session = self.session_maker()
             tag = self.classes["tag"](name=name, visible=visible, origin=origin, type=tag_type, unit=unit,
                                       default_value=default_value, description=description)
-            self.session.add(tag)
+            session.add(tag)
+            session.commit()
 
             # Table and class associated creation
             tag_table = Table(name, self.metadata,
@@ -56,16 +63,10 @@ class Database:
                          Column("index", Integer, nullable=False),
                          Column("initial_value", String),
                          Column("current_value", String))
-            attr_dict = {'__tablename__': name,
-                         'id': Column(Integer, primary_key=True, autoincrement=True),
-                         'index': Column(Integer, nullable=False),
-                         'initial_value': Column(String),
-                         'current_value': Column(String)}
-            tag_class = type(name + 'Class', (self.base,), attr_dict)
-            mapper(tag_class, tag_table)
-            self.classes[name] = tag_class
-            self.session.commit() # TODO try not to commit
-            tag_table.create(self.engine)
+            self.base = automap_base(metadata=self.metadata)
+            self.base.prepare()
+            self.classes[name] = getattr(self.base.classes, name)
+            tag_table.create()
 
     def remove_tag(self, name):
         """
@@ -73,12 +74,14 @@ class Database:
         :param name: Tag name
         """
 
+        session = self.session_maker()
         # Tag removed from the Tag table
-        tags = self.session.query(self.classes["tag"]).filter(self.classes["tag"].name == name).all()
+        tags = session.query(self.classes["tag"]).filter(self.classes["tag"].name == name).all()
         if len(tags) == 1:
-            self.session.delete(tags[0])
+            session.delete(tags[0])
 
-            # Tag removed from the Path tables
+            # Tag table removed
+        session.commit()
 
     def get_tag(self, name):
         """
@@ -87,7 +90,8 @@ class Database:
         :return: The tag object if the tag exists, None otherwise
         """
 
-        tags = self.session.query(self.classes["tag"]).filter(self.classes["tag"].name == name).all()
+        session = self.session_maker()
+        tags = session.query(self.classes["tag"]).filter(self.classes["tag"].name == name).all()
         if len(tags) == 1:
             return tags[0]
         else:
@@ -96,16 +100,18 @@ class Database:
     """ VALUES """
 
     def get_current_value(self, scan, tag):
-        scans = self.session.query(self.classes["path"].index).filter(self.classes["path"].name == scan).all()
+        session = self.session_maker()
+        scans = session.query(self.classes["path"].index).filter(self.classes["path"].name == scan).all()
         if len(scans) == 1:
             scan = scans[0]
             index = scan.index
-            values = self.session.query(self.classes[tag].current_value).filter(self.classes[tag].index == index).all()
+            values = session.query(self.classes[tag].current_value).filter(self.classes[tag].index == index).all()
             if len(values) == 1:
                 value = values[0]
                 return value.current_value
         else:
             return None
+        session.commit()
 
     def get_initial_value(self, scan, tag):
         pass
@@ -123,12 +129,14 @@ class Database:
         pass
 
     def add_value(self, scan, tag, value):
-        scans = self.session.query(self.classes["path"].index).filter(self.classes["path"].name == scan).all()
+        session = self.session_maker()
+        scans = session.query(self.classes["path"].index).filter(self.classes["path"].name == scan).all()
         if len(scans) == 1:
             scan = scans[0]
             index = scan.index
             value_to_add = self.classes[tag](index=index, initial_value=value, current_value=value)
-            self.session.add(value_to_add)
+            session.add(value_to_add)
+        session.commit()
 
     """ SCANS """
 
@@ -143,5 +151,21 @@ class Database:
         """
 
         # Adding the scan in the Tag table
+        session = self.session_maker()
         scan = self.classes["path"](name=scan, checksum=checksum)
-        self.session.add(scan)
+        session.add(scan)
+        session.commit()
+
+    def save_modifications(self):
+        """
+        Saves the modifications by copying the updated temporary database into the real database
+        """
+
+        shutil.copy(self.temp_file, self.path)
+
+    def __del__(self):
+        """
+        Overrides the instance closing to remove the temporary database file
+        """
+
+        os.remove(self.temp_file)
