@@ -192,6 +192,12 @@ class TestDatabaseMethods(unittest.TestCase):
         value = database.get_current_value("scan1", "SequenceName")
         self.assertEqual(value, "seq")
 
+        # Test value override
+        database.add_value("scan1", "PatientName", "test2")
+        database.save_modifications()
+        value = database.get_current_value("scan1", "PatientName")
+        self.assertEqual(value, "test")
+
     def test_save_modifications(self):
         """
         Tests the method saving the modifications
