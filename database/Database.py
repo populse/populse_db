@@ -51,7 +51,7 @@ class Database:
         """
 
         # We add the tag if it does not already exist
-        if self.get_tag(name) is None:
+        if name not in self.classes:
 
             # Adding the tag in the Tag table
             session = self.session_maker()
@@ -237,9 +237,16 @@ class Database:
 
         # Adding the scan in the Tag table
         session = self.session_maker()
-        scan = self.classes["path"](name=scan, checksum=checksum)
-        session.add(scan)
-        session.commit()
+
+        # Checking that the scan does not already exist
+        scans = session.query(self.classes["path"]).filter(self.classes["path"].name == scan).all()
+        if len(scans) is 0:
+            scan = self.classes["path"](name=scan, checksum=checksum)
+            session.add(scan)
+            session.commit()
+        else:
+            session.close()
+
 
     def save_modifications(self):
         """
