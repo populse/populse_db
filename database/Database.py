@@ -82,9 +82,12 @@ class Database:
         tags = session.query(self.classes["tag"]).filter(self.classes["tag"].name == name).all()
         if len(tags) == 1:
             session.delete(tags[0])
+            session.commit()
 
             # Tag table removed
-        session.commit()
+            self.classes[name].__table__.drop()
+        else:
+            session.close()
 
     def get_tag(self, name):
         """
@@ -95,6 +98,7 @@ class Database:
 
         session = self.session_maker()
         tags = session.query(self.classes["tag"]).filter(self.classes["tag"].name == name).all()
+        session.close()
         if len(tags) == 1:
             return tags[0]
         else:
@@ -103,21 +107,50 @@ class Database:
     """ VALUES """
 
     def get_current_value(self, scan, tag):
+        """
+        Gives the current value of <scan, tag>
+        :param scan: Scan name
+        :param tag: Tag name
+        :return: The current value of <scan, tag>
+        """
+
         session = self.session_maker()
         scans = session.query(self.classes["path"].index).filter(self.classes["path"].name == scan).all()
         if len(scans) == 1:
             scan = scans[0]
             index = scan.index
             values = session.query(self.classes[tag].current_value).filter(self.classes[tag].index == index).all()
+            session.close()
             if len(values) == 1:
                 value = values[0]
                 return value.current_value
+            else:
+                return None
         else:
             return None
-        session.commit()
 
     def get_initial_value(self, scan, tag):
-        pass
+        """
+        Gives the initial value of <scan, tag>
+        :param scan: Scan name
+        :param tag: Tag name
+        :return: The initial value of <scan, tag>
+        """
+
+        session = self.session_maker()
+        scans = session.query(self.classes["path"].index).filter(self.classes["path"].name == scan).all()
+        if len(scans) == 1:
+            scan = scans[0]
+            index = scan.index
+            values = session.query(self.classes[tag].initial_value).filter(self.classes[tag].index == index).all()
+            session.close()
+            if len(values) == 1:
+                value = values[0]
+                return value.initial_value
+            else:
+                return None
+        else:
+            return None
 
     def is_value_modified(self, scan, tag):
         pass
@@ -132,6 +165,13 @@ class Database:
         pass
 
     def add_value(self, scan, tag, value):
+        """
+        Adds a value for <scan, tag> (as initial and current)
+        :param scan: scan name
+        :param tag: tag name
+        :param value: value
+        """
+
         session = self.session_maker()
         scans = session.query(self.classes["path"].index).filter(self.classes["path"].name == scan).all()
         if len(scans) == 1:
@@ -139,12 +179,43 @@ class Database:
             index = scan.index
             value_to_add = self.classes[tag](index=index, initial_value=value, current_value=value)
             session.add(value_to_add)
-        session.commit()
+            session.commit()
+        else:
+            session.close()
 
     """ SCANS """
 
+    def get_scan(self, scan):
+        """
+        Gives the Scan object of a scan
+        :param scan: Scan name
+        """
+
+        session = self.session_maker()
+        scans = session.query(self.classes["path"]).filter(self.classes["path"].name == scan).all()
+        session.close()
+        if len(scans) == 1:
+            scan = scans[0]
+            return scan
+        else:
+            return None
+
     def remove_scan(self, scan):
-        pass
+        """
+        Removes a scan
+        :param scan: Scan name
+        """
+
+        session = self.session_maker()
+        scans = session.query(self.classes["path"]).filter(self.classes["path"].name == scan).all()
+        if len(scans) == 1:
+            scan = scans[0]
+            index = scan.index
+            session.delete(scan)
+            session.commit()
+        else:
+            session.close()
+
 
     def add_scan(self, scan, checksum):
         """
