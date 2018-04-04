@@ -1,5 +1,5 @@
 import os
-from model.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_STRING
+from model.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_STRING, TAG_TYPE_FLOAT
 from database.Database import Database
 import unittest
 import shutil
@@ -167,9 +167,30 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_scan("scan1", "159abc")
         database.add_scan("scan2", "def753")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("SequenceName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, None)
+        database.add_tag("BandWidth", True, TAG_ORIGIN_RAW, TAG_TYPE_FLOAT, None, None, None)
+
+        # Adding values
         database.add_value("scan1", "PatientName", "test")
+        database.add_value("scan2", "PatientName", "value")
+        database.add_value("scan1", "SequenceName", "seq")
+
+        # Testing not crashing when the tag does not exist
+        database.add_value("scan1", "NotExisting", "none")
+
+        # Testing not crashing when the scan does not exist
+        database.add_value("scan3", "SequenceName", "none")
+
+        # Testing not crashing when both do not exist
+        database.add_value("scan3", "NotExisting", "none")
+
+        # Testing values actually added
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test")
+        value = database.get_current_value("scan2", "PatientName")
+        self.assertEqual(value, "value")
+        value = database.get_current_value("scan1", "SequenceName")
+        self.assertEqual(value, "seq")
 
     def test_save_modifications(self):
         """
