@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, Column, String, Integer, Float, MetaData, 
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 import shutil
+import tempfile
 
 class Database:
 
@@ -22,7 +23,8 @@ class Database:
             createDatabase(self.path)
 
         # Temporary database file created that will be kept updated
-        self.temp_file = os.path.join(os.path.dirname(self.path), os.path.splitext(self.path)[0] + "_temp.db")
+        self.temp_folder = os.path.relpath(tempfile.mkdtemp())
+        self.temp_file = os.path.join(self.temp_folder, "temp_database.db")
         shutil.copy(path, self.temp_file)
 
         # Database opened (temporary file)
@@ -30,8 +32,9 @@ class Database:
         self.metadata = MetaData(bind=self.engine, reflect=True)
         self.session_maker = sessionmaker(bind=self.engine)
         self.base.prepare(self.engine, reflect=True)
-        self.classes["tag"] = self.base.classes.tag
-        self.classes["path"] = self.base.classes.path
+        for table in self.metadata.tables.values():
+            table_name = table.name
+            self.classes[table_name] = getattr(self.base.classes, table_name)
 
     """ TAGS """
 
@@ -165,7 +168,7 @@ class Database:
 
     def __del__(self):
         """
-        Overrides the instance closing to remove the temporary database file
+        Overrides the instance closing to remove the temporary folder
         """
 
-        os.remove(self.temp_file)
+        shutil.rmtree(self.temp_folder)
