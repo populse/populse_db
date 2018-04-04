@@ -173,8 +173,12 @@ class Database:
             if len(scans) is 1:
                 scan = scans[0]
                 index = scan.index
-                value_to_add = self.classes[tag](index=index, initial_value=value, current_value=value)
-                session.add(value_to_add)
+                values = session.query(self.classes[tag]).filter(self.classes[tag].index == index).all()
+
+                # We add the value only if it does not already exist
+                if len(values) is 0:
+                    value_to_add = self.classes[tag](index=index, initial_value=value, current_value=value)
+                    session.add(value_to_add)
                 session.commit()
             else:
                 session.close()
