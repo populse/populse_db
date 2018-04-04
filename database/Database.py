@@ -213,6 +213,18 @@ class Database:
             index = scan.index
             session.delete(scan)
             session.commit()
+
+            # Values removed from all tag tables
+            for table_class in self.classes:
+                if table_class != "tag" and table_class != "path":
+                    session = self.session_maker()
+                    values = session.query(self.classes[table_class]).filter(self.classes[table_class].index == index).all()
+                    if len(values) == 1:
+                        value = values[0]
+                        session.delete(value)
+                        session.commit()
+                    else:
+                        session.close()
         else:
             session.close()
 
