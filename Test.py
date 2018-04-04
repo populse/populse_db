@@ -8,7 +8,7 @@ path = os.path.relpath(os.path.join(".", "test.db"))
 
 class TestDatabaseMethods(unittest.TestCase):
 
-    def test_databasecreation(self):
+    def test_database_creation(self):
         """
         Tests the database creation
         """
@@ -19,7 +19,7 @@ class TestDatabaseMethods(unittest.TestCase):
         createDatabase(path)
         self.assertTrue(os.path.exists(path))
 
-    def test_databaseconstructor(self):
+    def test_database_constructor(self):
         """
         Tests the database constructor
         """
@@ -37,7 +37,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Database(path)
         self.assertTrue(os.path.exists(path))
 
-    def test_addtag(self):
+    def test_add_tag(self):
         """
         Tests the method adding a tag
         """
@@ -55,8 +55,9 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertIsNone(tag.unit)
         self.assertIsNone(tag.default_value)
         self.assertEqual(tag.description, "Name of the patient")
+        # TODO Testing tag table creation
 
-    def test_gettag(self):
+    def test_get_tag(self):
         """
         Tests the method giving the Tag object of a tag
         """
@@ -71,7 +72,7 @@ class TestDatabaseMethods(unittest.TestCase):
         tag = database.get_tag("Test")
         self.assertIsNone(tag)
 
-    def test_removetag(self):
+    def test_remove_tag(self):
         """
         Tests the method removing a tag
         """
@@ -84,8 +85,9 @@ class TestDatabaseMethods(unittest.TestCase):
         database.remove_tag("PatientName")
         tag = database.get_tag("PatientName")
         self.assertIsNone(tag)
+        # TODO Testing tag table removal
 
-    def test_addscan(self):
+    def test_add_scan(self):
         """
         Tests the method adding a scan
         """
@@ -96,8 +98,10 @@ class TestDatabaseMethods(unittest.TestCase):
         database = Database(path)
         database.add_scan("scan1", "159abc")
         database.add_scan("scan2", "def753")
+        scan = database.get_scan("scan1")
+        self.assertIsInstance(scan, database.classes["path"])
 
-    def test_getcurrentvalue(self):
+    def test_get_current_value(self):
         """
         Tests the method giving the current value, given a tag and a scan
         """
@@ -115,7 +119,25 @@ class TestDatabaseMethods(unittest.TestCase):
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test")
 
-    def test_addvalue(self):
+    def test_get_initial_value(self):
+        """
+        Tests the method giving the current value, given a tag and a scan
+        """
+        global path
+
+        if os.path.exists(path):
+            os.remove(path)
+        database = Database(path)
+        database.add_scan("scan1", "159abc")
+        database.add_scan("scan2", "def753")
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+        value = database.get_initial_value("scan1", "PatientName")
+        self.assertIsNone(value)
+        database.add_value("scan1", "PatientName", "test")
+        value = database.get_initial_value("scan1", "PatientName")
+        self.assertEqual(value, "test")
+
+    def test_add_value(self):
         """
         Tests the method adding a value
         """
@@ -131,7 +153,7 @@ class TestDatabaseMethods(unittest.TestCase):
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test")
 
-    def test_savemodifications(self):
+    def test_save_modifications(self):
         """
         Tests the method saving the modifications
         """
@@ -169,9 +191,40 @@ class TestDatabaseMethods(unittest.TestCase):
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test")
 
+        # Testing that the save_modifications method uptades the original file
         os.remove(os.path.join(".", "test_origin.db"))
         os.remove(os.path.join(".", "test_temp.db"))
         os.remove(os.path.join(".", "test_origin_after_commit.db"))
+
+    def test_remove_scan(self):
+        """
+        Tests the method that removes a scan
+        """
+
+        if os.path.exists(path):
+            os.remove(path)
+        database = Database(path)
+        database.add_scan("scan1", "159abc")
+        database.add_scan("scan2", "def753")
+        database.remove_scan("scan1")
+        scan = database.get_scan("scan1")
+        self.assertIsNone(scan)
+
+    def test_get_scan(self):
+        """
+        Tests the method adding a scan
+        """
+        global path
+
+        if os.path.exists(path):
+            os.remove(path)
+        database = Database(path)
+        database.add_scan("scan1", "159abc")
+        database.add_scan("scan2", "def753")
+        scan = database.get_scan("scan1")
+        self.assertIsInstance(scan, database.classes["path"])
+        scan = database.get_scan("scan3")
+        self.assertIsNone(scan)
 
 if __name__ == '__main__':
     unittest.main(exit=False)
