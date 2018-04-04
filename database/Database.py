@@ -154,10 +154,43 @@ class Database:
         pass
 
     def set_value(self, scan, tag, new_value):
-        pass
+        """
+        Sets the value associated to <scan, tag>
+        :param scan: scan name
+        :param tag: tag name
+        :param new_value: New value
+        """
+
+        # Checking that the tag table exists
+        if tag in self.classes:
+            session = self.session_maker()
+            values = session.query(self.classes[tag]).join(self.classes["path"]).filter(
+                self.classes["path"].name == scan).filter(self.classes[tag].index == self.classes["path"].index).all()
+            if len(values) is 1:
+                value = values[0]
+                value.current_value = new_value
+                session.commit()
+            else:
+                session.close()
 
     def reset_value(self, scan, tag):
-        pass
+        """
+        Resets the value associated to <scan, tag>
+        :param scan: scan name
+        :param tag: tag name
+        """
+
+        # Checking that the tag table exists
+        if tag in self.classes:
+            session = self.session_maker()
+            values = session.query(self.classes[tag]).join(self.classes["path"]).filter(
+                self.classes["path"].name == scan).filter(self.classes[tag].index == self.classes["path"].index).all()
+            if len(values) is 1:
+                value = values[0]
+                value.current_value = value.initial_value
+                session.commit()
+            else:
+                session.close()
 
     def remove_value(self, scan, tag):
         """
