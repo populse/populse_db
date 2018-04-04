@@ -51,7 +51,9 @@ def fill_tables(metadata):
                 Column("default_value", String, nullable=True),
                 Column("description", String, nullable=True))
 
-    path = Table('path', metadata,
-                Column("name", String, unique=True, nullable=False),
-                Column("checksum", String, nullable=False),
-                Column("index", Integer, primary_key=True, autoincrement=True))
+    path_current = Table('path_current', metadata,
+                Column("name", String, primary_key=True))
+
+    path_initial = Table('path_initial', metadata,
+                         Column("name", String, primary_key=True),
+                         Column("checksum", String, nullable=False))

@@ -51,7 +51,7 @@ class Database:
         """
 
         # We add the tag if it does not already exist
-        if name not in self.classes:
+        if self.get_tag(name) is None:
 
             # Adding the tag in the Tag table
             session = self.session_maker()
@@ -68,6 +68,10 @@ class Database:
             else:
                 column_type = String
 
+            column = Column(name, column_type)
+            column_type = column.type.compile(self.engine.dialect)
+
+            """
             # Table and class associated creation
             tag_table = Table(name, self.metadata,
                          Column("id", Integer, primary_key=True, autoincrement=True),
@@ -78,6 +82,17 @@ class Database:
             self.base.prepare()
             self.classes[name] = getattr(self.base.classes, name)
             tag_table.create()
+            """
+
+            session = self.session_maker()
+            self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("path_initial", name, column_type))
+            self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("path_current", name, column_type))
+            self.base = automap_base()
+            self.base.prepare(self.engine, reflect=True)
+            for table in self.metadata.tables.values():
+                table_name = table.name
+                self.classes[table_name] = getattr(self.base.classes, table_name)
+            session.commit()
 
     def remove_tag(self, name):
         """
@@ -92,9 +107,11 @@ class Database:
             session.delete(tags[0])
             session.commit()
 
+            """
             # Tag table removed
             self.classes[name].__table__.drop()
             self.classes[name] = None
+            """
         else:
             session.close()
 
@@ -123,13 +140,13 @@ class Database:
         """
 
         # Checking that the tag table exists
-        if tag in self.classes:
+        if self.get_tag(tag) is not None:
             session = self.session_maker()
-            values = session.query(self.classes[tag]).join(self.classes["path"]).filter(self.classes["path"].name == scan).filter(self.classes[tag].index == self.classes["path"].index).all()
+            values = session.query(self.classes["path_current"]).filter(self.classes["path_current"].name == scan).all()
             session.close()
             if len(values) is 1:
                 value = values[0]
-                return value.current_value
+                return getattr(value, tag)
         return None
 
     def get_initial_value(self, scan, tag):
@@ -262,7 +279,7 @@ class Database:
         """
 
         session = self.session_maker()
-        scans = session.query(self.classes["path"]).filter(self.classes["path"].name == scan).all()
+        scans = session.query(self.classes["path_initial"]).filter(self.classes["path_initial"].name == scan).all()
         session.close()
         if len(scans) is 1:
             scan = scans[0]
@@ -276,13 +293,16 @@ class Database:
         """
 
         session = self.session_maker()
-        scans = session.query(self.classes["path"]).filter(self.classes["path"].name == scan).all()
-        if len(scans) is 1:
-            scan = scans[0]
-            index = scan.index
-            session.delete(scan)
+        scans_initial = session.query(self.classes["path_initial"]).filter(self.classes["path_initial"].name == scan).all()
+        scans_current = session.query(self.classes["path_current"]).filter(self.classes["path_current"].name == scan).all()
+        if len(scans_initial) is 1:
+            scan_current = scans_current[0]
+            scan_initial = scans_initial[0]
+            session.delete(scan_initial)
+            session.delete(scan_current)
             session.commit()
 
+            """
             # Values removed from all tag tables
             for table_class in self.classes:
                 if table_class != "tag" and table_class != "path":
@@ -294,9 +314,9 @@ class Database:
                         session.commit()
                     else:
                         session.close()
+            """
         else:
             session.close()
-
 
     def add_scan(self, scan, checksum):
         """
@@ -309,10 +329,12 @@ class Database:
         session = self.session_maker()
 
         # Checking that the scan does not already exist
-        scans = session.query(self.classes["path"]).filter(self.classes["path"].name == scan).all()
+        scans = session.query(self.classes["path_initial"]).filter(self.classes["path_initial"].name == scan).all()
         if len(scans) is 0:
-            scan = self.classes["path"](name=scan, checksum=checksum)
-            session.add(scan)
+            scan_current = self.classes["path_current"](name=scan)
+            scan_initial = self.classes["path_initial"](name=scan, checksum=checksum)
+            session.add(scan_current)
+            session.add(scan_initial)
             session.commit()
         else:
             session.close()
