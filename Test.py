@@ -143,9 +143,17 @@ class TestDatabaseMethods(unittest.TestCase):
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test")
 
+        # Testing when not existing
+        value = database.get_current_value("scan3", "PatientName")
+        self.assertIsNone(value)
+        value = database.get_current_value("scan1", "NotExisting")
+        self.assertIsNone(value)
+        value = database.get_current_value("scan3", "NotExisting")
+        self.assertIsNone(value)
+
     def test_get_initial_value(self):
         """
-        Tests the method giving the current value, given a tag and a scan
+        Tests the method giving the initial value, given a tag and a scan
         """
         global path
 
@@ -165,6 +173,14 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing that the value is returned if it exists
         value = database.get_initial_value("scan1", "PatientName")
         self.assertEqual(value, "test")
+
+        # Testing when not existing
+        value = database.get_initial_value("scan3", "PatientName")
+        self.assertIsNone(value)
+        value = database.get_initial_value("scan1", "NotExisting")
+        self.assertIsNone(value)
+        value = database.get_initial_value("scan3", "NotExisting")
+        self.assertIsNone(value)
 
     def test_add_value(self):
         """
@@ -208,6 +224,36 @@ class TestDatabaseMethods(unittest.TestCase):
         database.save_modifications()
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test")
+
+    def test_remove_value(self):
+        """
+        Tests the method removing a value
+        """
+        global path
+
+        if os.path.exists(path):
+            os.remove(path)
+        database = Database(path)
+        database.add_scan("scan1", "159abc")
+        database.add_scan("scan2", "def753")
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("SequenceName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, None)
+        database.add_tag("BandWidth", True, TAG_ORIGIN_RAW, TAG_TYPE_FLOAT, None, None, None)
+
+        # Adding values
+        database.add_value("scan1", "PatientName", "test")
+
+        # Removing the value
+        database.remove_value("scan1", "PatientName")
+
+        # Trying when not existing
+        database.remove_value("scan3", "PatientName")
+        database.remove_value("scan1", "NotExisting")
+        database.remove_value("scan3", "NotExisting")
+
+        # Testing that the value is actually removed
+        value = database.get_current_value("scan1", "PatientName")
+        self.assertIsNone(value)
 
     def test_save_modifications(self):
         """
@@ -280,7 +326,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
     def test_get_scan(self):
         """
-        Tests the method adding a scan
+        Tests the method giving the Path object of a scan
         """
         global path
 
