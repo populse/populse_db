@@ -2,7 +2,7 @@ import os
 from model.DatabaseModel import createDatabase, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT
 from sqlalchemy import create_engine, Column, String, Integer, Float, MetaData, Table
 from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, mapper
 
 class Database:
 
@@ -50,16 +50,22 @@ class Database:
                                       default_value=default_value, description=description)
             self.session.add(tag)
 
+            # Table and class associated creation
             tag_table = Table(name, self.metadata,
                          Column("id", Integer, primary_key=True, autoincrement=True),
                          Column("index", Integer, nullable=False),
                          Column("initial_value", String),
                          Column("current_value", String))
-            self.session.commit() #self.session.add(tag_table)
+            attr_dict = {'__tablename__': name,
+                         'id': Column(Integer, primary_key=True, autoincrement=True),
+                         'index': Column(Integer, nullable=False),
+                         'initial_value': Column(String),
+                         'current_value': Column(String)}
+            tag_class = type(name + 'Class', (self.base,), attr_dict)
+            mapper(tag_class, tag_table)
+            self.classes[name] = tag_class
+            self.session.commit() # TODO try not to commit
             tag_table.create(self.engine)
-            self.base = automap_base()
-            self.base.prepare(self.engine, reflect=True)
-            self.classes[name] = getattr(self.base.classes, name)
 
     def remove_tag(self, name):
         """
@@ -90,10 +96,14 @@ class Database:
     """ VALUES """
 
     def get_current_value(self, scan, tag):
-        #print(getattr(Path_Current, tag))
-        scans = self.session.query(self.classes["path"]).filter(self.classes["path"].name == scan).all()
+        scans = self.session.query(self.classes["path"].index).filter(self.classes["path"].name == scan).all()
         if len(scans) == 1:
             scan = scans[0]
+            index = scan.index
+            values = self.session.query(self.classes[tag].current_value).filter(self.classes[tag].index == index).all()
+            if len(values) == 1:
+                value = values[0]
+                return value.current_value
         else:
             return None
 
@@ -113,7 +123,12 @@ class Database:
         pass
 
     def add_value(self, scan, tag, value):
-        values = self.session.query(Path_Current).filter(Path_Current.name == scan).all()
+        scans = self.session.query(self.classes["path"].index).filter(self.classes["path"].name == scan).all()
+        if len(scans) == 1:
+            scan = scans[0]
+            index = scan.index
+            value_to_add = self.classes[tag](index=index, initial_value=value, current_value=value)
+            self.session.add(value_to_add)
 
     """ SCANS """
 
