@@ -377,6 +377,39 @@ class TestDatabaseMethods(unittest.TestCase):
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test2")
 
+    def test_is_value_modified(self):
+        """
+        Tests the method telling if the value has been modified
+        """
+        global path
+
+        if os.path.exists(path):
+            os.remove(path)
+        database = Database(path)
+        database.add_scan("scan1", "159abc")
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+
+        # Adding a value and changing it
+        database.add_value("scan1", "PatientName", "test")
+
+        # Testing that the value has not been modified
+        is_modified = database.is_value_modified("scan1", "PatientName")
+        self.assertFalse(is_modified)
+
+        # Value modified
+        database.set_value("scan1", "PatientName", "test2")
+
+        # Testing that the value has been modified
+        is_modified = database.is_value_modified("scan1", "PatientName")
+        self.assertTrue(is_modified)
+
+        # Testing with values not existing
+        is_modified = database.is_value_modified("scan2", "PatientName")
+        self.assertFalse(is_modified)
+        is_modified = database.is_value_modified("scan1", "NotExisting")
+        self.assertFalse(is_modified)
+        is_modified = database.is_value_modified("scan2", "NotExisting")
+        self.assertFalse(is_modified)
 
 if __name__ == '__main__':
     unittest.main(exit=False)
