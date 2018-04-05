@@ -5,6 +5,7 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 import shutil
 import tempfile
+from datetime import date, time, datetime
 
 class Database:
 
@@ -264,6 +265,12 @@ class Database:
         if valid_type == TAG_TYPE_FLOAT and value_type == float:
             return True
         if valid_type == TAG_TYPE_STRING and value_type == str:
+            return True
+        if valid_type == TAG_TYPE_DATETIME and value_type == datetime:
+            return True
+        if valid_type == TAG_TYPE_TIME and value_type == time:
+            return True
+        if valid_type == TAG_TYPE_DATE and value_type == date:
             return True
         return False
 
