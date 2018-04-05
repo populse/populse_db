@@ -39,7 +39,7 @@ def createDatabase(path):
 
 def fill_tables(metadata):
 
-    tag = Table('tag', metadata,
+    Table('tag', metadata,
                 Column("name", String, primary_key=True),
                 Column("visible", Boolean, nullable=False),
                 Column("origin", Enum(TAG_ORIGIN_RAW, TAG_ORIGIN_USER), nullable=False),
@@ -51,11 +51,11 @@ def fill_tables(metadata):
                 Column("default_value", String, nullable=True),
                 Column("description", String, nullable=True))
 
-    path = Table('path', metadata,
+    Table('path', metadata,
                          Column("name", String, unique=True, nullable=False),
                          Column("checksum", String, nullable=False),
                          Column("index", Integer, primary_key=True, autoincrement=True))
 
-    current = Table('current', metadata, Column("index", Integer, primary_key=True), ForeignKeyConstraint(["index"], ["path.index"], ondelete="CASCADE", onupdate="CASCADE"))
+    Table('current', metadata, Column("index", Integer, primary_key=True), ForeignKeyConstraint(["index"], ["path.index"], ondelete="CASCADE", onupdate="CASCADE"))
 
-    initial = Table('initial', metadata, Column("index", Integer, primary_key=True), ForeignKeyConstraint(["index"], ["path.index"], ondelete="CASCADE", onupdate="CASCADE"))
+    Table('initial', metadata, Column("index", Integer, primary_key=True), ForeignKeyConstraint(["index"], ["path.index"], ondelete="CASCADE", onupdate="CASCADE"))

@@ -94,9 +94,23 @@ class TestDatabaseMethods(unittest.TestCase):
         os.remove(path)
         database = Database(path)
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("SequenceName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, None)
+        database.add_scan("scan1", "checksum")
+        database.add_scan("scan2", "checksum")
+        database.add_value("scan1", "PatientName", "Guerbet")
+        database.add_value("scan1", "SequenceName", "RARE")
+        database.save_modifications()
         database.remove_tag("PatientName")
+
+        # Testing that the tag does not exist anymore
         tag = database.get_tag("PatientName")
         self.assertIsNone(tag)
+
+        # Testing that the values are removed
+        value = database.get_current_value("scan1", "PatientName")
+        self.assertIsNone(value)
+        value = database.get_current_value("scan1", "SequenceName")
+        self.assertEqual(value, "RARE")
 
         # Testing with a tag not existing
         database.remove_tag("NotExisting")
