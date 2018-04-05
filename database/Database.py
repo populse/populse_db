@@ -3,9 +3,18 @@ from model.DatabaseModel import createDatabase, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT
 from sqlalchemy import create_engine, Column, String, Integer, Float, MetaData, Date, DateTime, Time
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.interfaces import PoolListener
 import shutil
 import tempfile
 from datetime import date, time, datetime
+
+class ForeignKeysListener(PoolListener):
+    """
+    Class to activate the pragma case_sensitive_like, that makes the like and contains functions case sensitive
+    """
+    def connect(self, dbapi_con, con_record):
+        db_cursor = dbapi_con.execute('pragma case_sensitive_like=ON')
+        db_cursor = dbapi_con.execute('pragma foreign_keys=ON')
 
 class Database:
 
@@ -29,7 +38,7 @@ class Database:
         shutil.copy(path, self.temp_file)
 
         # Database opened (temporary file)
-        self.engine = create_engine('sqlite:///' + self.temp_file)
+        self.engine = create_engine('sqlite:///' + self.temp_file, listeners=[ForeignKeysListener()])
         self.metadata = MetaData(bind=self.engine, reflect=True)
         self.session_maker = sessionmaker(bind=self.engine)
         self.base.prepare(self.engine, reflect=True)
@@ -345,6 +354,8 @@ class Database:
             scan = scans[0]
             session.delete(scan)
             session.commit()
+
+            # Thanks to the foreign key and on delete cascade, the scan is also removed from both initial and current tables
 
             """
             # Values removed from all tag tables

@@ -15,8 +15,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         global path
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         createDatabase(path)
         self.assertTrue(os.path.exists(path))
 
@@ -27,8 +26,7 @@ class TestDatabaseMethods(unittest.TestCase):
         global path
 
         # Testing without the database file existing
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         Database(path)
         self.assertTrue(os.path.exists(path))
 
@@ -44,8 +42,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         global path
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         database = Database(path)
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
         tag = database.get_tag("PatientName")
@@ -76,8 +73,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         global path
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         database = Database(path)
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
 
@@ -95,8 +91,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         global path
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         database = Database(path)
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
         database.remove_tag("PatientName")
@@ -114,8 +109,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         global path
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
         scan = database.get_scan("scan1")
@@ -132,8 +126,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         global path
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
@@ -168,8 +161,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         global path
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
@@ -204,8 +196,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         global path
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
         database.add_scan("scan2", "def758")
@@ -278,8 +269,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         global path
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
@@ -311,8 +301,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method saving the modifications
         """
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
@@ -353,8 +342,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method that removes a scan
         """
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
@@ -378,8 +366,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         global path
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
 
@@ -397,8 +384,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         global path
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
@@ -435,8 +421,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         global path
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
@@ -497,8 +482,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         global path
 
-        if os.path.exists(path):
-            os.remove(path)
+        os.remove(path)
         database = Database(path)
         database.add_scan("scan1", "159abc")
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
@@ -526,5 +510,6 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertFalse(is_modified)
 
 if __name__ == '__main__':
+    createDatabase(path)
     unittest.main(exit=False)
     os.remove(path)

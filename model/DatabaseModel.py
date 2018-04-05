@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Boolean, Enum, String, Integer, MetaData, Table
+from sqlalchemy import Column, Boolean, Enum, String, Integer, MetaData, Table, ForeignKey, ForeignKeyConstraint
 from sqlalchemy import create_engine
 
 # Tag origins
@@ -56,6 +56,6 @@ def fill_tables(metadata):
                          Column("checksum", String, nullable=False),
                          Column("index", Integer, primary_key=True, autoincrement=True))
 
-    current = Table('current', metadata, Column("index", Integer, primary_key=True))
+    current = Table('current', metadata, Column("index", Integer, primary_key=True), ForeignKeyConstraint(["index"], ["path.index"], ondelete="CASCADE", onupdate="CASCADE"))
 
-    initial = Table('initial', metadata, Column("index", Integer, primary_key=True))
+    initial = Table('initial', metadata, Column("index", Integer, primary_key=True), ForeignKeyConstraint(["index"], ["path.index"], ondelete="CASCADE", onupdate="CASCADE"))
