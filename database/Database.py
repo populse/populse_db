@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, Column, String, Integer, Float, MetaData, 
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.interfaces import PoolListener
+from sqlalchemy.schema import CreateTable
 import shutil
 import tempfile
 from datetime import date, time, datetime
@@ -130,10 +131,56 @@ class Database:
             self.classes[name] = None
             """
 
-            # Tag column removed from both initial and current tables
+            # Tag column removed from initial table
+            columns = ""
+            columns_list = []
+            sql_table_create = CreateTable(self.classes["initial"].__table__)
+            for column in sql_table_create.columns:
+                if name in str(column):
+                    column_to_remove = column
+                else:
+                    columns += str(column).split(" ")[0] + ", "
+                    columns_list.append(str(column).split(" ")[0])
+            sql_table_create.columns.remove(column_to_remove)
+            sql_query = str(sql_table_create)
+            sql_query = sql_query[:21] + '_backup' + sql_query[21:]
+            columns = columns[:-2]
+            columns = columns.replace("index", "\"index\"")
+            sql_query = sql_query.replace("index", "\"index\"")
             session = self.session_maker()
-            self.engine.execute('ALTER TABLE %s DROP COLUMN %s' % ("initial", name))
-            self.engine.execute('ALTER TABLE %s DROP COLUMN %s' % ("current", name))
+            session.execute(sql_query)
+            session.execute("INSERT INTO initial_backup SELECT " + columns + " FROM initial")
+            session.execute("DROP TABLE initial")
+            sql_query = sql_query[:21] + sql_query[29:]
+            session.execute(sql_query)
+            session.execute("INSERT INTO initial SELECT " + columns + " FROM initial_backup")
+            session.execute("DROP TABLE initial_backup")
+
+            # Tag column removed from current table
+            columns = ""
+            columns_list = []
+            sql_table_create = CreateTable(self.classes["current"].__table__)
+            for column in sql_table_create.columns:
+                if name in str(column):
+                    column_to_remove = column
+                else:
+                    columns += str(column).split(" ")[0] + ", "
+                    columns_list.append(str(column).split(" ")[0])
+            sql_table_create.columns.remove(column_to_remove)
+            sql_query = str(sql_table_create)
+            sql_query = sql_query[:21] + '_backup' + sql_query[21:]
+            columns = columns[:-2]
+            columns = columns.replace("index", "\"index\"")
+            sql_query = sql_query.replace("index", "\"index\"")
+            session = self.session_maker()
+            session.execute(sql_query)
+            session.execute("INSERT INTO current_backup SELECT " + columns + " FROM current")
+            session.execute("DROP TABLE current")
+            sql_query = sql_query[:21] + sql_query[29:]
+            session.execute(sql_query)
+            session.execute("INSERT INTO current SELECT " + columns + " FROM current_backup")
+            session.execute("DROP TABLE current_backup")
+
             self.base = automap_base()
             self.base.prepare(self.engine, reflect=True)
             for table in self.metadata.tables.values():
