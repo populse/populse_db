@@ -112,7 +112,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database = Database(path)
         database.add_scan("scan1", "159abc")
         scan = database.get_scan("scan1")
-        self.assertIsInstance(scan, database.classes["path_initial"])
+        self.assertIsInstance(scan, database.classes["path"])
 
         # Testing when trying to add a scan that already exists
         database.add_scan("scan1", "anotherChecksum")
@@ -318,7 +318,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing that a scan is returned if it exists
         scan = database.get_scan("scan1")
-        self.assertIsInstance(scan, database.classes["path_initial"])
+        self.assertIsInstance(scan, database.classes["path"])
 
         # Testing that None is returned if the scan does not exist
         scan = database.get_scan("scan3")
