@@ -1,5 +1,5 @@
 import os
-from model.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_STRING, TAG_TYPE_FLOAT
+from model.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_STRING, TAG_TYPE_FLOAT, TAG_UNIT_MHZ, TAG_TYPE_INTEGER, TAG_TYPE_TIME, TAG_TYPE_DATETIME, TAG_TYPE_DATE
 from database.Database import Database
 import unittest
 import shutil
@@ -60,6 +60,12 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing with a tag that elready exists
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+
+        # Testing all tag types
+        database.add_tag("BandWidth", True, TAG_ORIGIN_RAW, TAG_TYPE_FLOAT, TAG_UNIT_MHZ, None, None)
+        database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag("AcquisitionTime", True, TAG_ORIGIN_RAW, TAG_TYPE_TIME, None, None, None)
+        database.add_tag("AcquisitionDate", True, TAG_ORIGIN_RAW, TAG_TYPE_DATETIME, None, None, None)
 
         # TODO Testing tag table creation
 
@@ -149,6 +155,12 @@ class TestDatabaseMethods(unittest.TestCase):
         value = database.get_current_value("scan3", "NotExisting")
         self.assertIsNone(value)
 
+        # Testing with tag containing spaces
+        database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
+        database.add_value("scan1", "Bits per voxel", "space_tag")
+        value = database.get_current_value("scan1", "Bits per voxel")
+        self.assertEqual(value, "space_tag")
+
     def test_get_initial_value(self):
         """
         Tests the method giving the initial value, given a tag and a scan
@@ -178,6 +190,12 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertIsNone(value)
         value = database.get_initial_value("scan3", "NotExisting")
         self.assertIsNone(value)
+
+        # Testing with tag containing spaces
+        database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
+        database.add_value("scan1", "Bits per voxel", "space_tag")
+        value = database.get_initial_value("scan1", "Bits per voxel")
+        self.assertEqual(value, "space_tag")
 
     def test_add_value(self):
         """
@@ -212,6 +230,15 @@ class TestDatabaseMethods(unittest.TestCase):
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test")
 
+        # Testing with tag containing spaces
+        database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
+        database.add_value("scan1", "Bits per voxel", "space_tag")
+        value = database.get_current_value("scan1", "Bits per voxel")
+        self.assertEqual(value, "space_tag")
+
+        #database.save_modifications()
+        #shutil.copy(path, os.path.join(".", "test_add_value.db"))
+
     def test_remove_value(self):
         """
         Tests the method removing a value
@@ -237,6 +264,13 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing that the value is actually removed
         value = database.get_current_value("scan1", "PatientName")
+        self.assertIsNone(value)
+
+        # Testing with spaces in tag
+        database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
+        database.add_value("scan1", "Bits per voxel", "space_tag")
+        database.remove_value("scan1", "Bits per voxel")
+        value = database.get_current_value("scan1", "Bits per voxel")
         self.assertIsNone(value)
 
     def test_save_modifications(self):
@@ -352,6 +386,16 @@ class TestDatabaseMethods(unittest.TestCase):
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test")
 
+        # Testing with tag containing spaces
+        database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
+        database.add_value("scan1", "Bits per voxel", "space_tag")
+        database.set_value("scan1", "Bits per voxel", "value_updated")
+        value = database.get_current_value("scan1", "Bits per voxel")
+        self.assertEqual(value, "value_updated")
+        database.reset_value("scan1", "Bits per voxel")
+        value = database.get_current_value("scan1", "Bits per voxel")
+        self.assertEqual(value, "space_tag")
+
     def test_set_value(self):
         """
         Tests the method setting a value
@@ -376,6 +420,13 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing that the value is actually resetted
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test2")
+
+        # Testing with tag containing spaces
+        database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
+        database.add_value("scan1", "Bits per voxel", "space_tag")
+        database.set_value("scan1", "Bits per voxel", "value_updated")
+        value = database.get_current_value("scan1", "Bits per voxel")
+        self.assertEqual(value, "value_updated")
 
     def test_is_value_modified(self):
         """

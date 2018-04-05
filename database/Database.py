@@ -1,6 +1,6 @@
 import os
-from model.DatabaseModel import createDatabase, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT
-from sqlalchemy import create_engine, Column, String, Integer, Float, MetaData, Table, ForeignKey
+from model.DatabaseModel import createDatabase, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT, TAG_TYPE_TIME, TAG_TYPE_DATETIME, TAG_TYPE_DATE
+from sqlalchemy import create_engine, Column, String, Integer, Float, MetaData, Date, DateTime, Time
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 import shutil
@@ -65,6 +65,12 @@ class Database:
                 column_type = Integer
             elif tag_type is TAG_TYPE_FLOAT:
                 column_type = Float
+            elif tag_type is TAG_TYPE_DATE:
+                column_type = Date
+            elif tag_type is TAG_TYPE_DATETIME:
+                column_type = DateTime
+            elif tag_type is TAG_TYPE_TIME:
+                column_type = Time
             else:
                 column_type = String
 
@@ -86,20 +92,13 @@ class Database:
 
             # Tag column added to both initial and current tables
             session = self.session_maker()
-            self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("initial", name, column_type))
-            self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("current", name, column_type))
+            self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("initial", name.replace(" ", ""), column_type))
+            self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("current", name.replace(" ", ""), column_type))
             self.base = automap_base()
             self.base.prepare(self.engine, reflect=True)
             for table in self.metadata.tables.values():
                 table_name = table.name
                 self.classes[table_name] = getattr(self.base.classes, table_name)
-            session.commit()
-
-            session = self.session_maker()
-            initial = self.classes["initial"](index=self.get_scan_index(name))
-            current = self.classes["current"](index=self.get_scan_index(name))
-            session.add(current)
-            session.add(initial)
             session.commit()
 
     def remove_tag(self, name):
@@ -166,7 +165,7 @@ class Database:
             session.close()
             if len(values) is 1:
                 value = values[0]
-                return getattr(value, tag)
+                return getattr(value, tag.replace(" ", ""))
         return None
 
     def get_initial_value(self, scan, tag):
@@ -184,7 +183,7 @@ class Database:
             session.close()
             if len(values) is 1:
                 value = values[0]
-                return getattr(value, tag)
+                return getattr(value, tag.replace(" ", ""))
         return None
 
     def is_value_modified(self, scan, tag):
@@ -212,7 +211,7 @@ class Database:
                 self.classes["current"].index == self.get_scan_index(scan)).all()
             if len(values) is 1:
                 value = values[0]
-                setattr(value, tag, new_value)
+                setattr(value, tag.replace(" ", ""), new_value)
             session.commit()
 
     def reset_value(self, scan, tag):
@@ -222,7 +221,6 @@ class Database:
         :param tag: tag name
         """
 
-
         # Checking that the tag exists
         if self.get_tag(tag) is not None:
             session = self.session_maker()
@@ -230,7 +228,7 @@ class Database:
                 self.classes["current"].index == self.get_scan_index(scan)).all()
             if len(values) is 1:
                 value = values[0]
-                setattr(value, tag, self.get_initial_value(scan, tag))
+                setattr(value, tag.replace(" ", ""), self.get_initial_value(scan, tag))
             session.commit()
 
     def remove_value(self, scan, tag):
@@ -247,7 +245,7 @@ class Database:
                 self.classes["current"].index == self.get_scan_index(scan)).all()
             if len(values) is 1:
                 value = values[0]
-                setattr(value, tag, None)
+                setattr(value, tag.replace(" ", ""), None)
             session.commit()
 
     def add_value(self, scan, tag, value):
@@ -266,13 +264,13 @@ class Database:
             if len(scans_initial) is 1 and len(scans_current) is 1:
                 scan_initial = scans_initial[0]
                 scan_current = scans_current[0]
-                database_current_value = getattr(scan_current, tag)
-                database_initial_value = getattr(scan_initial, tag)
+                database_current_value = getattr(scan_current, tag.replace(" ", ""))
+                database_initial_value = getattr(scan_initial, tag.replace(" ", ""))
 
                 # We add the value only if it does not already exist
                 if database_current_value is None and database_initial_value is None:
-                    setattr(scan_initial, tag, value)
-                    setattr(scan_current, tag, value)
+                    setattr(scan_initial, tag.replace(" ", ""), value)
+                    setattr(scan_current, tag.replace(" ", ""), value)
                 session.commit()
             else:
                 session.close()
@@ -348,8 +346,16 @@ class Database:
         session = self.session_maker()
         scans = session.query(self.classes["path"]).filter(self.classes["path"].name == scan).all()
         if len(scans) is 0:
-            scan = self.classes["path"](name=scan, checksum=checksum)
-            session.add(scan)
+            scan_to_add = self.classes["path"](name=scan, checksum=checksum)
+            session.add(scan_to_add)
+            session.commit()
+
+            # Adding the index to both initial and current tables
+            session = self.session_maker()
+            initial = self.classes["initial"](index=self.get_scan_index(scan))
+            current = self.classes["current"](index=self.get_scan_index(scan))
+            session.add(current)
+            session.add(initial)
             session.commit()
         else:
             session.close()
