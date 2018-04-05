@@ -1,5 +1,5 @@
 import os
-from model.DatabaseModel import createDatabase, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT, TAG_TYPE_TIME, TAG_TYPE_DATETIME, TAG_TYPE_DATE
+from model.DatabaseModel import createDatabase, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT, TAG_TYPE_TIME, TAG_TYPE_DATETIME, TAG_TYPE_DATE, TAG_TYPE_STRING
 from sqlalchemy import create_engine, Column, String, Integer, Float, MetaData, Date, DateTime, Time
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
@@ -205,7 +205,7 @@ class Database:
         """
 
         # Checking that the tag exists
-        if self.get_tag(tag) is not None:
+        if self.get_tag(tag) is not None and self.check_type_value(new_value, self.get_tag(tag).type):
             session = self.session_maker()
             values = session.query(self.classes["current"]).filter(
                 self.classes["current"].index == self.get_scan_index(scan)).all()
@@ -248,6 +248,25 @@ class Database:
                 setattr(value, tag.replace(" ", ""), None)
             session.commit()
 
+    def check_type_value(self, value, valid_type):
+        """
+        Checks the type of the value
+        :param value: value
+        :param type: type that the value should have
+        :return: True if the value is valid, False otherwise
+        """
+
+        value_type = type(value)
+        if valid_type == TAG_TYPE_INTEGER and value_type == int:
+            return True
+        if valid_type == TAG_TYPE_FLOAT and value_type == int:
+            return True
+        if valid_type == TAG_TYPE_FLOAT and value_type == float:
+            return True
+        if valid_type == TAG_TYPE_STRING and value_type == str:
+            return True
+        return False
+
     def add_value(self, scan, tag, value):
         """
         Adds a value for <scan, tag> (as initial and current)
@@ -257,7 +276,8 @@ class Database:
         """
 
         # Checking that the tag exists
-        if self.get_tag(tag) is not None:
+        if self.get_tag(tag) is not None and self.check_type_value(value, self.get_tag(tag).type):
+
             session = self.session_maker()
             scans_initial = session.query(self.classes["initial"]).filter(self.classes["initial"].index == self.get_scan_index(scan)).all()
             scans_current = session.query(self.classes["current"]).filter(self.classes["current"].index == self.get_scan_index(scan)).all()
