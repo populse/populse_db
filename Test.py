@@ -3,6 +3,7 @@ from model.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_STRING,
 from database.Database import Database
 import unittest
 import shutil
+from datetime import date, time, datetime
 
 path = os.path.relpath(os.path.join(".", "test.db"))
 
@@ -257,6 +258,20 @@ class TestDatabaseMethods(unittest.TestCase):
         value = database.get_current_value("scan1", "BandWidth")
         self.assertEqual(value, 45)
 
+        # Testing with datetime tag
+        database.add_tag("AcquisitionDate", True, TAG_ORIGIN_RAW, TAG_TYPE_DATETIME, None, None, None)
+        date = datetime(2014, 02, 11, 8, 05, 07)
+        database.add_value("scan1", "AcquisitionDate", date)
+        value = database.get_current_value("scan1", "AcquisitionDate")
+        self.assertEqual(value, date)
+
+        # Testing with time tag
+        database.add_tag("AcquisitionTime", True, TAG_ORIGIN_RAW, TAG_TYPE_TIME, None, None, None)
+        time = datetime(2014, 02, 11, 0, 2, 20).time()
+        database.add_value("scan1", "AcquisitionTime", time)
+        value = database.get_current_value("scan1", "AcquisitionTime")
+        self.assertEqual(value, time)
+
     def test_remove_value(self):
         """
         Tests the method removing a value
@@ -453,6 +468,28 @@ class TestDatabaseMethods(unittest.TestCase):
         database.set_value("scan1", "Bits per voxel", 35.8)
         value = database.get_current_value("scan1", "Bits per voxel")
         self.assertEqual(value, 2)
+
+        # Testing with datetime tag
+        database.add_tag("AcquisitionDate", True, TAG_ORIGIN_RAW, TAG_TYPE_DATETIME, None, None, None)
+        date = datetime(2014, 02, 11, 8, 05, 07)
+        database.add_value("scan1", "AcquisitionDate", date)
+        value = database.get_current_value("scan1", "AcquisitionDate")
+        self.assertEqual(value, date)
+        date = datetime(2015, 02, 11, 8, 05, 07)
+        database.set_value("scan1", "AcquisitionDate", date)
+        value = database.get_current_value("scan1", "AcquisitionDate")
+        self.assertEqual(value, date)
+
+        # Testing with time tag
+        database.add_tag("AcquisitionTime", True, TAG_ORIGIN_RAW, TAG_TYPE_TIME, None, None, None)
+        time = datetime(2014, 02, 11, 0, 2, 20).time()
+        database.add_value("scan1", "AcquisitionTime", time)
+        value = database.get_current_value("scan1", "AcquisitionTime")
+        self.assertEqual(value, time)
+        time = datetime(2014, 02, 11, 15, 24, 20).time()
+        database.set_value("scan1", "AcquisitionTime", time)
+        value = database.get_current_value("scan1", "AcquisitionTime")
+        self.assertEqual(value, time)
 
     def test_is_value_modified(self):
         """
