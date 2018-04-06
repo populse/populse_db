@@ -1,6 +1,6 @@
 import os
-from model.DatabaseModel import createDatabase, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT, TAG_TYPE_TIME, TAG_TYPE_DATETIME, TAG_TYPE_DATE, TAG_TYPE_STRING
-from sqlalchemy import create_engine, Column, String, Integer, Float, MetaData, Date, DateTime, Time
+from model.DatabaseModel import createDatabase, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT, TAG_TYPE_TIME, TAG_TYPE_DATETIME, TAG_TYPE_DATE, TAG_TYPE_STRING, TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_STRING, TAG_TYPE_LIST_TIME
+from sqlalchemy import create_engine, Column, String, Integer, Float, MetaData, Date, DateTime, Time, Table, ForeignKeyConstraint
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.interfaces import PoolListener
@@ -85,32 +85,43 @@ class Database:
             else:
                 column_type = String
 
-            column = Column(name, column_type)
-            column_type = column.type.compile(self.engine.dialect)
+            if self.is_tag_list(name):
 
-            """
-            # Table and class associated creation
-            tag_table = Table(name, self.metadata,
-                         Column("id", Integer, primary_key=True, autoincrement=True),
-                         Column("index", Integer, ForeignKey(self.classes["path"].index), nullable=False),
-                         Column("initial_value", column_type),
-                         Column("current_value", column_type))
-            self.base = automap_base(metadata=self.metadata)
-            self.base.prepare()
-            self.classes[name] = getattr(self.base.classes, name)
-            tag_table.create()
-            """
+                # Tag is list: new table added
+                tag_table_current = Table(name + "_current", self.metadata,
+                                  Column("index", Integer, nullable=False, primary_key=True),
+                                  Column("order", Integer, nullable=False, primary_key=True),
+                                  Column("value", column_type),
+                                  ForeignKeyConstraint(["index"], ["path.index"], ondelete="CASCADE",
+                                                       onupdate="CASCADE"))
+                tag_table_initial = Table(name + "_initial", self.metadata,
+                                          Column("index", Integer, nullable=False, primary_key=True),
+                                          Column("order", Integer, nullable=False, primary_key=True),
+                                          Column("value", column_type),
+                                          ForeignKeyConstraint(["index"], ["path.index"], ondelete="CASCADE",
+                                                               onupdate="CASCADE"))
+                tag_table_current.create()
+                tag_table_initial.create()
+                self.base = automap_base(metadata=self.metadata)
+                self.base.prepare()
+                self.classes[name + "_initial"] = getattr(self.base.classes, name + "_initial")
+                self.classes[name + "_current"] = getattr(self.base.classes, name + "_current")
+            else:
 
-            # Tag column added to both initial and current tables
-            session = self.session_maker()
-            self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("initial", name.replace(" ", ""), column_type))
-            self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("current", name.replace(" ", ""), column_type))
-            self.base = automap_base()
-            self.base.prepare(self.engine, reflect=True)
-            for table in self.metadata.tables.values():
-                table_name = table.name
-                self.classes[table_name] = getattr(self.base.classes, table_name)
-            session.commit()
+                # Tag is not list, new column added
+                column = Column(name, column_type)
+                column_type = column.type.compile(self.engine.dialect)
+
+                # Tag column added to both initial and current tables
+                session = self.session_maker()
+                self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("initial", name.replace(" ", ""), column_type))
+                self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("current", name.replace(" ", ""), column_type))
+                self.base = automap_base()
+                self.base.prepare(self.engine, reflect=True)
+                for table in self.metadata.tables.values():
+                    table_name = table.name
+                    self.classes[table_name] = getattr(self.base.classes, table_name)
+                session.commit()
 
     def remove_tag(self, name):
         """
@@ -204,6 +215,20 @@ class Database:
             return tags[0]
         return None
 
+    def get_tag_type(self, name):
+        """
+        Gives the tag type
+        :param name: Tag name
+        :return: The tag type: See possibilities in DatabaseModel.py
+        """
+
+        session = self.session_maker()
+        tags = session.query(self.classes["tag"]).filter(self.classes["tag"].name == name).all()
+        session.close()
+        if len(tags) is 1:
+            return tags[0].type
+        return None
+
     """ VALUES """
 
     def get_current_value(self, scan, tag):
@@ -262,7 +287,7 @@ class Database:
         """
 
         # Checking that the tag exists
-        if self.get_tag(tag) is not None and self.check_type_value(new_value, self.get_tag(tag).type):
+        if self.get_tag(tag) is not None and self.check_type_value(new_value, self.get_tag_type(tag)):
             session = self.session_maker()
             values = session.query(self.classes["current"]).filter(
                 self.classes["current"].index == self.get_scan_index(scan)).all()
@@ -330,6 +355,28 @@ class Database:
             return True
         return False
 
+    def is_tag_list(self, tag):
+        """
+        To know if the given tag is a list
+        :param tag: tag
+        :return: True if the tag is a list, False otherwise
+        """
+
+        tag_type = self.get_tag(tag).type
+        if tag_type == TAG_TYPE_LIST_DATETIME:
+            return True
+        if tag_type == TAG_TYPE_LIST_TIME:
+            return True
+        if tag_type == TAG_TYPE_LIST_DATE:
+            return True
+        if tag_type == TAG_TYPE_LIST_STRING:
+            return True
+        if tag_type == TAG_TYPE_LIST_INTEGER:
+            return True
+        if tag_type == TAG_TYPE_LIST_FLOAT:
+            return True
+        return False
+
     def add_value(self, scan, tag, value):
         """
         Adds a value for <scan, tag> (as initial and current)
@@ -339,7 +386,7 @@ class Database:
         """
 
         # Checking that the tag exists
-        if self.get_tag(tag) is not None and self.check_type_value(value, self.get_tag(tag).type):
+        if self.get_tag(tag) is not None and self.check_type_value(value, self.get_tag_type(tag)):
 
             session = self.session_maker()
             scans_initial = session.query(self.classes["initial"]).filter(self.classes["initial"].index == self.get_scan_index(scan)).all()
