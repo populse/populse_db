@@ -281,9 +281,12 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing with list tag
         database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
         database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3])
-
-        database.save_modifications()
-        shutil.copy(path, os.path.join(".", "test_add_list_value.db"))
+        value = database.get_current_value("scan1", "Dataset dimensions")
+        self.assertEqual(value, [3, 28, 28, 3])
+        database.add_tag("Grids spacing", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_FLOAT, None, None, None)
+        database.add_value("scan2", "Grids spacing", [0.234375, 0.234375, 0.4])
+        value = database.get_current_value("scan2", "Grids spacing")
+        self.assertEqual(value, [0.234375, 0.234375, 0.4])
 
     def test_remove_value(self):
         """

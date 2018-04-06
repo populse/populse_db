@@ -239,15 +239,38 @@ class Database:
         :return: The current value of <scan, tag>
         """
 
-
         # Checking that the tag table exists
         if self.get_tag(tag) is not None:
-            session = self.session_maker()
-            values = session.query(self.classes["current"]).filter(self.classes["current"].index == self.get_scan_index(scan)).all()
-            session.close()
-            if len(values) is 1:
-                value = values[0]
-                return getattr(value, tag.replace(" ", ""))
+
+            if self.is_tag_list(tag):
+
+                # The tag is a list, we get the values from the tag current table
+                session = self.session_maker()
+                values = session.query(self.classes[tag + "_current"]).filter(
+                    self.classes[tag + "_current"].index == self.get_scan_index(scan)).all()
+                session.close()
+                values_list = []
+                for value in values:
+                    value_to_add = value.value
+                    tag_type = self.get_tag_type(tag)
+                    if tag_type == TAG_TYPE_LIST_INTEGER:
+                        value_to_add = int(value_to_add)
+                    elif tag_type == TAG_TYPE_LIST_STRING:
+                        value_to_add = str(value_to_add)
+                    elif tag_type == TAG_TYPE_LIST_FLOAT:
+                        value_to_add = float(value_to_add)
+                    values_list.insert(value.order, value_to_add)
+                return values_list
+
+            else:
+
+                # The tag is not a list, we get the value from current table
+                session = self.session_maker()
+                values = session.query(self.classes["current"]).filter(self.classes["current"].index == self.get_scan_index(scan)).all()
+                session.close()
+                if len(values) is 1:
+                    value = values[0]
+                    return getattr(value, tag.replace(" ", ""))
         return None
 
     def get_initial_value(self, scan, tag):
@@ -404,13 +427,12 @@ class Database:
 
                 # The tag is a list, we add it in the tag tables
                 session = self.session_maker()
-                i = 0
-                for element in value:
-                    current_to_add = self.classes[tag + "_current"](index=self.get_scan_index(scan), order=i, value=element)
-                    initial_to_add = self.classes[tag + "_initial"](index=self.get_scan_index(scan), order=i, value=element)
+                for order in range(0, len(value)):
+                    element = value[order]
+                    current_to_add = self.classes[tag + "_current"](index=self.get_scan_index(scan), order=order, value=element)
+                    initial_to_add = self.classes[tag + "_initial"](index=self.get_scan_index(scan), order=order, value=element)
                     session.add(current_to_add)
                     session.add(initial_to_add)
-                    i += 1
                 session.commit()
             else:
 
