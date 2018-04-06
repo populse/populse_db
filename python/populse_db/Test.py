@@ -1,12 +1,15 @@
 import os
-from populse_db.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_STRING, TAG_TYPE_FLOAT, TAG_UNIT_MHZ, TAG_TYPE_INTEGER, TAG_TYPE_TIME, TAG_TYPE_DATETIME, \
-    TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_FLOAT
-from populse_db.Database import Database
-import unittest
 import shutil
+import unittest
 from datetime import datetime
 
+from populse_db.Database import Database
+from populse_db.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_STRING, TAG_TYPE_FLOAT, TAG_UNIT_MHZ, \
+    TAG_TYPE_INTEGER, TAG_TYPE_TIME, TAG_TYPE_DATETIME, \
+    TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_FLOAT
+
 path = os.path.relpath(os.path.join(".", "test.db"))
+
 
 class TestDatabaseMethods(unittest.TestCase):
 
@@ -67,6 +70,9 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("AcquisitionDate", True, TAG_ORIGIN_RAW, TAG_TYPE_DATETIME, None, None, None)
         database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
 
+        # Testing with wrong parameters
+        database.add_tag(None, None, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+
         # TODO Testing tag table creation
 
     def test_get_tag(self):
@@ -116,6 +122,20 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing with a tag not existing
         database.remove_tag("NotExisting")
+
+        # Testing with list tag
+        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_value("scan1", "Dataset dimensions", [1, 2])
+        tag = database.get_tag("Dataset dimensions")
+        self.assertIsInstance(tag, database.classes["tag"])
+        value = database.get_current_value("scan1", "Dataset dimensions")
+        self.assertEqual(value, [1, 2])
+        database.remove_tag("Dataset dimension")
+        database.remove_tag("Dataset dimensions")
+        tag = database.get_tag("Dataset dimensions")
+        self.assertIsNone(tag)
+        value = database.get_current_value("scan1", "Dataset dimensions")
+        self.assertIsNone(value)
 
         # TODO Testing tag table removal
 
@@ -587,6 +607,7 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertFalse(is_modified)
         is_modified = database.is_value_modified("scan2", "NotExisting")
         self.assertFalse(is_modified)
+
 
 if __name__ == '__main__':
     createDatabase(path)
