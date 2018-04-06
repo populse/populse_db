@@ -1,5 +1,5 @@
 import os
-from model.DatabaseModel import createDatabase, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT, TAG_TYPE_TIME, TAG_TYPE_DATETIME, TAG_TYPE_DATE, TAG_TYPE_STRING, TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_STRING, TAG_TYPE_LIST_TIME
+from populse_db.DatabaseModel import createDatabase, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT, TAG_TYPE_TIME, TAG_TYPE_DATETIME, TAG_TYPE_DATE, TAG_TYPE_STRING, TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_STRING, TAG_TYPE_LIST_TIME
 from sqlalchemy import create_engine, Column, String, Integer, Float, MetaData, Date, DateTime, Time, Table, ForeignKeyConstraint
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
@@ -40,7 +40,8 @@ class Database:
 
         # Database opened (temporary file)
         self.engine = create_engine('sqlite:///' + self.temp_file, listeners=[ForeignKeysListener()])
-        self.metadata = MetaData(bind=self.engine, reflect=True)
+        self.metadata = MetaData(bind=self.engine)
+        self.metadata.reflect(bind=self.engine)
         self.session_maker = sessionmaker(bind=self.engine)
         self.base.prepare(self.engine, reflect=True)
         for table in self.metadata.tables.values():
