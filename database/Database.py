@@ -339,14 +339,29 @@ class Database:
         """
 
         # Checking that the tag exists
-        if self.get_tag(tag) is not None and self.check_type_value(new_value, self.get_tag_type(tag)):
-            session = self.session_maker()
-            values = session.query(self.classes["current"]).filter(
-                self.classes["current"].index == self.get_scan_index(scan)).all()
-            if len(values) is 1:
-                value = values[0]
-                setattr(value, tag.replace(" ", ""), new_value)
-            session.commit()
+        if self.get_tag(tag) is not None and self.check_type_value(new_value, self.get_tag_type(tag)) and self.get_scan_index(scan) is not None:
+
+            if self.is_tag_list(tag):
+
+                # The scan is a list type, we reset the values in the tag current table
+                session = self.session_maker()
+                values = session.query(self.classes[tag + "_current"]).filter(
+                    self.classes[tag + "_current"].index == self.get_scan_index(scan)).all()
+                for index in range(0, len(values)):
+                    value_to_modify = values[index]
+                    value_to_modify.value = new_value[index]
+                session.commit()
+
+            else:
+
+                # The scan is a simple type, we set the value in current table
+                session = self.session_maker()
+                values = session.query(self.classes["current"]).filter(
+                    self.classes["current"].index == self.get_scan_index(scan)).all()
+                if len(values) is 1:
+                    value = values[0]
+                    setattr(value, tag.replace(" ", ""), new_value)
+                session.commit()
 
     def reset_value(self, scan, tag):
         """
@@ -356,14 +371,29 @@ class Database:
         """
 
         # Checking that the tag exists
-        if self.get_tag(tag) is not None:
-            session = self.session_maker()
-            values = session.query(self.classes["current"]).filter(
-                self.classes["current"].index == self.get_scan_index(scan)).all()
-            if len(values) is 1:
-                value = values[0]
-                setattr(value, tag.replace(" ", ""), self.get_initial_value(scan, tag))
-            session.commit()
+        if self.get_tag(tag) is not None and self.get_scan_index(scan) is not None:
+
+            if self.is_tag_list(tag):
+
+                # The scan is a list type, we reset the values in the tag current table
+                session = self.session_maker()
+                values = session.query(self.classes[tag + "_current"]).filter(
+                    self.classes[tag + "_current"].index == self.get_scan_index(scan)).all()
+                for index in range(0, len(values)):
+                    value_to_modify = values[index]
+                    value_to_modify.value = self.get_initial_value(scan, tag)[index]
+                session.commit()
+
+            else:
+
+                # The scan is a simple type, we reset the value in current table
+                session = self.session_maker()
+                values = session.query(self.classes["current"]).filter(
+                    self.classes["current"].index == self.get_scan_index(scan)).all()
+                if len(values) is 1:
+                    value = values[0]
+                    setattr(value, tag.replace(" ", ""), self.get_initial_value(scan, tag))
+                session.commit()
 
     def remove_value(self, scan, tag):
         """
@@ -373,14 +403,28 @@ class Database:
         """
 
         # Checking that the tag exists
-        if self.get_tag(tag) is not None:
-            session = self.session_maker()
-            values = session.query(self.classes["current"]).filter(
-                self.classes["current"].index == self.get_scan_index(scan)).all()
-            if len(values) is 1:
-                value = values[0]
-                setattr(value, tag.replace(" ", ""), None)
-            session.commit()
+        if self.get_tag(tag) is not None and self.get_scan_index(scan) is not None:
+
+            if self.is_tag_list(tag):
+
+                # The tag has a list type, we remove the values from tag current table
+                session = self.session_maker()
+                values = session.query(self.classes[tag + "_current"]).filter(
+                    self.classes[tag + "_current"].index == self.get_scan_index(scan)).all()
+                for value in values:
+                    session.delete(value)
+                session.commit()
+
+            else:
+
+                # The tag has a simple type, we remove it from the tag column in the current table
+                session = self.session_maker()
+                values = session.query(self.classes["current"]).filter(
+                    self.classes["current"].index == self.get_scan_index(scan)).all()
+                if len(values) is 1:
+                    value = values[0]
+                    setattr(value, tag.replace(" ", ""), None)
+                session.commit()
 
     def check_type_value(self, value, valid_type):
         """
