@@ -66,9 +66,6 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("AcquisitionDate", True, TAG_ORIGIN_RAW, TAG_TYPE_DATETIME, None, None, None)
         database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
 
-        database.save_modifications()
-        shutil.copy(path, os.path.join(".", "test_add_list_tag.db"))
-
         # TODO Testing tag table creation
 
     def test_get_tag(self):
@@ -280,6 +277,13 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_value("scan1", "AcquisitionTime", time)
         value = database.get_current_value("scan1", "AcquisitionTime")
         self.assertEqual(value, time)
+
+        # Testing with list tag
+        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3])
+
+        database.save_modifications()
+        shutil.copy(path, os.path.join(".", "test_add_list_value.db"))
 
     def test_remove_value(self):
         """

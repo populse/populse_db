@@ -353,6 +353,18 @@ class Database:
             return True
         if valid_type == TAG_TYPE_DATE and value_type == date:
             return True
+        if valid_type == TAG_TYPE_LIST_DATE and value_type == list:
+            return True
+        if valid_type == TAG_TYPE_LIST_DATETIME and value_type == list:
+            return True
+        if valid_type == TAG_TYPE_LIST_TIME and value_type == list:
+            return True
+        if valid_type == TAG_TYPE_LIST_STRING and value_type == list:
+            return True
+        if valid_type == TAG_TYPE_LIST_FLOAT and value_type == list:
+            return True
+        if valid_type == TAG_TYPE_LIST_INTEGER and value_type == list:
+            return True
         return False
 
     def is_tag_list(self, tag):
@@ -388,22 +400,37 @@ class Database:
         # Checking that the tag exists
         if self.get_tag(tag) is not None and self.check_type_value(value, self.get_tag_type(tag)):
 
-            session = self.session_maker()
-            scans_initial = session.query(self.classes["initial"]).filter(self.classes["initial"].index == self.get_scan_index(scan)).all()
-            scans_current = session.query(self.classes["current"]).filter(self.classes["current"].index == self.get_scan_index(scan)).all()
-            if len(scans_initial) is 1 and len(scans_current) is 1:
-                scan_initial = scans_initial[0]
-                scan_current = scans_current[0]
-                database_current_value = getattr(scan_current, tag.replace(" ", ""))
-                database_initial_value = getattr(scan_initial, tag.replace(" ", ""))
+            if self.is_tag_list(tag):
 
-                # We add the value only if it does not already exist
-                if database_current_value is None and database_initial_value is None:
-                    setattr(scan_initial, tag.replace(" ", ""), value)
-                    setattr(scan_current, tag.replace(" ", ""), value)
+                # The tag is a list, we add it in the tag tables
+                session = self.session_maker()
+                i = 0
+                for element in value:
+                    current_to_add = self.classes[tag + "_current"](index=self.get_scan_index(scan), order=i, value=element)
+                    initial_to_add = self.classes[tag + "_initial"](index=self.get_scan_index(scan), order=i, value=element)
+                    session.add(current_to_add)
+                    session.add(initial_to_add)
+                    i += 1
                 session.commit()
             else:
-                session.close()
+
+                # The tag is not a list, we add it in both current and initial tables
+                session = self.session_maker()
+                scans_initial = session.query(self.classes["initial"]).filter(self.classes["initial"].index == self.get_scan_index(scan)).all()
+                scans_current = session.query(self.classes["current"]).filter(self.classes["current"].index == self.get_scan_index(scan)).all()
+                if len(scans_initial) is 1 and len(scans_current) is 1:
+                    scan_initial = scans_initial[0]
+                    scan_current = scans_current[0]
+                    database_current_value = getattr(scan_current, tag.replace(" ", ""))
+                    database_initial_value = getattr(scan_initial, tag.replace(" ", ""))
+
+                    # We add the value only if it does not already exist
+                    if database_current_value is None and database_initial_value is None:
+                        setattr(scan_initial, tag.replace(" ", ""), value)
+                        setattr(scan_current, tag.replace(" ", ""), value)
+                    session.commit()
+                else:
+                    session.close()
 
     """ SCANS """
 
