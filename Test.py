@@ -170,6 +170,21 @@ class TestDatabaseMethods(unittest.TestCase):
         value = database.get_current_value("scan1", "Bits per voxel")
         self.assertEqual(value, 10)
 
+        # Testing with list tag
+        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3])
+        value = database.get_current_value("scan1", "Dataset dimensions")
+        self.assertEqual(value, [3, 28, 28, 3])
+        database.add_tag("Grids spacing", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_FLOAT, None, None, None)
+        database.add_value("scan1", "Grids spacing", [0.234375, 0.234375, 0.4])
+        value = database.get_current_value("scan1", "Grids spacing")
+        self.assertEqual(value, [0.234375, 0.234375, 0.4])
+
+        # Trying with wrong params
+        database.add_value("scan2", "Grids spacing", [0.234375, 0.234375, 0.4])
+        value = database.get_current_value("scan2", "Grids spacing")
+        self.assertIsNone(value)
+
     def test_get_initial_value(self):
         """
         Tests the method giving the initial value, given a tag and a scan
@@ -204,6 +219,21 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_value("scan1", "Bits per voxel", 50)
         value = database.get_initial_value("scan1", "Bits per voxel")
         self.assertEqual(value, 50)
+
+        # Testing with list tag
+        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3])
+        value = database.get_initial_value("scan1", "Dataset dimensions")
+        self.assertEqual(value, [3, 28, 28, 3])
+        database.add_tag("Grids spacing", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_FLOAT, None, None, None)
+        database.add_value("scan1", "Grids spacing", [0.234375, 0.234375, 0.4])
+        value = database.get_initial_value("scan1", "Grids spacing")
+        self.assertEqual(value, [0.234375, 0.234375, 0.4])
+
+        # Trying with wrong params
+        database.add_value("scan2", "Grids spacing", [0.234375, 0.234375, 0.4])
+        value = database.get_initial_value("scan2", "Grids spacing")
+        self.assertIsNone(value)
 
     def test_add_value(self):
         """
