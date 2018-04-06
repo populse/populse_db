@@ -351,6 +351,17 @@ class TestDatabaseMethods(unittest.TestCase):
         value = database.get_current_value("scan1", "Bits per voxel")
         self.assertIsNone(value)
 
+        # Testing with list tag
+        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3])
+        value = database.get_current_value("scan1", "Dataset dimensions")
+        self.assertEqual(value, [3, 28, 28, 3])
+        database.remove_value("scan1", "Dataset dimensions")
+        value = database.get_current_value("scan1", "Dataset dimensions")
+        self.assertIsNone(value)
+        value = database.get_initial_value("scan1", "Dataset dimensions")
+        self.assertEqual(value, [3, 28, 28, 3])
+
     def test_save_modifications(self):
         """
         Tests the method saving the modifications
@@ -469,6 +480,18 @@ class TestDatabaseMethods(unittest.TestCase):
         database.reset_value("scan1", "Bits per voxel")
         value = database.get_current_value("scan1", "Bits per voxel")
         self.assertEqual(value, 5)
+
+        # Testing with list tag
+        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3])
+        value = database.get_current_value("scan1", "Dataset dimensions")
+        self.assertEqual(value, [3, 28, 28, 3])
+        database.set_value("scan1", "Dataset dimensions", [1, 2, 3, 4])
+        value = database.get_current_value("scan1", "Dataset dimensions")
+        self.assertEqual(value, [1, 2, 3, 4])
+        database.reset_value("scan1", "Dataset dimensions")
+        value = database.get_current_value("scan1", "Dataset dimensions")
+        self.assertEqual(value, [3, 28, 28, 3])
 
     def test_set_value(self):
         """
