@@ -249,6 +249,8 @@ class Database:
                 values = session.query(self.classes[tag + "_current"]).filter(
                     self.classes[tag + "_current"].index == self.get_scan_index(scan)).all()
                 session.close()
+                if len(values) is 0:
+                    return None
                 values_list = []
                 for value in values:
                     value_to_add = value.value
@@ -259,6 +261,7 @@ class Database:
                         value_to_add = str(value_to_add)
                     elif tag_type == TAG_TYPE_LIST_FLOAT:
                         value_to_add = float(value_to_add)
+                    # TODO add other types
                     values_list.insert(value.order, value_to_add)
                 return values_list
 
@@ -283,12 +286,38 @@ class Database:
 
         # Checking that the tag exists
         if self.get_tag(tag) is not None:
-            session = self.session_maker()
-            values = session.query(self.classes["initial"]).filter(self.classes["initial"].index == self.get_scan_index(scan)).all()
-            session.close()
-            if len(values) is 1:
-                value = values[0]
-                return getattr(value, tag.replace(" ", ""))
+
+            if self.is_tag_list(tag):
+                # The tag is a list, we get the values from the tag current table
+                session = self.session_maker()
+                values = session.query(self.classes[tag + "_initial"]).filter(
+                    self.classes[tag + "_initial"].index == self.get_scan_index(scan)).all()
+                session.close()
+                if len(values) is 0:
+                    return None
+                values_list = []
+                for value in values:
+                    value_to_add = value.value
+                    tag_type = self.get_tag_type(tag)
+                    if tag_type == TAG_TYPE_LIST_INTEGER:
+                        value_to_add = int(value_to_add)
+                    elif tag_type == TAG_TYPE_LIST_STRING:
+                        value_to_add = str(value_to_add)
+                    elif tag_type == TAG_TYPE_LIST_FLOAT:
+                        value_to_add = float(value_to_add)
+                    # TODO add other types
+                    values_list.insert(value.order, value_to_add)
+                return values_list
+
+            else:
+
+                # The tag is a list, we get the values from the tag initial table
+                session = self.session_maker()
+                values = session.query(self.classes["initial"]).filter(self.classes["initial"].index == self.get_scan_index(scan)).all()
+                session.close()
+                if len(values) is 1:
+                    value = values[0]
+                    return getattr(value, tag.replace(" ", ""))
         return None
 
     def is_value_modified(self, scan, tag):
@@ -421,7 +450,7 @@ class Database:
         """
 
         # Checking that the tag exists
-        if self.get_tag(tag) is not None and self.check_type_value(value, self.get_tag_type(tag)):
+        if self.get_tag(tag) is not None and self.check_type_value(value, self.get_tag_type(tag)) and self.get_scan_index(scan) is not None:
 
             if self.is_tag_list(tag):
 
