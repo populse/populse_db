@@ -1,5 +1,5 @@
 import os
-from model.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_STRING, TAG_TYPE_FLOAT, TAG_UNIT_MHZ, TAG_TYPE_INTEGER, TAG_TYPE_TIME, TAG_TYPE_DATETIME, TAG_TYPE_DATE
+from model.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_STRING, TAG_TYPE_FLOAT, TAG_UNIT_MHZ, TAG_TYPE_INTEGER, TAG_TYPE_TIME, TAG_TYPE_DATETIME, TAG_TYPE_DATE, TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_STRING, TAG_TYPE_LIST_TIME, TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_DATE
 from database.Database import Database
 import unittest
 import shutil
@@ -64,6 +64,10 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
         database.add_tag("AcquisitionTime", True, TAG_ORIGIN_RAW, TAG_TYPE_TIME, None, None, None)
         database.add_tag("AcquisitionDate", True, TAG_ORIGIN_RAW, TAG_TYPE_DATETIME, None, None, None)
+        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+
+        database.save_modifications()
+        shutil.copy(path, os.path.join(".", "test_add_list_tag.db"))
 
         # TODO Testing tag table creation
 
