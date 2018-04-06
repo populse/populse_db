@@ -1,9 +1,10 @@
 import os
-from model.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_STRING, TAG_TYPE_FLOAT, TAG_UNIT_MHZ, TAG_TYPE_INTEGER, TAG_TYPE_TIME, TAG_TYPE_DATETIME, TAG_TYPE_DATE, TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_STRING, TAG_TYPE_LIST_TIME, TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_DATE
-from database.Database import Database
+from populse_db.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_STRING, TAG_TYPE_FLOAT, TAG_UNIT_MHZ, TAG_TYPE_INTEGER, TAG_TYPE_TIME, TAG_TYPE_DATETIME, \
+    TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_FLOAT
+from populse_db.Database import Database
 import unittest
 import shutil
-from datetime import date, time, datetime
+from datetime import datetime
 
 path = os.path.relpath(os.path.join(".", "test.db"))
 
@@ -296,14 +297,14 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing with datetime tag
         database.add_tag("AcquisitionDate", True, TAG_ORIGIN_RAW, TAG_TYPE_DATETIME, None, None, None)
-        date = datetime(2014, 02, 11, 8, 05, 07)
+        date = datetime(2014, 2, 11, 8, 5, 7)
         database.add_value("scan1", "AcquisitionDate", date)
         value = database.get_current_value("scan1", "AcquisitionDate")
         self.assertEqual(value, date)
 
         # Testing with time tag
         database.add_tag("AcquisitionTime", True, TAG_ORIGIN_RAW, TAG_TYPE_TIME, None, None, None)
-        time = datetime(2014, 02, 11, 0, 2, 20).time()
+        time = datetime(2014, 2, 11, 0, 2, 2).time()
         database.add_value("scan1", "AcquisitionTime", time)
         value = database.get_current_value("scan1", "AcquisitionTime")
         self.assertEqual(value, time)
@@ -534,22 +535,22 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing with datetime tag
         database.add_tag("AcquisitionDate", True, TAG_ORIGIN_RAW, TAG_TYPE_DATETIME, None, None, None)
-        date = datetime(2014, 02, 11, 8, 05, 07)
+        date = datetime(2014, 2, 11, 8, 5, 7)
         database.add_value("scan1", "AcquisitionDate", date)
         value = database.get_current_value("scan1", "AcquisitionDate")
         self.assertEqual(value, date)
-        date = datetime(2015, 02, 11, 8, 05, 07)
+        date = datetime(2015, 2, 11, 8, 5, 7)
         database.set_value("scan1", "AcquisitionDate", date)
         value = database.get_current_value("scan1", "AcquisitionDate")
         self.assertEqual(value, date)
 
         # Testing with time tag
         database.add_tag("AcquisitionTime", True, TAG_ORIGIN_RAW, TAG_TYPE_TIME, None, None, None)
-        time = datetime(2014, 02, 11, 0, 2, 20).time()
+        time = datetime(2014, 2, 11, 0, 2, 20).time()
         database.add_value("scan1", "AcquisitionTime", time)
         value = database.get_current_value("scan1", "AcquisitionTime")
         self.assertEqual(value, time)
-        time = datetime(2014, 02, 11, 15, 24, 20).time()
+        time = datetime(2014, 2, 11, 15, 24, 20).time()
         database.set_value("scan1", "AcquisitionTime", time)
         value = database.get_current_value("scan1", "AcquisitionTime")
         self.assertEqual(value, time)
