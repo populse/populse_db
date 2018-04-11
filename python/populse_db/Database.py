@@ -383,7 +383,7 @@ class Database:
 
         # Parameters checked
         if type(name) is not str:
-            return None
+            return
         if self.get_tag(name) is None:
             return
         if origin not in [TAG_ORIGIN_USER, TAG_ORIGIN_RAW]:
@@ -394,6 +394,80 @@ class Database:
         if len(tags) is 1:
             tag = tags[0]
             tag.origin = origin
+            session.commit()
+        else:
+            session.close()
+
+    def set_tag_type(self, name, tag_type):
+        """
+        Sets the tag type
+        :param name: Tag name
+        :param origin: Tag type (string, integer, float, date, datetime, time, list_string, list_integer, list_float, list_date, list_datetime, or list_time)
+        """
+
+        # Parameters checked
+        if type(name) is not str:
+            return
+        if self.get_tag(name) is None:
+            return
+        if tag_type not in [TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_STRING, TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_TIME, TAG_TYPE_DATETIME, TAG_TYPE_DATE, TAG_TYPE_STRING, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT, TAG_TYPE_TIME]:
+            return
+
+        session = self.session_maker()
+        tags = session.query(self.classes["tag"]).filter(self.classes["tag"].name == name).all()
+        if len(tags) is 1:
+            tag = tags[0]
+            tag.type = tag_type
+            session.commit()
+        else:
+            session.close()
+
+        # TODO set column type
+
+    def set_tag_unit(self, name, unit):
+        """
+        Sets the tag unit
+        :param name: Tag name
+        :param origin: Tag unit (ms, mm, degree, Hz/pixel, MHz, or None)
+        """
+
+        # Parameters checked
+        if type(name) is not str:
+            return
+        if self.get_tag(name) is None:
+            return
+        if unit not in [TAG_UNIT_MHZ, TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL, TAG_UNIT_MM, TAG_UNIT_MS] and unit is not None:
+            return
+
+        session = self.session_maker()
+        tags = session.query(self.classes["tag"]).filter(self.classes["tag"].name == name).all()
+        if len(tags) is 1:
+            tag = tags[0]
+            tag.unit = unit
+            session.commit()
+        else:
+            session.close()
+
+    def set_tag_description(self, name, description):
+        """
+        Sets the tag description
+        :param name: Tag name
+        :param origin: Tag description (str)
+        """
+
+        # Parameters checked
+        if type(name) is not str:
+            return
+        if self.get_tag(name) is None:
+            return
+        if type(description) is not str:
+            return
+
+        session = self.session_maker()
+        tags = session.query(self.classes["tag"]).filter(self.classes["tag"].name == name).all()
+        if len(tags) is 1:
+            tag = tags[0]
+            tag.description = description
             session.commit()
         else:
             session.close()
@@ -909,6 +983,20 @@ class Database:
         session.close()
         for scan in scans:
             scans_list.append(scan.name)
+        return scans_list
+
+    def get_scans(self):
+        """
+        Gives the list of path table objects
+        :param scan: List of path table objects
+        """
+
+        scans_list = []
+        session = self.session_maker()
+        scans = session.query(self.classes["path"]).all()
+        session.close()
+        for scan in scans:
+            scans_list.append(scan)
         return scans_list
 
     def get_scan_index(self, scan):
