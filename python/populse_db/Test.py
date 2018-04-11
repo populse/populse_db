@@ -1,6 +1,7 @@
 import os
 import shutil
 import unittest
+import tempfile
 from datetime import datetime
 
 from populse_db.Database import Database
@@ -8,7 +9,8 @@ from populse_db.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_ST
     TAG_TYPE_INTEGER, TAG_TYPE_TIME, TAG_TYPE_DATETIME, \
     TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_FLOAT
 
-path = os.path.relpath(os.path.join(".", "test.db"))
+temp_folder = tempfile.mkdtemp()
+path = os.path.relpath(os.path.join(temp_folder, "test.db"))
 
 
 class TestDatabaseMethods(unittest.TestCase):
@@ -102,9 +104,9 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_scan("scan2", "checksum")
 
         # Adding values
-        database.add_value("scan1", "PatientName", "Guerbet")
-        database.add_value("scan1", "SequenceName", "RARE")
-        database.add_value("scan1", "Dataset dimensions", [1, 2])
+        database.add_value("scan1", "PatientName", "Guerbet", "Guerbet")
+        database.add_value("scan1", "SequenceName", "RARE", "RARE")
+        database.add_value("scan1", "Dataset dimensions", [1, 2], [1, 2])
 
         # Removing tag
         database.remove_tag("PatientName")
@@ -215,11 +217,11 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("Grids spacing", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_FLOAT, None, None, None)
 
         # Adding values
-        database.add_value("scan1", "PatientName", "test")
-        database.add_value("scan1", "Bits per voxel", 10)
-        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3])
-        database.add_value("scan1", "Grids spacing", [0.234375, 0.234375, 0.4])
-        database.add_value("scan2", "Grids spacing", [0.234375, 0.234375, 0.4])
+        database.add_value("scan1", "PatientName", "test", "test")
+        database.add_value("scan1", "Bits per voxel", 10, 10)
+        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
+        database.add_value("scan1", "Grids spacing", [0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
+        database.add_value("scan2", "Grids spacing", [0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
 
         # Testing that the value is returned if it exists
         value = database.get_current_value("scan1", "PatientName")
@@ -268,10 +270,10 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("Grids spacing", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_FLOAT, None, None, None)
 
         # Adding values
-        database.add_value("scan1", "PatientName", "test")
-        database.add_value("scan1", "Bits per voxel", 50)
-        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3])
-        database.add_value("scan1", "Grids spacing", [0.234375, 0.234375, 0.4])
+        database.add_value("scan1", "PatientName", "test", "test")
+        database.add_value("scan1", "Bits per voxel", 50, 50)
+        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
+        database.add_value("scan1", "Grids spacing", [0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
 
         # Testing that the value is returned if it exists
         value = database.get_initial_value("scan1", "PatientName")
@@ -315,7 +317,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Adding a value
-        database.add_value("scan1", "PatientName", "test")
+        database.add_value("scan1", "PatientName", "test", "test")
 
         # Testing that the value has not been modified
         is_modified = database.is_value_modified("scan1", "PatientName")
@@ -363,21 +365,21 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("AcquisitionTime", True, TAG_ORIGIN_RAW, TAG_TYPE_TIME, None, None, None)
 
         # Adding values and changing it
-        database.add_value("scan1", "PatientName", "test")
+        database.add_value("scan1", "PatientName", "test", "test")
         database.set_value("scan1", "PatientName", "test2")
 
-        database.add_value("scan1", "Bits per voxel", 1)
+        database.add_value("scan1", "Bits per voxel", 1, 1)
         database.set_value("scan1", "Bits per voxel", 2)
 
         date = datetime(2014, 2, 11, 8, 5, 7)
-        database.add_value("scan1", "AcquisitionDate", date)
+        database.add_value("scan1", "AcquisitionDate", date, date)
         value = database.get_current_value("scan1", "AcquisitionDate")
         self.assertEqual(value, date)
         date = datetime(2015, 2, 11, 8, 5, 7)
         database.set_value("scan1", "AcquisitionDate", date)
 
         time = datetime(2014, 2, 11, 0, 2, 20).time()
-        database.add_value("scan1", "AcquisitionTime", time)
+        database.add_value("scan1", "AcquisitionTime", time, time)
         value = database.get_current_value("scan1", "AcquisitionTime")
         self.assertEqual(value, time)
         time = datetime(2014, 2, 11, 15, 24, 20).time()
@@ -392,6 +394,9 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(value, date)
         value = database.get_current_value("scan1", "AcquisitionTime")
         self.assertEqual(value, time)
+        database.set_value("scan1", "PatientName", None)
+        value = database.get_current_value("scan1", "PatientName")
+        self.assertIsNone(value)
 
         # Testing when not existing
         database.set_value("scan3", "PatientName", None)
@@ -409,9 +414,6 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing with wrong parameters
         database.set_value(1, "Grids spacing", "2")
         database.set_value("scan1", None, "1")
-        database.set_value("scan1", "PatientName", None)
-        value = database.get_current_value("scan1", "PatientName")
-        self.assertEqual(value, "test2")
         database.set_value(1, None, True)
 
     def test_reset_value(self):
@@ -432,15 +434,15 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Adding values and changing it
-        database.add_value("scan1", "PatientName", "test")
+        database.add_value("scan1", "PatientName", "test", "test")
         database.set_value("scan1", "PatientName", "test2")
 
-        database.add_value("scan1", "Bits per voxel", 5)
+        database.add_value("scan1", "Bits per voxel", 5, 5)
         database.set_value("scan1", "Bits per voxel", 15)
         value = database.get_current_value("scan1", "Bits per voxel")
         self.assertEqual(value, 15)
 
-        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3])
+        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
         value = database.get_current_value("scan1", "Dataset dimensions")
         self.assertEqual(value, [3, 28, 28, 3])
         database.set_value("scan1", "Dataset dimensions", [1, 2, 3, 4])
@@ -488,9 +490,9 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Adding values
-        database.add_value("scan1", "PatientName", "test")
-        database.add_value("scan1", "Bits per voxel", "space_tag")
-        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3])
+        database.add_value("scan1", "PatientName", "test", "test")
+        database.add_value("scan1", "Bits per voxel", "space_tag", "space_tag")
+        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
         value = database.get_current_value("scan1", "Dataset dimensions")
         self.assertEqual(value, [3, 28, 28, 3])
 
@@ -528,7 +530,7 @@ class TestDatabaseMethods(unittest.TestCase):
         is_valid = database.check_type_value(1, TAG_TYPE_STRING)
         self.assertFalse(is_valid)
         is_valid = database.check_type_value(None, TAG_TYPE_STRING)
-        self.assertFalse(is_valid)
+        self.assertTrue(is_valid)
         is_valid = database.check_type_value(1, TAG_TYPE_INTEGER)
         self.assertTrue(is_valid)
         is_valid = database.check_type_value(1, TAG_TYPE_FLOAT)
@@ -567,25 +569,27 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("Grids spacing", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_FLOAT, None, None, None)
 
         # Adding values
-        database.add_value("scan1", "PatientName", "test")
-        database.add_value("scan2", "BandWidth", 35.5)
-        database.add_value("scan1", "Bits per voxel", 1)
-        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3])
-        database.add_value("scan2", "Grids spacing", [0.234375, 0.234375, 0.4])
+        database.add_value("scan1", "PatientName", "test", None)
+        database.add_value("scan2", "BandWidth", 35.5, 35.5)
+        database.add_value("scan1", "Bits per voxel", 1, 1)
+        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
+        database.add_value("scan2", "Grids spacing", [0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
 
         # Testing when not existing
-        database.add_value("scan1", "NotExisting", "none")
-        database.add_value("scan3", "SequenceName", "none")
-        database.add_value("scan3", "NotExisting", "none")
-        database.add_value("scan1", "BandWidth", 45)
+        database.add_value("scan1", "NotExisting", "none", "none")
+        database.add_value("scan3", "SequenceName", "none", "none")
+        database.add_value("scan3", "NotExisting", "none", "none")
+        database.add_value("scan1", "BandWidth", 45, 45)
         date = datetime(2014, 2, 11, 8, 5, 7)
-        database.add_value("scan1", "AcquisitionDate", date)
+        database.add_value("scan1", "AcquisitionDate", date, date)
         time = datetime(2014, 2, 11, 0, 2, 2).time()
-        database.add_value("scan1", "AcquisitionTime", time)
+        database.add_value("scan1", "AcquisitionTime", time, time)
 
         # Testing that the values are actually added
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test")
+        value = database.get_initial_value("scan1", "PatientName")
+        self.assertIsNone(value)
         value = database.get_current_value("scan2", "BandWidth")
         self.assertEqual(value, 35.5)
         value = database.get_current_value("scan1", "Bits per voxel")
@@ -602,28 +606,28 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(value, [0.234375, 0.234375, 0.4])
 
         # Test value override
-        database.add_value("scan1", "PatientName", "test2")
+        database.add_value("scan1", "PatientName", "test2", "test2")
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test")
 
         # Testing with wrong types
-        database.add_value("scan2", "Bits per voxel", "space_tag")
+        database.add_value("scan2", "Bits per voxel", "space_tag", "space_tag")
         value = database.get_current_value("scan2", "Bits per voxel")
         self.assertIsNone(value)
-        database.add_value("scan2", "Bits per voxel", 35.5)
+        database.add_value("scan2", "Bits per voxel", 35.5, 35.5)
         value = database.get_current_value("scan2", "Bits per voxel")
         self.assertIsNone(value)
-        database.add_value("scan1", "BandWidth", "test")
+        database.add_value("scan1", "BandWidth", "test", "test")
         value = database.get_current_value("scan1", "BandWidth")
         self.assertEqual(value, 45)
 
         # Testing with wrong parameters
-        database.add_value(1, "Grids spacing", "2")
-        database.add_value("scan1", None, "1")
-        database.add_value("scan1", "PatientName", None)
+        database.add_value(1, "Grids spacing", "2", "2")
+        database.add_value("scan1", None, "1", "1")
+        database.add_value("scan1", "PatientName", None, None)
         value = database.get_current_value("scan1", "PatientName")
         self.assertEqual(value, "test")
-        database.add_value(1, None, True)
+        database.add_value(1, None, True, False)
 
     def test_get_scan(self):
         """
@@ -692,7 +696,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Adding value
-        database.add_value("scan1", "PatientName", "test")
+        database.add_value("scan1", "PatientName", "test", "test")
 
         # Removing scan
         database.remove_scan("scan1")
@@ -735,3 +739,4 @@ if __name__ == '__main__':
     createDatabase(path)
     unittest.main(exit=False)
     os.remove(path)
+    os.rmdir(os.path.dirname(path))
