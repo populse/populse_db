@@ -621,6 +621,7 @@ class Database:
 
         if self.is_tag_list(tag):
             # The tag has a type list, the values are gotten from the tag initial table
+
             session = self.session_maker()
             values = session.query(self.classes[tag + "_initial"]).filter(
                 self.classes[tag + "_initial"].index == self.get_scan_index(scan)).all()
@@ -642,8 +643,8 @@ class Database:
             return values_list
 
         else:
-
             # The tag has a simple type, the value is gotten from initial table
+
             session = self.session_maker()
             values = session.query(self.classes["initial"]).filter(
                 self.classes["initial"].index == self.get_scan_index(scan)).all()
@@ -1055,6 +1056,44 @@ class Database:
             self.unsaved_modifications = True
         else:
             session.close()
+
+    """ UTILS """
+
+    def get_scans_matching_search(self, search):
+        """
+        Returns the list of scans matching the search
+        :param search: search to match (str)
+        :return: List of scan names matching the search
+        """
+
+        if type(search) is not str:
+            return None
+
+        scans_matching = []
+
+        # Itering over all values and finding matches
+        session = self.session_maker()
+
+        # Only the visible tags are taken into account
+        for tag in self.get_visualized_tags():
+            if not self.is_tag_list(tag):
+                # The tag has a simple type, the tag column is used in the current table
+
+                values = session.query(self.classes["path"].name).join(self.classes["current"]).filter(getattr(self.classes["current"], self.tag_to_column_name(tag)).like("%" + search + "%")).distinct().all()
+                for value in values:
+                    if not value in scans_matching:
+                        scans_matching.append(value.name)
+            else:
+                # The tag has a list type, the tag current table is used
+
+                values = session.query(self.classes["path"].name).join(self.classes[tag.name + "_current"]).filter(self.classes[tag + "_current"].value.ilike("%" + search + "%")).distinct().all()
+                for value in values:
+                    if not value in scans_matching:
+                        scans_matching.append(value.name)
+
+        session.close()
+
+        return scans_matching
 
     def save_modifications(self):
         """
