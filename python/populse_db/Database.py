@@ -46,6 +46,7 @@ class Database:
         - engine: database engine
         - metadata: database metadata
         - session_maker: session manager
+        - unsaved_modifications: boolean to know if there are unsaved modifications in the database
 
     methods:
         - add_tag: adds a tag
@@ -105,6 +106,8 @@ class Database:
         for table in self.metadata.tables.values():
             table_name = table.name
             self.classes[table_name] = getattr(self.base.classes, table_name)
+
+        self.unsaved_modifications = False
 
     """ TAGS """
 
@@ -191,11 +194,10 @@ class Database:
             column_type = column.type.compile(self.engine.dialect)
 
             # Tag column added to both initial and current tables
-            # Spaces are removed from the tag name, otherwise it is split in the column name
-            session = self.session_maker()
             self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("initial", self.tag_to_column_name(name), column_type))
             self.engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % ("current", self.tag_to_column_name(name), column_type))
-            session.commit()
+
+            self.unsaved_modifications = True
 
             # Redefinition of the table classes
             self.tables_redefinition()
@@ -259,7 +261,6 @@ class Database:
                 columns = columns[:-2]
                 columns = columns.replace("index", "\"index\"")
                 sql_query = sql_query.replace("index", "\"index\"")
-                session = self.session_maker()
                 session.execute(sql_query)
                 session.execute("INSERT INTO initial_backup SELECT " + columns + " FROM initial")
                 session.execute("DROP TABLE initial")
@@ -284,7 +285,6 @@ class Database:
                 columns = columns[:-2]
                 columns = columns.replace("index", "\"index\"")
                 sql_query = sql_query.replace("index", "\"index\"")
-                session = self.session_maker()
                 session.execute(sql_query)
                 session.execute("INSERT INTO current_backup SELECT " + columns + " FROM current")
                 session.execute("DROP TABLE current")
@@ -299,6 +299,7 @@ class Database:
                     table_name = table.name
                     self.classes[table_name] = getattr(self.base.classes, table_name)
                 session.commit()
+                self.unsaved_modifications = True
         else:
             session.close()
 
@@ -358,6 +359,7 @@ class Database:
         for tag in tags:
             tag.visible = False
         session.commit()
+        self.unsaved_modifications = True
 
     def get_visualized_tags(self):
         """
@@ -395,6 +397,7 @@ class Database:
             tag = tags[0]
             tag.origin = origin
             session.commit()
+            self.unsaved_modifications = True
         else:
             session.close()
 
@@ -419,6 +422,7 @@ class Database:
             tag = tags[0]
             tag.type = tag_type
             session.commit()
+            self.unsaved_modifications = True
         else:
             session.close()
 
@@ -445,6 +449,7 @@ class Database:
             tag = tags[0]
             tag.unit = unit
             session.commit()
+            self.unsaved_modifications = True
         else:
             session.close()
 
@@ -469,6 +474,7 @@ class Database:
             tag = tags[0]
             tag.description = description
             session.commit()
+            self.unsaved_modifications = True
         else:
             session.close()
 
@@ -493,6 +499,7 @@ class Database:
             tag = tags[0]
             tag.visible = visible
             session.commit()
+            self.unsaved_modifications = True
         else:
             session.close()
 
@@ -696,6 +703,7 @@ class Database:
                 value_to_modify = values[index]
                 value_to_modify.value = new_value[index]
             session.commit()
+            self.unsaved_modifications = True
 
         else:
             # The scan has a simple type, the values are reset in the tag column in current table
@@ -707,6 +715,7 @@ class Database:
                 value = values[0]
                 setattr(value, self.tag_to_column_name(tag), new_value)
             session.commit()
+            self.unsaved_modifications = True
 
     def reset_value(self, scan, tag):
         """
@@ -735,6 +744,7 @@ class Database:
                 value_to_modify = values[index]
                 value_to_modify.value = self.get_initial_value(scan, tag)[index]
             session.commit()
+            self.unsaved_modifications = True
 
         else:
             # The scan has a simple type, the value is reset in the current table
@@ -746,6 +756,7 @@ class Database:
                 value = values[0]
                 setattr(value, self.tag_to_column_name(tag), self.get_initial_value(scan, tag))
             session.commit()
+            self.unsaved_modifications = True
 
     def remove_value(self, scan, tag):
         """
@@ -782,6 +793,7 @@ class Database:
             for value in values:
                 session.delete(value)
             session.commit()
+            self.unsaved_modifications = True
 
         else:
             # The tag has a simple type, the value is removed from both current and initial tables tag columns
@@ -803,6 +815,7 @@ class Database:
                 value = values[0]
                 setattr(value, self.tag_to_column_name(tag), None)
             session.commit()
+            self.unsaved_modifications = True
 
     def check_type_value(self, value, valid_type):
         """
@@ -872,62 +885,42 @@ class Database:
         :param initial_value: initial value
         """
 
-        """
-        print("scan: " + scan)
-        print("tag: " + tag)
-        print("cur value: " + str(current_value))
-        print("initial value: " + str(initial_value))
-        print("tag object: " + str(self.get_tag(tag)))
-        print("tag type: " + str(self.get_tag_type(tag)))
-        print("check_type_value cur: " + str(self.check_type_value(current_value, self.get_tag_type(tag))))
-        print("check_type_value initial: " + str(self.check_type_value(initial_value, self.get_tag_type(tag))))
-        print("type cur: " + str(type(current_value)))
-        print("type initial: " + str(type(initial_value)))
-        print("tags list: " + str(self.get_tags_names()))
-        """
-
         # Parameters checked
         if type(tag) is not str:
             return
-        #print("trace 1")
         if self.get_tag(tag) is None:
             return
-        #print("trace 2")
         if type(scan) is not str:
             return
-        #print("trace 3")
         if self.get_scan(scan) is None:
             return
-        #print("trace 4")
         if not self.check_type_value(current_value, self.get_tag_type(tag)):
             return
-        #print("trace 5")
         if not self.check_type_value(initial_value, self.get_tag_type(tag)):
             return
-        #print("trace 6")
 
         if self.is_tag_list(tag):
             # The tag has a list type, it is added in the tag tables
 
+            session = self.session_maker()
+
             # Initial value
             if initial_value is not None:
-                session = self.session_maker()
+
                 for order in range(0, len(initial_value)):
                     element = initial_value[order]
-                    initial_to_add = self.classes[tag + "_initial"](index=self.get_scan_index(scan), order=order,
-                                                                    value=element)
+                    initial_to_add = self.classes[tag + "_initial"](index=self.get_scan_index(scan), order=order, value=element)
                     session.add(initial_to_add)
-                session.commit()
 
             # Current value
             if current_value is not None:
-                session = self.session_maker()
                 for order in range(0, len(current_value)):
                     element = current_value[order]
-                    current_to_add = self.classes[tag + "_current"](index=self.get_scan_index(scan), order=order,
-                                                                    value=element)
+                    current_to_add = self.classes[tag + "_current"](index=self.get_scan_index(scan), order=order, value=element)
                     session.add(current_to_add)
-                session.commit()
+
+            session.commit()
+            self.unsaved_modifications = True
         else:
             # The tag has a simple type, it is add it in both current and initial tables
 
@@ -949,6 +942,7 @@ class Database:
                     if current_value is not None:
                         setattr(scan_current, self.tag_to_column_name(tag), current_value)
                 session.commit()
+                self.unsaved_modifications = True
             else:
                 session.close()
 
@@ -1029,6 +1023,7 @@ class Database:
             scan = scans[0]
             session.delete(scan)
             session.commit()
+            self.unsaved_modifications = True
 
             # Thanks to the foreign key and on delete cascade, the scan is also removed from all other tables
 
@@ -1057,6 +1052,7 @@ class Database:
             session.add(current)
             session.add(initial)
             session.commit()
+            self.unsaved_modifications = True
         else:
             session.close()
 
@@ -1066,6 +1062,15 @@ class Database:
         """
 
         shutil.copy(self.temp_file, self.path)
+        self.unsaved_modifications = False
+
+    def has_unsaved_modifications(self):
+        """
+        Knowing if the database has pending modifications that are unsaved
+        :return: True if pending modifications to save, False otherwise
+        """
+
+        return self.unsaved_modifications
 
     def tables_redefinition(self):
         """
