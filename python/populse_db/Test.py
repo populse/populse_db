@@ -156,26 +156,6 @@ class TestDatabaseMethods(unittest.TestCase):
         tag = database.get_tag("Test")
         self.assertIsNone(tag)
 
-    def test_get_tag_type(self):
-        """
-        Tests the method giving the tag type
-        """
-        global path
-
-        os.remove(path)
-        database = Database(path)
-
-        # Adding a tag
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
-
-        # Testing that the tag type is returned if it exists
-        tag_type = database.get_tag_type("PatientName")
-        self.assertEqual(tag_type, TAG_TYPE_STRING)
-
-        # Testing that None is returned if the tag does not exist
-        tag_type = database.get_tag_type("Test")
-        self.assertIsNone(tag_type)
-
     def test_is_tag_list(self):
         """
         Tests the method telling if the tag has a list type or not
@@ -653,32 +633,6 @@ class TestDatabaseMethods(unittest.TestCase):
         scan = database.get_scan(None)
         self.assertIsNone(scan)
         scan = database.get_scan(1)
-        self.assertIsNone(scan)
-
-    def test_get_scan_index(self):
-        """
-        Tests the method giving the index of a scan
-        """
-        global path
-
-        os.remove(path)
-        database = Database(path)
-
-        # Adding scan
-        database.add_scan("scan1", "159abc")
-
-        # Testing that a scan index is returned if it exists
-        scan = database.get_scan_index("scan1")
-        self.assertEqual(scan, 1)
-
-        # Testing that None is returned if the scan does not exist
-        scan = database.get_scan_index("scan3")
-        self.assertIsNone(scan)
-
-        # Testing with wrong parameter
-        scan = database.get_scan_index(None)
-        self.assertIsNone(scan)
-        scan = database.get_scan_index(1)
         self.assertIsNone(scan)
 
     def test_remove_scan(self):
