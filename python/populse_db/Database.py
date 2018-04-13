@@ -864,17 +864,18 @@ class Database:
         Resets the value associated to <scan, tag>
         :param scan: scan name
         :param tag: tag name
+        :return True if the value has been reset, False otherwise
         """
 
         # Parameters checked
         if not isinstance(tag, str):
-            return
+            return False
         if self.get_tag(tag) is None:
-            return
+            return False
         if not isinstance(scan, str):
-            return
+            return False
         if self.get_scan(scan) is None:
-            return
+            return False
 
         if self.is_tag_list(tag):
             # The scan has a list type, the values are reset in the tag current table
@@ -897,8 +898,13 @@ class Database:
             if len(values) is 1:
                 value = values[0]
                 setattr(value, self.tag_name_to_column_name(tag), self.get_initial_value(scan, tag))
-            session.commit()
-            self.unsaved_modifications = True
+                session.commit()
+                self.unsaved_modifications = True
+            else:
+                session.close()
+                return False
+
+        return True
 
     def remove_value(self, scan, tag):
         """
