@@ -1144,16 +1144,14 @@ class Database:
                     getattr(self.classes["current"], self.tag_name_to_column_name(tag)).contains(
                         value)).distinct().all()
             elif (condition == "BETWEEN"):
-                borders = value.split(', ')
                 query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                    getattr(self.classes["current"], self.tag_name_to_column_name(tag)).between(borders[0],
-                                                                                                      borders[
+                    getattr(self.classes["current"], self.tag_name_to_column_name(tag)).between(value[0],
+                                                                                                      value[
                                                                                                           1])).distinct().all()
             elif (condition == "IN"):
-                choices = value.split(', ')
                 query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
                     getattr(self.classes["current"], self.tag_name_to_column_name(tag)).in_(
-                        choices)).distinct().all()
+                        value)).distinct().all()
 
             session.close()
 
@@ -1191,9 +1189,11 @@ class Database:
                     if value in str(current_value):
                         scans_list.append(scan)
                 elif condition == "IN":
-                    pass
+                    if str(current_value) in value:
+                        scans_list.append(scan)
                 elif condition == "BETWEEN":
-                    pass
+                    if value[0] <= str(current_value) <= value[1]:
+                        scans_list.append(scan)
             return scans_list
 
     def get_scans_matching_advanced_search(self, links, fields, conditions, values, nots):
@@ -1202,11 +1202,13 @@ class Database:
         :param links: Links (AND/OR)
         :param fields: Fields (tag name/All visualized tags)
         :param conditions: Conditions (=, !=, <, >, <=, >=, BETWEEN, CONTAINS, IN)
-        :param values: Values
+        :param values: Values (str for =, !=, <, >, <=, >=, and CONTAINS/list for BETWEEN and IN)
         :param nots: Nots (Empty or NOT)
         :return: List of scan names matching all the constraints
         """
 
+        if not len(links) == len(fields) - 1 == len(conditions) - 1 == len(values) - 1 == len(nots) - 1:
+            return []
         for link in links:
             if link not in ["AND", "OR"]:
                 return []
@@ -1218,14 +1220,20 @@ class Database:
         for condition in conditions:
             if condition not in ["=", "!=", "<", ">", "<=", ">=", "BETWEEN", "IN", "CONTAINS"]:
                 return []
-        for value in values:
-            if not isinstance(value, str):
-                return []
+        for i in range(0, len(values)):
+            value = values[i]
+            if conditions[i] == "BETWEEN":
+                if not isinstance(value, list) or len(value) != 2:
+                    return []
+            elif conditions[i] == "IN":
+                if not isinstance(value, list):
+                    return []
+            else:
+                if not isinstance(value, str):
+                    return []
         for not_ in nots:
             if not_ not in ["", "NOT"]:
                 return []
-        if not len(links) == len(fields) - 1 == len(conditions) - 1 == len(values) - 1 == len(nots) - 1:
-            return []
 
         queries = []  # list of scans of each query (row)
         for i in range(0, len(conditions)):
