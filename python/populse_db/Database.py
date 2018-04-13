@@ -1340,4 +1340,4 @@ class Database:
         Overrides the instance closing to remove the temporary folder and temporary database file
         """
 
-        shutil.rmtree(self.temp_folder)
+        if os.path.exists(self.temp_folder): shutil.rmtree(self.temp_folder)
