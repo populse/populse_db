@@ -83,7 +83,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, 1, None)
         database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, 1.5)
 
-        # TODO Testing tag table or creation
+        # TODO Testing tag table or tag column creation
 
     def test_remove_tag(self):
         """
@@ -134,7 +134,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database.remove_tag(1)
         database.remove_tag(None)
 
-        # TODO Testing tag table or column removal
+        # TODO Testing tag table or tag column removal
 
     def test_get_tag(self):
         """
@@ -155,6 +155,37 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing that None is returned if the tag does not exist
         tag = database.get_tag("Test")
         self.assertIsNone(tag)
+
+    def test_set_tag_type(self):
+        """
+        Tests the method setting the tag type
+        """
+        global path
+
+        os.remove(path)
+        database = Database(path)
+
+        # Adding tags
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+
+        # Testing the original tag type
+        tag = database.get_tag("PatientName")
+        self.assertEqual(tag.type, TAG_TYPE_STRING)
+        tag = database.get_tag("Dataset dimensions")
+        self.assertEqual(tag.type, TAG_TYPE_LIST_INTEGER)
+
+        # Setting the tag type
+        database.set_tag_type("PatientName", TAG_TYPE_INTEGER)
+        database.set_tag_type("Dataset dimensions", TAG_TYPE_LIST_FLOAT)
+
+        # Testing the new tag type
+        tag = database.get_tag("PatientName")
+        self.assertEqual(tag.type, TAG_TYPE_INTEGER)
+        tag = database.get_tag("Dataset dimensions")
+        self.assertEqual(tag.type, TAG_TYPE_LIST_FLOAT)
+
+        # TODO Testing tag column type set
 
     def test_is_tag_list(self):
         """

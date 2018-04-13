@@ -273,14 +273,12 @@ class Database:
 
                 # Tag column removed from initial table
                 columns = ""
-                columns_list = []
                 sql_table_create = CreateTable(self.classes["initial"].__table__)
                 for column in sql_table_create.columns:
-                    if name.replace(" ", "") in str(column):
+                    if self.tag_name_to_column_name(name) in str(column):
                         column_to_remove = column
                     else:
                         columns += str(column).split(" ")[0] + ", "
-                        columns_list.append(str(column).split(" ")[0])
                 sql_table_create.columns.remove(column_to_remove)
                 sql_query = str(sql_table_create)
                 sql_query = sql_query[:21] + '_backup' + sql_query[21:]
@@ -297,14 +295,12 @@ class Database:
 
                 # Tag column removed from current table
                 columns = ""
-                columns_list = []
                 sql_table_create = CreateTable(self.classes["current"].__table__)
                 for column in sql_table_create.columns:
-                    if name in str(column):
+                    if self.tag_name_to_column_name(name) in str(column):
                         column_to_remove = column
                     else:
                         columns += str(column).split(" ")[0] + ", "
-                        columns_list.append(str(column).split(" ")[0])
                 sql_table_create.columns.remove(column_to_remove)
                 sql_query = str(sql_table_create)
                 sql_query = sql_query[:21] + '_backup' + sql_query[21:]
@@ -444,12 +440,136 @@ class Database:
         if len(tags) is 1:
             tag = tags[0]
             tag.type = tag_type
+
+            # Preparing column type
+            column = Column("", self.tag_type_to_column_type(tag_type))
+            column_type = column.type.compile(self.engine.dialect)
+
+            # Column type set
+            if self.is_tag_list(name):
+                # The tag has a list type, both tag tables are updated
+
+                # Initial tag table value column updated
+                columns = ""
+                sql_table_create = CreateTable(self.classes[name + "_initial"].__table__)
+                for column in sql_table_create.columns:
+                    columns += str(column).split(" ")[0] + ", "
+                sql_query = str(sql_table_create)
+                temp_query = sql_query.split("\n\t")
+                new_query = ""
+                for row in temp_query:
+                    words = row.split(" ")
+                    if words[0] == "value":
+                        words[1] = column_type + " NOT NULL,"
+                        words = [words[0], words[1]]
+                    new_query += ' '.join(words) + "\n\t"
+                new_query = new_query[:-1]
+                sql_query = new_query
+                columns = columns[:-2]
+                columns = columns.replace("index", "\"index\"")
+                sql_query = sql_query.replace("index", "\"index\"")
+                sql_query = sql_query.replace("initial", "initial_backup")
+                session.execute(sql_query)
+                session.execute("INSERT INTO \"" + name + "_initial_backup\" SELECT " + columns + " FROM \"" + name + "_initial\"")
+                session.execute("DROP TABLE \"" + name + "_initial\"")
+                sql_query = sql_query.replace("initial_backup", "initial")
+                session.execute(sql_query)
+                session.execute("INSERT INTO \"" + name + "_initial\" SELECT " + columns + " FROM \"" + name + "_initial_backup\"")
+                session.execute("DROP TABLE \"" + name + "_initial_backup\"")
+
+                # Current tag table value column updated
+                columns = ""
+                sql_table_create = CreateTable(self.classes[name + "_current"].__table__)
+                for column in sql_table_create.columns:
+                    columns += str(column).split(" ")[0] + ", "
+                sql_query = str(sql_table_create)
+                temp_query = sql_query.split("\n\t")
+                new_query = ""
+                for row in temp_query:
+                    words = row.split(" ")
+                    if words[0] == "value":
+                        words[1] = column_type + " NOT NULL,"
+                        words = [words[0], words[1]]
+                    new_query += ' '.join(words) + "\n\t"
+                new_query = new_query[:-1]
+                sql_query = new_query
+                columns = columns[:-2]
+                columns = columns.replace("index", "\"index\"")
+                sql_query = sql_query.replace("index", "\"index\"")
+                sql_query = sql_query.replace("current", "current_backup")
+                session.execute(sql_query)
+                session.execute(
+                    "INSERT INTO \"" + name + "_current_backup\" SELECT " + columns + " FROM \"" + name + "_current\"")
+                session.execute("DROP TABLE \"" + name + "_current\"")
+                sql_query = sql_query.replace("current_backup", "current")
+                session.execute(sql_query)
+                session.execute(
+                    "INSERT INTO \"" + name + "_current\" SELECT " + columns + " FROM \"" + name + "_current_backup\"")
+                session.execute("DROP TABLE \"" + name + "_current_backup\"")
+
+            else:
+                # The tag has a simple type, both current and initial tables are updated
+
+                # Tag column updated from initial table
+                columns = ""
+                sql_table_create = CreateTable(self.classes["initial"].__table__)
+                for column in sql_table_create.columns:
+                    columns += str(column).split(" ")[0] + ", "
+                sql_query = str(sql_table_create)
+                temp_query = sql_query.split("\n\t")
+                new_query = ""
+                for row in temp_query:
+                    words = row.split(" ")
+                    if words[0] == "\"" + name + "\"":
+                        words[1] = column_type + ","
+                    new_query += ' '.join(words) + "\n\t"
+                new_query = new_query[:-1]
+                sql_query = new_query
+                sql_query = sql_query[:21] + '_backup' + sql_query[21:]
+                columns = columns[:-2]
+                columns = columns.replace("index", "\"index\"")
+                sql_query = sql_query.replace("index", "\"index\"")
+                session.execute(sql_query)
+                session.execute("INSERT INTO initial_backup SELECT " + columns + " FROM initial")
+                session.execute("DROP TABLE initial")
+                sql_query = sql_query[:21] + sql_query[29:]
+                session.execute(sql_query)
+                session.execute("INSERT INTO initial SELECT " + columns + " FROM initial_backup")
+                session.execute("DROP TABLE initial_backup")
+
+                # Tag column updated from current table
+                columns = ""
+                sql_table_create = CreateTable(self.classes["current"].__table__)
+                for column in sql_table_create.columns:
+                    columns += str(column).split(" ")[0] + ", "
+                sql_query = str(sql_table_create)
+                temp_query = sql_query.split("\n\t")
+                new_query = ""
+                for row in temp_query:
+                    words = row.split(" ")
+                    if words[0] == "\"" + name + "\"":
+                        words[1] = column_type + ","
+                    new_query += ' '.join(words) + "\n\t"
+                new_query = new_query[:-2]
+                sql_query = new_query
+                sql_query = sql_query[:21] + '_backup' + sql_query[21:]
+                columns = columns[:-2]
+                columns = columns.replace("index", "\"index\"")
+                sql_query = sql_query.replace("index", "\"index\"")
+                session.execute(sql_query)
+                session.execute("INSERT INTO current_backup SELECT " + columns + " FROM current")
+                session.execute("DROP TABLE current")
+                sql_query = sql_query[:21] + sql_query[29:]
+                session.execute(sql_query)
+                session.execute("INSERT INTO current SELECT " + columns + " FROM current_backup")
+                session.execute("DROP TABLE current_backup")
+
             session.commit()
             self.unsaved_modifications = True
         else:
             session.close()
 
-        # TODO set column type
+
 
     def set_tag_unit(self, name, unit):
         """
