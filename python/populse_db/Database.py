@@ -44,7 +44,7 @@ class Database:
         - engine: database engine
         - metadata: database metadata
         - session_maker: session manager
-        - unsaved_modifications: boolean to know if there are unsaved modifications in the database
+        - unsaved_modifications: to know if there are unsaved modifications in the database
 
     methods:
         - add_tag: adds a tag
@@ -76,9 +76,10 @@ class Database:
         - get_scans_names: gives all scan names
         - add_scan: adds a scan
         - remove_scan: removes a scan
+        - get_scans_matching_constraints: gives the scans matching the constraints given in parameter
         - get_scans_matching_search: gives the scans matching the search
         - get_scans_matching_advanced_search: gives the scans matching the advanced search
-        - check_count_table: gives the scans containing all <tag, value> given in parameter
+        - get_scans_matching_tag_value_couples: gives the scans containing all <tag, value> given in parameter
         - save_modifications: saves the pending modifications to the original database file
         - has_unsaved_modifications: to know if there are unsaved modifications
         - tables_redefinition: redefines the model after schema update
@@ -99,8 +100,6 @@ class Database:
                 os.makedirs(os.path.dirname(self.path))
             createDatabase(self.path)
 
-        # TODO If the database file exists, check the schema to ensure the coherence
-
         # Temporary database file created that will be kept updated
         self.temp_folder = os.path.relpath(tempfile.mkdtemp())
         self.temp_file = os.path.join(self.temp_folder, "temp_database.db")
@@ -113,6 +112,10 @@ class Database:
         self.metadata = MetaData(bind=self.engine)
         self.metadata.reflect(bind=self.engine)
         self.tables_redefinition()
+
+        # Database schema checked
+        if "path" not in self.classes.keys() or "current" not in self.classes.keys() or "initial" not in self.classes.keys():
+            raise ValueError('The database schema is not coherent with the API.')
 
         self.session_maker = sessionmaker(bind=self.engine)
 
@@ -1083,7 +1086,7 @@ class Database:
 
         # Only the visible tags are taken into account
         for tag in self.get_visualized_tags():
-            if not self.is_tag_list(tag):
+            if not self.is_tag_list(tag.name):
                 # The tag has a simple type, the tag column is used in the current table
 
                 values = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
@@ -1095,17 +1098,103 @@ class Database:
             else:
                 # The tag has a list type, the tag current table is used
 
-                values = session.query(self.classes["path"].name).join(self.classes[tag.name + "_current"]).filter(
-                    self.classes[tag + "_current"].value.ilike("%" + search + "%")).distinct().all()
-                for value in values:
-                    if not value in scans_matching:
-                        scans_matching.append(value.name)
-
-                # TODO improve list search
+                for scan in self.get_scans_names():
+                    scan_value = self.get_current_value(scan, tag.name)
+                    if search in str(scan_value) and not scan in scans_matching:
+                        scans_matching.append(scan)
 
         session.close()
 
         return scans_matching
+
+    def get_scans_matching_constraints(self, tag, value, condition):
+        """
+        Gives the scans corresponding to the constraints
+        :param tag: tag name
+        :param value: value
+        :param condition: condition
+        :return: List of scans matching the constraints given in parameter
+        """
+
+        if not self.is_tag_list(tag):
+            # The tag has a simple type, the tag column is used in the current table
+
+            session = self.session_maker()
+
+            if (condition == "="):
+                query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
+                    getattr(self.classes["current"], self.tag_name_to_column_name(tag)) == value).distinct().all()
+            elif (condition == "!="):
+                query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
+                    getattr(self.classes["current"], self.tag_name_to_column_name(tag)) != value).distinct().all()
+            elif (condition == ">="):
+                query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
+                    getattr(self.classes["current"], self.tag_name_to_column_name(tag)) >= value).distinct().all()
+            elif (condition == "<="):
+                query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
+                    getattr(self.classes["current"], self.tag_name_to_column_name(tag)) <= value).distinct().all()
+            elif (condition == ">"):
+                query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
+                    getattr(self.classes["current"], self.tag_name_to_column_name(tag)) > value).distinct().all()
+            elif (condition == "<"):
+                query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
+                    getattr(self.classes["current"], self.tag_name_to_column_name(tag)) < value).distinct().all()
+            elif (condition == "CONTAINS"):
+                query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
+                    getattr(self.classes["current"], self.tag_name_to_column_name(tag)).contains(
+                        value)).distinct().all()
+            elif (condition == "BETWEEN"):
+                borders = value.split(', ')
+                query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
+                    getattr(self.classes["current"], self.tag_name_to_column_name(tag)).between(borders[0],
+                                                                                                      borders[
+                                                                                                          1])).distinct().all()
+            elif (condition == "IN"):
+                choices = value.split(', ')
+                query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
+                    getattr(self.classes["current"], self.tag_name_to_column_name(tag)).in_(
+                        choices)).distinct().all()
+
+            session.close()
+
+            scans_list = []
+            for scan in query:
+                if scan.name not in scans_list:
+                    scans_list.append(scan.name)
+            return scans_list
+
+        else:
+            # The tag has a list type, the tag current table is used
+
+            scans_list = []
+            for scan in self.get_scans_names():
+                current_value = self.get_current_value(scan, tag)
+                if condition == "=":
+                    if str(current_value) == value:
+                        scans_list.append(scan)
+                elif condition == "!=":
+                    if str(current_value) != value:
+                        scans_list.append(scan)
+                elif condition == ">=":
+                    if str(current_value) >= value:
+                        scans_list.append(scan)
+                elif condition == "<=":
+                    if str(current_value) <= value:
+                        scans_list.append(scan)
+                elif condition == ">":
+                    if str(current_value) > value:
+                        scans_list.append(scan)
+                elif condition == "<":
+                    if str(current_value) < value:
+                        scans_list.append(scan)
+                elif condition == "CONTAINS":
+                    if value in str(current_value):
+                        scans_list.append(scan)
+                elif condition == "IN":
+                    pass
+                elif condition == "BETWEEN":
+                    pass
+            return scans_list
 
     def get_scans_matching_advanced_search(self, links, fields, conditions, values, nots):
         """
@@ -1121,8 +1210,10 @@ class Database:
         for link in links:
             if link not in ["AND", "OR"]:
                 return []
+        fields_list = self.get_tags_names()
+        fields_list.append("All visualized tags")
         for field in fields:
-            if field not in self.get_tags_names().append("All visualized tags"):
+            if field not in fields_list:
                 return []
         for condition in conditions:
             if condition not in ["=", "!=", "<", ">", "<=", ">=", "BETWEEN", "IN", "CONTAINS"]:
@@ -1137,205 +1228,22 @@ class Database:
             return []
 
         queries = []  # list of scans of each query (row)
-        session = self.session_maker()
         for i in range(0, len(conditions)):
             queries.append([])
             if fields[i] != "All visualized tags":
                 # Tag filter: Only those values are read
 
-                if not self.is_tag_list(fields[i]):
-                    # The tag has a simple type, the tag column is used in the current table
-
-                    if (conditions[i] == "="):
-                        query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                            getattr(self.classes["current"], self.tag_name_to_column_name(fields[i])) == values[
-                                i]).distinct().all()
-                    elif (conditions[i] == "!="):
-                        query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                            getattr(self.classes["current"], self.tag_name_to_column_name(fields[i])) != values[
-                                i]).distinct().all()
-                    elif (conditions[i] == ">="):
-                        query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                            getattr(self.classes["current"], self.tag_name_to_column_name(fields[i])) >= values[
-                                i]).distinct().all()
-                    elif (conditions[i] == "<="):
-                        query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                            getattr(self.classes["current"], self.tag_name_to_column_name(fields[i])) <= values[
-                                i]).distinct().all()
-                    elif (conditions[i] == ">"):
-                        query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                            getattr(self.classes["current"], self.tag_name_to_column_name(fields[i])) > values[
-                                i]).distinct().all()
-                    elif (conditions[i] == "<"):
-                        query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                            getattr(self.classes["current"], self.tag_name_to_column_name(fields[i])) < values[
-                                i]).distinct().all()
-                    elif (conditions[i] == "CONTAINS"):
-                        query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                            getattr(self.classes["current"], self.tag_name_to_column_name(fields[i])).contains(
-                                values[i])).distinct().all()
-                    elif (conditions[i] == "BETWEEN"):
-                        borders = values[i].split(', ')
-                        query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                            getattr(self.classes["current"], self.tag_name_to_column_name(fields[i])).between(borders[0],
-                                                                                                         borders[
-                                                                                                             1])).distinct().all()
-                    elif (conditions[i] == "IN"):
-                        choices = values[i].split(', ')
-                        query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                            getattr(self.classes["current"], self.tag_name_to_column_name(fields[i])).in_(
-                                choices)).distinct().all()
-
-                else:
-                    # The tag has a list type, the tag current table is used
-
-                    # TODO improve list search
-
-                    if (conditions[i] == "="):
-                        query = session.query(self.classes["path"].name).join(
-                            self.classes[fields[i] + "_current"]).filter(
-                            self.classes[fields[i] + "_current"].value == values[i]).distinct().all()
-                    elif (conditions[i] == "!="):
-                        query = session.query(self.classes["path"].name).join(
-                            self.classes[fields[i] + "_current"]).filter(
-                            self.classes[fields[i] + "_current"].value != values[i]).distinct().all()
-                    elif (conditions[i] == ">="):
-                        query = session.query(self.classes["path"].name).join(
-                            self.classes[fields[i] + "_current"]).filter(
-                            self.classes[fields[i] + "_current"].value >= values[i]).distinct().all()
-                    elif (conditions[i] == "<="):
-                        query = session.query(self.classes["path"].name).join(
-                            self.classes[fields[i] + "_current"]).filter(
-                            self.classes[fields[i] + "_current"].value <= values[i]).distinct().all()
-                    elif (conditions[i] == ">"):
-                        query = session.query(self.classes["path"].name).join(
-                            self.classes[fields[i] + "_current"]).filter(
-                            self.classes[fields[i] + "_current"].value > values[i]).distinct().all()
-                    elif (conditions[i] == "<"):
-                        query = session.query(self.classes["path"].name).join(
-                            self.classes[fields[i] + "_current"]).filter(
-                            self.classes[fields[i] + "_current"].value < values[i]).distinct().all()
-                    elif (conditions[i] == "CONTAINS"):
-                        query = session.query(self.classes["path"].name).join(
-                            self.classes[fields[i] + "_current"]).filter(
-                            self.classes[fields[i] + "_current"].value.contains(values[i])).distinct().all()
-                    elif (conditions[i] == "BETWEEN"):
-                        borders = values[i].split(', ')
-                        query = session.query(self.classes["path"].name).join(
-                            self.classes[fields[i] + "_current"]).filter(
-                            self.classes[fields[i] + "_current"].value.between(borders[0], borders[1])).distinct().all()
-                    elif (conditions[i] == "IN"):
-                        choices = values[i].split(', ')
-                        query = session.query(self.classes["path"].name).join(
-                            self.classes[fields[i] + "_current"]).filter(
-                            self.classes[fields[i] + "_current"].value.in_(choices)).distinct().all()
-
-                # Appending list of matching scans to the results
-                for value in query:
-                    scan_to_add = value.name
-                    if scan_to_add not in queries[i]:
-                        queries[i].append(scan_to_add)
+                queries[i] = self.get_scans_matching_constraints(fields[i], values[i], conditions[i])
 
             else:
                 # No tag filter, all values are read
 
-                for tag in self.get_tags_names():
-                    if not self.is_tag_list(tag):
-                        # The tag has a simple type, the tag column is used in the current table
-
-                        if (conditions[i] == "="):
-                            query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                                getattr(self.classes["current"], self.tag_name_to_column_name(tag)) == values[
-                                    i]).distinct().all()
-                        elif (conditions[i] == "!="):
-                            query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                                getattr(self.classes["current"], self.tag_name_to_column_name(tag)) != values[
-                                    i]).distinct().all()
-                        elif (conditions[i] == ">="):
-                            query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                                getattr(self.classes["current"], self.tag_name_to_column_name(tag)) >= values[
-                                    i]).distinct().all()
-                        elif (conditions[i] == "<="):
-                            query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                                getattr(self.classes["current"], self.tag_name_to_column_name(tag)) <= values[
-                                    i]).distinct().all()
-                        elif (conditions[i] == ">"):
-                            query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                                getattr(self.classes["current"], self.tag_name_to_column_name(tag)) > values[
-                                    i]).distinct().all()
-                        elif (conditions[i] == "<"):
-                            query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                                getattr(self.classes["current"], self.tag_name_to_column_name(tag)) < values[
-                                    i]).distinct().all()
-                        elif (conditions[i] == "CONTAINS"):
-                            query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                                getattr(self.classes["current"], self.tag_name_to_column_name(tag)).contains(values[
-                                                                                                            i])).distinct().all()
-                        elif (conditions[i] == "BETWEEN"):
-                            borders = values[i].split(', ')
-                            query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                                getattr(self.classes["current"], self.tag_name_to_column_name(tag)).between(borders[
-                                                                                                           0], borders[
-                                                                                                           1])).distinct().all()
-                        elif (conditions[i] == "BETWEEN"):
-                            choices = values[i].split(', ')
-                            query = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
-                                getattr(self.classes["current"], self.tag_name_to_column_name(tag)).in_(
-                                    choices)).distinct().all()
-
-                    else:
-                        # The tag has a list type, the tag current table is used
-
-                        if (conditions[i] == "="):
-                            query = session.query(self.classes["path"].name).join(
-                                self.classes[tag + "_current"]).filter(
-                                self.classes[tag + "_current"].value == values[i]).distinct().all()
-                        elif (conditions[i] == "!="):
-                            query = session.query(self.classes["path"].name).join(
-                                self.classes[tag + "_current"]).filter(
-                                self.classes[tag + "_current"].value != values[i]).distinct().all()
-                        elif (conditions[i] == ">="):
-                            query = session.query(self.classes["path"].name).join(
-                                self.classes[tag + "_current"]).filter(
-                                self.classes[tag + "_current"].value >= values[i]).distinct().all()
-                        elif (conditions[i] == "<="):
-                            query = session.query(self.classes["path"].name).join(
-                                self.classes[tag + "_current"]).filter(
-                                self.classes[tag + "_current"].value <= values[i]).distinct().all()
-                        elif (conditions[i] == ">"):
-                            query = session.query(self.classes["path"].name).join(
-                                self.classes[tag + "_current"]).filter(
-                                self.classes[tag + "_current"].value > values[i]).distinct().all()
-                        elif (conditions[i] == "<"):
-                            query = session.query(self.classes["path"].name).join(
-                                self.classes[tag + "_current"]).filter(
-                                self.classes[tag + "_current"].value < values[i]).distinct().all()
-                        elif (conditions[i] == "CONTAINS"):
-                            query = session.query(self.classes["path"].name).join(
-                                self.classes[tag + "_current"]).filter(
-                                self.classes[tag + "_current"].value.contains(values[i])).distinct().all()
-                        elif (conditions[i] == "BETWEEN"):
-                            borders = values[i].split(', ')
-                            query = session.query(self.classes["path"].name).join(
-                                self.classes[tag + "_current"]).filter(
-                                self.classes[tag + "_current"].value.between(borders[0], borders[1])).distinct().all()
-                        elif (conditions[i] == "IN"):
-                            choices = values[i].split(', ')
-                            query = session.query(self.classes["path"].name).join(
-                                self.classes[tag + "_current"]).filter(
-                                self.classes[tag + "_current"].value.in_(choices)).distinct().all()
-
-                    # Appending list of matching scans to the results
-                    for value in query:
-                        scan_to_add = value.name
-                        if scan_to_add not in queries[i]:
-                            queries[i].append(scan_to_add)
+                for tag in self.get_visualized_tags():
+                    queries[i] = list(set(queries[i]).union(set(self.get_scans_matching_constraints(tag.name, values[i], conditions[i]))))
 
             # Putting negation if needed
             if (nots[i] == "NOT"):
                 queries[i] = list(set(self.get_scans_names()) - set(queries[i]))
-
-        session.close()
 
         # We start with the first row to put the link between the conditions
         # Links are made row by row, there is no priority like in SQL where AND is stronger than OR
@@ -1350,13 +1258,14 @@ class Database:
 
         return result
 
-    def check_count_table(self, tag_value_couples):
+    def get_scans_matching_tag_value_couples(self, tag_value_couples):
         """
         Checks if a scan contains all the couples <tag, value> given in parameter
         :param tag_value_couples: List of couple <tag, value> to check
-        :return: True if a scan has all the couples <tag, value> given in parameter, False otherwise
+        :return: List of scans matching all the <tag, value> couples
         """
-        queries = []
+
+        couple_results = []
         for couple in tag_value_couples:
             tag = couple[0]
             value = couple[1]
@@ -1365,25 +1274,29 @@ class Database:
                 # The tag has a simple type, the tag column in the current table is used
 
                 session = self.session_maker()
-                cellResult = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
+                couple_query_result = session.query(self.classes["path"].name).join(self.classes["current"]).filter(
                     getattr(self.classes["current"], self.tag_name_to_column_name(tag)) == value)
                 session.close()
+                couple_result = []
+                for query_result in couple_query_result:
+                    couple_result.append(query_result.name)
             else:
                 # The tag has a list type, the tag current table is used
 
-                session = self.session_maker()
-                cellResult = session.query(self.classes["path"].name).join(self.classes[tag + "_current"]).filter(
-                    self.classes[tag + "_current"].value == value)
-                session.close()
+                couple_result = []
+                for scan in self.get_scans_names():
+                    scan_value = self.get_current_value(scan, tag)
+                    if str(scan_value) == value:
+                        couple_result.append(scan)
 
-            queries.append(cellResult)
-        # All the cells are put together, with intersections
-        # Only the scans with all the values are taken
-        finalResult = queries[0]
-        for i in range(0, len(queries) - 1):
-            finalResult = finalResult.intersect(queries[i + 1])
-        finalResult = finalResult.distinct().all()
-        return finalResult
+            couple_results.append(couple_result)
+
+        # All the scan lists are put together, with intersections
+        # Only the scans with all <tag, value> are taken
+        final_result = couple_results[0]
+        for i in range(0, len(couple_results) - 1):
+            final_result = list(set(final_result).intersection(set(couple_results[i + 1])))
+        return final_result
 
     def save_modifications(self):
         """
