@@ -129,9 +129,9 @@ class Database:
         :param name: Tag name (str)
         :param visible: Tag visibility (True or False)
         :param origin: Tag origin (Raw or user)
-        :param type: Tag type (string, integer, float, date, datetime, time, list_string, list_integer, list_float, list_date, list_datetime, or list_time)
+        :param type: Tag type (string, int, float, date, datetime, time, list_string, list_int, list_float, list_date, list_datetime, or list_time)
         :param unit: Tag unit (ms, mm, degree, Hz/pixel, MHz, or None)
-        :param default_value: Tag default value (str or None)
+        :param default_value: Tag default value (Value of valid type or None)
         :param description: Tag description (str or None)
         """
 
@@ -148,7 +148,7 @@ class Database:
             return
         if unit not in [TAG_UNIT_MHZ, TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL, TAG_UNIT_MM, TAG_UNIT_MS] and unit is not None:
             return
-        if not isinstance(default_value, str) and default_value is not None:
+        if not self.check_type_value(default_value, tag_type) and default_value is not None:
             return
         if not isinstance(description, str) and description is not None:
             return
@@ -160,9 +160,8 @@ class Database:
         tag = self.classes["tag"](name=name, visible=visible, origin=origin, type=tag_type, unit=unit,
                                   default_value=default_value, description=description)
         session.add(tag)
-        session.commit()
 
-        if self.is_tag_list(name):
+        if tag_type in [TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_STRING, TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_TIME, TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_DATETIME]:
             # The tag has a list type: new tag tables added
 
             # Tag tables initial and current definition
@@ -191,10 +190,12 @@ class Database:
             column_type = column.type.compile(self.engine.dialect)
 
             # Tag column added to both initial and current tables
-            self.engine.execute(
+            session.execute(
                 'ALTER TABLE %s ADD COLUMN %s %s' % ("initial", self.tag_name_to_column_name(name), column_type))
-            self.engine.execute(
+            session.execute(
                 'ALTER TABLE %s ADD COLUMN %s %s' % ("current", self.tag_name_to_column_name(name), column_type))
+
+        session.commit()
 
         self.unsaved_modifications = True
 
