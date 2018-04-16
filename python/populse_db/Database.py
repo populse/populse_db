@@ -131,7 +131,7 @@ class Database:
         :param origin: Tag origin (Raw or user)
         :param type: Tag type (string, int, float, date, datetime, time, list_string, list_int, list_float, list_date, list_datetime, or list_time)
         :param unit: Tag unit (ms, mm, degree, Hz/pixel, MHz, or None)
-        :param default_value: Tag default value (Value of valid type or None)
+        :param default_value: Tag default value (str or None)
         :param description: Tag description (str or None)
         """
 
@@ -148,7 +148,7 @@ class Database:
             return
         if unit not in [TAG_UNIT_MHZ, TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL, TAG_UNIT_MM, TAG_UNIT_MS] and unit is not None:
             return
-        if not self.check_type_value(default_value, tag_type) and default_value is not None:
+        if not isinstance(default_value, str) and default_value is not None:
             return
         if not isinstance(description, str) and description is not None:
             return
