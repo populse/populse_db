@@ -4,55 +4,54 @@ import unittest
 import tempfile
 from datetime import datetime
 
-from populse_db.Database import Database
-from populse_db.DatabaseModel import createDatabase, TAG_ORIGIN_RAW, TAG_TYPE_STRING, TAG_TYPE_FLOAT, TAG_UNIT_MHZ, \
-    TAG_TYPE_INTEGER, TAG_TYPE_TIME, TAG_TYPE_DATETIME, \
-    TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_FLOAT
-
-temp_folder = tempfile.mkdtemp()
-path = os.path.relpath(os.path.join(temp_folder, "test.db"))
+from populse_db.database import Database
+from populse_db.database_model import (create_database, TAG_ORIGIN_RAW,
+                                       TAG_TYPE_STRING, TAG_TYPE_FLOAT,
+                                       TAG_UNIT_MHZ, TAG_TYPE_INTEGER,
+                                       TAG_TYPE_TIME, TAG_TYPE_DATETIME,
+                                       TAG_TYPE_LIST_INTEGER,
+                                       TAG_TYPE_LIST_FLOAT)
 
 
 class TestDatabaseMethods(unittest.TestCase):
-
+    def setUp(self):
+        self.temp_folder = tempfile.mkdtemp()
+        self.path = os.path.join(self.temp_folder, "test.db")
+    
+    def tearDown(self):
+        shutil.rmtree(self.temp_folder)
+        
+        
     def test_database_creation(self):
         """
         Tests the database creation
         """
-        global path
-
         # Testing the creation of the database file
-        os.remove(path)
-        createDatabase(path)
-        self.assertTrue(os.path.exists(path))
+        create_database(self.path)
+        self.assertTrue(os.path.exists(self.path))
 
     def test_database_constructor(self):
         """
         Tests the database constructor
         """
-        global path
-
         # Testing without the database file existing
-        os.remove(path)
-        Database(path)
-        self.assertTrue(os.path.exists(path))
+        Database(self.path)
+        self.assertTrue(os.path.exists(self.path))
 
         # Testing with the database file existing
-        os.remove(path)
-        createDatabase(path)
-        Database(path)
-        self.assertTrue(os.path.exists(path))
+        os.remove(self.path)
+        create_database(self.path)
+        Database(self.path)
+        self.assertTrue(os.path.exists(self.path))
 
     def test_add_tag(self):
         """
         Tests the method adding a tag
         """
-        global path
-
         # Testing with a first tag
-        os.remove(path)
-        database = Database(path)
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+        database = Database(self.path)
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Checking the tag properties
         tag = database.get_tag("PatientName")
@@ -65,23 +64,36 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(tag.description, "Name of the patient")
 
         # Testing with a tag that already exists
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Testing with all tag types
-        database.add_tag("BandWidth", True, TAG_ORIGIN_RAW, TAG_TYPE_FLOAT, TAG_UNIT_MHZ, None, None)
-        database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag("AcquisitionTime", True, TAG_ORIGIN_RAW, TAG_TYPE_TIME, None, None, None)
-        database.add_tag("AcquisitionDate", True, TAG_ORIGIN_RAW, TAG_TYPE_DATETIME, None, None, None)
-        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag("BandWidth", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_FLOAT, TAG_UNIT_MHZ, None, None)
+        database.add_tag(
+            "Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag(
+            "AcquisitionTime", True, TAG_ORIGIN_RAW, TAG_TYPE_TIME, None, None, None)
+        database.add_tag(
+            "AcquisitionDate", True, TAG_ORIGIN_RAW, TAG_TYPE_DATETIME, None, None, None)
+        database.add_tag("Dataset dimensions", True,
+                         TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Testing with wrong parameters
-        database.add_tag(None, True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
-        database.add_tag("PatientName", None, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
-        database.add_tag("PatientName", True, "wrong_origin", TAG_TYPE_LIST_INTEGER, None, None, None)
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, "wrong_type", None, None, None)
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, "invalid_unit", None, None)
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, 1, None)
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, 1.5)
+        database.add_tag(
+            None, True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag(
+            "PatientName", None, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag(
+            "PatientName", True, "wrong_origin", TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag(
+            "PatientName", True, TAG_ORIGIN_RAW, "wrong_type", None, None, None)
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, "invalid_unit", None, None)
+        database.add_tag(
+            "PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, 1, None)
+        database.add_tag(
+            "PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, 1.5)
 
         # TODO Testing tag table or tag column creation
 
@@ -89,15 +101,15 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method removing a tag
         """
-        global path
-
-        os.remove(path)
-        database = Database(path)
+        database = Database(self.path)
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("SequenceName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, None)
-        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag(
+            "SequenceName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, None)
+        database.add_tag("Dataset dimensions", True,
+                         TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Adding scans
         database.add_scan("scan1", "checksum")
@@ -140,13 +152,11 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method giving the Tag table object of a tag
         """
-        global path
-
-        os.remove(path)
-        database = Database(path)
+        database = Database(self.path)
 
         # Adding a tag
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Testing that the tag is returned if it exists
         tag = database.get_tag("PatientName")
@@ -160,14 +170,13 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method setting the tag type
         """
-        global path
-
-        os.remove(path)
-        database = Database(path)
+        database = Database(self.path)
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("Dataset dimensions", True,
+                         TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Testing the original tag type
         tag = database.get_tag("PatientName")
@@ -191,15 +200,13 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method telling if the tag has a list type or not
         """
-
-        global path
-
-        os.remove(path)
-        database = Database(path)
+        database = Database(self.path)
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("Dataset dimensions", True,
+                         TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Testing that the correct boolean is returned
         tag_list = database.is_tag_list("PatientName")
@@ -213,26 +220,30 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method giving the current value, given a tag and a scan
         """
-        global path
-
-        os.remove(path)
-        database = Database(path)
+        database = Database(self.path)
 
         # Adding scans
         database.add_scan("scan1", "159abc")
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
-        database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag("Grids spacing", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_FLOAT, None, None, None)
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("Dataset dimensions", True,
+                         TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag(
+            "Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag(
+            "Grids spacing", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_FLOAT, None, None, None)
 
         # Adding values
         database.add_value("scan1", "PatientName", "test", "test")
         database.add_value("scan1", "Bits per voxel", 10, 10)
-        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
-        database.add_value("scan1", "Grids spacing", [0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
-        database.add_value("scan2", "Grids spacing", [0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
+        database.add_value(
+            "scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
+        database.add_value("scan1", "Grids spacing", [
+                           0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
+        database.add_value("scan2", "Grids spacing", [
+                           0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
 
         # Testing that the value is returned if it exists
         value = database.get_current_value("scan1", "PatientName")
@@ -266,25 +277,28 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method giving the initial value, given a tag and a scan
         """
-        global path
-
-        os.remove(path)
-        database = Database(path)
+        database = Database(self.path)
 
         # Adding scans
         database.add_scan("scan1", "159abc")
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
-        database.add_tag("Grids spacing", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_FLOAT, None, None, None)
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag(
+            "Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag("Dataset dimensions", True,
+                         TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag(
+            "Grids spacing", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_FLOAT, None, None, None)
 
         # Adding values
         database.add_value("scan1", "PatientName", "test", "test")
         database.add_value("scan1", "Bits per voxel", 50, 50)
-        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
-        database.add_value("scan1", "Grids spacing", [0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
+        database.add_value(
+            "scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
+        database.add_value("scan1", "Grids spacing", [
+                           0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
 
         # Testing that the value is returned if it exists
         value = database.get_initial_value("scan1", "PatientName")
@@ -316,16 +330,14 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method telling if the value has been modified or not
         """
-        global path
-
-        os.remove(path)
-        database = Database(path)
+        database = Database(self.path)
 
         # Adding scan
         database.add_scan("scan1", "159abc")
 
         # Adding tag
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Adding a value
         database.add_value("scan1", "PatientName", "test", "test")
@@ -361,19 +373,20 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method setting a value
         """
-        global path
-
-        os.remove(path)
-        database = Database(path)
+        database = Database(self.path)
 
         # Adding scan
         database.add_scan("scan1", "159abc")
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag("AcquisitionDate", True, TAG_ORIGIN_RAW, TAG_TYPE_DATETIME, None, None, None)
-        database.add_tag("AcquisitionTime", True, TAG_ORIGIN_RAW, TAG_TYPE_TIME, None, None, None)
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag(
+            "Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag(
+            "AcquisitionDate", True, TAG_ORIGIN_RAW, TAG_TYPE_DATETIME, None, None, None)
+        database.add_tag(
+            "AcquisitionTime", True, TAG_ORIGIN_RAW, TAG_TYPE_TIME, None, None, None)
 
         # Adding values and changing it
         database.add_value("scan1", "PatientName", "test", "test")
@@ -431,18 +444,18 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method resetting a value
         """
-        global path
-
-        os.remove(path)
-        database = Database(path)
+        database = Database(self.path)
 
         # Adding scan
         database.add_scan("scan1", "159abc")
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag(
+            "Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag("Dataset dimensions", True,
+                         TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Adding values and changing it
         database.add_value("scan1", "PatientName", "test", "test")
@@ -453,7 +466,8 @@ class TestDatabaseMethods(unittest.TestCase):
         value = database.get_current_value("scan1", "Bits per voxel")
         self.assertEqual(value, 15)
 
-        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
+        database.add_value(
+            "scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
         value = database.get_current_value("scan1", "Dataset dimensions")
         self.assertEqual(value, [3, 28, 28, 3])
         database.set_value("scan1", "Dataset dimensions", [1, 2, 3, 4])
@@ -487,23 +501,24 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method removing a value
         """
-        global path
-
-        os.remove(path)
-        database = Database(path)
+        database = Database(self.path)
 
         # Adding scan
         database.add_scan("scan1", "159abc")
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag(
+            "Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag("Dataset dimensions", True,
+                         TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Adding values
         database.add_value("scan1", "PatientName", "test", "test")
         database.add_value("scan1", "Bits per voxel", "space_tag", "space_tag")
-        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
+        database.add_value(
+            "scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
         value = database.get_current_value("scan1", "Dataset dimensions")
         self.assertEqual(value, [3, 28, 28, 3])
 
@@ -531,11 +546,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method checking the validity of incoming values
         """
-        global path
-
-        os.remove(path)
-
-        database = Database(path)
+        database = Database(self.path)
         is_valid = database.check_type_value("string", TAG_TYPE_STRING)
         self.assertTrue(is_valid)
         is_valid = database.check_type_value(1, TAG_TYPE_STRING)
@@ -554,37 +565,44 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertTrue(is_valid)
         is_valid = database.check_type_value(1.5, TAG_TYPE_LIST_FLOAT)
         self.assertFalse(is_valid)
-        is_valid = database.check_type_value([1.5, "test"], TAG_TYPE_LIST_FLOAT)
+        is_valid = database.check_type_value(
+            [1.5, "test"], TAG_TYPE_LIST_FLOAT)
         self.assertFalse(is_valid)
 
     def test_add_value(self):
         """
         Tests the method adding a value
         """
-        global path
-
-        os.remove(path)
-        database = Database(path)
+        database = Database(self.path)
 
         # Adding scans
         database.add_scan("scan1", "159abc")
         database.add_scan("scan2", "def758")
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag("BandWidth", True, TAG_ORIGIN_RAW, TAG_TYPE_FLOAT, None, None, None)
-        database.add_tag("AcquisitionTime", True, TAG_ORIGIN_RAW, TAG_TYPE_TIME, None, None, None)
-        database.add_tag("AcquisitionDate", True, TAG_ORIGIN_RAW, TAG_TYPE_DATETIME, None, None, None)
-        database.add_tag("Dataset dimensions", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
-        database.add_tag("Grids spacing", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_FLOAT, None, None, None)
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag(
+            "Bits per voxel", True, TAG_ORIGIN_RAW, TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag(
+            "BandWidth", True, TAG_ORIGIN_RAW, TAG_TYPE_FLOAT, None, None, None)
+        database.add_tag(
+            "AcquisitionTime", True, TAG_ORIGIN_RAW, TAG_TYPE_TIME, None, None, None)
+        database.add_tag(
+            "AcquisitionDate", True, TAG_ORIGIN_RAW, TAG_TYPE_DATETIME, None, None, None)
+        database.add_tag("Dataset dimensions", True,
+                         TAG_ORIGIN_RAW, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag(
+            "Grids spacing", True, TAG_ORIGIN_RAW, TAG_TYPE_LIST_FLOAT, None, None, None)
 
         # Adding values
         database.add_value("scan1", "PatientName", "test", None)
         database.add_value("scan2", "BandWidth", 35.5, 35.5)
         database.add_value("scan1", "Bits per voxel", 1, 1)
-        database.add_value("scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
-        database.add_value("scan2", "Grids spacing", [0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
+        database.add_value(
+            "scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
+        database.add_value("scan2", "Grids spacing", [
+                           0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
 
         # Testing when not existing
         database.add_value("scan1", "NotExisting", "none", "none")
@@ -644,10 +662,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method giving the Path table object of a scan
         """
-        global path
-
-        os.remove(path)
-        database = Database(path)
+        database = Database(self.path)
 
         # Adding scan
         database.add_scan("scan1", "159abc")
@@ -670,15 +685,14 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method removing a scan
         """
-
-        os.remove(path)
-        database = Database(path)
+        database = Database(self.path)
 
         # Adding scan
         database.add_scan("scan1", "159abc")
 
         # Adding tag
-        database.add_tag("PatientName", True, TAG_ORIGIN_RAW, TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("PatientName", True, TAG_ORIGIN_RAW,
+                         TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Adding value
         database.add_value("scan1", "PatientName", "test", "test")
@@ -701,10 +715,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method adding a scan
         """
-        global path
-
-        os.remove(path)
-        database = Database(path)
+        database = Database(self.path)
 
         # Adding scan
         database.add_scan("scan1", "159abc")
@@ -721,7 +732,4 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(scan.checksum, "159abc")
 
 if __name__ == '__main__':
-    createDatabase(path)
     unittest.main(exit=False)
-    os.remove(path)
-    os.rmdir(os.path.dirname(path))

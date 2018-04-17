@@ -50,4 +50,4 @@ EXTRA_REQUIRES = {
 }
 
 # tests to run
-test_commands = ['%s -m populse_db.Test' % sys.executable]
+test_commands = ['%s -m populse_db.test' % sys.executable]

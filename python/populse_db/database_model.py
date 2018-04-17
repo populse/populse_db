@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Table, ForeignKeyConstraint, String, Boolean, Enum, Integer, MetaData, create_engine
+from sqlalchemy import (Column, Table, ForeignKeyConstraint, String, Boolean,
+                        Enum, Integer, MetaData, create_engine)
 
 # Tag origin
 TAG_ORIGIN_RAW = "raw"
@@ -26,7 +27,7 @@ TAG_UNIT_HZPIXEL = "Hz/pixel"
 TAG_UNIT_MHZ = "MHz"
 
 
-def createDatabase(path):
+def create_database(path):
     """
     Creates the database file with an empty schema
     :param path: Path of the new database file
@@ -46,14 +47,20 @@ def fill_tables(metadata):
     Table('tag', metadata,
           Column("name", String, primary_key=True),
           Column("visible", Boolean, nullable=False),
-          Column("origin", Enum(TAG_ORIGIN_RAW, TAG_ORIGIN_USER), nullable=False),
-          Column("type",
-                 Enum(TAG_TYPE_STRING, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT, TAG_TYPE_DATE, TAG_TYPE_DATETIME,
-                      TAG_TYPE_TIME,
-                      TAG_TYPE_LIST_STRING, TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_DATE,
-                      TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_TIME), nullable=False),
-          Column("unit", Enum(TAG_UNIT_MS, TAG_UNIT_MM, TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL, TAG_UNIT_MHZ),
-                 nullable=True),
+          Column(
+              "origin", Enum(TAG_ORIGIN_RAW, TAG_ORIGIN_USER), nullable=False),
+          Column(
+              "type", Enum(TAG_TYPE_STRING, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT,
+                           TAG_TYPE_DATE, TAG_TYPE_DATETIME, TAG_TYPE_TIME,
+                           TAG_TYPE_LIST_STRING, TAG_TYPE_LIST_INTEGER,
+                           TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_DATE,
+                           TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_TIME),
+              nullable=False),
+          Column(
+              "unit", Enum(
+                  TAG_UNIT_MS, TAG_UNIT_MM, TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL,
+                  TAG_UNIT_MHZ),
+              nullable=True),
           Column("default_value", String, nullable=True),
           Column("description", String, nullable=True))
 
@@ -63,7 +70,9 @@ def fill_tables(metadata):
           Column("index", Integer, primary_key=True, autoincrement=True))
 
     Table('current', metadata, Column("index", Integer, primary_key=True),
-          ForeignKeyConstraint(["index"], ["path.index"], ondelete="CASCADE", onupdate="CASCADE"))
+          ForeignKeyConstraint(["index"], ["path.index"], ondelete="CASCADE",
+                               onupdate="CASCADE"))
 
     Table('initial', metadata, Column("index", Integer, primary_key=True),
-          ForeignKeyConstraint(["index"], ["path.index"], ondelete="CASCADE", onupdate="CASCADE"))
+          ForeignKeyConstraint(["index"], ["path.index"], ondelete="CASCADE",
+                               onupdate="CASCADE"))
