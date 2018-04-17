@@ -295,8 +295,8 @@ class Database:
         :return: Valid column name
         """
 
-        return tag.replace(" ", "").replace("(", "").replace(")", "")\
-            .replace(",", "").replace(".", "").replace("/", "")
+        return tag.replace(" ", "").replace("(", "").replace(")", "").replace(
+            ",", "").replace(".", "").replace("/", "")
         # TODO remove numbers if it causes problems (beware that it's not
         #     the same way to do it in python2 and python3)
         # TODO check that it does not conflict with another close tag that
@@ -340,8 +340,8 @@ class Database:
 
                 # Tag column removed from initial table
                 columns = ""
-                sql_table_create = \
-                    CreateTable(self.classes["initial"].__table__)
+                sql_table_create = CreateTable(
+                    self.classes["initial"].__table__)
                 for column in sql_table_create.columns:
                     if self.tag_name_to_column_name(name) in str(column):
                         column_to_remove = column
@@ -365,8 +365,8 @@ class Database:
 
                 # Tag column removed from current table
                 columns = ""
-                sql_table_create = \
-                    CreateTable(self.classes["current"].__table__)
+                sql_table_create = CreateTable(
+                    self.classes["current"].__table__)
                 for column in sql_table_create.columns:
                     if self.tag_name_to_column_name(name) in str(column):
                         column_to_remove = column
@@ -406,8 +406,8 @@ class Database:
             return None
 
         session = self.session_maker()
-        tags = session.query(self.classes["tag"])\
-            .filter(self.classes["tag"].name == name).all()
+        tags = session.query(self.classes["tag"]).filter(
+            self.classes["tag"].name == name).all()
         session.close()
         if len(tags) is 1:
             return tags[0]
@@ -461,8 +461,8 @@ class Database:
 
         tags_list = []
         session = self.session_maker()
-        tags = session.query(self.classes["tag"])\
-            .filter(self.classes["tag"].visible is True).all()
+        tags = session.query(self.classes["tag"]).filter(
+            self.classes["tag"].visible is True).all()
         session.close()
         for tag in tags:
             tags_list.append(tag)
@@ -484,8 +484,8 @@ class Database:
             return
 
         session = self.session_maker()
-        tags = session.query(self.classes["tag"])\
-            .filter(self.classes["tag"].name == name).all()
+        tags = session.query(self.classes["tag"]).filter(
+            self.classes["tag"].name == name).all()
         if len(tags) is 1:
             tag = tags[0]
             tag.origin = origin
@@ -519,8 +519,8 @@ class Database:
             return
 
         session = self.session_maker()
-        tags = session.query(self.classes["tag"])\
-            .filter(self.classes["tag"].name == name).all()
+        tags = session.query(self.classes["tag"]).filter(
+            self.classes["tag"].name == name).all()
         if len(tags) is 1:
             tag = tags[0]
             tag.type = tag_type
@@ -535,8 +535,8 @@ class Database:
 
                 # Initial tag table value column updated
                 columns = ""
-                sql_table_create = \
-                    CreateTable(self.classes[name + "_initial"].__table__)
+                sql_table_create = CreateTable(
+                    self.classes[name + "_initial"].__table__)
                 for column in sql_table_create.columns:
                     columns += str(column).split(" ")[0] + ", "
                 sql_query = str(sql_table_create)
@@ -568,8 +568,8 @@ class Database:
 
                 # Current tag table value column updated
                 columns = ""
-                sql_table_create = \
-                    CreateTable(self.classes[name + "_current"].__table__)
+                sql_table_create = CreateTable(
+                    self.classes[name + "_current"].__table__)
                 for column in sql_table_create.columns:
                     columns += str(column).split(" ")[0] + ", "
                 sql_query = str(sql_table_create)
@@ -605,8 +605,8 @@ class Database:
 
                 # Tag column updated from initial table
                 columns = ""
-                sql_table_create = \
-                    CreateTable(self.classes["initial"].__table__)
+                sql_table_create = CreateTable(
+                    self.classes["initial"].__table__)
                 for column in sql_table_create.columns:
                     columns += str(column).split(" ")[0] + ", "
                 sql_query = str(sql_table_create)
@@ -635,8 +635,8 @@ class Database:
 
                 # Tag column updated from current table
                 columns = ""
-                sql_table_create = \
-                    CreateTable(self.classes["current"].__table__)
+                sql_table_create = CreateTable(
+                    self.classes["current"].__table__)
                 for column in sql_table_create.columns:
                     columns += str(column).split(" ")[0] + ", "
                 sql_query = str(sql_table_create)
@@ -687,8 +687,8 @@ class Database:
             return
 
         session = self.session_maker()
-        tags = session.query(self.classes["tag"])\
-            .filter(self.classes["tag"].name == name).all()
+        tags = session.query(self.classes["tag"]).filter(
+            self.classes["tag"].name == name).all()
         if len(tags) is 1:
             tag = tags[0]
             tag.unit = unit
@@ -713,8 +713,8 @@ class Database:
             return
 
         session = self.session_maker()
-        tags = session.query(self.classes["tag"])\
-            .filter(self.classes["tag"].name == name).all()
+        tags = session.query(self.classes["tag"]).filter(
+            self.classes["tag"].name == name).all()
         if len(tags) is 1:
             tag = tags[0]
             tag.description = description
@@ -739,8 +739,8 @@ class Database:
             return
 
         session = self.session_maker()
-        tags = session.query(self.classes["tag"])\
-            .filter(self.classes["tag"].name == name).all()
+        tags = session.query(self.classes["tag"]).filter(
+            self.classes["tag"].name == name).all()
         if len(tags) is 1:
             tag = tags[0]
             tag.visible = visible
@@ -829,9 +829,9 @@ class Database:
             # current table
 
             session = self.session_maker()
-            values = session.query(self.classes[tag + "_current"])\
-                .join(self.classes["path"]).filter(
-                self.classes["path"].name == scan).all()
+            values = session.query(self.classes[tag + "_current"]).join(
+                self.classes["path"]).filter(
+                    self.classes["path"].name == scan).all()
             session.close()
             if len(values) is 0:
                 return None
