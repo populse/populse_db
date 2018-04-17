@@ -367,7 +367,7 @@ class Database:
                 columns = ""
                 sql_table_create = CreateTable(
                     self.classes["current"].__table__)
-                for column in sql_table_create.columns:
+!                for column in sql_table_create.columns:
                     if self.tag_name_to_column_name(name) in str(column):
                         column_to_remove = column
                     else:
