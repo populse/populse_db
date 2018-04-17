@@ -696,11 +696,11 @@ class Database:
         elif tag_type == TAG_TYPE_LIST_FLOAT:
             return float(value)
         elif tag_type == TAG_TYPE_LIST_DATETIME:
-            return datetime(value)
+            return value
         elif tag_type == TAG_TYPE_LIST_DATE:
-            return date(value)
+            return value
         elif tag_type == TAG_TYPE_LIST_TIME:
-            return time(value)
+            return value
 
     def get_current_value(self, scan, tag):
         """
@@ -993,34 +993,9 @@ class Database:
             return True
         if valid_type == TAG_TYPE_DATE and value_type == date:
             return True
-        if valid_type == TAG_TYPE_LIST_DATE and value_type == list:
+        if valid_type in [TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_TIME, TAG_TYPE_LIST_STRING, TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_FLOAT] and value_type == list:
             for value_element in value:
-                if not self.check_type_value(value_element, TAG_TYPE_DATE):
-                    return False
-            return True
-        if valid_type == TAG_TYPE_LIST_DATETIME and value_type == list:
-            for value_element in value:
-                if not self.check_type_value(value_element, TAG_TYPE_DATETIME):
-                    return False
-            return True
-        if valid_type == TAG_TYPE_LIST_TIME and value_type == list:
-            for value_element in value:
-                if not self.check_type_value(value_element, TAG_TYPE_TIME):
-                    return False
-            return True
-        if valid_type == TAG_TYPE_LIST_STRING and value_type == list:
-            for value_element in value:
-                if not self.check_type_value(value_element, TAG_TYPE_STRING):
-                    return False
-            return True
-        if valid_type == TAG_TYPE_LIST_FLOAT and value_type == list:
-            for value_element in value:
-                if not self.check_type_value(value_element, TAG_TYPE_FLOAT):
-                    return False
-            return True
-        if valid_type == TAG_TYPE_LIST_INTEGER and value_type == list:
-            for value_element in value:
-                if not self.check_type_value(value_element, TAG_TYPE_INTEGER):
+                if not self.check_type_value(value_element, valid_type.replace("list_", "")):
                     return False
             return True
         return False
