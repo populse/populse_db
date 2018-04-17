@@ -367,7 +367,7 @@ class Database:
                 columns = ""
                 sql_table_create = CreateTable(
                     self.classes["current"].__table__)
-!                for column in sql_table_create.columns:
+                for column in sql_table_create.columns:
                     if self.tag_name_to_column_name(name) in str(column):
                         column_to_remove = column
                     else:
@@ -1133,9 +1133,13 @@ class Database:
             return True
         if valid_type == TAG_TYPE_DATE and value_type == date:
             return True
-        if valid_type in [TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_TIME, TAG_TYPE_LIST_STRING, TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_FLOAT] and value_type == list:
+        if (valid_type in [TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_DATETIME,
+                           TAG_TYPE_LIST_TIME, TAG_TYPE_LIST_STRING,
+                           TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_FLOAT]
+                and value_type == list):
             for value_element in value:
-                if not self.check_type_value(value_element, valid_type.replace("list_", "")):
+                if not self.check_type_value(value_element,
+                                             valid_type.replace("list_", "")):
                     return False
             return True
         return False
