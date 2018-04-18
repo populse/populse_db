@@ -462,7 +462,7 @@ class Database:
         tags_list = []
         session = self.session_maker()
         tags = session.query(self.classes["tag"]).filter(
-            self.classes["tag"].visible is True).all()
+            self.classes["tag"].visible == True).all()
         session.close()
         for tag in tags:
             tags_list.append(tag)
