@@ -2,7 +2,7 @@ from sqlalchemy import (Column, Table, ForeignKeyConstraint, String, Boolean,
                         Enum, Integer, MetaData, create_engine)
 
 # Tag origin
-TAG_ORIGIN_RAW = "raw"
+TAG_ORIGIN_BUILTIN = "builtin"
 TAG_ORIGIN_USER = "user"
 
 # Tag type
@@ -48,7 +48,7 @@ def fill_tables(metadata):
           Column("name", String, primary_key=True),
           Column("visible", Boolean, nullable=False),
           Column(
-              "origin", Enum(TAG_ORIGIN_RAW, TAG_ORIGIN_USER), nullable=False),
+              "origin", Enum(TAG_ORIGIN_BUILTIN, TAG_ORIGIN_USER), nullable=False),
           Column(
               "type", Enum(TAG_TYPE_STRING, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT,
                            TAG_TYPE_DATE, TAG_TYPE_DATETIME, TAG_TYPE_TIME,
