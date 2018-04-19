@@ -1,4 +1,4 @@
-# populse_db
+# populse_db [![Build Status](https://travis-ci.org/populse/populse_db.svg?branch=master)](https://travis-ci.org/populse/populse_db)
 SQLAlchemy based database API for Populse
 
 # Tools
