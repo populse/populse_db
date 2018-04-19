@@ -10,6 +10,8 @@ from sqlalchemy.schema import CreateTable, DropTable
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
 
+import time as time_exec
+
 from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_TYPE_FLOAT, TAG_TYPE_TIME,
                                        TAG_TYPE_DATETIME, TAG_TYPE_DATE,
@@ -21,7 +23,8 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_TYPE_LIST_TIME, TAG_UNIT_MS,
                                        TAG_UNIT_MM, TAG_UNIT_HZPIXEL,
                                        TAG_UNIT_DEGREE, TAG_UNIT_MHZ,
-                                       TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN)
+                                       TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN,
+                                       LIST_TYPES, SIMPLE_TYPES)
 
 
 @event.listens_for(Engine, "connect")
@@ -113,7 +116,7 @@ class Database:
             create_database(self.path)
 
         # Database opened
-        self.engine = create_engine('sqlite:///' + self.path)
+        self.engine = create_engine('sqlite:///' + self.path, connect_args={'check_same_thread': False})
 
         # Metadata generated
         self.update_table_classes()
@@ -133,7 +136,7 @@ class Database:
     """ TAGS """
 
     def add_tag(self, name, visible, origin, tag_type, unit, default_value,
-                description):
+                description): # (0.05 sec on average)
         """
         Adds a tag to the database, if it does not already exist
         :param name: Tag name (str)
@@ -147,43 +150,18 @@ class Database:
         :param description: Tag description (str or None)
         """
 
-        # Parameters checked
-        if not isinstance(name, str):
-            return
-        if not isinstance(visible, bool):
-            return
-        if origin not in [TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN]:
-            return
-        if tag_type not in [TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_STRING,
-                            TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_DATE,
-                            TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_TIME,
-                            TAG_TYPE_DATETIME, TAG_TYPE_DATE,
-                            TAG_TYPE_STRING, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT,
-                            TAG_TYPE_TIME]:
-            return
-        if unit not in [TAG_UNIT_MHZ, TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL,
-                        TAG_UNIT_MM, TAG_UNIT_MS] and unit is not None:
-            return
-        if not isinstance(default_value, str) and default_value is not None:
-            return
-        if not isinstance(description, str) and description is not None:
-            return
-        if self.get_tag(name) is not None:
-            return
-
-        # Adding the tag in the tag table
+        # Adding the tag in the tag table (0.003 sec on average)
         tag = self.table_classes["tag"](name=name, visible=visible, origin=origin,
                                         type=tag_type, unit=unit,
                                         default_value=default_value,
                                         description=description)
+
         self.session.add(tag)
 
-        if tag_type in [TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_STRING,
-                        TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_TIME,
-                        TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_DATETIME]:
-            # The tag has a list type: new tag tables added
+        if tag_type in LIST_TYPES:
+            # The tag has a list type: new tag tables added (0.04 sec on average)
 
-            # Tag tables initial and current definition
+            # Tag tables initial and current definition (0.00045 sec on average)
             tag_table_current = Table(name + "_current", self.metadata,
                                       Column("index", Integer,
                                              primary_key=True),
@@ -211,21 +189,28 @@ class Database:
                                                            ondelete="CASCADE",
                                                            onupdate="CASCADE"))
 
-            # Both tables added
+            # Both tables added (0.03 sec on average)
             current_query = CreateTable(tag_table_current)
-            self.session.execute(current_query)
             initial_query = CreateTable(tag_table_initial)
+
+            # 0.03 seconds to execute those 2 queries
+            self.session.execute(current_query)
             self.session.execute(initial_query)
 
-        else:
+            self.unsaved_modifications = True
+
+            # Redefinition of the table classes
+            self.update_table_classes()
+
+        elif tag_type in SIMPLE_TYPES:
             # The tag has a simple type: new column added to both initial
-            # and current tables
+            # and current tables (0.06 sec on average)
 
             # Column creation
             column = Column(name, self.tag_type_to_column_type(tag_type))
             column_type = column.type.compile(self.engine.dialect)
 
-            # Tag column added to both initial and current tables
+            # Tag column added to both initial and current tables (0.05 sec on average)
             self.session.execute(
                 'ALTER TABLE %s ADD COLUMN %s %s' % (
                     "initial", self.tag_name_to_column_name(name),
@@ -234,6 +219,79 @@ class Database:
                 'ALTER TABLE %s ADD COLUMN %s %s' % (
                     "current", self.tag_name_to_column_name(name),
                     column_type))
+
+            self.unsaved_modifications = True
+
+            # Redefinition of the table classes
+            self.update_table_classes()
+
+    def add_tags(self, tags):
+        """
+        Add all the tags
+        :param tags: List of tags to add (name, visible, origin, tag_type, unit, default_value,
+                description)
+        """
+
+        for tag in tags:
+
+            tag_name = tag[0]
+            tag_type = tag[3]
+
+            # Adding the tag in the tag table (0.003 sec on average)
+            tag_row = self.table_classes["tag"](name=tag_name, visible=tag[1], origin=tag[2],
+                                            type=tag_type, unit=tag[4],
+                                            default_value=tag[5],
+                                            description=tag[6])
+
+            self.session.add(tag_row)
+
+            if tag_type in LIST_TYPES:
+
+                # Tag tables initial and current definition (0.00045 sec on average)
+                tag_table_current = Table(tag_name + "_current", self.metadata,
+                                          Column("index", Integer,
+                                                 primary_key=True),
+                                          Column("order", Integer,
+                                                 primary_key=True),
+                                          Column("value",
+                                                 self.tag_type_to_column_type(
+                                                     tag_type),
+                                                 nullable=False),
+                                          ForeignKeyConstraint(["index"],
+                                                               ["path.index"],
+                                                               ondelete="CASCADE",
+                                                               onupdate="CASCADE"))
+                tag_table_initial = Table(tag_name + "_initial", self.metadata,
+                                          Column("index", Integer,
+                                                 primary_key=True),
+                                          Column("order", Integer,
+                                                 primary_key=True),
+                                          Column("value",
+                                                 self.tag_type_to_column_type(
+                                                     tag_type),
+                                                 nullable=False),
+                                          ForeignKeyConstraint(["index"],
+                                                               ["path.index"],
+                                                               ondelete="CASCADE",
+                                                               onupdate="CASCADE"))
+
+                # Both tables added (0.03 sec on average)
+                current_query = CreateTable(tag_table_current)
+                initial_query = CreateTable(tag_table_initial)
+
+                # 0.03 seconds to execute those 2 queries
+                self.session.execute(current_query)
+                self.session.execute(initial_query)
+
+            elif tag_type in SIMPLE_TYPES:
+
+                # Columns creation
+                column = Column(tag_name, self.tag_type_to_column_type(tag_type))
+                column_type = column.type.compile(self.engine.dialect)
+                self.session.execute(
+                    'ALTER TABLE %s ADD COLUMN %s %s;' % ("initial", self.tag_name_to_column_name(tag_name), column_type))
+                self.session.execute(
+                    'ALTER TABLE %s ADD COLUMN %s %s;' % ("current", self.tag_name_to_column_name(tag_name), column_type))
 
         self.unsaved_modifications = True
 
@@ -246,15 +304,6 @@ class Database:
         :param tag_type: Tag type
         :return: The column type given the tag type
         """
-
-        # Parameter checked
-        if tag_type not in [TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_STRING,
-                            TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_DATE,
-                            TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_TIME,
-                            TAG_TYPE_DATETIME, TAG_TYPE_DATE,
-                            TAG_TYPE_STRING, TAG_TYPE_INTEGER,
-                            TAG_TYPE_FLOAT, TAG_TYPE_TIME]:
-            return None
 
         if tag_type == TAG_TYPE_INTEGER or tag_type == TAG_TYPE_LIST_INTEGER:
             return Integer
@@ -288,12 +337,6 @@ class Database:
         Removes a tag
         :param name: Tag name
         """
-
-        # Parameters checked
-        if not isinstance(name, str):
-            return
-        if self.get_tag(name) is None:
-            return
 
         is_tag_list = self.is_tag_list(name)
         tags = self.session.query(self.table_classes["tag"]).filter(
@@ -379,10 +422,6 @@ class Database:
         :return: The tag table object if the tag exists, None otherwise
         """
 
-        # Parameters checked
-        if not isinstance(name, str):
-            return None
-
         tags = self.session.query(self.table_classes["tag"]).filter(
             self.table_classes["tag"].name == name).all()
         if len(tags) is 1:
@@ -423,6 +462,20 @@ class Database:
             tag.visible = False
         self.unsaved_modifications = True
 
+    def set_tag_visibility(self, name, visible):
+        """
+        Sets the tag visibility
+        :param name: Tag name
+        :param visible: Tag new visibility (True or False)
+        """
+
+        tags = self.session.query(self.table_classes["tag"]).filter(self.table_classes["tag"].name == name).all()
+
+        if len(tags) is 1:
+            tag = tags[0]
+            tag.visible = visible
+            self.unsaved_modifications = True
+
     def get_visualized_tags(self):
         """
         Gives the list of visualized tags
@@ -436,268 +489,6 @@ class Database:
             tags_list.append(tag)
         return tags_list
 
-    def set_tag_origin(self, name, origin):
-        """
-        Sets the tag origin
-        :param name: Tag name
-        :param origin: Tag origin (raw or user)
-        """
-
-        # Parameters checked
-        if not isinstance(name, str):
-            return
-        if self.get_tag(name) is None:
-            return
-        if origin not in [TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN]:
-            return
-
-        tags = self.session.query(self.table_classes["tag"]).filter(
-            self.table_classes["tag"].name == name).all()
-        if len(tags) is 1:
-            tag = tags[0]
-            tag.origin = origin
-            self.unsaved_modifications = True
-
-    def set_tag_type(self, name, tag_type):
-        """
-        Sets the tag type
-        :param name: Tag name
-        :param origin: Tag type (string, integer, float, date, datetime,
-                       time, list_string, list_integer, list_float,
-                       list_date, list_datetime, or list_time)
-        """
-
-        # Parameters checked
-        if not isinstance(name, str):
-            return
-        if self.get_tag(name) is None:
-            return
-        if tag_type not in [TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_STRING,
-                            TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_DATE,
-                            TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_TIME,
-                            TAG_TYPE_DATETIME, TAG_TYPE_DATE,
-                            TAG_TYPE_STRING, TAG_TYPE_INTEGER,
-                            TAG_TYPE_FLOAT, TAG_TYPE_TIME]:
-            return
-        if self.get_tag(name).type == tag_type:
-            return
-
-        tags = self.session.query(self.table_classes["tag"]).filter(
-            self.table_classes["tag"].name == name).all()
-        if len(tags) is 1:
-            tag = tags[0]
-            tag.type = tag_type
-
-            # Preparing column type
-            column = Column("", self.tag_type_to_column_type(tag_type))
-            column_type = column.type.compile(self.engine.dialect)
-
-            # Column type set
-            if self.is_tag_list(name):
-                # The tag has a list type, both tag tables are updated
-
-                # Initial tag table value column updated
-                columns = ""
-                sql_table_create = CreateTable(
-                    self.table_classes[name + "_initial"].__table__)
-                for column in sql_table_create.columns:
-                    columns += str(column).split(" ")[0] + ", "
-                sql_query = str(sql_table_create)
-                temp_query = sql_query.split("\n\t")
-                new_query = ""
-                for row in temp_query:
-                    words = row.split(" ")
-                    if words[0] == "value":
-                        words[1] = column_type + " NOT NULL,"
-                        words = [words[0], words[1]]
-                    new_query += ' '.join(words) + "\n\t"
-                new_query = new_query[:-1]
-                sql_query = new_query
-                columns = columns[:-2]
-                columns = columns.replace("index", "\"index\"")
-                sql_query = sql_query.replace("index", "\"index\"")
-                sql_query = sql_query.replace("initial", "initial_backup")
-                self.session.execute(sql_query)
-                self.session.execute("INSERT INTO \"" + name +
-                                "_initial_backup\" SELECT " + columns +
-                                " FROM \"" + name + "_initial\"")
-                self.session.execute("DROP TABLE \"" + name + "_initial\"")
-                sql_query = sql_query.replace("initial_backup", "initial")
-                self.session.execute(sql_query)
-                self.session.execute("INSERT INTO \"" + name + "_initial\" SELECT "
-                                + columns + " FROM \"" + name +
-                                "_initial_backup\"")
-                self.session.execute("DROP TABLE \"" + name + "_initial_backup\"")
-
-                # Current tag table value column updated
-                columns = ""
-                sql_table_create = CreateTable(
-                    self.table_classes[name + "_current"].__table__)
-                for column in sql_table_create.columns:
-                    columns += str(column).split(" ")[0] + ", "
-                sql_query = str(sql_table_create)
-                temp_query = sql_query.split("\n\t")
-                new_query = ""
-                for row in temp_query:
-                    words = row.split(" ")
-                    if words[0] == "value":
-                        words[1] = column_type + " NOT NULL,"
-                        words = [words[0], words[1]]
-                    new_query += ' '.join(words) + "\n\t"
-                new_query = new_query[:-1]
-                sql_query = new_query
-                columns = columns[:-2]
-                columns = columns.replace("index", "\"index\"")
-                sql_query = sql_query.replace("index", "\"index\"")
-                sql_query = sql_query.replace("current", "current_backup")
-                self.session.execute(sql_query)
-                self.session.execute(
-                    "INSERT INTO \"" + name + "_current_backup\" SELECT " +
-                    columns + " FROM \"" + name + "_current\"")
-                self.session.execute("DROP TABLE \"" + name + "_current\"")
-                sql_query = sql_query.replace("current_backup", "current")
-                self.session.execute(sql_query)
-                self.session.execute(
-                    "INSERT INTO \"" + name + "_current\" SELECT " + columns +
-                    " FROM \"" + name + "_current_backup\"")
-                self.session.execute("DROP TABLE \"" + name + "_current_backup\"")
-
-            else:
-                # The tag has a simple type, both current and initial tables
-                # are updated
-
-                # Tag column updated from initial table
-                columns = ""
-                sql_table_create = CreateTable(
-                    self.table_classes["initial"].__table__)
-                for column in sql_table_create.columns:
-                    columns += str(column).split(" ")[0] + ", "
-                sql_query = str(sql_table_create)
-                temp_query = sql_query.split("\n\t")
-                new_query = ""
-                for row in temp_query:
-                    words = row.split(" ")
-                    if words[0] == "\"" + name + "\"":
-                        words[1] = column_type + ","
-                    new_query += ' '.join(words) + "\n\t"
-                new_query = new_query[:-1]
-                sql_query = new_query
-                sql_query = sql_query[:21] + '_backup' + sql_query[21:]
-                columns = columns[:-2]
-                columns = columns.replace("index", "\"index\"")
-                sql_query = sql_query.replace("index", "\"index\"")
-                self.session.execute(sql_query)
-                self.session.execute("INSERT INTO initial_backup SELECT " +
-                                columns + " FROM initial")
-                self.session.execute("DROP TABLE initial")
-                sql_query = sql_query[:21] + sql_query[29:]
-                self.session.execute(sql_query)
-                self.session.execute("INSERT INTO initial SELECT " + columns +
-                                " FROM initial_backup")
-                self.session.execute("DROP TABLE initial_backup")
-
-                # Tag column updated from current table
-                columns = ""
-                sql_table_create = CreateTable(
-                    self.table_classes["current"].__table__)
-                for column in sql_table_create.columns:
-                    columns += str(column).split(" ")[0] + ", "
-                sql_query = str(sql_table_create)
-                temp_query = sql_query.split("\n\t")
-                new_query = ""
-                for row in temp_query:
-                    words = row.split(" ")
-                    if words[0] == "\"" + name + "\"":
-                        words[1] = column_type + ","
-                    new_query += ' '.join(words) + "\n\t"
-                new_query = new_query[:-2]
-                sql_query = new_query
-                sql_query = sql_query[:21] + '_backup' + sql_query[21:]
-                columns = columns[:-2]
-                columns = columns.replace("index", "\"index\"")
-                sql_query = sql_query.replace("index", "\"index\"")
-                self.session.execute(sql_query)
-                self.session.execute("INSERT INTO current_backup SELECT " + columns
-                                + " FROM current")
-                self.session.execute("DROP TABLE current")
-                sql_query = sql_query[:21] + sql_query[29:]
-                self.session.execute(sql_query)
-                self.session.execute("INSERT INTO current SELECT " + columns +
-                                " FROM current_backup")
-                self.session.execute("DROP TABLE current_backup")
-
-            self.update_table_classes()
-            self.unsaved_modifications = True
-
-    def set_tag_unit(self, name, unit):
-        """
-        Sets the tag unit
-        :param name: Tag name
-        :param origin: Tag unit (ms, mm, degree, Hz/pixel, MHz, or None)
-        """
-
-        # Parameters checked
-        if not isinstance(name, str):
-            return
-        if self.get_tag(name) is None:
-            return
-        if unit not in [TAG_UNIT_MHZ, TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL,
-                        TAG_UNIT_MM, TAG_UNIT_MS] and unit is not None:
-            return
-        if self.get_tag(name).unit == unit:
-            return
-
-        tags = self.session.query(self.table_classes["tag"]).filter(
-            self.table_classes["tag"].name == name).all()
-        if len(tags) is 1:
-            tag = tags[0]
-            tag.unit = unit
-            self.unsaved_modifications = True
-
-    def set_tag_description(self, name, description):
-        """
-        Sets the tag description
-        :param name: Tag name
-        :param origin: Tag description (str)
-        """
-
-        # Parameters checked
-        if not isinstance(name, str):
-            return
-        if self.get_tag(name) is None:
-            return
-        if not isinstance(description, str):
-            return
-
-        tags = self.session.query(self.table_classes["tag"]).filter(
-            self.table_classes["tag"].name == name).all()
-        if len(tags) is 1:
-            tag = tags[0]
-            tag.description = description
-            self.unsaved_modifications = True
-
-    def set_tag_visibility(self, name, visible):
-        """
-        Sets the tag visibility
-        :param name: Tag name
-        :param visible: Tag new visibility (True or False)
-        """
-
-        # Parameters checked
-        if not isinstance(name, str):
-            return None
-        if self.get_tag(name) is None:
-            return
-        if not isinstance(visible, bool):
-            return
-
-        tags = self.session.query(self.table_classes["tag"]).filter(
-            self.table_classes["tag"].name == name).all()
-        if len(tags) is 1:
-            tag = tags[0]
-            tag.visible = visible
-            self.unsaved_modifications = True
-
     def is_tag_list(self, tag):
         """
         To know if the given tag is a list
@@ -705,26 +496,18 @@ class Database:
         :return: True if the tag is a list, False otherwise
         """
 
-        # Parameters checked
-        if not isinstance(tag, str):
-            return False
-        if self.get_tag(tag) is None:
-            return False
+        tag_type = self.get_tag(tag).type
+        return tag_type in LIST_TYPES
+
+    def is_tag_simple(self, tag):
+        """
+        To know if the given tag has a simple type
+        :param tag: tag name
+        :return: True if the tag has a simple type, False otherwise
+        """
 
         tag_type = self.get_tag(tag).type
-        if tag_type == TAG_TYPE_LIST_DATETIME:
-            return True
-        if tag_type == TAG_TYPE_LIST_TIME:
-            return True
-        if tag_type == TAG_TYPE_LIST_DATE:
-            return True
-        if tag_type == TAG_TYPE_LIST_STRING:
-            return True
-        if tag_type == TAG_TYPE_LIST_INTEGER:
-            return True
-        if tag_type == TAG_TYPE_LIST_FLOAT:
-            return True
-        return False
+        return tag_type in SIMPLE_TYPES
 
     """ VALUES """
 
@@ -735,12 +518,6 @@ class Database:
         :param tag_type: Value type
         :return: Typed subvalue
         """
-
-        # Parameters checked
-        if tag_type not in [TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_DATE,
-                            TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_STRING,
-                            TAG_TYPE_LIST_TIME, TAG_TYPE_LIST_FLOAT]:
-            return None
 
         if tag_type == TAG_TYPE_LIST_INTEGER:
             return int(value)
@@ -762,16 +539,6 @@ class Database:
         :param tag: Tag name
         :return: The current value of <path, tag>
         """
-
-        # Parameters checked
-        if not isinstance(tag, str):
-            return None
-        if self.get_tag(tag) is None:
-            return None
-        if not isinstance(path, str):
-            return None
-        if self.get_path(path) is None:
-            return None
 
         if self.is_tag_list(tag):
             # The tag has a type list, the values are gotten from the tag
@@ -811,16 +578,6 @@ class Database:
         :return: The initial value of <path, tag>
         """
 
-        # Parameters checked
-        if not isinstance(tag, str):
-            return None
-        if self.get_tag(tag) is None:
-            return None
-        if not isinstance(path, str):
-            return None
-        if self.get_path(path) is None:
-            return None
-
         if self.is_tag_list(tag):
             # The tag has a type list, the values are gotten from the tag
             # initial table
@@ -858,16 +615,6 @@ class Database:
         :return: True if the value has been modified, False otherwise
         """
 
-        # Parameters checked
-        if not isinstance(tag, str):
-            return False
-        if self.get_tag(tag) is None:
-            return False
-        if not isinstance(path, str):
-            return False
-        if self.get_path(path) is None:
-            return False
-
         return (self.get_current_value(path, tag) !=
                 self.get_initial_value(path, tag))
 
@@ -878,18 +625,6 @@ class Database:
         :param tag: tag name
         :param new_value: New value
         """
-
-        # Parameters checked
-        if not isinstance(tag, str):
-            return
-        if self.get_tag(tag) is None:
-            return
-        if not isinstance(path, str):
-            return
-        if self.get_path(path) is None:
-            return
-        if not self.check_type_value(new_value, self.get_tag(tag).type):
-            return
 
         if self.is_tag_list(tag):
             # The path has a list type, the values are reset in the tag
@@ -922,16 +657,6 @@ class Database:
         :param tag: tag name
         :return True if the value has been reset, False otherwise
         """
-
-        # Parameters checked
-        if not isinstance(tag, str):
-            return False
-        if self.get_tag(tag) is None:
-            return False
-        if not isinstance(path, str):
-            return False
-        if self.get_path(path) is None:
-            return False
 
         if self.is_tag_list(tag):
             # The path has a list type, the values are reset in the tag
@@ -969,16 +694,6 @@ class Database:
         :param path: path name
         :param tag: tag name
         """
-
-        # Parameters checked
-        if not isinstance(tag, str):
-            return
-        if self.get_tag(tag) is None:
-            return
-        if not isinstance(path, str):
-            return
-        if self.get_path(path) is None:
-            return
 
         if self.is_tag_list(tag):
             # The tag has a list type, the values are removed from both tag
@@ -1067,20 +782,6 @@ class Database:
         :param initial_value: initial value
         """
 
-        # Parameters checked
-        if not isinstance(tag, str):
-            return
-        if self.get_tag(tag) is None:
-            return
-        if not isinstance(path, str):
-            return
-        if self.get_path(path) is None:
-            return
-        if not self.check_type_value(current_value, self.get_tag(tag).type):
-            return
-        if not self.check_type_value(initial_value, self.get_tag(tag).type):
-            return
-
         if self.is_tag_list(tag):
             # The tag has a list type, it is added in the tag tables
 
@@ -1135,6 +836,70 @@ class Database:
                             current_value)
                 self.unsaved_modifications = True
 
+    def new_path_values(self, path, values):
+        """
+        Adds all the values for the path
+        :param path: path name
+        :param values (tag, current_value, initial_value)
+        """
+
+        paths_initial = self.session.query(self.table_classes["initial"]).join(
+            self.table_classes["path"]).filter(
+            self.table_classes["path"].name == path).all()
+        paths_current = self.session.query(self.table_classes["current"]).join(
+            self.table_classes["path"]).filter(
+            self.table_classes["path"].name == path).all()
+        if len(paths_initial) is 1 and len(paths_current) is 1:
+            path_initial = paths_initial[0]
+            path_current = paths_current[0]
+
+        for value in values:
+
+            tag = value[0]
+            current_value = value[1]
+            initial_value = value[2]
+
+            if self.is_tag_list(tag):
+
+                # Initial value
+                if initial_value is not None:
+                    for order in range(0, len(initial_value)):
+                        element = initial_value[order]
+                        initial_to_add = self.table_classes[tag + "_initial"](
+                            index=self.get_path(path).index, order=order,
+                            value=element)
+                        self.session.add(initial_to_add)
+
+                # Current value
+                if current_value is not None:
+                    for order in range(0, len(current_value)):
+                        element = current_value[order]
+                        current_to_add = self.table_classes[tag + "_current"](
+                            index=self.get_path(path).index, order=order,
+                            value=element)
+                        self.session.add(current_to_add)
+
+            else:
+
+                database_current_value = getattr(
+                    path_current, self.tag_name_to_column_name(tag))
+                database_initial_value = getattr(
+                    path_initial, self.tag_name_to_column_name(tag))
+
+                # We add the value only if it does not already exist
+                if (database_current_value is None and
+                        database_initial_value is None):
+                    if initial_value is not None:
+                        setattr(
+                            path_initial, self.tag_name_to_column_name(tag),
+                            initial_value)
+                    if current_value is not None:
+                        setattr(
+                            path_current, self.tag_name_to_column_name(tag),
+                            current_value)
+
+            self.unsaved_modifications = True
+
     """ PATHS """
 
     def get_path(self, path):
@@ -1142,9 +907,6 @@ class Database:
         Gives the path table object of a path
         :param path: path name
         """
-
-        if not isinstance(path, str):
-            return None
 
         paths = self.session.query(self.table_classes["path"]).filter(
             self.table_classes["path"].name == path).all()
@@ -1182,11 +944,6 @@ class Database:
         Removes a path
         :param path: path name
         """
-
-        if not isinstance(path, str):
-            return None
-        if self.get_path(path) is None:
-            return None
 
         paths = self.session.query(self.table_classes["path"]).filter(
             self.table_classes["path"].name == path).all()
@@ -1227,9 +984,6 @@ class Database:
         :param search: search to match (str)
         :return: List of path names matching the search
         """
-
-        if not isinstance(search, str):
-            return None
 
         paths_matching = []
 
@@ -1524,7 +1278,7 @@ class Database:
 
         return self.unsaved_modifications
 
-    def update_table_classes(self):
+    def update_table_classes(self): # (0.015 sec on average)
         """
         Redefines the model after an update of the schema
         """
