@@ -14,11 +14,24 @@ from populse_db.database_model import (create_database, TAG_ORIGIN_BUILTIN,
 
 
 class TestDatabaseMethods(unittest.TestCase):
+    """
+    Class executing the unit tests of populse_db
+    """
+
     def setUp(self):
+        """
+        Called before every unit test
+        Creates a temporary folder containing the database file that will be used for the test
+        """
         self.temp_folder = tempfile.mkdtemp()
         self.path = os.path.join(self.temp_folder, "test.db")
     
     def tearDown(self):
+        """
+        Called after every unit test
+        Deletes the temporary folder created for the test
+        :return:
+        """
         shutil.rmtree(self.temp_folder)
         
         
