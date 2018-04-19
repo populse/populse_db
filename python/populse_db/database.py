@@ -7,9 +7,10 @@ from sqlalchemy import (create_engine, Column, String, Integer, Float,
                         MetaData, Date, DateTime, Time, Table,
                         ForeignKeyConstraint)
 from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.interfaces import PoolListener
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import CreateTable
+from sqlalchemy.engine import Engine
+from sqlalchemy import event
 
 from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_TYPE_FLOAT, TAG_TYPE_TIME,
@@ -25,21 +26,15 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN)
 
 
-class ForeignKeysListener(PoolListener):
-
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
     """
-    Manages the database pragmas
+    Manages the pragmas during the database opening
+    :param dbapi_connection:
+    :param connection_record:
     """
-
-    def connect(self, dbapi_con, con_record):
-        """
-        Manages the pragmas during the database opening
-        :param dbapi_con:
-        :param con_record:
-        """
-        dbapi_con.execute('pragma case_sensitive_like=ON')
-        dbapi_con.execute('pragma foreign_keys=ON')
-
+    dbapi_connection.execute('pragma case_sensitive_like=ON')
+    dbapi_connection.execute('pragma foreign_keys=ON')
 
 class Database:
 
@@ -129,8 +124,7 @@ class Database:
 
         # Database opened (temporary database file being a copy of the
         # original database file)
-        self.engine = create_engine('sqlite:///' + self.temp_file,
-                                    listeners=[ForeignKeysListener()])
+        self.engine = create_engine('sqlite:///' + self.temp_file)
 
         # Metadata generated
         self.update_table_classes()
