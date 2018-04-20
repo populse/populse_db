@@ -836,67 +836,81 @@ class Database:
                             current_value)
                 self.unsaved_modifications = True
 
-    def new_path_values(self, path, values):
+    def new_values(self, values):
         """
-        Adds all the values for the path
-        :param path: path name
-        :param values (tag, current_value, initial_value)
+        Adds all the values
+        :param values (dictionary with path key and [tag, current_value, initial_value] as value)
         """
 
-        paths_initial = self.session.query(self.table_classes["initial"]).join(
-            self.table_classes["path"]).filter(
-            self.table_classes["path"].name == path).all()
-        paths_current = self.session.query(self.table_classes["current"]).join(
-            self.table_classes["path"]).filter(
-            self.table_classes["path"].name == path).all()
-        if len(paths_initial) is 1 and len(paths_current) is 1:
-            path_initial = paths_initial[0]
-            path_current = paths_current[0]
+        tags_is_list = {}
 
-        for value in values:
+        for path in values:
 
-            tag = value[0]
-            current_value = value[1]
-            initial_value = value[2]
+            path_index = self.get_path(path).index
+            paths_initial = self.session.query(self.table_classes["initial"]).join(
+                self.table_classes["path"]).filter(
+                self.table_classes["path"].name == path).all()
+            paths_current = self.session.query(self.table_classes["current"]).join(
+                self.table_classes["path"]).filter(
+                self.table_classes["path"].name == path).all()
+            if len(paths_initial) is 1 and len(paths_current) is 1:
+                path_initial = paths_initial[0]
+                path_current = paths_current[0]
 
-            if self.is_tag_list(tag):
+            path_values = values[path]
 
-                # Initial value
-                if initial_value is not None:
-                    for order in range(0, len(initial_value)):
-                        element = initial_value[order]
-                        initial_to_add = self.table_classes[tag + "_initial"](
-                            index=self.get_path(path).index, order=order,
-                            value=element)
-                        self.session.add(initial_to_add)
+            for value in path_values:
 
-                # Current value
-                if current_value is not None:
-                    for order in range(0, len(current_value)):
-                        element = current_value[order]
-                        current_to_add = self.table_classes[tag + "_current"](
-                            index=self.get_path(path).index, order=order,
-                            value=element)
-                        self.session.add(current_to_add)
+                tag = value[0]
+                current_value = value[1]
+                initial_value = value[2]
 
-            else:
+                if tag in tags_is_list:
+                    is_list = tags_is_list[tag]
+                else:
+                    is_list = self.is_tag_list(tag)
+                    tags_is_list[tag] = is_list
 
-                database_current_value = getattr(
-                    path_current, self.tag_name_to_column_name(tag))
-                database_initial_value = getattr(
-                    path_initial, self.tag_name_to_column_name(tag))
+                if is_list:
 
-                # We add the value only if it does not already exist
-                if (database_current_value is None and
-                        database_initial_value is None):
+                    # Initial value
                     if initial_value is not None:
-                        setattr(
-                            path_initial, self.tag_name_to_column_name(tag),
-                            initial_value)
+                        for order in range(0, len(initial_value)):
+                            element = initial_value[order]
+                            initial_to_add = self.table_classes[tag + "_initial"](
+                                index=path_index, order=order,
+                                value=element)
+                            self.session.add(initial_to_add)
+
+                    # Current value
                     if current_value is not None:
-                        setattr(
-                            path_current, self.tag_name_to_column_name(tag),
-                            current_value)
+                        for order in range(0, len(current_value)):
+                            element = current_value[order]
+                            current_to_add = self.table_classes[tag + "_current"](
+                                index=path_index, order=order,
+                                value=element)
+                            self.session.add(current_to_add)
+
+                else:
+
+                    column_name = self.tag_name_to_column_name(tag)
+
+                    database_current_value = getattr(
+                        path_current, column_name)
+                    database_initial_value = getattr(
+                        path_initial, column_name)
+
+                    # We add the value only if it does not already exist
+                    if (database_current_value is None and
+                            database_initial_value is None):
+                        if initial_value is not None:
+                            setattr(
+                                path_initial, column_name,
+                                initial_value)
+                        if current_value is not None:
+                            setattr(
+                                path_current, column_name,
+                                current_value)
 
             self.unsaved_modifications = True
 
@@ -975,6 +989,34 @@ class Database:
             self.session.add(current)
             self.session.add(initial)
             self.unsaved_modifications = True
+
+    def add_paths(self, paths):
+        """
+        Adds all paths
+        :param paths: list of paths (path, checksum)
+        """
+
+        for path in paths:
+
+            path_name = path[0]
+            path_checksum = path[1]
+
+            # Adding the path in the Tag table
+            paths_query = self.session.query(self.table_classes["path"]).filter(
+                self.table_classes["path"].name == path_name).all()
+            if len(paths_query) is 0:
+                path_to_add = self.table_classes["path"](name=path_name, checksum=path_checksum)
+                self.session.add(path_to_add)
+
+                path_index = self.get_path(path_name).index
+
+                # Adding the index to both initial and current tables
+                initial = self.table_classes["initial"](index=path_index)
+                current = self.table_classes["current"](index=path_index)
+                self.session.add(current)
+                self.session.add(initial)
+
+                self.unsaved_modifications = True
 
     """ UTILS """
 
