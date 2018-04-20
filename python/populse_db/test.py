@@ -745,4 +745,4 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(scan.checksum, "159abc")
 
 if __name__ == '__main__':
-    unittest.main(exit=False)
+    unittest.main()
