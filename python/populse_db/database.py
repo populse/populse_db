@@ -873,6 +873,9 @@ class Database:
 
                 if is_list:
 
+                    # Removing the old value in case the path was already in the database
+                    self.remove_value(path, tag)
+
                     # Initial value
                     if initial_value is not None:
                         for order in range(0, len(initial_value)):
@@ -895,21 +898,10 @@ class Database:
 
                     column_name = self.tag_name_to_column_name(tag)
 
-                    database_current_value = getattr(
-                        path_current, column_name)
-                    database_initial_value = getattr(
-                        path_initial, column_name)
+                    setattr(path_initial, column_name,
+                            initial_value)
 
-                    # We add the value only if it does not already exist
-                    if (database_current_value is None and
-                            database_initial_value is None):
-                        if initial_value is not None:
-                            setattr(
-                                path_initial, column_name,
-                                initial_value)
-                        if current_value is not None:
-                            setattr(
-                                path_current, column_name,
+                    setattr(path_current, column_name,
                                 current_value)
 
             self.unsaved_modifications = True
