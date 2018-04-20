@@ -1023,8 +1023,15 @@ class Database:
 
         # Itering over all values and finding matches
 
+        # Search in FileName
+        values = self.session.query(self.table_classes["path"].name).filter(self.table_classes["path"].name.like("%" + search + "%")).distinct().all()
+        for value in values:
+            if value not in paths_matching:
+                paths_matching.append(value.name)
+
         # Only the visible tags are taken into account
         for tag in self.get_visualized_tags():
+
             if not self.is_tag_list(tag.name):
                 # The tag has a simple type, the tag column is used in the
                 # current table
@@ -1121,6 +1128,7 @@ class Database:
             for path in query:
                 if path.name not in paths_list:
                     paths_list.append(path.name)
+
             return paths_list
 
         else:
@@ -1318,10 +1326,10 @@ class Database:
         """
 
         self.table_classes.clear()
-        self.base = automap_base()
-        self.base.prepare(self.engine, reflect=True)
-        self.metadata = MetaData(bind=self.engine)
-        self.metadata.reflect(bind=self.engine)
+        self.metadata = MetaData()
+        self.metadata.reflect(self.engine)
+        self.base = automap_base(metadata=self.metadata)
+        self.base.prepare()
         for table in self.metadata.tables.values():
             table_name = table.name
             self.table_classes[table_name] = getattr(self.base.classes,
