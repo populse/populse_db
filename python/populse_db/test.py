@@ -63,13 +63,12 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         # Testing with a first tag
         database = Database(self.path)
-        database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Checking the tag properties
         tag = database.get_tag("PatientName")
         self.assertEqual(tag.name, "PatientName")
-        self.assertTrue(tag.visible)
         self.assertEqual(tag.origin, TAG_ORIGIN_BUILTIN)
         self.assertEqual(tag.type, TAG_TYPE_STRING)
         self.assertIsNone(tag.unit)
@@ -80,15 +79,15 @@ class TestDatabaseMethods(unittest.TestCase):
         #database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Testing with all tag types
-        database.add_tag("BandWidth", True, TAG_ORIGIN_BUILTIN,
+        database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_FLOAT, TAG_UNIT_MHZ, None, None)
         database.add_tag(
-            "Bits per voxel", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
+            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
         database.add_tag(
-            "AcquisitionTime", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_TIME, None, None, None)
+            "AcquisitionTime", TAG_ORIGIN_BUILTIN, TAG_TYPE_TIME, None, None, None)
         database.add_tag(
-            "AcquisitionDate", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_DATETIME, None, None, None)
-        database.add_tag("Dataset dimensions", True,
+            "AcquisitionDate", TAG_ORIGIN_BUILTIN, TAG_TYPE_DATETIME, None, None, None)
+        database.add_tag("Dataset dimensions",
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Testing with wrong parameters
@@ -109,11 +108,11 @@ class TestDatabaseMethods(unittest.TestCase):
         database = Database(self.path)
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
         database.add_tag(
-            "SequenceName", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
-        database.add_tag("Dataset dimensions", True,
+            "SequenceName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
+        database.add_tag("Dataset dimensions",
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Adding scans
@@ -160,7 +159,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database = Database(self.path)
 
         # Adding a tag
-        database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Testing that the tag is returned if it exists
@@ -178,9 +177,9 @@ class TestDatabaseMethods(unittest.TestCase):
         database = Database(self.path)
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("Dataset dimensions", True,
+        database.add_tag("Dataset dimensions",
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Testing that the correct boolean is returned
@@ -201,14 +200,14 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("scan1", "159abc")
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("Dataset dimensions", True,
+        database.add_tag("Dataset dimensions",
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
         database.add_tag(
-            "Bits per voxel", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
+            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
         database.add_tag(
-            "Grids spacing", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_FLOAT, None, None, None)
+            "Grids spacing", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_FLOAT, None, None, None)
 
         # Adding values
         database.new_value("scan1", "PatientName", "test", "test")
@@ -257,14 +256,14 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("scan1", "159abc")
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
         database.add_tag(
-            "Bits per voxel", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag("Dataset dimensions", True,
+            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag("Dataset dimensions",
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
         database.add_tag(
-            "Grids spacing", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_FLOAT, None, None, None)
+            "Grids spacing", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_FLOAT, None, None, None)
 
         # Adding values
         database.new_value("scan1", "PatientName", "test", "test")
@@ -310,7 +309,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("scan1", "159abc")
 
         # Adding tag
-        database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Adding a value
@@ -353,14 +352,14 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("scan1", "159abc")
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
         database.add_tag(
-            "Bits per voxel", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
+            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
         database.add_tag(
-            "AcquisitionDate", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_DATETIME, None, None, None)
+            "AcquisitionDate", TAG_ORIGIN_BUILTIN, TAG_TYPE_DATETIME, None, None, None)
         database.add_tag(
-            "AcquisitionTime", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_TIME, None, None, None)
+            "AcquisitionTime", TAG_ORIGIN_BUILTIN, TAG_TYPE_TIME, None, None, None)
 
         # Adding values and changing it
         database.new_value("scan1", "PatientName", "test", "test")
@@ -424,11 +423,11 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("scan1", "159abc")
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
         database.add_tag(
-            "Bits per voxel", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag("Dataset dimensions", True,
+            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag("Dataset dimensions",
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Adding values and changing it
@@ -481,11 +480,11 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("scan1", "159abc")
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
         database.add_tag(
-            "Bits per voxel", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag("Dataset dimensions", True,
+            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag("Dataset dimensions",
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Adding values
@@ -554,20 +553,20 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("scan2", "def758")
 
         # Adding tags
-        database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
         database.add_tag(
-            "Bits per voxel", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
+            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
         database.add_tag(
-            "BandWidth", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_FLOAT, None, None, None)
+            "BandWidth", TAG_ORIGIN_BUILTIN, TAG_TYPE_FLOAT, None, None, None)
         database.add_tag(
-            "AcquisitionTime", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_TIME, None, None, None)
+            "AcquisitionTime", TAG_ORIGIN_BUILTIN, TAG_TYPE_TIME, None, None, None)
         database.add_tag(
-            "AcquisitionDate", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_DATETIME, None, None, None)
-        database.add_tag("Dataset dimensions", True,
+            "AcquisitionDate", TAG_ORIGIN_BUILTIN, TAG_TYPE_DATETIME, None, None, None)
+        database.add_tag("Dataset dimensions",
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
         database.add_tag(
-            "Grids spacing", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_FLOAT, None, None, None)
+            "Grids spacing", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_FLOAT, None, None, None)
 
         # Adding values
         database.new_value("scan1", "PatientName", "test", None)
@@ -666,7 +665,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("scan1", "159abc")
 
         # Adding tag
-        database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Adding value
