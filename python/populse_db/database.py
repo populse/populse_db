@@ -232,6 +232,8 @@ class Database:
                 description)
         """
 
+        tag_rows = []
+
         for tag in tags:
 
             tag_name = tag[0]
@@ -243,7 +245,7 @@ class Database:
                                             default_value=tag[5],
                                             description=tag[6])
 
-            self.session.add(tag_row)
+            tag_rows.append(tag_row)
 
             if tag_type in LIST_TYPES:
 
@@ -288,10 +290,13 @@ class Database:
                 # Columns creation
                 column = Column(tag_name, self.tag_type_to_column_type(tag_type))
                 column_type = column.type.compile(self.engine.dialect)
+                tag_column_name = self.tag_name_to_column_name(tag_name)
                 self.session.execute(
-                    'ALTER TABLE %s ADD COLUMN %s %s;' % ("initial", self.tag_name_to_column_name(tag_name), column_type))
+                    'ALTER TABLE %s ADD COLUMN %s %s;' % ("initial", tag_column_name, column_type))
                 self.session.execute(
-                    'ALTER TABLE %s ADD COLUMN %s %s;' % ("current", self.tag_name_to_column_name(tag_name), column_type))
+                    'ALTER TABLE %s ADD COLUMN %s %s;' % ("current", tag_column_name, column_type))
+
+        self.session.add_all(tag_rows)
 
         self.unsaved_modifications = True
 
@@ -722,9 +727,10 @@ class Database:
             values = self.session.query(self.table_classes["current"]).join(
                 self.table_classes["path"]).filter(
                 self.table_classes["path"].name == path).all()
+            tag_column_name = self.tag_name_to_column_name(tag)
             if len(values) is 1:
                 value = values[0]
-                setattr(value, self.tag_name_to_column_name(tag), None)
+                setattr(value, tag_column_name, None)
 
             # Initial table
             values = self.session.query(self.table_classes["initial"]).join(
@@ -732,7 +738,7 @@ class Database:
                 self.table_classes["path"].name == path).all()
             if len(values) is 1:
                 value = values[0]
-                setattr(value, self.tag_name_to_column_name(tag), None)
+                setattr(value, tag_column_name, None)
             self.unsaved_modifications = True
 
     def check_type_value(self, value, valid_type):
@@ -843,19 +849,17 @@ class Database:
         """
 
         tags_is_list = {}
+        values_added = []
 
         for path in values:
 
             path_index = self.get_path(path).index
-            paths_initial = self.session.query(self.table_classes["initial"]).join(
+            path_initial = self.session.query(self.table_classes["initial"]).join(
                 self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
-            paths_current = self.session.query(self.table_classes["current"]).join(
+                self.table_classes["path"].name == path).first()
+            path_current = self.session.query(self.table_classes["current"]).join(
                 self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
-            if len(paths_initial) is 1 and len(paths_current) is 1:
-                path_initial = paths_initial[0]
-                path_current = paths_current[0]
+                self.table_classes["path"].name == path).first()
 
             path_values = values[path]
 
@@ -873,26 +877,32 @@ class Database:
 
                 if is_list:
 
-                    # Removing the old value in case the path was already in the database
-                    self.remove_value(path, tag)
+                    # Old values removed first
+                    # Tag current table
+                    current_values = self.session.query(self.table_classes[tag + "_current"]).join(
+                        self.table_classes["path"]).filter(
+                        self.table_classes["path"].name == path).all()
+                    for value in current_values:
+                        self.session.delete(value)
 
-                    # Initial value
-                    if initial_value is not None:
+                    # Tag initial table
+                    initial_values = self.session.query(self.table_classes[tag + "_initial"]).join(
+                        self.table_classes["path"]).filter(
+                        self.table_classes["path"].name == path).all()
+                    for value in initial_values:
+                        self.session.delete(value)
+
+                    # List values added
+                    if initial_value is not None and current_value is not None:
                         for order in range(0, len(initial_value)):
-                            element = initial_value[order]
                             initial_to_add = self.table_classes[tag + "_initial"](
                                 index=path_index, order=order,
-                                value=element)
-                            self.session.add(initial_to_add)
-
-                    # Current value
-                    if current_value is not None:
-                        for order in range(0, len(current_value)):
-                            element = current_value[order]
+                                value=initial_value[order])
                             current_to_add = self.table_classes[tag + "_current"](
                                 index=path_index, order=order,
-                                value=element)
-                            self.session.add(current_to_add)
+                                value=current_value[order])
+                            values_added.append(initial_to_add)
+                            values_added.append(current_to_add)
 
                 else:
 
@@ -904,7 +914,9 @@ class Database:
                     setattr(path_current, column_name,
                                 current_value)
 
-            self.unsaved_modifications = True
+
+        self.unsaved_modifications = True
+        self.session.add_all(values_added)
 
     """ PATHS """
 
@@ -995,12 +1007,12 @@ class Database:
 
             # Adding the path in the Tag table
             paths_query = self.session.query(self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path_name).all()
-            if len(paths_query) is 0:
+                self.table_classes["path"].name == path_name).first()
+            if paths_query is None:
                 path_to_add = self.table_classes["path"](name=path_name, checksum=path_checksum)
                 self.session.add(path_to_add)
 
-                path_index = self.get_path(path_name).index
+                path_index = self.get_path(path_name).index # get_path => 40%
 
                 # Adding the index to both initial and current tables
                 initial = self.table_classes["initial"](index=path_index)
