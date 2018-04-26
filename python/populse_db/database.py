@@ -408,11 +408,9 @@ class Database:
         :return: The tag table object if the tag exists, None otherwise
         """
 
-        tags = self.session.query(self.table_classes["tag"]).filter(
-            self.table_classes["tag"].name == name).all()
-        if len(tags) is 1:
-            return tags[0]
-        return None
+        tag = self.session.query(self.table_classes["tag"]).filter(
+            self.table_classes["tag"].name == name).first()
+        return tag
 
     def get_tags_names(self):
         """
@@ -868,12 +866,9 @@ class Database:
         :param path: path name
         """
 
-        paths = self.session.query(self.table_classes["path"]).filter(
-            self.table_classes["path"].name == path).all()
-        if len(paths) is 1:
-            path = paths[0]
-            return path
-        return None
+        path = self.session.query(self.table_classes["path"]).filter(
+            self.table_classes["path"].name == path).first()
+        return path
 
     def get_paths_names(self):
         """
