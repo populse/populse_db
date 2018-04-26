@@ -63,13 +63,6 @@ class Database:
         - get_tag_type: gives the tag type
         - get_tags_names: gives all tag names
         - get_tags: gives all tag table objects
-        - reset_all_visibilities: puts all tag visibilities to False
-        - get_visualized_tags: gives the visualized tags
-        - set_tag_origin: sets the tag origin
-        - set_tag_unit: sets the tag unit
-        - set_tag_type: sets the tag type
-        - set_tag_description: sets the tag description
-        - set_tag_visibility: sets the tag visibility
         - get_current_value: gives the current value of <path, tag>
         - get_initial_value: gives the initial value of <path, tag>
         - is_value_modified: to know if a value has been modified
@@ -135,7 +128,7 @@ class Database:
 
     """ TAGS """
 
-    def add_tag(self, name, visible, origin, tag_type, unit, default_value,
+    def add_tag(self, name, origin, tag_type, unit, default_value,
                 description): # (0.05 sec on average)
         """
         Adds a tag to the database, if it does not already exist
@@ -151,7 +144,7 @@ class Database:
         """
 
         # Adding the tag in the tag table (0.003 sec on average)
-        tag = self.table_classes["tag"](name=name, visible=visible, origin=origin,
+        tag = self.table_classes["tag"](name=name, origin=origin,
                                         type=tag_type, unit=unit,
                                         default_value=default_value,
                                         description=description)
@@ -228,7 +221,7 @@ class Database:
     def add_tags(self, tags):
         """
         Add all the tags
-        :param tags: List of tags to add (name, visible, origin, tag_type, unit, default_value,
+        :param tags: List of tags to add (name, origin, tag_type, unit, default_value,
                 description)
         """
 
@@ -237,13 +230,13 @@ class Database:
         for tag in tags:
 
             tag_name = tag[0]
-            tag_type = tag[3]
+            tag_type = tag[2]
 
             # Adding the tag in the tag table (0.003 sec on average)
-            tag_row = self.table_classes["tag"](name=tag_name, visible=tag[1], origin=tag[2],
-                                            type=tag_type, unit=tag[4],
-                                            default_value=tag[5],
-                                            description=tag[6])
+            tag_row = self.table_classes["tag"](name=tag_name, origin=tag[1],
+                                            type=tag_type, unit=tag[3],
+                                            default_value=tag[4],
+                                            description=tag[5])
 
             tag_rows.append(tag_row)
 
@@ -441,43 +434,6 @@ class Database:
 
         tags_list = []
         tags = self.session.query(self.table_classes["tag"]).all()
-        for tag in tags:
-            tags_list.append(tag)
-        return tags_list
-
-    def reset_tag_visibilities(self):
-        """
-        Resets all tags visibility to False
-        """
-
-        tags = self.session.query(self.table_classes["tag"]).all()
-        for tag in tags:
-            tag.visible = False
-        self.unsaved_modifications = True
-
-    def set_tag_visibility(self, name, visible):
-        """
-        Sets the tag visibility
-        :param name: Tag name
-        :param visible: Tag new visibility (True or False)
-        """
-
-        tags = self.session.query(self.table_classes["tag"]).filter(self.table_classes["tag"].name == name).all()
-
-        if len(tags) is 1:
-            tag = tags[0]
-            tag.visible = visible
-            self.unsaved_modifications = True
-
-    def get_visualized_tags(self):
-        """
-        Gives the list of visualized tags
-        :return: List of visualized tags
-        """
-
-        tags_list = []
-        tags = self.session.query(self.table_classes["tag"]).filter(
-            self.table_classes["tag"].visible == True).all()
         for tag in tags:
             tags_list.append(tag)
         return tags_list
@@ -1010,10 +966,11 @@ class Database:
 
     """ UTILS """
 
-    def get_paths_matching_search(self, search):
+    def get_paths_matching_search(self, search, tags):
         """
         Returns the list of paths names matching the search
         :param search: search to match (str)
+        :param tags: List of tags taken into account
         :return: List of path names matching the search
         """
 
@@ -1028,16 +985,16 @@ class Database:
                 paths_matching.append(value.name)
 
         # Only the visible tags are taken into account
-        for tag in self.get_visualized_tags():
+        for tag in tags:
 
-            if not self.is_tag_list(tag.name):
+            if not self.is_tag_list(tag):
                 # The tag has a simple type, the tag column is used in the
                 # current table
 
                 values = self.session.query(self.table_classes["path"].name).join(
                     self.table_classes["current"]).filter(
                     getattr(self.table_classes["current"],
-                            self.tag_name_to_column_name(tag.name)).like(
+                            self.tag_name_to_column_name(tag)).like(
                                 "%" + search + "%")).distinct().all()
                 for value in values:
                     if value not in paths_matching:
@@ -1046,7 +1003,7 @@ class Database:
                 # The tag has a list type, the tag current table is used
 
                 for path in self.get_paths_names():
-                    path_value = self.get_current_value(path, tag.name)
+                    path_value = self.get_current_value(path, tag)
                     if (search in str(path_value) and
                             path not in paths_matching):
                         paths_matching.append(path)

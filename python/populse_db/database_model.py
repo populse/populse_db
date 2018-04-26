@@ -62,7 +62,6 @@ def fill_tables(metadata):
     """
     Table('tag', metadata,
           Column("name", String, primary_key=True),
-          Column("visible", Boolean, nullable=False),
           Column(
               "origin", Enum(TAG_ORIGIN_BUILTIN, TAG_ORIGIN_USER), nullable=False),
           Column(
