@@ -24,7 +24,7 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_UNIT_MM, TAG_UNIT_HZPIXEL,
                                        TAG_UNIT_DEGREE, TAG_UNIT_MHZ,
                                        TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN,
-                                       LIST_TYPES, SIMPLE_TYPES)
+                                       LIST_TYPES, SIMPLE_TYPES, TYPE_TO_COLUMN)
 
 
 @event.listens_for(Engine, "connect")
@@ -310,19 +310,7 @@ class Database:
         :return: The column type given the tag type
         """
 
-        if tag_type == TAG_TYPE_INTEGER or tag_type == TAG_TYPE_LIST_INTEGER:
-            return Integer
-        elif tag_type == TAG_TYPE_FLOAT or tag_type == TAG_TYPE_LIST_FLOAT:
-            return Float
-        elif tag_type == TAG_TYPE_DATE or tag_type == TAG_TYPE_LIST_DATE:
-            return Date
-        elif (tag_type == TAG_TYPE_DATETIME or
-              tag_type == TAG_TYPE_LIST_DATETIME):
-            return DateTime
-        elif tag_type == TAG_TYPE_TIME or tag_type == TAG_TYPE_LIST_TIME:
-            return Time
-        elif tag_type == TAG_TYPE_STRING or tag_type == TAG_TYPE_LIST_STRING:
-            return String
+        return TYPE_TO_COLUMN[tag_type]
 
     def tag_name_to_column_name(self, tag):
         """
@@ -768,9 +756,7 @@ class Database:
             return True
         if valid_type == TAG_TYPE_DATE and value_type == date:
             return True
-        if (valid_type in [TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_DATETIME,
-                           TAG_TYPE_LIST_TIME, TAG_TYPE_LIST_STRING,
-                           TAG_TYPE_LIST_INTEGER, TAG_TYPE_LIST_FLOAT]
+        if (valid_type in LIST_TYPES
                 and value_type == list):
             for value_element in value:
                 if not self.check_type_value(value_element,
@@ -1343,6 +1329,5 @@ class Database:
         self.base = automap_base(metadata=self.metadata)
         self.base.prepare()
         for table in self.metadata.tables.values():
-            table_name = table.name
-            self.table_classes[table_name] = getattr(self.base.classes,
-                                                     table_name)
+            self.table_classes[table.name] = getattr(self.base.classes,
+                                                     table.name)
