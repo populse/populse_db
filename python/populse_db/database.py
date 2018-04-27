@@ -225,6 +225,14 @@ class Database:
                 description)
         """
 
+        cascade_name = "CASCADE"
+        name_name = "name"
+        order_name = "order"
+        value_name = "value"
+        path_name = "path.name"
+        initial_name = "initial"
+        current_name = "current"
+
         tag_rows = []
 
         for tag in tags:
@@ -246,29 +254,29 @@ class Database:
 
                 # Tag tables initial and current definition (0.00045 sec on average)
                 tag_table_current = Table(tag_name + "_current", self.metadata,
-                                          Column("name", Integer,
+                                          Column(name_name, Integer,
                                                  primary_key=True),
-                                          Column("order", Integer,
+                                          Column(order_name, Integer,
                                                  primary_key=True),
-                                          Column("value",
+                                          Column(value_name,
                                                  column_type,
                                                  nullable=False),
-                                          ForeignKeyConstraint(["name"],
-                                                               ["path.name"],
-                                                               ondelete="CASCADE",
-                                                               onupdate="CASCADE"))
+                                          ForeignKeyConstraint([name_name],
+                                                               [path_name],
+                                                               ondelete=cascade_name,
+                                                               onupdate=cascade_name))
                 tag_table_initial = Table(tag_name + "_initial", self.metadata,
-                                          Column("name", Integer,
+                                          Column(name_name, Integer,
                                                  primary_key=True),
-                                          Column("order", Integer,
+                                          Column(order_name, Integer,
                                                  primary_key=True),
-                                          Column("value",
+                                          Column(value_name,
                                                  column_type,
                                                  nullable=False),
-                                          ForeignKeyConstraint(["name"],
-                                                               ["path.name"],
-                                                               ondelete="CASCADE",
-                                                               onupdate="CASCADE"))
+                                          ForeignKeyConstraint([name_name],
+                                                               [path_name],
+                                                               ondelete=cascade_name,
+                                                               onupdate=cascade_name))
 
                 # Both tables added (0.03 sec on average)
                 current_query = CreateTable(tag_table_current)
@@ -285,9 +293,9 @@ class Database:
                 column_type = column.type.compile(self.engine.dialect)
                 tag_column_name = self.tag_name_to_column_name(tag_name)
                 self.session.execute(
-                    'ALTER TABLE %s ADD COLUMN %s %s;' % ("initial", tag_column_name, column_type))
+                    'ALTER TABLE %s ADD COLUMN %s %s;' % (initial_name, tag_column_name, column_type))
                 self.session.execute(
-                    'ALTER TABLE %s ADD COLUMN %s %s;' % ("current", tag_column_name, column_type))
+                    'ALTER TABLE %s ADD COLUMN %s %s;' % (current_name, tag_column_name, column_type))
 
         self.session.add_all(tag_rows)
 
@@ -772,13 +780,15 @@ class Database:
 
         tags_is_list = {}
         values_added = []
+        initial_name = "initial"
+        current_name = "current"
 
         for path in values:
 
-            path_initial = self.session.query(self.table_classes["initial"]).filter(
-                self.table_classes["initial"].name == path).first()
-            path_current = self.session.query(self.table_classes["current"]).filter(
-                self.table_classes["current"].name == path).first()
+            path_initial = self.session.query(self.table_classes[initial_name]).filter(
+                self.table_classes[initial_name].name == path).first()
+            path_current = self.session.query(self.table_classes[current_name]).filter(
+                self.table_classes[current_name].name == path).first()
 
             path_values = values[path]
 
@@ -796,26 +806,25 @@ class Database:
 
                 if is_list:
 
+                    current_table_name = tag + "_current"
+                    initial_table_name = tag + "_initial"
+
                     # Old values removed first
                     # Tag current table
-                    current_values = self.session.query(self.table_classes[tag + "_current"]).filter(
-                        self.table_classes[tag + "_current"].name == path).all()
-                    for value in current_values:
-                        self.session.delete(value)
+                    self.session.query(self.table_classes[current_table_name]).filter(
+                        self.table_classes[current_table_name].name == path).delete()
 
                     # Tag initial table
-                    initial_values = self.session.query(self.table_classes[tag + "_initial"]).filter(
-                        self.table_classes[tag + "_initial"].name == path).all()
-                    for value in initial_values:
-                        self.session.delete(value)
+                    self.session.query(self.table_classes[initial_table_name]).filter(
+                        self.table_classes[initial_table_name].name == path).delete()
 
                     # List values added
                     if initial_value is not None and current_value is not None:
                         for order in range(0, len(initial_value)):
-                            initial_to_add = self.table_classes[tag + "_initial"](
+                            initial_to_add = self.table_classes[initial_table_name](
                                 name=path, order=order,
                                 value=initial_value[order])
-                            current_to_add = self.table_classes[tag + "_current"](
+                            current_to_add = self.table_classes[current_table_name](
                                 name=path, order=order,
                                 value=current_value[order])
                             values_added.append(initial_to_add)
@@ -914,21 +923,25 @@ class Database:
         :param paths: list of paths (path, checksum)
         """
 
+        path_table_name = "path"
+        initial_name = "initial"
+        current_name = "current"
+
         for path in paths:
 
             path_name = path[0]
             path_checksum = path[1]
 
             # Adding the path in the Tag table
-            paths_query = self.session.query(self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path_name).first()
+            paths_query = self.session.query(self.table_classes[path_table_name]).filter(
+                self.table_classes[path_table_name].name == path_name).first()
             if paths_query is None:
-                path_to_add = self.table_classes["path"](name=path_name, checksum=path_checksum)
+                path_to_add = self.table_classes[path_table_name](name=path_name, checksum=path_checksum)
                 self.session.add(path_to_add)
 
                 # Adding the index to both initial and current tables
-                initial = self.table_classes["initial"](name=path_name)
-                current = self.table_classes["current"](name=path_name)
+                initial = self.table_classes[initial_name](name=path_name)
+                current = self.table_classes[current_name](name=path_name)
                 self.session.add(current)
                 self.session.add(initial)
 
