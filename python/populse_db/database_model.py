@@ -80,14 +80,13 @@ def fill_tables(metadata):
           Column("description", String, nullable=True))
 
     Table('path', metadata,
-          Column("name", String, unique=True, nullable=False),
-          Column("checksum", String, nullable=False),
-          Column("index", Integer, primary_key=True, autoincrement=True))
+          Column("name", String, primary_key=True),
+          Column("checksum", String, nullable=False))
 
-    Table('current', metadata, Column("index", Integer, primary_key=True),
-          ForeignKeyConstraint(["index"], ["path.index"], ondelete="CASCADE",
+    Table('current', metadata, Column("name", String, primary_key=True),
+          ForeignKeyConstraint(["name"], ["path.name"], ondelete="CASCADE",
                                onupdate="CASCADE"))
 
-    Table('initial', metadata, Column("index", Integer, primary_key=True),
-          ForeignKeyConstraint(["index"], ["path.index"], ondelete="CASCADE",
+    Table('initial', metadata, Column("name", String, primary_key=True),
+          ForeignKeyConstraint(["name"], ["path.name"], ondelete="CASCADE",
                                onupdate="CASCADE"))
