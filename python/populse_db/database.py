@@ -103,6 +103,9 @@ class Database:
 
         self.path = path
         self.table_classes = {}
+        self.tags = {}
+        self.paths = {}
+        self.names = {}
 
         # Creation the database file if it does not already exist
         if not os.path.exists(self.path):
@@ -152,6 +155,7 @@ class Database:
                                         description=description)
 
         self.session.add(tag)
+        self.tags[name] = tag
 
         if tag_type in LIST_TYPES:
             # The tag has a list type: new tag tables added (0.04 sec on average)
@@ -251,6 +255,7 @@ class Database:
                                             description=tag[5])
 
             tag_rows.append(tag_row)
+            self.tags[tag_name] = tag_row
 
             if tag_type in LIST_TYPES:
 
@@ -325,8 +330,12 @@ class Database:
         :return: Valid column name
         """
 
-        column_name = hashlib.md5(tag.encode('utf-8')).hexdigest()
-        return column_name
+        if tag in self.names:
+            return self.names[tag]
+        else:
+            column_name = hashlib.md5(tag.encode('utf-8')).hexdigest()
+            self.names[tag] = column_name
+            return column_name
 
     def remove_tag(self, name):
         """
@@ -337,6 +346,8 @@ class Database:
         is_tag_list = self.is_tag_list(name)
         self.session.query(self.table_classes["tag"]).filter(
             self.table_classes["tag"].name == name).delete()
+
+        self.tags.pop(name, None)
 
         if is_tag_list:
             # The tag has a list type, both tag tables are removed
@@ -410,9 +421,13 @@ class Database:
         :return: The tag table object if the tag exists, None otherwise
         """
 
-        tag = self.session.query(self.table_classes["tag"]).filter(
-            self.table_classes["tag"].name == name).first()
-        return tag
+        if name in self.tags:
+            return self.tags[name]
+        else:
+            tag = self.session.query(self.table_classes["tag"]).filter(
+                self.table_classes["tag"].name == name).first()
+            self.tags[name] = tag
+            return tag
 
     def get_tags_names(self):
         """
@@ -859,9 +874,13 @@ class Database:
         :param path: path name
         """
 
-        path = self.session.query(self.table_classes["path"]).filter(
+        if path in self.paths:
+            return self.paths[path]
+        else:
+            path_row = self.session.query(self.table_classes["path"]).filter(
             self.table_classes["path"].name == path).first()
-        return path
+            self.paths[path] = path_row
+            return path_row
 
     def get_paths_names(self):
         """
@@ -896,6 +915,8 @@ class Database:
         self.session.query(self.table_classes["path"]).filter(
             self.table_classes["path"].name == path).delete()
 
+        self.paths.pop(path, None)
+
         self.unsaved_modifications = True
 
         # Thanks to the foreign key and on delete cascade, the path is
@@ -914,6 +935,7 @@ class Database:
         if len(paths) is 0:
             path_to_add = self.table_classes["path"](name=path, checksum=checksum)
             self.session.add(path_to_add)
+            self.paths[path] = path_to_add
 
             # Adding the index to both initial and current tables
             initial = self.table_classes["initial"](name=path)
@@ -943,6 +965,7 @@ class Database:
             if paths_query is None:
                 path_to_add = self.table_classes[path_table_name](name=path_name, checksum=path_checksum)
                 self.session.add(path_to_add)
+                self.paths[path_name] = path_to_add
 
                 # Adding the index to both initial and current tables
                 initial = self.table_classes[initial_name](name=path_name)

@@ -169,7 +169,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing that the tag is returned if it exists
         tag = database.get_tag("PatientName")
-        self.assertIsInstance(tag, database.table_classes["tag"])
+        self.assertIsNotNone(tag)
 
         # Testing that None is returned if the tag does not exist
         tag = database.get_tag("Test")
