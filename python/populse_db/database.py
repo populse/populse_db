@@ -10,6 +10,8 @@ from sqlalchemy.schema import CreateTable, DropTable
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
 
+import hashlib
+
 import time as time_exec
 
 from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
@@ -154,8 +156,10 @@ class Database:
         if tag_type in LIST_TYPES:
             # The tag has a list type: new tag tables added (0.04 sec on average)
 
+            table_name = self.tag_name_to_column_name(name)
+
             # Tag tables initial and current definition (0.00045 sec on average)
-            tag_table_current = Table(name + "_current", self.metadata,
+            tag_table_current = Table(table_name + "_current", self.metadata,
                                       Column("name", String,
                                              primary_key=True),
                                       Column("order", Integer,
@@ -168,7 +172,7 @@ class Database:
                                                            ["path.name"],
                                                            ondelete="CASCADE",
                                                            onupdate="CASCADE"))
-            tag_table_initial = Table(name + "_initial", self.metadata,
+            tag_table_initial = Table(table_name + "_initial", self.metadata,
                                       Column("name", String,
                                              primary_key=True),
                                       Column("order", Integer,
@@ -206,11 +210,11 @@ class Database:
             # Tag column added to both initial and current tables (0.05 sec on average)
             self.session.execute(
                 'ALTER TABLE %s ADD COLUMN %s %s' % (
-                    "initial", self.tag_name_to_column_name(name),
+                    "initial", "\"" + self.tag_name_to_column_name(name) + "\"",
                     column_type))
             self.session.execute(
                 'ALTER TABLE %s ADD COLUMN %s %s' % (
-                    "current", self.tag_name_to_column_name(name),
+                    "current", "\"" + self.tag_name_to_column_name(name) + "\"",
                     column_type))
 
             self.unsaved_modifications = True
@@ -251,9 +255,10 @@ class Database:
             if tag_type in LIST_TYPES:
 
                 column_type = self.tag_type_to_column_type(tag_type)
+                table_name = self.tag_name_to_column_name(tag_name)
 
                 # Tag tables initial and current definition (0.00045 sec on average)
-                tag_table_current = Table(tag_name + "_current", self.metadata,
+                tag_table_current = Table(table_name + "_current", self.metadata,
                                           Column(name_name, Integer,
                                                  primary_key=True),
                                           Column(order_name, Integer,
@@ -265,7 +270,8 @@ class Database:
                                                                [path_name],
                                                                ondelete=cascade_name,
                                                                onupdate=cascade_name))
-                tag_table_initial = Table(tag_name + "_initial", self.metadata,
+
+                tag_table_initial = Table(table_name + "_initial", self.metadata,
                                           Column(name_name, Integer,
                                                  primary_key=True),
                                           Column(order_name, Integer,
@@ -291,7 +297,7 @@ class Database:
                 # Columns creation
                 column = Column(tag_name, self.tag_type_to_column_type(tag_type))
                 column_type = column.type.compile(self.engine.dialect)
-                tag_column_name = self.tag_name_to_column_name(tag_name)
+                tag_column_name = "\"" + self.tag_name_to_column_name(tag_name) + "\""
                 self.session.execute(
                     'ALTER TABLE %s ADD COLUMN %s %s;' % (initial_name, tag_column_name, column_type))
                 self.session.execute(
@@ -315,16 +321,12 @@ class Database:
 
     def tag_name_to_column_name(self, tag):
         """
-        Transforms the tag name into a valid column name
+        Transforms the tag name into a valid and unique column name, by hashing the tag name
         :return: Valid column name
         """
 
-        return tag.replace(" ", "").replace("(", "").replace(")", "").replace(
-            ",", "").replace(".", "").replace("/", "")
-        # TODO remove numbers if it causes problems (beware that it's not
-        #     the same way to do it in python2 and python3)
-        # TODO check that it does not conflict with another close tag that
-        #     would have the same column name
+        column_name = hashlib.md5(tag.encode('utf-8')).hexdigest()
+        return column_name
 
     def remove_tag(self, name):
         """
@@ -339,9 +341,10 @@ class Database:
         if is_tag_list:
             # The tag has a list type, both tag tables are removed
 
-            initial_query = DropTable(self.table_classes[name + "_initial"].__table__)
+            table_name = self.tag_name_to_column_name(name)
+            initial_query = DropTable(self.table_classes[table_name + "_initial"].__table__)
             self.session.execute(initial_query)
-            current_query = DropTable(self.table_classes[name + "_current"].__table__)
+            current_query = DropTable(self.table_classes[table_name + "_current"].__table__)
             self.session.execute(current_query)
 
             # Redefinition of the table classes
@@ -490,8 +493,9 @@ class Database:
             # The tag has a type list, the values are gotten from the tag
             # current table
 
-            values = self.session.query(self.table_classes[tag + "_current"]).filter(
-                self.table_classes[tag + "_current"].name == path).all()
+            table_name = self.tag_name_to_column_name(tag)
+            values = self.session.query(self.table_classes[table_name + "_current"]).filter(
+                self.table_classes[table_name + "_current"].name == path).all()
             if len(values) is 0:
                 return None
             values_list = []
@@ -526,8 +530,9 @@ class Database:
             # The tag has a type list, the values are gotten from the tag
             # initial table
 
-            values = self.session.query(self.table_classes[tag + "_initial"]).filter(
-                self.table_classes[tag + "_initial"].name == path).all()
+            table_name = self.tag_name_to_column_name(tag)
+            values = self.session.query(self.table_classes[table_name + "_initial"]).filter(
+                self.table_classes[table_name + "_initial"].name == path).all()
             if len(values) is 0:
                 return None
             values_list = []
@@ -572,8 +577,10 @@ class Database:
             # The path has a list type, the values are reset in the tag
             # current table
 
-            values = self.session.query(self.table_classes[tag + "_current"]).filter(
-                self.table_classes[tag + "_current"].name == path).all()
+            table_name = self.tag_name_to_column_name(tag)
+
+            values = self.session.query(self.table_classes[table_name + "_current"]).filter(
+                self.table_classes[table_name + "_current"].name == path).all()
             for index in range(0, len(values)):
                 value_to_modify = values[index]
                 value_to_modify.value = new_value[index]
@@ -602,8 +609,10 @@ class Database:
             # The path has a list type, the values are reset in the tag
             # current table
 
-            values = self.session.query(self.table_classes[tag + "_current"]).filter(
-                self.table_classes[tag + "_current"].name == path).all()
+            table_name = self.tag_name_to_column_name(tag)
+
+            values = self.session.query(self.table_classes[table_name + "_current"]).filter(
+                self.table_classes[table_name + "_current"].name == path).all()
             for index in range(0, len(values)):
                 value_to_modify = values[index]
                 value_to_modify.value = self.get_initial_value(path,
@@ -637,15 +646,17 @@ class Database:
             # The tag has a list type, the values are removed from both tag
             # current and initial tables
 
+            table_name = self.tag_name_to_column_name(tag)
+
             # Tag current table
-            values = self.session.query(self.table_classes[tag + "_current"]).filter(
-                self.table_classes[tag + "_current"].name == path).all()
+            values = self.session.query(self.table_classes[table_name + "_current"]).filter(
+                self.table_classes[table_name + "_current"].name == path).all()
             for value in values:
                 self.session.delete(value)
 
             # Tag initial table
-            values = self.session.query(self.table_classes[tag + "_initial"]).filter(
-                self.table_classes[tag + "_initial"].name == path).all()
+            values = self.session.query(self.table_classes[table_name + "_initial"]).filter(
+                self.table_classes[table_name + "_initial"].name == path).all()
             for value in values:
                 self.session.delete(value)
             self.unsaved_modifications = True
@@ -713,6 +724,8 @@ class Database:
         :param initial_value: initial value
         """
 
+        table_name = self.tag_name_to_column_name(tag)
+
         if self.is_tag_list(tag):
             # The tag has a list type, it is added in the tag tables
 
@@ -721,7 +734,7 @@ class Database:
 
                 for order in range(0, len(initial_value)):
                     element = initial_value[order]
-                    initial_to_add = self.table_classes[tag + "_initial"](
+                    initial_to_add = self.table_classes[table_name + "_initial"](
                         name=path, order=order,
                         value=element)
                     self.session.add(initial_to_add)
@@ -730,7 +743,7 @@ class Database:
             if current_value is not None:
                 for order in range(0, len(current_value)):
                     element = current_value[order]
-                    current_to_add = self.table_classes[tag + "_current"](
+                    current_to_add = self.table_classes[table_name + "_current"](
                         name=path, order=order,
                         value=element)
                     self.session.add(current_to_add)
@@ -799,8 +812,9 @@ class Database:
 
                 if is_list:
 
-                    current_table_name = tag + "_current"
-                    initial_table_name = tag + "_initial"
+                    table_name = self.tag_name_to_column_name(tag)
+                    current_table_name = table_name + "_current"
+                    initial_table_name = table_name + "_initial"
 
                     # Old values removed first
                     # Tag current table

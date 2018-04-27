@@ -82,13 +82,18 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_FLOAT, TAG_UNIT_MHZ, None, None)
         database.add_tag(
-            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
+            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, "with space")
         database.add_tag(
             "AcquisitionTime", TAG_ORIGIN_BUILTIN, TAG_TYPE_TIME, None, None, None)
         database.add_tag(
             "AcquisitionDate", TAG_ORIGIN_BUILTIN, TAG_TYPE_DATETIME, None, None, None)
         database.add_tag("Dataset dimensions",
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
+
+        database.add_tag(
+            "Bitspervoxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, "without space")
+        self.assertEqual(database.get_tag("Bitspervoxel").description, "without space")
+        self.assertEqual(database.get_tag("Bits per voxel").description, "with space")
 
         # Testing with wrong parameters
         #database.add_tag(None, True, TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
