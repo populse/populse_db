@@ -994,7 +994,44 @@ class Database:
         :return: List of paths matching the constraints given in parameter
         """
 
-        if not self.is_tag_list(tag):
+        if tag == "FileName":
+
+            if (condition == "="):
+                values = self.session.query(self.table_classes["path"].name).filter(
+                    self.table_classes["path"].name == value).distinct().all()
+            elif (condition == "!="):
+                values = self.session.query(self.table_classes["path"].name).filter(
+                    self.table_classes["path"].name != value).distinct().all()
+            elif (condition == ">="):
+                values = self.session.query(self.table_classes["path"].name).filter(
+                    self.table_classes["path"].name >= value).distinct().all()
+            elif (condition == "<="):
+                values = self.session.query(self.table_classes["path"].name).filter(
+                    self.table_classes["path"].name <= value).distinct().all()
+            elif (condition == ">"):
+                values = self.session.query(self.table_classes["path"].name).filter(
+                    self.table_classes["path"].name > value).distinct().all()
+            elif (condition == "<"):
+                values = self.session.query(self.table_classes["path"].name).filter(
+                    self.table_classes["path"].name < value).distinct().all()
+            elif (condition == "CONTAINS"):
+                values = self.session.query(self.table_classes["path"].name).filter(
+                    self.table_classes["path"].name.contains(value)).distinct().all()
+            elif (condition == "BETWEEN"):
+                values = self.session.query(self.table_classes["path"].name).filter(
+                    self.table_classes["path"].name.between(value[0], value[1])).distinct().all()
+            elif (condition == "IN"):
+                values = self.session.query(self.table_classes["path"].name).filter(
+                    self.table_classes["path"].name._in(value)).distinct().all()
+
+            paths_list = []
+            for path in values:
+                if path.name not in paths_list:
+                    paths_list.append(path.name)
+
+            return paths_list
+
+        elif not self.is_tag_list(tag):
             # The tag has a simple type, the tag column is used in the current
             # table
 
@@ -1111,6 +1148,7 @@ class Database:
                 return []
         fields_list = self.get_tags_names()
         fields_list.append("All visualized tags")
+        fields_list.append("FileName")
         for field in fields:
             if field not in fields_list:
                 return []
@@ -1137,6 +1175,7 @@ class Database:
         for i in range(0, len(conditions)):
             queries.append([])
             if fields[i] != "All visualized tags":
+
                 # Tag filter: Only those values are read
 
                 queries[i] = self.get_paths_matching_constraints(fields[i],
