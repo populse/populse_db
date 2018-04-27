@@ -76,7 +76,7 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(tag.description, "Name of the patient")
 
         # Testing with a tag that already exists
-        #database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,TAG_TYPE_STRING, None, None, "Name of the patient")
+        #database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Testing with all tag types
         database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN,
