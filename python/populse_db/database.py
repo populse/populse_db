@@ -26,7 +26,7 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_UNIT_MM, TAG_UNIT_HZPIXEL,
                                        TAG_UNIT_DEGREE, TAG_UNIT_MHZ,
                                        TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN,
-                                       LIST_TYPES, SIMPLE_TYPES, TYPE_TO_COLUMN)
+                                       LIST_TYPES, SIMPLE_TYPES, TYPE_TO_COLUMN, ALL_TYPES, ALL_UNITS)
 
 
 @event.listens_for(Engine, "connect")
@@ -138,7 +138,6 @@ class Database:
         """
         Adds a tag to the database, if it does not already exist
         :param name: Tag name (str)
-        :param visible: Tag visibility (True or False)
         :param origin: Tag origin (Raw or user)
         :param type: Tag type (string, int, float, date, datetime,
                      time, list_string, list_int, list_float, list_date,
@@ -146,7 +145,31 @@ class Database:
         :param unit: Tag unit (ms, mm, degree, Hz/pixel, MHz, or None)
         :param default_value: Tag default value (str or None)
         :param description: Tag description (str or None)
+        :return 0 if the tag has been added
+        :return 1 if the tag already exists
+        :return 2 if the tag name is invalid
+        :return 3 if the tag origin is invalid
+        :return 4 if the tag type is invalid
+        :return 5 if the tag unit is invalid
+        :return 6 if the tag default value is invalid
+        :return 7 if the tag description is invalid
         """
+
+        if not isinstance(name, str):
+            return 2
+        tag_row = self.get_tag(name)
+        if tag_row != None:
+            return 1
+        if not origin in [TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN]:
+            return 3
+        if not tag_type in ALL_TYPES:
+            return 4
+        if not unit in ALL_UNITS and unit is not None:
+            return 5
+        if not isinstance(default_value, str) and default_value is not None:
+            return 6
+        if not isinstance(description, str) and description is not None:
+            return 7
 
         # Adding the tag in the tag table (0.003 sec on average)
         tag = self.table_classes["tag"](name=name, origin=origin,
@@ -198,11 +221,6 @@ class Database:
             self.session.execute(current_query)
             self.session.execute(initial_query)
 
-            self.unsaved_modifications = True
-
-            # Redefinition of the table classes
-            self.update_table_classes()
-
         elif tag_type in SIMPLE_TYPES:
             # The tag has a simple type: new column added to both initial
             # and current tables (0.06 sec on average)
@@ -221,10 +239,12 @@ class Database:
                     "current", "\"" + self.tag_name_to_column_name(name) + "\"",
                     column_type))
 
-            self.unsaved_modifications = True
+        self.unsaved_modifications = True
 
-            # Redefinition of the table classes
-            self.update_table_classes()
+        # Redefinition of the table classes
+        self.update_table_classes()
+
+        return 0
 
     def add_tags(self, tags):
         """
@@ -340,8 +360,17 @@ class Database:
     def remove_tag(self, name):
         """
         Removes a tag
-        :param name: Tag name
+        :param name: Tag name (str)
+        :return 0 if the tag has been removed
+        :return 1 if the tag does not exist
+        :return 2 if the tag name is invalid
         """
+
+        if not isinstance(name, str):
+            return 2
+        tag_row = self.get_tag(name)
+        if tag_row is None:
+            return 1
 
         is_tag_list = self.is_tag_list(name)
         self.session.query(self.table_classes["tag"]).filter(
@@ -357,9 +386,6 @@ class Database:
             self.session.execute(initial_query)
             current_query = DropTable(self.table_classes[table_name + "_current"].__table__)
             self.session.execute(current_query)
-
-            # Redefinition of the table classes
-            self.update_table_classes()
 
         else:
             # The tag has a simple type, the tag column is removed from
@@ -411,14 +437,15 @@ class Database:
                             " FROM current_backup")
             self.session.execute("DROP TABLE current_backup")
 
-            self.update_table_classes()
-            self.unsaved_modifications = True
+        self.update_table_classes()
+        self.unsaved_modifications = True
+        return 0
 
     def get_tag(self, name):
         """
-        Gives the tag table object of a tag
+        Gives the tag row given a tag name
         :param name: Tag name
-        :return: The tag table object if the tag exists, None otherwise
+        :return: The tag row if the tag exists, None otherwise
         """
 
         if name in self.tags:
@@ -499,10 +526,17 @@ class Database:
     def get_current_value(self, path, tag):
         """
         Gives the current value of <path, tag>
-        :param path: path name
-        :param tag: Tag name
-        :return: The current value of <path, tag>
+        :param path: path name (str)
+        :param tag: Tag name (str)
+        :return: The current value of <path, tag> if it exists, None otherwise
         """
+
+        tag_row = self.get_tag(tag)
+        if tag_row is None:
+            return None
+        path_row = self.get_path(path)
+        if path_row is None:
+            return None
 
         if self.is_tag_list(tag):
             # The tag has a type list, the values are gotten from the tag
@@ -538,8 +572,15 @@ class Database:
         Gives the initial value of <path, tag>
         :param path: path name
         :param tag: Tag name
-        :return: The initial value of <path, tag>
+        :return: The initial value of <path, tag> if it exists, None otherwise
         """
+
+        tag_row = self.get_tag(tag)
+        if tag_row is None:
+            return None
+        path_row = self.get_path(path)
+        if path_row is None:
+            return None
 
         if self.is_tag_list(tag):
             # The tag has a type list, the values are gotten from the tag
@@ -577,6 +618,13 @@ class Database:
         :return: True if the value has been modified, False otherwise
         """
 
+        tag_row = self.get_tag(tag)
+        if tag_row is None:
+            return False
+        path_row = self.get_path(path)
+        if path_row is None:
+            return False
+
         return (self.get_current_value(path, tag) !=
                 self.get_initial_value(path, tag))
 
@@ -586,7 +634,20 @@ class Database:
         :param path: path name
         :param tag: tag name
         :param new_value: New value
+        :return 0 if the current value has been updated
+        :return 1 if the tag does not exist
+        :return 2 if the path does not exist
+        :return 3 if the new value is invalid
         """
+
+        tag_row = self.get_tag(tag)
+        if tag_row is None:
+            return 1
+        path_row = self.get_path(path)
+        if path_row is None:
+            return 2
+        if not self.check_type_value(new_value, tag_row.type):
+            return 3
 
         if self.is_tag_list(tag):
             # The path has a list type, the values are reset in the tag
@@ -599,7 +660,6 @@ class Database:
             for index in range(0, len(values)):
                 value_to_modify = values[index]
                 value_to_modify.value = new_value[index]
-            self.unsaved_modifications = True
 
         else:
             # The path has a simple type, the values are reset in the tag
@@ -610,15 +670,25 @@ class Database:
             if len(values) is 1:
                 value = values[0]
                 setattr(value, self.tag_name_to_column_name(tag), new_value)
-            self.unsaved_modifications = True
+
+        self.unsaved_modifications = True
+        return 0
 
     def reset_current_value(self, path, tag):
         """
         Resets the value associated to <path, tag>
         :param path: path name
         :param tag: tag name
-        :return True if the value has been reset, False otherwise
+        :return 0 if the value has been reset
+        :return 1 if the tag does not exist
+        :return 2 if the path does not exist
         """
+        tag_row = self.get_tag(tag)
+        if tag_row is None:
+            return 1
+        path_row = self.get_path(path)
+        if path_row is None:
+            return 2
 
         if self.is_tag_list(tag):
             # The path has a list type, the values are reset in the tag
@@ -632,30 +702,35 @@ class Database:
                 value_to_modify = values[index]
                 value_to_modify.value = self.get_initial_value(path,
                                                                tag)[index]
-            self.unsaved_modifications = True
 
         else:
             # The path has a simple type, the value is reset in the current
             # table
 
-            values = self.session.query(self.table_classes["current"]).filter(
-                self.table_classes["current"].name == path).all()
-            if len(values) is 1:
-                value = values[0]
-                setattr(value, self.tag_name_to_column_name(tag),
+            value = self.session.query(self.table_classes["current"]).filter(
+                self.table_classes["current"].name == path).first()
+            setattr(value, self.tag_name_to_column_name(tag),
                         self.get_initial_value(path, tag))
-                self.unsaved_modifications = True
-            else:
-                return False
 
-        return True
+        self.unsaved_modifications = True
+        return 0
 
     def remove_value(self, path, tag):
         """
         Removes the value associated to <path, tag>
         :param path: path name
         :param tag: tag name
+        :return 0 if the value has been removed
+        :return 1 if the tag does not exist
+        :return 2 if the path does not exist
         """
+
+        tag_row = self.get_tag(tag)
+        if tag_row is None:
+            return 1
+        path_row = self.get_path(path)
+        if path_row is None:
+            return 2
 
         if self.is_tag_list(tag):
             # The tag has a list type, the values are removed from both tag
@@ -674,7 +749,6 @@ class Database:
                 self.table_classes[table_name + "_initial"].name == path).all()
             for value in values:
                 self.session.delete(value)
-            self.unsaved_modifications = True
 
         else:
             # The tag has a simple type, the value is removed from both
@@ -692,7 +766,9 @@ class Database:
                 self.table_classes["initial"].name == path).first()
             if value is not None:
                 setattr(value, tag_column_name, None)
-            self.unsaved_modifications = True
+
+        self.unsaved_modifications = True
+        return 0
 
     def check_type_value(self, value, valid_type):
         """
@@ -737,7 +813,24 @@ class Database:
         :param tag: tag name
         :param current_value: current value
         :param initial_value: initial value
+        :return 0 if the value has been added
+        :return 1 if the tag does not exist
+        :return 2 if the path does not exist
+        :return 3 if the current value is invalid
+        :return 4 if the initial value is invalid
+        :return 5 if the value already exists
         """
+
+        tag_row = self.get_tag(tag)
+        if tag_row is None:
+            return 1
+        path_row = self.get_path(path)
+        if path_row is None:
+            return 2
+        if not self.check_type_value(current_value, tag_row.type):
+            return 3
+        if not self.check_type_value(initial_value, tag_row.type):
+            return 4
 
         table_name = self.tag_name_to_column_name(tag)
 
@@ -754,6 +847,8 @@ class Database:
                         value=element)
                     self.session.add(initial_to_add)
 
+                self.unsaved_modifications = True
+
             # Current value
             if current_value is not None:
                 for order in range(0, len(current_value)):
@@ -763,35 +858,40 @@ class Database:
                         value=element)
                     self.session.add(current_to_add)
 
-            self.unsaved_modifications = True
+                self.unsaved_modifications = True
+
+            return 0
+
         else:
             # The tag has a simple type, it is add it in both current and
             # initial tables
 
-            paths_initial = self.session.query(self.table_classes["initial"]).filter(
-                self.table_classes["initial"].name == path).all()
-            paths_current = self.session.query(self.table_classes["current"]).filter(
-                self.table_classes["current"].name == path).all()
-            if len(paths_initial) is 1 and len(paths_current) is 1:
-                path_initial = paths_initial[0]
-                path_current = paths_current[0]
-                database_current_value = getattr(
-                    path_current, self.tag_name_to_column_name(tag))
-                database_initial_value = getattr(
-                    path_initial, self.tag_name_to_column_name(tag))
+            path_initial = self.session.query(self.table_classes["initial"]).filter(
+                self.table_classes["initial"].name == path).first()
+            path_current = self.session.query(self.table_classes["current"]).filter(
+                self.table_classes["current"].name == path).first()
+            database_current_value = getattr(
+                path_current, self.tag_name_to_column_name(tag))
+            database_initial_value = getattr(
+                path_initial, self.tag_name_to_column_name(tag))
 
-                # We add the value only if it does not already exist
-                if (database_current_value is None and
-                        database_initial_value is None):
-                    if initial_value is not None:
-                        setattr(
-                            path_initial, self.tag_name_to_column_name(tag),
-                            initial_value)
-                    if current_value is not None:
-                        setattr(
-                            path_current, self.tag_name_to_column_name(tag),
-                            current_value)
+            # We add the value only if it does not already exist
+            if (database_current_value is None and
+                    database_initial_value is None):
+                if initial_value is not None:
+                    setattr(
+                        path_initial, self.tag_name_to_column_name(tag),
+                        initial_value)
+                if current_value is not None:
+                    setattr(
+                        path_current, self.tag_name_to_column_name(tag),
+                        current_value)
+
                 self.unsaved_modifications = True
+                return 0
+
+            else:
+                return 5
 
     def new_values(self, values):
         """
@@ -872,6 +972,7 @@ class Database:
         """
         Gives the path table object of a path
         :param path: path name
+        :return The path row if the path exists, None otherwise
         """
 
         if path in self.paths:
@@ -910,39 +1011,58 @@ class Database:
         """
         Removes a path
         :param path: path name
+        :return 0 if the path has been removed
+        :return 1 if the path does not exists
         """
+
+        path_row = self.get_path(path)
+        if path_row is None:
+            return 1
 
         self.session.query(self.table_classes["path"]).filter(
             self.table_classes["path"].name == path).delete()
+
+        # Thanks to the foreign key and on delete cascade, the path is
+        # also removed from all other tables
 
         self.paths.pop(path, None)
 
         self.unsaved_modifications = True
 
-        # Thanks to the foreign key and on delete cascade, the path is
-        # also removed from all other tables
+        return 0
 
     def add_path(self, path, checksum=None):
         """
         Adds a path
-        :param path: path path
-        :param checksum: path checksum
+        :param path: path path (str)
+        :param checksum: path checksum (str or None)
+        :return 0 if the path has been added
+        :return 1 if the path already exists
+        :return 2 if the checksum is invalid
+        :return 3 if the name is invalid
         """
 
-        # Adding the path in the Tag table
-        paths = self.session.query(self.table_classes["path"]).filter(
-            self.table_classes["path"].name == path).all()
-        if len(paths) is 0:
-            path_to_add = self.table_classes["path"](name=path, checksum=checksum)
-            self.session.add(path_to_add)
-            self.paths[path] = path_to_add
+        path_row = self.get_path(path)
+        if path_row is not None:
+            return 1
+        if not isinstance(checksum, str) and checksum is not None:
+            return 2
+        if not isinstance(path, str):
+            return 3
 
-            # Adding the index to both initial and current tables
-            initial = self.table_classes["initial"](name=path)
-            current = self.table_classes["current"](name=path)
-            self.session.add(current)
-            self.session.add(initial)
-            self.unsaved_modifications = True
+        path_to_add = self.table_classes["path"](name=path, checksum=checksum)
+        self.session.add(path_to_add)
+        self.paths[path] = path_to_add
+
+        # Adding the index to both initial and current tables
+        initial = self.table_classes["initial"](name=path)
+        current = self.table_classes["current"](name=path)
+        self.session.add(current)
+        self.session.add(initial)
+
+        self.unsaved_modifications = True
+
+        return 0
 
     def add_paths(self, paths):
         """
