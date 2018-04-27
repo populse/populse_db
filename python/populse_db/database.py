@@ -887,7 +887,7 @@ class Database:
             # Thanks to the foreign key and on delete cascade, the path is
             # also removed from all other tables
 
-    def add_path(self, path, checksum):
+    def add_path(self, path, checksum=None):
         """
         Adds a path
         :param path: path path

@@ -705,5 +705,12 @@ class TestDatabaseMethods(unittest.TestCase):
         scan = database.get_path("scan1")
         self.assertEqual(scan.checksum, "159abc")
 
+        # Testing without checksum
+        database.add_path("scan_without_checksum")
+
+        database.save_modifications()
+        scan = database.get_path("scan_without_checksum")
+        self.assertIsNone(scan.checksum)
+
 if __name__ == '__main__':
     unittest.main()
