@@ -81,7 +81,7 @@ def fill_tables(metadata):
 
     Table('path', metadata,
           Column("name", String, primary_key=True),
-          Column("checksum", String, nullable=False))
+          Column("checksum", String, nullable=True))
 
     Table('current', metadata, Column("name", String, primary_key=True),
           ForeignKeyConstraint(["name"], ["path.name"], ondelete="CASCADE",
