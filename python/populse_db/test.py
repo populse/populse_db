@@ -63,8 +63,9 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         # Testing with a first tag
         database = Database(self.path)
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
+        return_value = database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
+        self.assertEqual(return_value, 0)
 
         # Checking the tag properties
         tag = database.get_tag("PatientName")
@@ -76,7 +77,8 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(tag.description, "Name of the patient")
 
         # Testing with a tag that already exists
-        #database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,TAG_TYPE_STRING, None, None, "Name of the patient")
+        return_value = database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,TAG_TYPE_STRING, None, None, "Name of the patient")
+        self.assertEqual(return_value, 1)
 
         # Testing with all tag types
         database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN,
@@ -96,13 +98,18 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(database.get_tag("Bits per voxel").description, "with space")
 
         # Testing with wrong parameters
-        #database.add_tag(None, True, TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
-        #database.add_tag("PatientName", None, TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
-        #database.add_tag("PatientName", True, "wrong_origin", TAG_TYPE_LIST_INTEGER, None, None, None)
-        #database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN, "wrong_type", None, None, None)
-        #database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN,TAG_TYPE_STRING, "invalid_unit", None, None)
-        #database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, 1, None)
-        #database.add_tag("PatientName", True, TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, 1.5)
+        return_value = database.add_tag(None, TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
+        self.assertEqual(return_value, 2)
+        return_value = database.add_tag("Patient Name", True, TAG_TYPE_LIST_INTEGER, None, None, None)
+        self.assertEqual(return_value, 3)
+        return_value = database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN, None, None, None, None)
+        self.assertEqual(return_value, 4)
+        return_value = database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, "unit", None, None)
+        self.assertEqual(return_value, 5)
+        return_value = database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, True, None)
+        self.assertEqual(return_value, 6)
+        return_value = database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, 1.5)
+        self.assertEqual(return_value, 7)
 
         # TODO Testing tag table or tag column creation
 
@@ -113,8 +120,9 @@ class TestDatabaseMethods(unittest.TestCase):
         database = Database(self.path)
 
         # Adding tags
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
+        return_value = database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
+        self.assertEqual(return_value, 0)
         database.add_tag(
             "SequenceName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
         database.add_tag("Dataset dimensions",
@@ -140,20 +148,24 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertIsNone(tag)
 
         # Testing that the tag values are removed
-        #value = database.get_current_value("scan1", "PatientName")
-        #self.assertIsNone(value)
+        value = database.get_current_value("scan1", "PatientName")
+        self.assertIsNone(value)
         value = database.get_current_value("scan1", "SequenceName")
         self.assertEqual(value, "RARE")
-        #value = database.get_current_value("scan1", "Dataset dimensions")
-        #self.assertIsNone(value)
+        value = database.get_current_value("scan1", "Dataset dimensions")
+        self.assertIsNone(value)
 
         # Testing with a tag not existing
-        #database.remove_tag("NotExisting")
-        #database.remove_tag("Dataset dimension")
+        return_value = database.remove_tag("NotExisting")
+        self.assertEqual(return_value, 1)
+        return_value = database.remove_tag("Dataset dimension")
+        self.assertEqual(return_value, 1)
 
         # Testing with wrong parameter
-        #database.remove_tag(1)
-        #database.remove_tag(None)
+        return_value = database.remove_tag(1)
+        self.assertEqual(return_value, 2)
+        return_value = database.remove_tag(None)
+        self.assertEqual(return_value, 2)
 
         # TODO Testing tag table or tag column removal
 
@@ -234,22 +246,22 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(value, [0.234375, 0.234375, 0.4])
 
         # Testing when not existing
-        #value = database.get_current_value("scan3", "PatientName")
-        #self.assertIsNone(value)
-        #value = database.get_current_value("scan1", "NotExisting")
-        #self.assertIsNone(value)
-        #value = database.get_current_value("scan3", "NotExisting")
-        #self.assertIsNone(value)
-        #value = database.get_current_value("scan2", "Grids spacing")
-        #self.assertIsNone(value)
+        value = database.get_current_value("scan3", "PatientName")
+        self.assertIsNone(value)
+        value = database.get_current_value("scan1", "NotExisting")
+        self.assertIsNone(value)
+        value = database.get_current_value("scan3", "NotExisting")
+        self.assertIsNone(value)
+        value = database.get_current_value("scan2", "Grids spacing")
+        self.assertIsNone(value)
 
         # Testing with wrong parameters
-        #value = database.get_current_value(1, "Grids spacing")
-        #self.assertIsNone(value)
-        #value = database.get_current_value("scan1", None)
-        #self.assertIsNone(value)
-        #value = database.get_current_value(3.5, None)
-        #self.assertIsNone(value)
+        value = database.get_current_value(1, "Grids spacing")
+        self.assertIsNone(value)
+        value = database.get_current_value("scan1", None)
+        self.assertIsNone(value)
+        value = database.get_current_value(3.5, None)
+        self.assertIsNone(value)
 
     def test_get_initial_value(self):
         """
@@ -289,20 +301,20 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(value, [0.234375, 0.234375, 0.4])
 
         # Testing when not existing
-        #value = database.get_initial_value("scan3", "PatientName")
-        #self.assertIsNone(value)
-        #value = database.get_initial_value("scan1", "NotExisting")
-        #self.assertIsNone(value)
-        #value = database.get_initial_value("scan3", "NotExisting")
-        #self.assertIsNone(value)
+        value = database.get_initial_value("scan3", "PatientName")
+        self.assertIsNone(value)
+        value = database.get_initial_value("scan1", "NotExisting")
+        self.assertIsNone(value)
+        value = database.get_initial_value("scan3", "NotExisting")
+        self.assertIsNone(value)
 
         # Testing with wrong parameters
-        #value = database.get_initial_value(1, "Grids spacing")
-        #self.assertIsNone(value)
-        #value = database.get_initial_value("scan1", None)
-        #self.assertIsNone(value)
-        #value = database.get_initial_value(3.5, None)
-        #self.assertIsNone(value)
+        value = database.get_initial_value(1, "Grids spacing")
+        self.assertIsNone(value)
+        value = database.get_initial_value("scan1", None)
+        self.assertIsNone(value)
+        value = database.get_initial_value(3.5, None)
+        self.assertIsNone(value)
 
     def test_is_value_modified(self):
         """
@@ -332,20 +344,20 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertTrue(is_modified)
 
         # Testing with values not existing
-        #is_modified = database.is_value_modified("scan2", "PatientName")
-        #self.assertFalse(is_modified)
-        #is_modified = database.is_value_modified("scan1", "NotExisting")
-        #self.assertFalse(is_modified)
-        #is_modified = database.is_value_modified("scan2", "NotExisting")
-        #self.assertFalse(is_modified)
+        is_modified = database.is_value_modified("scan2", "PatientName")
+        self.assertFalse(is_modified)
+        is_modified = database.is_value_modified("scan1", "NotExisting")
+        self.assertFalse(is_modified)
+        is_modified = database.is_value_modified("scan2", "NotExisting")
+        self.assertFalse(is_modified)
 
         # Testing with wrong parameters
-        #value = database.is_value_modified(1, "Grids spacing")
-        #self.assertFalse(value)
-        #value = database.is_value_modified("scan1", None)
-        #self.assertFalse(value)
-        #value = database.is_value_modified(3.5, None)
-        #self.assertFalse(value)
+        value = database.is_value_modified(1, "Grids spacing")
+        self.assertFalse(value)
+        value = database.is_value_modified("scan1", None)
+        self.assertFalse(value)
+        value = database.is_value_modified(3.5, None)
+        self.assertFalse(value)
 
     def test_set_value(self):
         """
@@ -401,22 +413,30 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertIsNone(value)
 
         # Testing when not existing
-        #database.set_current_value("scan3", "PatientName", None)
-        #database.set_current_value("scan1", "NotExisting", None)
-        #database.set_current_value("scan3", "NotExisting", None)
+        return_value = database.set_current_value("scan3", "PatientName", None)
+        self.assertEqual(return_value, 2)
+        return_value = database.set_current_value("scan1", "NotExisting", None)
+        self.assertEqual(return_value, 1)
+        return_value = database.set_current_value("scan3", "NotExisting", None)
+        self.assertEqual(return_value, 1)
 
         # Testing with wrong types
-        #database.set_current_value("scan1", "Bits per voxel", "test")
-        #value = database.get_current_value("scan1", "Bits per voxel")
-        #self.assertEqual(value, 2)
-        #database.set_current_value("scan1", "Bits per voxel", 35.8)
-        #value = database.get_current_value("scan1", "Bits per voxel")
-        #self.assertEqual(value, 2)
+        return_value = database.set_current_value("scan1", "Bits per voxel", "test")
+        self.assertEqual(return_value, 3)
+        value = database.get_current_value("scan1", "Bits per voxel")
+        self.assertEqual(value, 2)
+        return_value = database.set_current_value("scan1", "Bits per voxel", 35.8)
+        self.assertEqual(return_value, 3)
+        value = database.get_current_value("scan1", "Bits per voxel")
+        self.assertEqual(value, 2)
 
         # Testing with wrong parameters
-        #database.set_current_value(1, "Grids spacing", "2")
-        #database.set_current_value("scan1", None, "1")
-        #database.set_current_value(1, None, True)
+        return_value = database.set_current_value(1, "Bits per voxel", "2")
+        self.assertEqual(return_value, 2)
+        return_value = database.set_current_value("scan1", None, "1")
+        self.assertEqual(return_value, 1)
+        return_value = database.set_current_value(1, None, True)
+        self.assertEqual(return_value, 1)
 
     def test_reset_value(self):
         """
@@ -458,9 +478,12 @@ class TestDatabaseMethods(unittest.TestCase):
         database.reset_current_value("scan1", "Dataset dimensions")
 
         # Testing when not existing
-        #database.reset_current_value("scan3", "PatientName")
-        #database.reset_current_value("scan1", "NotExisting")
-        #database.reset_current_value("scan3", "NotExisting")
+        return_value = database.reset_current_value("scan3", "PatientName")
+        self.assertEqual(return_value, 2)
+        return_value = database.reset_current_value("scan1", "NotExisting")
+        self.assertEqual(return_value, 1)
+        return_value = database.reset_current_value("scan3", "NotExisting")
+        self.assertEqual(return_value, 1)
 
         # Testing that the values are actually reset
         value = database.get_current_value("scan1", "PatientName")
@@ -471,9 +494,12 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(value, [3, 28, 28, 3])
 
         # Testing with wrong parameters
-        #database.reset_current_value(1, "Grids spacing")
-        #database.reset_current_value("scan1", None)
-        #database.reset_current_value(3.5, None)
+        return_value = database.reset_current_value(1, "Bits per voxel")
+        self.assertEqual(return_value, 2)
+        return_value = database.reset_current_value("scan1", None)
+        self.assertEqual(return_value, 1)
+        return_value = database.reset_current_value(3.5, None)
+        self.assertEqual(return_value, 1)
 
     def test_remove_value(self):
         """
@@ -506,9 +532,12 @@ class TestDatabaseMethods(unittest.TestCase):
         database.remove_value("scan1", "Dataset dimensions")
 
         # Testing when not existing
-        #database.remove_value("scan3", "PatientName")
-        #database.remove_value("scan1", "NotExisting")
-        #database.remove_value("scan3", "NotExisting")
+        return_value = database.remove_value("scan3", "PatientName")
+        self.assertEqual(return_value, 2)
+        return_value = database.remove_value("scan1", "NotExisting")
+        self.assertEqual(return_value, 1)
+        return_value = database.remove_value("scan3", "NotExisting")
+        self.assertEqual(return_value, 1)
 
         # Testing that the values are actually removed
         value = database.get_current_value("scan1", "PatientName")
@@ -583,10 +612,14 @@ class TestDatabaseMethods(unittest.TestCase):
                            0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
 
         # Testing when not existing
-        #database.new_value("scan1", "NotExisting", "none", "none")
-        #database.new_value("scan3", "SequenceName", "none", "none")
-        #database.new_value("scan3", "NotExisting", "none", "none")
-        database.new_value("scan1", "BandWidth", 45, 45)
+        return_value = database.new_value("scan1", "NotExisting", "none", "none")
+        self.assertEqual(return_value, 1)
+        return_value = database.new_value("scan3", "SequenceName", "none", "none")
+        self.assertEqual(return_value, 1)
+        return_value = database.new_value("scan3", "NotExisting", "none", "none")
+        self.assertEqual(return_value, 1)
+        return_value = database.new_value("scan1", "BandWidth", 45, 45)
+        self.assertEqual(return_value, 0)
 
         date = datetime(2014, 2, 11, 8, 5, 7)
         database.new_value("scan1", "AcquisitionDate", date, date)
@@ -619,23 +652,29 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(value, "test")
 
         # Testing with wrong types
-        #database.new_value("scan2", "Bits per voxel", "space_tag", "space_tag")
-        #value = database.get_current_value("scan2", "Bits per voxel")
-        #self.assertIsNone(value)
-        #database.new_value("scan2", "Bits per voxel", 35.5, 35.5)
-        #value = database.get_current_value("scan2", "Bits per voxel")
-        #self.assertIsNone(value)
-        #database.new_value("scan1", "BandWidth", "test", "test")
-        #value = database.get_current_value("scan1", "BandWidth")
-        #self.assertEqual(value, 45)
+        return_value = database.new_value("scan2", "Bits per voxel", "space_tag", "space_tag")
+        self.assertEqual(return_value, 3)
+        value = database.get_current_value("scan2", "Bits per voxel")
+        self.assertIsNone(value)
+        return_value = database.new_value("scan2", "Bits per voxel", 35, 35.5)
+        self.assertEqual(return_value, 4)
+        value = database.get_current_value("scan2", "Bits per voxel")
+        self.assertIsNone(value)
+        return_value = database.new_value("scan1", "BandWidth", "test", "test")
+        self.assertEqual(return_value, 3)
+        value = database.get_current_value("scan1", "BandWidth")
+        self.assertEqual(value, 45)
 
         # Testing with wrong parameters
-        #database.new_value(1, "Grids spacing", "2", "2")
-        #database.new_value("scan1", None, "1", "1")
-        #database.new_value("scan1", "PatientName", None, None)
-        #value = database.get_current_value("scan1", "PatientName")
-        #self.assertEqual(value, "test")
-        #database.new_value(1, None, True, False)
+        return_value = database.new_value(1, "Grids spacing", "2", "2")
+        self.assertEqual(return_value, 2)
+        return_value = database.new_value("scan1", None, "1", "1")
+        self.assertEqual(return_value, 1)
+        return_value = database.new_value("scan1", "PatientName", None, None)
+        self.assertEqual(return_value, 5)
+        value = database.get_current_value("scan1", "PatientName")
+        self.assertEqual(value, "test")
+        database.new_value(1, None, True, False)
 
     def test_get_path(self):
         """
@@ -688,7 +727,8 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertIsNone(value)
 
         # Testing with a scan not existing
-        database.remove_path("NotExisting")
+        return_value = database.remove_path("NotExisting")
+        self.assertEqual(return_value, 1)
 
     def test_add_path(self):
         """
@@ -706,7 +746,8 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(scan.name, "scan1")
 
         # Testing when trying to add a scan that already exists
-        database.add_path("scan1", "anotherChecksum")
+        return_value = database.add_path("scan1", "anotherChecksum")
+        self.assertEqual(return_value, 1)
         scan = database.get_path("scan1")
         self.assertEqual(scan.checksum, "159abc")
 
@@ -716,6 +757,12 @@ class TestDatabaseMethods(unittest.TestCase):
         database.save_modifications()
         scan = database.get_path("scan_without_checksum")
         self.assertIsNone(scan.checksum)
+
+        # Testing with invalid parameters
+        return_value = database.add_path("scan_wrong_checksum", True)
+        self.assertEqual(return_value, 2)
+        return_value = database.add_path(True, "checksum")
+        self.assertEqual(return_value, 3)
 
 if __name__ == '__main__':
     unittest.main()
