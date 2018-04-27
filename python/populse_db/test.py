@@ -25,7 +25,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         self.temp_folder = tempfile.mkdtemp()
         self.path = os.path.join(self.temp_folder, "test.db")
-    
+
     def tearDown(self):
         """
         Called after every unit test

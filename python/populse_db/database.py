@@ -156,7 +156,7 @@ class Database:
 
             # Tag tables initial and current definition (0.00045 sec on average)
             tag_table_current = Table(name + "_current", self.metadata,
-                                      Column("index", Integer,
+                                      Column("name", String,
                                              primary_key=True),
                                       Column("order", Integer,
                                              primary_key=True),
@@ -164,12 +164,12 @@ class Database:
                                              self.tag_type_to_column_type(
                                                  tag_type),
                                              nullable=False),
-                                      ForeignKeyConstraint(["index"],
-                                                           ["path.index"],
+                                      ForeignKeyConstraint(["name"],
+                                                           ["path.name"],
                                                            ondelete="CASCADE",
                                                            onupdate="CASCADE"))
             tag_table_initial = Table(name + "_initial", self.metadata,
-                                      Column("index", Integer,
+                                      Column("name", String,
                                              primary_key=True),
                                       Column("order", Integer,
                                              primary_key=True),
@@ -177,8 +177,8 @@ class Database:
                                              self.tag_type_to_column_type(
                                                  tag_type),
                                              nullable=False),
-                                      ForeignKeyConstraint(["index"],
-                                                           ["path.index"],
+                                      ForeignKeyConstraint(["name"],
+                                                           ["path.name"],
                                                            ondelete="CASCADE",
                                                            onupdate="CASCADE"))
 
@@ -242,31 +242,31 @@ class Database:
 
             if tag_type in LIST_TYPES:
 
+                column_type = self.tag_type_to_column_type(tag_type)
+
                 # Tag tables initial and current definition (0.00045 sec on average)
                 tag_table_current = Table(tag_name + "_current", self.metadata,
-                                          Column("index", Integer,
+                                          Column("name", Integer,
                                                  primary_key=True),
                                           Column("order", Integer,
                                                  primary_key=True),
                                           Column("value",
-                                                 self.tag_type_to_column_type(
-                                                     tag_type),
+                                                 column_type,
                                                  nullable=False),
-                                          ForeignKeyConstraint(["index"],
-                                                               ["path.index"],
+                                          ForeignKeyConstraint(["name"],
+                                                               ["path.name"],
                                                                ondelete="CASCADE",
                                                                onupdate="CASCADE"))
                 tag_table_initial = Table(tag_name + "_initial", self.metadata,
-                                          Column("index", Integer,
+                                          Column("name", Integer,
                                                  primary_key=True),
                                           Column("order", Integer,
                                                  primary_key=True),
                                           Column("value",
-                                                 self.tag_type_to_column_type(
-                                                     tag_type),
+                                                 column_type,
                                                  nullable=False),
-                                          ForeignKeyConstraint(["index"],
-                                                               ["path.index"],
+                                          ForeignKeyConstraint(["name"],
+                                                               ["path.name"],
                                                                ondelete="CASCADE",
                                                                onupdate="CASCADE"))
 
@@ -361,8 +361,6 @@ class Database:
                 sql_query = str(sql_table_create)
                 sql_query = sql_query[:21] + '_backup' + sql_query[21:]
                 columns = columns[:-2]
-                columns = columns.replace("index", "\"index\"")
-                sql_query = sql_query.replace("index", "\"index\"")
                 self.session.execute(sql_query)
                 self.session.execute("INSERT INTO initial_backup SELECT " +
                                 columns + " FROM initial")
@@ -386,8 +384,6 @@ class Database:
                 sql_query = str(sql_table_create)
                 sql_query = sql_query[:21] + '_backup' + sql_query[21:]
                 columns = columns[:-2]
-                columns = columns.replace("index", "\"index\"")
-                sql_query = sql_query.replace("index", "\"index\"")
                 self.session.execute(sql_query)
                 self.session.execute("INSERT INTO current_backup SELECT " +
                                 columns + " FROM current")
@@ -491,9 +487,8 @@ class Database:
             # The tag has a type list, the values are gotten from the tag
             # current table
 
-            values = self.session.query(self.table_classes[tag + "_current"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
+            values = self.session.query(self.table_classes[tag + "_current"]).filter(
+                self.table_classes[tag + "_current"].name == path).all()
             if len(values) is 0:
                 return None
             values_list = []
@@ -509,9 +504,8 @@ class Database:
             # The tag has a simple type, the value is gotten from current
             # table
 
-            values = self.session.query(self.table_classes["current"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
+            values = self.session.query(self.table_classes["current"]).filter(
+                self.table_classes["current"].name == path).all()
             if len(values) is 1:
                 value = values[0]
                 return getattr(value, self.tag_name_to_column_name(tag))
@@ -529,9 +523,8 @@ class Database:
             # The tag has a type list, the values are gotten from the tag
             # initial table
 
-            values = self.session.query(self.table_classes[tag + "_initial"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
+            values = self.session.query(self.table_classes[tag + "_initial"]).filter(
+                self.table_classes[tag + "_initial"].name == path).all()
             if len(values) is 0:
                 return None
             values_list = []
@@ -546,9 +539,8 @@ class Database:
         else:
             # The tag has a simple type, the value is gotten from initial table
 
-            values = self.session.query(self.table_classes["initial"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
+            values = self.session.query(self.table_classes["initial"]).filter(
+                self.table_classes["initial"].name == path).all()
             if len(values) is 1:
                 value = values[0]
                 return getattr(value, self.tag_name_to_column_name(tag))
@@ -577,9 +569,8 @@ class Database:
             # The path has a list type, the values are reset in the tag
             # current table
 
-            values = self.session.query(self.table_classes[tag + "_current"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
+            values = self.session.query(self.table_classes[tag + "_current"]).filter(
+                self.table_classes[tag + "_current"].name == path).all()
             for index in range(0, len(values)):
                 value_to_modify = values[index]
                 value_to_modify.value = new_value[index]
@@ -589,9 +580,8 @@ class Database:
             # The path has a simple type, the values are reset in the tag
             # column in current table
 
-            values = self.session.query(self.table_classes["current"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
+            values = self.session.query(self.table_classes["current"]).filter(
+                self.table_classes["current"].name == path).all()
             if len(values) is 1:
                 value = values[0]
                 setattr(value, self.tag_name_to_column_name(tag), new_value)
@@ -609,9 +599,8 @@ class Database:
             # The path has a list type, the values are reset in the tag
             # current table
 
-            values = self.session.query(self.table_classes[tag + "_current"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
+            values = self.session.query(self.table_classes[tag + "_current"]).filter(
+                self.table_classes[tag + "_current"].name == path).all()
             for index in range(0, len(values)):
                 value_to_modify = values[index]
                 value_to_modify.value = self.get_initial_value(path,
@@ -622,9 +611,8 @@ class Database:
             # The path has a simple type, the value is reset in the current
             # table
 
-            values = self.session.query(self.table_classes["current"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
+            values = self.session.query(self.table_classes["current"]).filter(
+                self.table_classes["current"].name == path).all()
             if len(values) is 1:
                 value = values[0]
                 setattr(value, self.tag_name_to_column_name(tag),
@@ -647,16 +635,14 @@ class Database:
             # current and initial tables
 
             # Tag current table
-            values = self.session.query(self.table_classes[tag + "_current"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
+            values = self.session.query(self.table_classes[tag + "_current"]).filter(
+                self.table_classes[tag + "_current"].name == path).all()
             for value in values:
                 self.session.delete(value)
 
             # Tag initial table
-            values = self.session.query(self.table_classes[tag + "_initial"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
+            values = self.session.query(self.table_classes[tag + "_initial"]).filter(
+                self.table_classes[tag + "_initial"].name == path).all()
             for value in values:
                 self.session.delete(value)
             self.unsaved_modifications = True
@@ -666,18 +652,16 @@ class Database:
             # current and initial tables tag columns
 
             # Current table
-            values = self.session.query(self.table_classes["current"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
+            values = self.session.query(self.table_classes["current"]).filter(
+                self.table_classes["current"].name == path).all()
             tag_column_name = self.tag_name_to_column_name(tag)
             if len(values) is 1:
                 value = values[0]
                 setattr(value, tag_column_name, None)
 
             # Initial table
-            values = self.session.query(self.table_classes["initial"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
+            values = self.session.query(self.table_classes["initial"]).filter(
+                self.table_classes["initial"].name == path).all()
             if len(values) is 1:
                 value = values[0]
                 setattr(value, tag_column_name, None)
@@ -737,7 +721,7 @@ class Database:
                 for order in range(0, len(initial_value)):
                     element = initial_value[order]
                     initial_to_add = self.table_classes[tag + "_initial"](
-                        index=self.get_path(path).index, order=order,
+                        name=path, order=order,
                         value=element)
                     self.session.add(initial_to_add)
 
@@ -746,7 +730,7 @@ class Database:
                 for order in range(0, len(current_value)):
                     element = current_value[order]
                     current_to_add = self.table_classes[tag + "_current"](
-                        index=self.get_path(path).index, order=order,
+                        name=path, order=order,
                         value=element)
                     self.session.add(current_to_add)
 
@@ -755,12 +739,10 @@ class Database:
             # The tag has a simple type, it is add it in both current and
             # initial tables
 
-            paths_initial = self.session.query(self.table_classes["initial"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
-            paths_current = self.session.query(self.table_classes["current"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).all()
+            paths_initial = self.session.query(self.table_classes["initial"]).filter(
+                self.table_classes["initial"].name == path).all()
+            paths_current = self.session.query(self.table_classes["current"]).filter(
+                self.table_classes["current"].name == path).all()
             if len(paths_initial) is 1 and len(paths_current) is 1:
                 path_initial = paths_initial[0]
                 path_current = paths_current[0]
@@ -793,13 +775,10 @@ class Database:
 
         for path in values:
 
-            path_index = self.get_path(path).index
-            path_initial = self.session.query(self.table_classes["initial"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).first()
-            path_current = self.session.query(self.table_classes["current"]).join(
-                self.table_classes["path"]).filter(
-                self.table_classes["path"].name == path).first()
+            path_initial = self.session.query(self.table_classes["initial"]).filter(
+                self.table_classes["initial"].name == path).first()
+            path_current = self.session.query(self.table_classes["current"]).filter(
+                self.table_classes["current"].name == path).first()
 
             path_values = values[path]
 
@@ -819,16 +798,14 @@ class Database:
 
                     # Old values removed first
                     # Tag current table
-                    current_values = self.session.query(self.table_classes[tag + "_current"]).join(
-                        self.table_classes["path"]).filter(
-                        self.table_classes["path"].name == path).all()
+                    current_values = self.session.query(self.table_classes[tag + "_current"]).filter(
+                        self.table_classes[tag + "_current"].name == path).all()
                     for value in current_values:
                         self.session.delete(value)
 
                     # Tag initial table
-                    initial_values = self.session.query(self.table_classes[tag + "_initial"]).join(
-                        self.table_classes["path"]).filter(
-                        self.table_classes["path"].name == path).all()
+                    initial_values = self.session.query(self.table_classes[tag + "_initial"]).filter(
+                        self.table_classes[tag + "_initial"].name == path).all()
                     for value in initial_values:
                         self.session.delete(value)
 
@@ -836,10 +813,10 @@ class Database:
                     if initial_value is not None and current_value is not None:
                         for order in range(0, len(initial_value)):
                             initial_to_add = self.table_classes[tag + "_initial"](
-                                index=path_index, order=order,
+                                name=path, order=order,
                                 value=initial_value[order])
                             current_to_add = self.table_classes[tag + "_current"](
-                                index=path_index, order=order,
+                                name=path, order=order,
                                 value=current_value[order])
                             values_added.append(initial_to_add)
                             values_added.append(current_to_add)
@@ -925,8 +902,8 @@ class Database:
             self.session.add(path_to_add)
 
             # Adding the index to both initial and current tables
-            initial = self.table_classes["initial"](index=self.get_path(path).index)
-            current = self.table_classes["current"](index=self.get_path(path).index)
+            initial = self.table_classes["initial"](name=path)
+            current = self.table_classes["current"](name=path)
             self.session.add(current)
             self.session.add(initial)
             self.unsaved_modifications = True
@@ -949,11 +926,9 @@ class Database:
                 path_to_add = self.table_classes["path"](name=path_name, checksum=path_checksum)
                 self.session.add(path_to_add)
 
-                path_index = self.get_path(path_name).index # get_path => 40%
-
                 # Adding the index to both initial and current tables
-                initial = self.table_classes["initial"](index=path_index)
-                current = self.table_classes["current"](index=path_index)
+                initial = self.table_classes["initial"](name=path_name)
+                current = self.table_classes["current"](name=path_name)
                 self.session.add(current)
                 self.session.add(initial)
 
