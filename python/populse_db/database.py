@@ -491,8 +491,11 @@ class Database:
         :return: True if the tag is a list, False otherwise
         """
 
-        tag_type = self.get_tag(tag).type
-        return tag_type in LIST_TYPES
+        tag = self.get_tag(tag)
+        if tag != None:
+            return tag.type in LIST_TYPES
+        else:
+            return None
 
     def is_tag_simple(self, tag):
         """
@@ -1103,6 +1106,11 @@ class Database:
         :return: List of path names matching the search
         """
 
+        if not isinstance(tags, list):
+            return []
+        if not isinstance(search, str):
+            return []
+
         paths_matching = []
 
         # Iterating over all values and finding matches
@@ -1116,7 +1124,8 @@ class Database:
         # Search for each tag
         for tag in tags:
 
-            if not self.is_tag_list(tag):
+            is_list = self.is_tag_list(tag)
+            if is_list is False:
                 # The tag has a simple type, the tag column is used in the
                 # current table
 
@@ -1127,7 +1136,7 @@ class Database:
                 for value in values:
                     if value not in paths_matching:
                         paths_matching.append(value.name)
-            else:
+            elif is_list is True:
                 # The tag has a list type, the tag current table is used
 
                 for path in self.get_paths_names():
@@ -1282,7 +1291,7 @@ class Database:
         """
         Gives the paths matching the advanced search
         :param links: Links (AND/OR)
-        :param fields: Fields (tag name/All visualized tags)
+        :param fields: Fields (tag name/All visualized tags/FileName)
         :param conditions: Conditions (=, !=, <, >, <=, >=, BETWEEN,
                            CONTAINS, IN)
         :param values: Values (str for =, !=, <, >, <=, >=, and
@@ -1291,17 +1300,15 @@ class Database:
         :return: List of path names matching all the constraints
         """
 
-        if (not len(links) == len(fields) - 1 == len(conditions) - 1 ==
-                len(values) - 1 == len(nots) - 1):
+        if not isinstance(links, list) or not isinstance(fields, list) or not isinstance(conditions, list) or not isinstance(values, list) or not isinstance(nots, list):
             return []
         for link in links:
             if link not in ["AND", "OR"]:
                 return []
         fields_list = self.get_tags_names()
-        fields_list.append("All visualized tags")
         fields_list.append("FileName")
         for field in fields:
-            if field not in fields_list:
+            if not isinstance(field, list) and field not in fields_list:
                 return []
         for condition in conditions:
             if condition not in ["=", "!=", "<", ">", "<=", ">=", "BETWEEN",
@@ -1321,11 +1328,14 @@ class Database:
         for not_ in nots:
             if not_ not in ["", "NOT"]:
                 return []
+        if (not len(links) == len(fields) - 1 == len(conditions) - 1 ==
+                len(values) - 1 == len(nots) - 1):
+            return []
 
         queries = []  # list of paths of each query (row)
         for i in range(0, len(conditions)):
             queries.append([])
-            if fields[i] != "All visualized tags":
+            if not isinstance(fields[i], list):
 
                 # Tag filter: Only those values are read
 
@@ -1336,9 +1346,13 @@ class Database:
             else:
                 # No tag filter, all values are read
 
-                for tag in self.get_visualized_tags():
+                queries[i] = list(set(queries[i]).union(set(
+                    self.get_paths_matching_constraints("FileName",
+                                                        values[i],
+                                                        conditions[i]))))
+                for tag in fields[i]:
                     queries[i] = list(set(queries[i]).union(set(
-                        self.get_paths_matching_constraints(tag.name,
+                        self.get_paths_matching_constraints(tag,
                                                             values[i],
                                                             conditions[i]))))
 
