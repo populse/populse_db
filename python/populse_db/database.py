@@ -1039,7 +1039,7 @@ class Database:
     def add_path(self, path, checksum=None):
         """
         Adds a path
-        :param path: path path (str)
+        :param path: file path
         :param checksum: path checksum (str or None)
         :return 0 if the path has been added
         :return 1 if the path already exists
