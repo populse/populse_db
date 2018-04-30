@@ -1385,12 +1385,18 @@ class Database:
         :return: List of paths matching all the <tag, value> couples
         """
 
+        if not isinstance(tag_value_couples, list) or not len(tag_value_couples) > 0:
+            return []
+
         couple_results = []
         for couple in tag_value_couples:
             tag = couple[0]
             value = couple[1]
 
-            if not self.is_tag_list(tag):
+            couple_result = []
+            is_list = self.is_tag_list(tag)
+
+            if is_list is False:
                 # The tag has a simple type, the tag column in the current
                 # table is used
 
@@ -1398,13 +1404,12 @@ class Database:
                     self.table_classes[CURRENT_TABLE].name).filter(
                     getattr(self.table_classes[CURRENT_TABLE],
                             self.tag_name_to_column_name(tag)) == value)
-                couple_result = []
                 for query_result in couple_query_result:
                     couple_result.append(query_result.name)
-            else:
+
+            elif is_list is True:
                 # The tag has a list type, the tag current table is used
 
-                couple_result = []
                 for path in self.get_paths_names():
                     path_value = self.get_current_value(path, tag)
                     if str(path_value) == value:
