@@ -23,6 +23,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Called before every unit test
         Creates a temporary folder containing the database file that will be used for the test
         """
+
         self.temp_folder = tempfile.mkdtemp()
         self.path = os.path.join(self.temp_folder, "test.db")
         self.string_engine = 'sqlite:///' + self.path
@@ -31,8 +32,8 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Called after every unit test
         Deletes the temporary folder created for the test
-        :return:
         """
+
         shutil.rmtree(self.temp_folder)
         
         
@@ -40,6 +41,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the database creation
         """
+
         # Testing the creation of the database file
         create_database(self.string_engine)
         self.assertTrue(os.path.exists(self.path))
@@ -48,6 +50,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the database constructor
         """
+
         # Testing without the database file existing
         Database(self.string_engine)
         self.assertTrue(os.path.exists(self.path))
@@ -62,6 +65,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method adding a tag
         """
+
         # Testing with a first tag
         database = Database(self.string_engine)
         return_value = database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
@@ -118,6 +122,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method removing a tag
         """
+
         database = Database(self.string_engine)
 
         # Adding tags
@@ -174,6 +179,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method giving the Tag table object of a tag
         """
+
         database = Database(self.string_engine)
 
         # Adding a tag
@@ -212,6 +218,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method giving the current value, given a tag and a scan
         """
+
         database = Database(self.string_engine)
 
         # Adding scans
@@ -268,6 +275,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method giving the initial value, given a tag and a scan
         """
+
         database = Database(self.string_engine)
 
         # Adding scans
@@ -321,6 +329,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method telling if the value has been modified or not
         """
+
         database = Database(self.string_engine)
 
         # Adding scan
@@ -364,6 +373,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method setting a value
         """
+
         database = Database(self.string_engine)
 
         # Adding scan
@@ -443,6 +453,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method resetting a value
         """
+
         database = Database(self.string_engine)
 
         # Adding scan
@@ -506,6 +517,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method removing a value
         """
+
         database = Database(self.string_engine)
 
         # Adding scan
@@ -554,6 +566,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method checking the validity of incoming values
         """
+
         database = Database(self.string_engine)
         is_valid = database.check_type_value("string", TAG_TYPE_STRING)
         self.assertTrue(is_valid)
@@ -581,6 +594,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method adding a value
         """
+
         database = Database(self.string_engine)
 
         # Adding scans
@@ -681,6 +695,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method giving the Path table object of a scan
         """
+
         database = Database(self.string_engine)
 
         # Adding scan
@@ -735,6 +750,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method adding a scan
         """
+
         database = Database(self.string_engine)
 
         # Adding scan
@@ -764,6 +780,87 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(return_value, 2)
         return_value = database.add_path(True, "checksum")
         self.assertEqual(return_value, 3)
+
+    def test_get_paths_matching_search(self):
+        """
+        Tests the method returning the list of paths matching the search(str)
+        """
+
+        database = Database(self.string_engine)
+
+        # Testing with wrong parameters
+        return_list = database.get_paths_matching_search(1, [])
+        self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_search("search", 1)
+        self.assertEqual(return_list, [])
+        database.add_path("scan1")
+        return_list = database.get_paths_matching_search("search", ["tag_not_existing"])
+        self.assertEqual(return_list, [])
+
+        database.add_path("scan2")
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
+        database.new_value("scan1", "PatientName", "Guerbet1", "Guerbet")
+        database.new_value("scan2", "PatientName", "Guerbet2", "Guerbet")
+        return_list = database.get_paths_matching_search("search", ["PatientName"])
+        self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_search("scan", ["PatientName"])
+        self.assertEqual(return_list, ["scan1", "scan2"])
+        return_list = database.get_paths_matching_search("Guerbet", ["PatientName"])
+        self.assertEqual(return_list, ["scan1", "scan2"])
+        return_list = database.get_paths_matching_search("Guerbet1", ["PatientName"])
+        self.assertEqual(return_list, ["scan1"])
+        return_list = database.get_paths_matching_search("Guerbet2", ["PatientName"])
+        self.assertEqual(return_list, ["scan2"])
+
+    def test_get_paths_matching_advanced_search(self):
+        """
+        Tests the method returning the list of paths matching the advanced search
+        """
+
+        database = Database(self.string_engine)
+
+        return_list = database.get_paths_matching_advanced_search([], [], [], [], [])
+        self.assertEqual(return_list, [])
+
+        # Testing with wrong parameters
+        return_list = database.get_paths_matching_advanced_search(1, [], [], [], [])
+        self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_advanced_search(["AND"], [], ["="], ["Guerbet"], [""])
+        self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_advanced_search([], ["PatientName"], ["wrong_condition"], ["Guerbet"], [""])
+        self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_advanced_search([], ["PatientName"], ["wrong_condition"], ["Guerbet"],["wrong_not"])
+        self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_advanced_search([], ["PatientName"], ["BETWEEN"], ["Guerbet"],["NOT"])
+        self.assertEqual(return_list, [])
+
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
+        database.add_tag("SequenceName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
+        database.add_path("scan1")
+        database.add_path("scan2")
+        database.add_path("scan3")
+        database.new_value("scan1", "PatientName", "Guerbet", "Guerbet")
+        database.new_value("scan2", "SequenceName", "RARE", "RARE")
+        return_list = database.get_paths_matching_advanced_search([], ["PatientName"], ["="], ["Guerbet"], [""])
+        self.assertEqual(return_list, ["scan1"])
+        return_list = database.get_paths_matching_advanced_search([], ["PatientName"], ["="], ["Guerbet"], ["NOT"])
+        self.assertTrue("scan2" in return_list)
+        self.assertTrue("scan3" in return_list)
+        self.assertEqual(len(return_list), 2)
+        return_list = database.get_paths_matching_advanced_search([], ["TagNotExisting"], ["="], ["Guerbet"], [""])
+        self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_advanced_search([], ["FileName"], ["CONTAINS"], ["scan"], [""])
+        self.assertTrue("scan1" in return_list)
+        self.assertTrue("scan2" in return_list)
+        self.assertTrue("scan3" in return_list)
+        self.assertEqual(len(return_list), 3)
+        return_list = database.get_paths_matching_advanced_search(["OR"], ["PatientName", "SequenceName"], ["=", "CONTAINS"], ["Guerbet", "RARE"], ["", ""])
+        self.assertTrue("scan1" in return_list)
+        self.assertTrue("scan2" in return_list)
+        self.assertEqual(len(return_list), 2)
+        return_list = database.get_paths_matching_advanced_search(["AND"], ["PatientName", "SequenceName"],
+                                                                  ["=", "CONTAINS"], ["Guerbet", "RARE"], ["", ""])
+        self.assertEqual(return_list, [])
 
 if __name__ == '__main__':
     unittest.main()
