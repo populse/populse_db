@@ -46,13 +46,13 @@ TAG_UNIT_MHZ = "MHz"
 
 ALL_UNITS = [TAG_UNIT_MS, TAG_UNIT_MM, TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL, TAG_UNIT_MHZ]
 
-def create_database(path):
+def create_database(string_engine):
     """
     Creates the database file with an empty schema
-    :param path: Path of the new database file
+    :param string_engine: Path of the new database file
     """
 
-    engine = create_engine('sqlite:///' + path)
+    engine = create_engine(string_engine)
     metadata = MetaData(bind=engine)
     fill_tables(metadata)
     metadata.create_all(engine)
