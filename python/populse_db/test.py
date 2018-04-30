@@ -862,5 +862,36 @@ class TestDatabaseMethods(unittest.TestCase):
                                                                   ["=", "CONTAINS"], ["Guerbet", "RARE"], ["", ""])
         self.assertEqual(return_list, [])
 
+    def test_get_paths_matching_tag_value_couples(self):
+        """
+        Tests the method giving the list of scans having all the values given
+        """
+
+        database = Database(self.string_engine)
+
+        # Testing with wrong parameters
+        return_list = database.get_paths_matching_tag_value_couples([])
+        self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_tag_value_couples(False)
+        self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_tag_value_couples([["tag_not_existing", "Guerbet"]])
+        self.assertEqual(return_list, [])
+
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
+        database.add_tag("SequenceName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
+        database.add_path("scan1")
+        database.add_path("scan2")
+        database.add_path("scan3")
+        database.new_value("scan1", "PatientName", "Guerbet", "Guerbet")
+        database.new_value("scan2", "SequenceName", "RARE", "RARE")
+
+        return_list = database.get_paths_matching_tag_value_couples([["PatientName", "Guerbet"]])
+        self.assertEqual(return_list, ["scan1"])
+        return_list = database.get_paths_matching_tag_value_couples([["PatientName", "Guerbet"], ["SequenceName", "RARE"]])
+        self.assertEqual(return_list, [])
+        database.new_value("scan2", "PatientName", "Guerbet", "Guerbet")
+        return_list = database.get_paths_matching_tag_value_couples([["PatientName", "Guerbet"], ["SequenceName", "RARE"]])
+        self.assertEqual(return_list, ["scan2"])
+
 if __name__ == '__main__':
     unittest.main()
