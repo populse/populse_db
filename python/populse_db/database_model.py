@@ -46,6 +46,11 @@ TAG_UNIT_MHZ = "MHz"
 
 ALL_UNITS = [TAG_UNIT_MS, TAG_UNIT_MM, TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL, TAG_UNIT_MHZ]
 
+INITIAL_TABLE = "initial"
+CURRENT_TABLE = "current"
+PATH_TABLE = "path"
+TAG_TABLE = "tag"
+
 def create_database(string_engine):
     """
     Creates the database file with an empty schema
@@ -63,7 +68,7 @@ def fill_tables(metadata):
     Fills the metadata with an empty schema
     :param metadata: Metadata filled
     """
-    Table('tag', metadata,
+    Table(TAG_TABLE, metadata,
           Column("name", String, primary_key=True),
           Column(
               "origin", Enum(TAG_ORIGIN_BUILTIN, TAG_ORIGIN_USER), nullable=False),
@@ -82,14 +87,14 @@ def fill_tables(metadata):
           Column("default_value", String, nullable=True),
           Column("description", String, nullable=True))
 
-    Table('path', metadata,
+    Table(PATH_TABLE, metadata,
           Column("name", String, primary_key=True),
           Column("checksum", String, nullable=True))
 
-    Table('current', metadata, Column("name", String, primary_key=True),
-          ForeignKeyConstraint(["name"], ["path.name"], ondelete="CASCADE",
+    Table(CURRENT_TABLE, metadata, Column("name", String, primary_key=True),
+          ForeignKeyConstraint(["name"], [PATH_TABLE + ".name"], ondelete="CASCADE",
                                onupdate="CASCADE"))
 
-    Table('initial', metadata, Column("name", String, primary_key=True),
-          ForeignKeyConstraint(["name"], ["path.name"], ondelete="CASCADE",
+    Table(INITIAL_TABLE, metadata, Column("name", String, primary_key=True),
+          ForeignKeyConstraint(["name"], [PATH_TABLE + ".name"], ondelete="CASCADE",
                                onupdate="CASCADE"))

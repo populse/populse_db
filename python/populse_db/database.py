@@ -28,7 +28,9 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_UNIT_MM, TAG_UNIT_HZPIXEL,
                                        TAG_UNIT_DEGREE, TAG_UNIT_MHZ,
                                        TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN,
-                                       LIST_TYPES, SIMPLE_TYPES, TYPE_TO_COLUMN, ALL_TYPES, ALL_UNITS)
+                                       LIST_TYPES, SIMPLE_TYPES, TYPE_TO_COLUMN,
+                                       ALL_TYPES, ALL_UNITS, INITIAL_TABLE,
+                                       CURRENT_TABLE, PATH_TABLE, TAG_TABLE)
 
 
 @event.listens_for(Engine, "connect")
@@ -47,7 +49,7 @@ class Database:
     Database API
 
     attributes:
-        - path: path of the database file
+        - enigne: string engine of the database
         - classes: list of table classes, generated automatically
         - base: database base
         - engine: database engine
@@ -99,7 +101,7 @@ class Database:
     def __init__(self, string_engine):
         """
         Creates an API of the database instance
-        :param path: Path of the database file, can be already
+        :param string_engine: String engine of the database file, can be already
         existing, or not
         """
 
@@ -108,14 +110,6 @@ class Database:
         self.tags = {}
         self.paths = {}
         self.names = {}
-
-        """
-        # Creation the database file if it does not already exist
-        if not os.path.exists(self.path):
-            if not os.path.exists(os.path.dirname(self.path)):
-                os.makedirs(os.path.dirname(self.path))
-            create_database(self.path)
-        """
 
         # SQLite database: we create it if it does not exist
         if string_engine.startswith('sqlite'):
@@ -131,9 +125,10 @@ class Database:
         self.update_table_classes()
 
         # Database schema checked
-        if ("path" not in self.table_classes.keys() or
-            "current" not in self.table_classes.keys() or
-                "initial" not in self.table_classes.keys()):
+        if (PATH_TABLE not in self.table_classes.keys() or
+            CURRENT_TABLE not in self.table_classes.keys() or
+                INITIAL_TABLE not in self.table_classes.keys() or
+                TAG_TABLE not in self.table_classes.keys()):
             raise ValueError(
                 'The database schema is not coherent with the API.')
 
@@ -183,7 +178,7 @@ class Database:
             return 7
 
         # Adding the tag in the tag table (0.003 sec on average)
-        tag = self.table_classes["tag"](name=name, origin=origin,
+        tag = self.table_classes[TAG_TABLE](name=name, origin=origin,
                                         type=tag_type, unit=unit,
                                         default_value=default_value,
                                         description=description)
@@ -207,7 +202,7 @@ class Database:
                                                  tag_type),
                                              nullable=False),
                                       ForeignKeyConstraint(["name"],
-                                                           ["path.name"],
+                                                           [PATH_TABLE + ".name"],
                                                            ondelete="CASCADE",
                                                            onupdate="CASCADE"))
             tag_table_initial = Table(table_name + "_initial", self.metadata,
@@ -220,7 +215,7 @@ class Database:
                                                  tag_type),
                                              nullable=False),
                                       ForeignKeyConstraint(["name"],
-                                                           ["path.name"],
+                                                           [PATH_TABLE + ".name"],
                                                            ondelete="CASCADE",
                                                            onupdate="CASCADE"))
 
@@ -243,11 +238,11 @@ class Database:
             # Tag column added to both initial and current tables (0.05 sec on average)
             self.session.execute(
                 'ALTER TABLE %s ADD COLUMN %s %s' % (
-                    "initial", "\"" + self.tag_name_to_column_name(name) + "\"",
+                    INITIAL_TABLE, "\"" + self.tag_name_to_column_name(name) + "\"",
                     column_type))
             self.session.execute(
                 'ALTER TABLE %s ADD COLUMN %s %s' % (
-                    "current", "\"" + self.tag_name_to_column_name(name) + "\"",
+                    CURRENT_TABLE, "\"" + self.tag_name_to_column_name(name) + "\"",
                     column_type))
 
         self.unsaved_modifications = True
@@ -268,9 +263,7 @@ class Database:
         name_name = "name"
         order_name = "order"
         value_name = "value"
-        path_name = "path.name"
-        initial_name = "initial"
-        current_name = "current"
+        path_name = PATH_TABLE + ".name"
 
         tag_rows = []
 
@@ -335,9 +328,9 @@ class Database:
                 column_type = column.type.compile(self.engine.dialect)
                 tag_column_name = "\"" + self.tag_name_to_column_name(tag_name) + "\""
                 self.session.execute(
-                    'ALTER TABLE %s ADD COLUMN %s %s;' % (initial_name, tag_column_name, column_type))
+                    'ALTER TABLE %s ADD COLUMN %s %s;' % (INITIAL_TABLE, tag_column_name, column_type))
                 self.session.execute(
-                    'ALTER TABLE %s ADD COLUMN %s %s;' % (current_name, tag_column_name, column_type))
+                    'ALTER TABLE %s ADD COLUMN %s %s;' % (CURRENT_TABLE, tag_column_name, column_type))
 
         self.session.add_all(tag_rows)
 
@@ -384,8 +377,8 @@ class Database:
             return 1
 
         is_tag_list = self.is_tag_list(name)
-        self.session.query(self.table_classes["tag"]).filter(
-            self.table_classes["tag"].name == name).delete()
+        self.session.query(self.table_classes[TAG_TABLE]).filter(
+            self.table_classes[TAG_TABLE].name == name).delete()
 
         self.tags.pop(name, None)
 
@@ -405,7 +398,7 @@ class Database:
             # Tag column removed from initial table
             columns = ""
             sql_table_create = CreateTable(
-                self.table_classes["initial"].__table__)
+                self.table_classes[INITIAL_TABLE].__table__)
             for column in sql_table_create.columns:
                 if self.tag_name_to_column_name(name) in str(column):
                     column_to_remove = column
@@ -417,18 +410,18 @@ class Database:
             columns = columns[:-2]
             self.session.execute(sql_query)
             self.session.execute("INSERT INTO initial_backup SELECT " +
-                            columns + " FROM initial")
-            self.session.execute("DROP TABLE initial")
+                            columns + " FROM " + INITIAL_TABLE)
+            self.session.execute("DROP TABLE " + INITIAL_TABLE)
             sql_query = sql_query[:21] + sql_query[29:]
             self.session.execute(sql_query)
-            self.session.execute("INSERT INTO initial SELECT " + columns +
+            self.session.execute("INSERT INTO " + INITIAL_TABLE + " SELECT " + columns +
                             " FROM initial_backup")
             self.session.execute("DROP TABLE initial_backup")
 
             # Tag column removed from current table
             columns = ""
             sql_table_create = CreateTable(
-                self.table_classes["current"].__table__)
+                self.table_classes[CURRENT_TABLE].__table__)
             for column in sql_table_create.columns:
                 if self.tag_name_to_column_name(name) in str(column):
                     column_to_remove = column
@@ -440,11 +433,11 @@ class Database:
             columns = columns[:-2]
             self.session.execute(sql_query)
             self.session.execute("INSERT INTO current_backup SELECT " +
-                            columns + " FROM current")
-            self.session.execute("DROP TABLE current")
+                            columns + " FROM " + CURRENT_TABLE)
+            self.session.execute("DROP TABLE " + CURRENT_TABLE)
             sql_query = sql_query[:21] + sql_query[29:]
             self.session.execute(sql_query)
-            self.session.execute("INSERT INTO current SELECT " + columns +
+            self.session.execute("INSERT INTO " + CURRENT_TABLE + " SELECT " + columns +
                             " FROM current_backup")
             self.session.execute("DROP TABLE current_backup")
 
@@ -462,8 +455,8 @@ class Database:
         if name in self.tags:
             return self.tags[name]
         else:
-            tag = self.session.query(self.table_classes["tag"]).filter(
-                self.table_classes["tag"].name == name).first()
+            tag = self.session.query(self.table_classes[TAG_TABLE]).filter(
+                self.table_classes[TAG_TABLE].name == name).first()
             self.tags[name] = tag
             return tag
 
@@ -474,7 +467,7 @@ class Database:
         """
 
         tags_list = []
-        tags = self.session.query(self.table_classes["tag"].name).all()
+        tags = self.session.query(self.table_classes[TAG_TABLE].name).all()
         for tag in tags:
             tags_list.append(tag.name)
         return tags_list
@@ -486,7 +479,7 @@ class Database:
         """
 
         tags_list = []
-        tags = self.session.query(self.table_classes["tag"]).all()
+        tags = self.session.query(self.table_classes[TAG_TABLE]).all()
         for tag in tags:
             tags_list.append(tag)
         return tags_list
@@ -571,8 +564,8 @@ class Database:
             # The tag has a simple type, the value is gotten from current
             # table
 
-            values = self.session.query(self.table_classes["current"]).filter(
-                self.table_classes["current"].name == path).all()
+            values = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
+                self.table_classes[CURRENT_TABLE].name == path).all()
             if len(values) is 1:
                 value = values[0]
                 return getattr(value, self.tag_name_to_column_name(tag))
@@ -614,8 +607,8 @@ class Database:
         else:
             # The tag has a simple type, the value is gotten from initial table
 
-            values = self.session.query(self.table_classes["initial"]).filter(
-                self.table_classes["initial"].name == path).all()
+            values = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
+                self.table_classes[INITIAL_TABLE].name == path).all()
             if len(values) is 1:
                 value = values[0]
                 return getattr(value, self.tag_name_to_column_name(tag))
@@ -676,8 +669,8 @@ class Database:
             # The path has a simple type, the values are reset in the tag
             # column in current table
 
-            values = self.session.query(self.table_classes["current"]).filter(
-                self.table_classes["current"].name == path).all()
+            values = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
+                self.table_classes[CURRENT_TABLE].name == path).all()
             if len(values) is 1:
                 value = values[0]
                 setattr(value, self.tag_name_to_column_name(tag), new_value)
@@ -718,8 +711,8 @@ class Database:
             # The path has a simple type, the value is reset in the current
             # table
 
-            value = self.session.query(self.table_classes["current"]).filter(
-                self.table_classes["current"].name == path).first()
+            value = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
+                self.table_classes[CURRENT_TABLE].name == path).first()
             setattr(value, self.tag_name_to_column_name(tag),
                         self.get_initial_value(path, tag))
 
@@ -766,15 +759,15 @@ class Database:
             # current and initial tables tag columns
 
             # Current table
-            value = self.session.query(self.table_classes["current"]).filter(
-                self.table_classes["current"].name == path).first()
+            value = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
+                self.table_classes[CURRENT_TABLE].name == path).first()
             tag_column_name = self.tag_name_to_column_name(tag)
             if value is not None:
                 setattr(value, tag_column_name, None)
 
             # Initial table
-            value = self.session.query(self.table_classes["initial"]).filter(
-                self.table_classes["initial"].name == path).first()
+            value = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
+                self.table_classes[INITIAL_TABLE].name == path).first()
             if value is not None:
                 setattr(value, tag_column_name, None)
 
@@ -877,10 +870,10 @@ class Database:
             # The tag has a simple type, it is add it in both current and
             # initial tables
 
-            path_initial = self.session.query(self.table_classes["initial"]).filter(
-                self.table_classes["initial"].name == path).first()
-            path_current = self.session.query(self.table_classes["current"]).filter(
-                self.table_classes["current"].name == path).first()
+            path_initial = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
+                self.table_classes[INITIAL_TABLE].name == path).first()
+            path_current = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
+                self.table_classes[CURRENT_TABLE].name == path).first()
             database_current_value = getattr(
                 path_current, self.tag_name_to_column_name(tag))
             database_initial_value = getattr(
@@ -912,15 +905,13 @@ class Database:
 
         tags_is_list = {}
         values_added = []
-        initial_name = "initial"
-        current_name = "current"
 
         for path in values:
 
-            path_initial = self.session.query(self.table_classes[initial_name]).filter(
-                self.table_classes[initial_name].name == path).first()
-            path_current = self.session.query(self.table_classes[current_name]).filter(
-                self.table_classes[current_name].name == path).first()
+            path_initial = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
+                self.table_classes[INITIAL_TABLE].name == path).first()
+            path_current = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
+                self.table_classes[CURRENT_TABLE].name == path).first()
 
             path_values = values[path]
 
@@ -981,7 +972,7 @@ class Database:
 
     def get_path(self, path):
         """
-        Gives the path table object of a path
+        Gives the path row of a path
         :param path: path name
         :return The path row if the path exists, None otherwise
         """
@@ -989,8 +980,8 @@ class Database:
         if path in self.paths:
             return self.paths[path]
         else:
-            path_row = self.session.query(self.table_classes["path"]).filter(
-            self.table_classes["path"].name == path).first()
+            path_row = self.session.query(self.table_classes[PATH_TABLE]).filter(
+            self.table_classes[PATH_TABLE].name == path).first()
             self.paths[path] = path_row
             return path_row
 
@@ -1001,7 +992,7 @@ class Database:
         """
 
         paths_list = []
-        paths = self.session.query(self.table_classes["path"]).all()
+        paths = self.session.query(self.table_classes[PATH_TABLE]).all()
         for path in paths:
             paths_list.append(path.name)
         return paths_list
@@ -1013,7 +1004,7 @@ class Database:
         """
 
         paths_list = []
-        paths = self.session.query(self.table_classes["path"]).all()
+        paths = self.session.query(self.table_classes[PATH_TABLE]).all()
         for path in paths:
             paths_list.append(path)
         return paths_list
@@ -1030,8 +1021,8 @@ class Database:
         if path_row is None:
             return 1
 
-        self.session.query(self.table_classes["path"]).filter(
-            self.table_classes["path"].name == path).delete()
+        self.session.query(self.table_classes[PATH_TABLE]).filter(
+            self.table_classes[PATH_TABLE].name == path).delete()
 
         # Thanks to the foreign key and on delete cascade, the path is
         # also removed from all other tables
@@ -1061,13 +1052,13 @@ class Database:
         if not isinstance(path, str):
             return 3
 
-        path_to_add = self.table_classes["path"](name=path, checksum=checksum)
+        path_to_add = self.table_classes[PATH_TABLE](name=path, checksum=checksum)
         self.session.add(path_to_add)
         self.paths[path] = path_to_add
 
         # Adding the index to both initial and current tables
-        initial = self.table_classes["initial"](name=path)
-        current = self.table_classes["current"](name=path)
+        initial = self.table_classes[INITIAL_TABLE](name=path)
+        current = self.table_classes[CURRENT_TABLE](name=path)
         self.session.add(current)
         self.session.add(initial)
 
@@ -1081,26 +1072,22 @@ class Database:
         :param paths: list of paths (path, checksum)
         """
 
-        path_table_name = "path"
-        initial_name = "initial"
-        current_name = "current"
-
         for path in paths:
 
             path_name = path[0]
             path_checksum = path[1]
 
             # Adding the path in the Tag table
-            paths_query = self.session.query(self.table_classes[path_table_name]).filter(
-                self.table_classes[path_table_name].name == path_name).first()
+            paths_query = self.session.query(self.table_classes[PATH_TABLE]).filter(
+                self.table_classes[PATH_TABLE].name == path_name).first()
             if paths_query is None:
-                path_to_add = self.table_classes[path_table_name](name=path_name, checksum=path_checksum)
+                path_to_add = self.table_classes[PATH_TABLE](name=path_name, checksum=path_checksum)
                 self.session.add(path_to_add)
                 self.paths[path_name] = path_to_add
 
                 # Adding the index to both initial and current tables
-                initial = self.table_classes[initial_name](name=path_name)
-                current = self.table_classes[current_name](name=path_name)
+                initial = self.table_classes[INITIAL_TABLE](name=path_name)
+                current = self.table_classes[CURRENT_TABLE](name=path_name)
                 self.session.add(current)
                 self.session.add(initial)
 
@@ -1121,12 +1108,10 @@ class Database:
         # Iterating over all values and finding matches
 
         # Search in path name
-        values = self.session.query(self.table_classes["path"].name).filter(self.table_classes["path"].name.like("%" + search + "%")).distinct().all()
+        values = self.session.query(self.table_classes[PATH_TABLE].name).filter(self.table_classes[PATH_TABLE].name.like("%" + search + "%")).distinct().all()
         for value in values:
             if value not in paths_matching:
                 paths_matching.append(value.name)
-
-        current_name = "current"
 
         # Search for each tag
         for tag in tags:
@@ -1135,8 +1120,8 @@ class Database:
                 # The tag has a simple type, the tag column is used in the
                 # current table
 
-                values = self.session.query(self.table_classes[current_name].name).filter(
-                    getattr(self.table_classes[current_name],
+                values = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
+                    getattr(self.table_classes[CURRENT_TABLE],
                             self.tag_name_to_column_name(tag)).like(
                                 "%" + search + "%")).distinct().all()
                 for value in values:
@@ -1165,32 +1150,32 @@ class Database:
         if tag == "FileName":
 
             if (condition == "="):
-                values = self.session.query(self.table_classes["path"].name).filter(
-                    self.table_classes["path"].name == value).distinct().all()
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].name == value).distinct().all()
             elif (condition == "!="):
-                values = self.session.query(self.table_classes["path"].name).filter(
-                    self.table_classes["path"].name != value).distinct().all()
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].name != value).distinct().all()
             elif (condition == ">="):
-                values = self.session.query(self.table_classes["path"].name).filter(
-                    self.table_classes["path"].name >= value).distinct().all()
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].name >= value).distinct().all()
             elif (condition == "<="):
-                values = self.session.query(self.table_classes["path"].name).filter(
-                    self.table_classes["path"].name <= value).distinct().all()
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].name <= value).distinct().all()
             elif (condition == ">"):
-                values = self.session.query(self.table_classes["path"].name).filter(
-                    self.table_classes["path"].name > value).distinct().all()
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].name > value).distinct().all()
             elif (condition == "<"):
-                values = self.session.query(self.table_classes["path"].name).filter(
-                    self.table_classes["path"].name < value).distinct().all()
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].name < value).distinct().all()
             elif (condition == "CONTAINS"):
-                values = self.session.query(self.table_classes["path"].name).filter(
-                    self.table_classes["path"].name.contains(value)).distinct().all()
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].name.contains(value)).distinct().all()
             elif (condition == "BETWEEN"):
-                values = self.session.query(self.table_classes["path"].name).filter(
-                    self.table_classes["path"].name.between(value[0], value[1])).distinct().all()
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].name.between(value[0], value[1])).distinct().all()
             elif (condition == "IN"):
-                values = self.session.query(self.table_classes["path"].name).filter(
-                    self.table_classes["path"].name._in(value)).distinct().all()
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].name._in(value)).distinct().all()
 
             paths_list = []
             for path in values:
@@ -1203,52 +1188,50 @@ class Database:
             # The tag has a simple type, the tag column is used in the current
             # table
 
-            current_name = "current"
-
             if (condition == "="):
-                query = self.session.query(self.table_classes[current_name].name).filter(
-                    getattr(self.table_classes[current_name],
+                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
+                    getattr(self.table_classes[CURRENT_TABLE],
                             self.tag_name_to_column_name(tag)) ==
                     value).distinct().all()
             elif (condition == "!="):
-                query = self.session.query(self.table_classes[current_name].name).filter(
-                    getattr(self.table_classes[current_name],
+                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
+                    getattr(self.table_classes[CURRENT_TABLE],
                             self.tag_name_to_column_name(tag))
                     != value).distinct().all()
             elif (condition == ">="):
-                query = self.session.query(self.table_classes[current_name].name).filter(
-                    getattr(self.table_classes[current_name],
+                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
+                    getattr(self.table_classes[CURRENT_TABLE],
                             self.tag_name_to_column_name(tag)) >=
                     value).distinct().all()
             elif (condition == "<="):
-                query = self.session.query(self.table_classes[current_name].name).filter(
-                    getattr(self.table_classes[current_name],
+                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
+                    getattr(self.table_classes[CURRENT_TABLE],
                             self.tag_name_to_column_name(tag))
                     <= value).distinct().all()
             elif (condition == ">"):
-                query = self.session.query(self.table_classes[current_name].name).filter(
-                    getattr(self.table_classes[current_name],
+                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
+                    getattr(self.table_classes[CURRENT_TABLE],
                             self.tag_name_to_column_name(tag))
                     > value).distinct().all()
             elif (condition == "<"):
-                query = self.session.query(self.table_classes[current_name].name).filter(
-                    getattr(self.table_classes[current_name],
+                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
+                    getattr(self.table_classes[CURRENT_TABLE],
                             self.tag_name_to_column_name(tag))
                     < value).distinct().all()
             elif (condition == "CONTAINS"):
-                query = self.session.query(self.table_classes[current_name].name).filter(
-                    getattr(self.table_classes[current_name],
+                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
+                    getattr(self.table_classes[CURRENT_TABLE],
                             self.tag_name_to_column_name(tag)).contains(
                         value)).distinct().all()
             elif (condition == "BETWEEN"):
-                query = self.session.query(self.table_classes[current_name].name).filter(
-                    getattr(self.table_classes[current_name],
+                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
+                    getattr(self.table_classes[CURRENT_TABLE],
                             self.tag_name_to_column_name(tag)).between(
                                 value[0],
                                 value[1])).distinct().all()
             elif (condition == "IN"):
-                query = self.session.query(self.table_classes[current_name].name).filter(
-                    getattr(self.table_classes[current_name],
+                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
+                    getattr(self.table_classes[CURRENT_TABLE],
                             self.tag_name_to_column_name(tag)).in_(
                         value)).distinct().all()
 
@@ -1397,11 +1380,9 @@ class Database:
                 # The tag has a simple type, the tag column in the current
                 # table is used
 
-                current_name = "current"
-
                 couple_query_result = self.session.query(
-                    self.table_classes[current_name].name).filter(
-                    getattr(self.table_classes[current_name],
+                    self.table_classes[CURRENT_TABLE].name).filter(
+                    getattr(self.table_classes[CURRENT_TABLE],
                             self.tag_name_to_column_name(tag)) == value)
                 couple_result = []
                 for query_result in couple_query_result:
