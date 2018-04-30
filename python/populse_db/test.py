@@ -25,6 +25,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         self.temp_folder = tempfile.mkdtemp()
         self.path = os.path.join(self.temp_folder, "test.db")
+        self.string_engine = 'sqlite:///' + self.path
 
     def tearDown(self):
         """
@@ -40,7 +41,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the database creation
         """
         # Testing the creation of the database file
-        create_database(self.path)
+        create_database(self.string_engine)
         self.assertTrue(os.path.exists(self.path))
 
     def test_database_constructor(self):
@@ -48,13 +49,13 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the database constructor
         """
         # Testing without the database file existing
-        Database(self.path)
+        Database(self.string_engine)
         self.assertTrue(os.path.exists(self.path))
 
         # Testing with the database file existing
         os.remove(self.path)
-        create_database(self.path)
-        Database(self.path)
+        create_database(self.string_engine)
+        Database(self.string_engine)
         self.assertTrue(os.path.exists(self.path))
 
     def test_add_tag(self):
@@ -62,7 +63,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method adding a tag
         """
         # Testing with a first tag
-        database = Database(self.path)
+        database = Database(self.string_engine)
         return_value = database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
         self.assertEqual(return_value, 0)
@@ -117,7 +118,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method removing a tag
         """
-        database = Database(self.path)
+        database = Database(self.string_engine)
 
         # Adding tags
         return_value = database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
@@ -173,7 +174,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method giving the Tag table object of a tag
         """
-        database = Database(self.path)
+        database = Database(self.string_engine)
 
         # Adding a tag
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
@@ -191,7 +192,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method telling if the tag has a list type or not
         """
-        database = Database(self.path)
+        database = Database(self.string_engine)
 
         # Adding tags
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
@@ -211,7 +212,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method giving the current value, given a tag and a scan
         """
-        database = Database(self.path)
+        database = Database(self.string_engine)
 
         # Adding scans
         database.add_path("scan1", "159abc")
@@ -267,7 +268,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method giving the initial value, given a tag and a scan
         """
-        database = Database(self.path)
+        database = Database(self.string_engine)
 
         # Adding scans
         database.add_path("scan1", "159abc")
@@ -320,7 +321,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method telling if the value has been modified or not
         """
-        database = Database(self.path)
+        database = Database(self.string_engine)
 
         # Adding scan
         database.add_path("scan1", "159abc")
@@ -363,7 +364,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method setting a value
         """
-        database = Database(self.path)
+        database = Database(self.string_engine)
 
         # Adding scan
         database.add_path("scan1", "159abc")
@@ -442,7 +443,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method resetting a value
         """
-        database = Database(self.path)
+        database = Database(self.string_engine)
 
         # Adding scan
         database.add_path("scan1", "159abc")
@@ -505,7 +506,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method removing a value
         """
-        database = Database(self.path)
+        database = Database(self.string_engine)
 
         # Adding scan
         database.add_path("scan1", "159abc")
@@ -553,7 +554,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method checking the validity of incoming values
         """
-        database = Database(self.path)
+        database = Database(self.string_engine)
         is_valid = database.check_type_value("string", TAG_TYPE_STRING)
         self.assertTrue(is_valid)
         is_valid = database.check_type_value(1, TAG_TYPE_STRING)
@@ -580,7 +581,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method adding a value
         """
-        database = Database(self.path)
+        database = Database(self.string_engine)
 
         # Adding scans
         database.add_path("scan1", "159abc")
@@ -680,7 +681,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method giving the Path table object of a scan
         """
-        database = Database(self.path)
+        database = Database(self.string_engine)
 
         # Adding scan
         database.add_path("scan1", "159abc")
@@ -703,7 +704,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method removing a scan
         """
-        database = Database(self.path)
+        database = Database(self.string_engine)
 
         # Adding scan
         database.add_path("scan1", "159abc")
@@ -734,7 +735,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method adding a scan
         """
-        database = Database(self.path)
+        database = Database(self.string_engine)
 
         # Adding scan
         database.add_path("scan1", "159abc")

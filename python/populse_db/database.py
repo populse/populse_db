@@ -12,6 +12,8 @@ from sqlalchemy import event
 
 import hashlib
 
+import re
+
 import time as time_exec
 
 from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
@@ -94,27 +96,36 @@ class Database:
         - tables_redefinition: redefines the model after schema update
     """
 
-    def __init__(self, path):
+    def __init__(self, string_engine):
         """
         Creates an API of the database instance
         :param path: Path of the database file, can be already
         existing, or not
         """
 
-        self.path = path
+        self.string_engine = string_engine
         self.table_classes = {}
         self.tags = {}
         self.paths = {}
         self.names = {}
 
+        """
         # Creation the database file if it does not already exist
         if not os.path.exists(self.path):
             if not os.path.exists(os.path.dirname(self.path)):
                 os.makedirs(os.path.dirname(self.path))
             create_database(self.path)
+        """
+
+        # SQLite database: we create it if it does not exist
+        if string_engine.startswith('sqlite'):
+            db_file = re.sub("sqlite.*:///", "", string_engine)
+            if not os.path.exists(db_file):
+                os.makedirs(os.path.dirname(db_file), exist_ok=True)
+                create_database(string_engine)
 
         # Database opened
-        self.engine = create_engine('sqlite:///' + self.path, connect_args={'check_same_thread': False})
+        self.engine = create_engine(self.string_engine)
 
         # Metadata generated
         self.update_table_classes()
