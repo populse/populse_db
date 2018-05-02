@@ -1294,7 +1294,7 @@ class Database:
         :param fields: Fields (tag name/All visualized tags/FileName)
         :param conditions: Conditions (=, !=, <, >, <=, >=, BETWEEN,
                            CONTAINS, IN)
-        :param values: Values (str for =, !=, <, >, <=, >=, and
+        :param values: Values (Typed value for =, !=, <, >, <=, >=, and
                        CONTAINS/list for BETWEEN and IN)
         :param nots: Nots (Empty or NOT)
         :return: List of path names matching all the constraints
@@ -1323,8 +1323,11 @@ class Database:
                 if not isinstance(value, list):
                     return []
             else:
-                if not isinstance(value, str):
-                    return []
+                field = fields[i]
+                if field != "FileName" and not isinstance(field, list):
+                    tag_type = self.get_tag(field).type
+                    if not self.check_type_value(value, tag_type):
+                        return []
         for not_ in nots:
             if not_ not in ["", "NOT"]:
                 return []
@@ -1381,7 +1384,7 @@ class Database:
         """
         Checks if a path contains all the couples <tag, value> given in
         parameter
-        :param tag_value_couples: List of couple <tag, value> to check
+        :param tag_value_couples: List of couple <tag(str), value(Typed)> to check
         :return: List of paths matching all the <tag, value> couples
         """
 
@@ -1412,7 +1415,7 @@ class Database:
 
                 for path in self.get_paths_names():
                     path_value = self.get_current_value(path, tag)
-                    if str(path_value) == value:
+                    if path_value == value:
                         couple_result.append(path)
 
             couple_results.append(couple_result)
