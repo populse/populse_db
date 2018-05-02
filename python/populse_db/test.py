@@ -754,7 +754,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database = Database(self.string_engine)
 
         # Adding scan
-        database.add_path("scan1", "159abc")
+        database.add_path("scan1", "scan","159abc")
 
         # Testing that the scan has been added
         scan = database.get_path("scan1")
@@ -763,23 +763,25 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(scan.name, "scan1")
 
         # Testing when trying to add a scan that already exists
-        return_value = database.add_path("scan1", "anotherChecksum")
+        return_value = database.add_path("scan1", "scan", "anotherChecksum")
         self.assertEqual(return_value, 1)
         scan = database.get_path("scan1")
         self.assertEqual(scan.checksum, "159abc")
 
         # Testing without checksum
-        database.add_path("scan_without_checksum")
+        database.add_path("scan_without_checksum", "scan")
 
         database.save_modifications()
         scan = database.get_path("scan_without_checksum")
         self.assertIsNone(scan.checksum)
 
         # Testing with invalid parameters
-        return_value = database.add_path("scan_wrong_checksum", True)
+        return_value = database.add_path("scan_wrong_checksum", "scan", True)
         self.assertEqual(return_value, 2)
         return_value = database.add_path(True, "checksum")
         self.assertEqual(return_value, 3)
+        return_value = database.add_path("scan", 5, "checksum")
+        self.assertEqual(return_value, 4)
 
     def test_get_paths_matching_search(self):
         """
@@ -793,11 +795,11 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(return_list, [])
         return_list = database.get_paths_matching_search("search", 1)
         self.assertEqual(return_list, [])
-        database.add_path("scan1")
+        database.add_path("scan1", "scan")
         return_list = database.get_paths_matching_search("search", ["tag_not_existing"])
         self.assertEqual(return_list, [])
 
-        database.add_path("scan2")
+        database.add_path("scan2", "scan")
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
         database.new_value("scan1", "PatientName", "Guerbet1", "Guerbet")
         database.new_value("scan2", "PatientName", "Guerbet2", "Guerbet")
@@ -837,9 +839,9 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
         database.add_tag("SequenceName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
         database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
-        database.add_path("scan1")
-        database.add_path("scan2")
-        database.add_path("scan3")
+        database.add_path("scan1", "scan")
+        database.add_path("scan2", "scan")
+        database.add_path("scan3", "scan")
         database.new_value("scan1", "PatientName", "Guerbet", "Guerbet")
         database.new_value("scan2", "SequenceName", "RARE", "RARE")
         database.new_value("scan3", "BandWidth", 50000, 50000)
@@ -894,9 +896,9 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
         database.add_tag("SequenceName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
         database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
-        database.add_path("scan1")
-        database.add_path("scan2")
-        database.add_path("scan3")
+        database.add_path("scan1", "scan")
+        database.add_path("scan2", "scan")
+        database.add_path("scan3", "scan")
         database.new_value("scan1", "PatientName", "Guerbet", "Guerbet")
         database.new_value("scan2", "SequenceName", "RARE", "RARE")
         database.new_value("scan2", "BandWidth", 50000, 50000)
