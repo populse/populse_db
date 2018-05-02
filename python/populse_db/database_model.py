@@ -89,7 +89,8 @@ def fill_tables(metadata):
 
     Table(PATH_TABLE, metadata,
           Column("name", String, primary_key=True),
-          Column("checksum", String, nullable=True))
+          Column("checksum", String, nullable=True),
+          Column("type", String, nullable=False))
 
     Table(CURRENT_TABLE, metadata, Column("name", String, primary_key=True),
           ForeignKeyConstraint(["name"], [PATH_TABLE + ".name"], ondelete="CASCADE",

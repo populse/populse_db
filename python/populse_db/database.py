@@ -1036,15 +1036,17 @@ class Database:
 
         return 0
 
-    def add_path(self, path, checksum=None):
+    def add_path(self, path, path_type, checksum=None):
         """
         Adds a path
         :param path: file path
+        :param path_type : path type (str)
         :param checksum: path checksum (str or None)
         :return 0 if the path has been added
         :return 1 if the path already exists
         :return 2 if the checksum is invalid
         :return 3 if the name is invalid
+        :return 4 if the path type is invalid
         """
 
         path_row = self.get_path(path)
@@ -1054,8 +1056,10 @@ class Database:
             return 2
         if not isinstance(path, str):
             return 3
+        if not isinstance(path_type, str):
+            return 4
 
-        path_to_add = self.table_classes[PATH_TABLE](name=path, checksum=checksum)
+        path_to_add = self.table_classes[PATH_TABLE](name=path, type=path_type, checksum=checksum)
         self.session.add(path_to_add)
         self.paths[path] = path_to_add
 
@@ -1072,19 +1076,20 @@ class Database:
     def add_paths(self, paths):
         """
         Adds all paths
-        :param paths: list of paths (path, checksum)
+        :param paths: list of paths (path, type, checksum)
         """
 
         for path in paths:
 
             path_name = path[0]
-            path_checksum = path[1]
+            path_type = path[1]
+            path_checksum = path[2]
 
             # Adding the path in the Tag table
             paths_query = self.session.query(self.table_classes[PATH_TABLE]).filter(
                 self.table_classes[PATH_TABLE].name == path_name).first()
             if paths_query is None:
-                path_to_add = self.table_classes[PATH_TABLE](name=path_name, checksum=path_checksum)
+                path_to_add = self.table_classes[PATH_TABLE](name=path_name, type=path_type, checksum=path_checksum)
                 self.session.add(path_to_add)
                 self.paths[path_name] = path_to_add
 
