@@ -836,11 +836,13 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
         database.add_tag("SequenceName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
+        database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
         database.add_path("scan1")
         database.add_path("scan2")
         database.add_path("scan3")
         database.new_value("scan1", "PatientName", "Guerbet", "Guerbet")
         database.new_value("scan2", "SequenceName", "RARE", "RARE")
+        database.new_value("scan3", "BandWidth", 50000, 50000)
         return_list = database.get_paths_matching_advanced_search([], ["PatientName"], ["="], ["Guerbet"], [""])
         self.assertEqual(return_list, ["scan1"])
         return_list = database.get_paths_matching_advanced_search([], ["PatientName"], ["="], ["Guerbet"], ["NOT"])
@@ -861,6 +863,10 @@ class TestDatabaseMethods(unittest.TestCase):
         return_list = database.get_paths_matching_advanced_search(["AND"], ["PatientName", "SequenceName"],
                                                                   ["=", "CONTAINS"], ["Guerbet", "RARE"], ["", ""])
         self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_advanced_search([], ["BandWidth"], ["="], ["50000"], [""])
+        self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_advanced_search([], ["BandWidth"], ["="], [50000], [""])
+        self.assertEqual(return_list, ["scan3"])
 
     def test_get_paths_matching_tag_value_couples(self):
         """
@@ -876,14 +882,24 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(return_list, [])
         return_list = database.get_paths_matching_tag_value_couples([["tag_not_existing", "Guerbet"]])
         self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_tag_value_couples([["tag_not_existing"]])
+        self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_tag_value_couples([["tag_not_existing", "Guerbet", "too_many"]])
+        self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_tag_value_couples([1])
+        self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_tag_value_couples("test")
+        self.assertEqual(return_list, [])
 
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
         database.add_tag("SequenceName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
+        database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
         database.add_path("scan1")
         database.add_path("scan2")
         database.add_path("scan3")
         database.new_value("scan1", "PatientName", "Guerbet", "Guerbet")
         database.new_value("scan2", "SequenceName", "RARE", "RARE")
+        database.new_value("scan2", "BandWidth", 50000, 50000)
 
         return_list = database.get_paths_matching_tag_value_couples([["PatientName", "Guerbet"]])
         self.assertEqual(return_list, ["scan1"])
@@ -892,6 +908,12 @@ class TestDatabaseMethods(unittest.TestCase):
         database.new_value("scan2", "PatientName", "Guerbet", "Guerbet")
         return_list = database.get_paths_matching_tag_value_couples([["PatientName", "Guerbet"], ["SequenceName", "RARE"]])
         self.assertEqual(return_list, ["scan2"])
+        return_list = database.get_paths_matching_tag_value_couples(
+            [["PatientName", "Guerbet"], ["SequenceName", "RARE"], ["BandWidth", 50000]])
+        self.assertEqual(return_list, ["scan2"])
+        return_list = database.get_paths_matching_tag_value_couples(
+            [["PatientName", "Guerbet"], ["SequenceName", "RARE"], ["BandWidth", "50000"]])
+        self.assertEqual(return_list, [])
 
 if __name__ == '__main__':
     unittest.main()

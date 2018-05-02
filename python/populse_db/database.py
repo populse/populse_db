@@ -1302,6 +1302,9 @@ class Database:
 
         if not isinstance(links, list) or not isinstance(fields, list) or not isinstance(conditions, list) or not isinstance(values, list) or not isinstance(nots, list):
             return []
+        if (not len(links) == len(fields) - 1 == len(conditions) - 1 ==
+                len(values) - 1 == len(nots) - 1):
+            return []
         for link in links:
             if link not in ["AND", "OR"]:
                 return []
@@ -1324,16 +1327,16 @@ class Database:
                     return []
             else:
                 field = fields[i]
-                if field != "FileName" and not isinstance(field, list):
+                if field == "FileName":
+                    if not isinstance(value, str):
+                        return []
+                elif not isinstance(field, list):
                     tag_type = self.get_tag(field).type
                     if not self.check_type_value(value, tag_type):
                         return []
         for not_ in nots:
             if not_ not in ["", "NOT"]:
                 return []
-        if (not len(links) == len(fields) - 1 == len(conditions) - 1 ==
-                len(values) - 1 == len(nots) - 1):
-            return []
 
         queries = []  # list of paths of each query (row)
         for i in range(0, len(conditions)):
@@ -1393,8 +1396,18 @@ class Database:
 
         couple_results = []
         for couple in tag_value_couples:
+
+            if not isinstance(couple, list) or len(couple) != 2:
+                return []
+
             tag = couple[0]
             value = couple[1]
+
+            tag_row = self.get_tag(tag)
+            if tag_row is None:
+                return []
+            if not self.check_type_value(value, tag_row.type):
+                return []
 
             couple_result = []
             is_list = self.is_tag_list(tag)
