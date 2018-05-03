@@ -1305,7 +1305,7 @@ class Database:
         :return: List of path names matching all the constraints
         """
 
-        if not isinstance(links, list) or not isinstance(fields, list) or not isinstance(conditions, list) or not isinstance(values, list) or not isinstance(nots, list):
+        if not isinstance(links, list) or not isinstance(fields, list) or not isinstance(conditions, list) or not isinstance(values, list) or not isinstance(nots, list) or not isinstance(scans_list, list):
             return []
         if (not len(links) == len(fields) - 1 == len(conditions) - 1 ==
                 len(values) - 1 == len(nots) - 1):
