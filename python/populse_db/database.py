@@ -3,7 +3,7 @@ from datetime import date, time, datetime
 
 from sqlalchemy import (create_engine, Column, String, Integer, Float,
                         MetaData, Date, DateTime, Time, Table,
-                        ForeignKeyConstraint, event)
+                        ForeignKeyConstraint, event, or_)
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import CreateTable, DropTable
@@ -1133,7 +1133,7 @@ class Database:
         # Iterating over all values and finding matches
 
         # Search in path name
-        values = self.session.query(self.table_classes[PATH_TABLE].name).filter(self.table_classes[PATH_TABLE].name.like("%" + search + "%")).distinct().all()
+        values = self.session.query(self.table_classes[PATH_TABLE].name).filter(or_(self.table_classes[PATH_TABLE].name.like("%" + search + "%"), self.table_classes[PATH_TABLE].type.like("%" + search + "%"))).distinct().all()
         for value in values:
             if value not in paths_matching:
                 paths_matching.append(value.name)
@@ -1202,6 +1202,42 @@ class Database:
             elif (condition == "IN"):
                 values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
                     self.table_classes[PATH_TABLE].name._in(value)).distinct().all()
+
+            paths_list = []
+            for path in values:
+                if path.name not in paths_list:
+                    paths_list.append(path.name)
+            return paths_list
+
+        elif tag == "FileType":
+
+            if (condition == "="):
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].type == value).distinct().all()
+            elif (condition == "!="):
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].type != value).distinct().all()
+            elif (condition == ">="):
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].type >= value).distinct().all()
+            elif (condition == "<="):
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].type <= value).distinct().all()
+            elif (condition == ">"):
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].type > value).distinct().all()
+            elif (condition == "<"):
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].type < value).distinct().all()
+            elif (condition == "CONTAINS"):
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].type.contains(value)).distinct().all()
+            elif (condition == "BETWEEN"):
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].type.between(value[0], value[1])).distinct().all()
+            elif (condition == "IN"):
+                values = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+                    self.table_classes[PATH_TABLE].type._in(value)).distinct().all()
 
             paths_list = []
             for path in values:
@@ -1307,7 +1343,7 @@ class Database:
         """
         Gives the paths matching the advanced search
         :param links: Links (AND/OR)
-        :param fields: Fields (tag name/All visualized tags/FileName)
+        :param fields: Fields (tag name/All visualized tags/FileName/FileType)
         :param conditions: Conditions (=, !=, <, >, <=, >=, BETWEEN,
                            CONTAINS, IN)
         :param values: Values (Typed value for =, !=, <, >, <=, >=, and
@@ -1327,6 +1363,7 @@ class Database:
                 return []
         fields_list = self.get_tags_names()
         fields_list.append("FileName")
+        fields_list.append("FileType")
         for field in fields:
             if not isinstance(field, list) and field not in fields_list:
                 return []
@@ -1344,7 +1381,7 @@ class Database:
                     return []
             else:
                 field = fields[i]
-                if field == "FileName":
+                if field == "FileName" or field == "FileType":
                     if not isinstance(value, str):
                         return []
                 elif not isinstance(field, list):
@@ -1373,6 +1410,12 @@ class Database:
                     self.get_paths_matching_constraints("FileName",
                                                         values[i],
                                                         conditions[i]))))
+
+                queries[i] = list(set(queries[i]).union(set(
+                    self.get_paths_matching_constraints("FileType",
+                                                        values[i],
+                                                        conditions[i]))))
+
                 for tag in fields[i]:
                     queries[i] = list(set(queries[i]).union(set(
                         self.get_paths_matching_constraints(tag,

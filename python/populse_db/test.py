@@ -886,6 +886,16 @@ class TestDatabaseMethods(unittest.TestCase):
         return_list = database.get_paths_matching_advanced_search([], ["BandWidth"], ["="], [50000], [""],
                                                                   ["scan1", "scan2"])
         self.assertEqual(return_list, [])
+        return_list = database.get_paths_matching_advanced_search([], ["FileType"], ["="], ["scan"], [""],
+                                                                  ["scan1", "scan2", "scan3"])
+        self.assertTrue("scan1" in return_list)
+        self.assertTrue("scan2" in return_list)
+        self.assertTrue("scan3" in return_list)
+        return_list = database.get_paths_matching_advanced_search([], [["FileName", "FileType"]], ["="], ["scan"], [""],
+                                                                  ["scan1", "scan2", "scan3"])
+        self.assertTrue("scan1" in return_list)
+        self.assertTrue("scan2" in return_list)
+        self.assertTrue("scan3" in return_list)
 
     def test_get_paths_matching_tag_value_couples(self):
         """
