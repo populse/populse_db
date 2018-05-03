@@ -1195,7 +1195,6 @@ class Database:
             for path in values:
                 if path.name not in paths_list:
                     paths_list.append(path.name)
-
             return paths_list
 
         elif not self.is_tag_list(tag):
@@ -1292,7 +1291,7 @@ class Database:
             return paths_list
 
     def get_paths_matching_advanced_search(self, links, fields, conditions,
-                                           values, nots):
+                                           values, nots, scans_list=None):
         """
         Gives the paths matching the advanced search
         :param links: Links (AND/OR)
@@ -1302,6 +1301,7 @@ class Database:
         :param values: Values (Typed value for =, !=, <, >, <=, >=, and
                        CONTAINS/list for BETWEEN and IN)
         :param nots: Nots (Empty or NOT)
+        :param scans_list: List of scans to take into account
         :return: List of path names matching all the constraints
         """
 
@@ -1385,6 +1385,13 @@ class Database:
                 # If the link is OR, we do an union between the current result
                 # and the next row
                 result = list(set(result).union(set(queries[i + 1])))
+
+        # Removing scans if they are not taken into account
+        print(scans_list)
+        if isinstance(scans_list, list):
+            for scan in result:
+                if scan not in scans_list:
+                    result.remove(scan)
 
         return result
 
