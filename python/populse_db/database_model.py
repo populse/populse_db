@@ -1,4 +1,4 @@
-from sqlalchemy import (Column, Table, ForeignKeyConstraint, String, Boolean,
+from sqlalchemy import (Column, Table, ForeignKeyConstraint, String,
                         Enum, Integer, MetaData, create_engine, Float, Date, DateTime, Time)
 
 # Tag origin
@@ -50,6 +50,7 @@ INITIAL_TABLE = "initial"
 CURRENT_TABLE = "current"
 PATH_TABLE = "path"
 TAG_TABLE = "tag"
+INHERITANCE_TABLE = "inheritance"
 
 def create_database(string_engine):
     """
@@ -97,5 +98,9 @@ def fill_tables(metadata):
                                onupdate="CASCADE"))
 
     Table(INITIAL_TABLE, metadata, Column("name", String, primary_key=True),
+          ForeignKeyConstraint(["name"], [PATH_TABLE + ".name"], ondelete="CASCADE",
+                               onupdate="CASCADE"))
+
+    Table(INHERITANCE_TABLE, metadata, Column("name", String, primary_key=True), Column("link", String, nullable=False),
           ForeignKeyConstraint(["name"], [PATH_TABLE + ".name"], ondelete="CASCADE",
                                onupdate="CASCADE"))

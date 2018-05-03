@@ -3,12 +3,11 @@ from datetime import date, time, datetime
 
 from sqlalchemy import (create_engine, Column, String, Integer, Float,
                         MetaData, Date, DateTime, Time, Table,
-                        ForeignKeyConstraint)
+                        ForeignKeyConstraint, event)
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import CreateTable, DropTable
 from sqlalchemy.engine import Engine
-from sqlalchemy import event
 
 import hashlib
 
@@ -30,7 +29,7 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN,
                                        LIST_TYPES, SIMPLE_TYPES, TYPE_TO_COLUMN,
                                        ALL_TYPES, ALL_UNITS, INITIAL_TABLE,
-                                       CURRENT_TABLE, PATH_TABLE, TAG_TABLE)
+                                       CURRENT_TABLE, PATH_TABLE, TAG_TABLE, INHERITANCE_TABLE)
 
 
 @event.listens_for(Engine, "connect")
@@ -128,7 +127,8 @@ class Database:
         if (PATH_TABLE not in self.table_classes.keys() or
             CURRENT_TABLE not in self.table_classes.keys() or
                 INITIAL_TABLE not in self.table_classes.keys() or
-                TAG_TABLE not in self.table_classes.keys()):
+                TAG_TABLE not in self.table_classes.keys() or
+                INHERITANCE_TABLE not in self.table_classes.keys()):
             raise ValueError(
                 'The database schema is not coherent with the API.')
 
@@ -1036,17 +1036,19 @@ class Database:
 
         return 0
 
-    def add_path(self, path, path_type, checksum=None):
+    def add_path(self, path, path_type, checksum=None, inheritance=[]):
         """
         Adds a path
         :param path: file path
         :param path_type : path type (str)
         :param checksum: path checksum (str or None)
+        :param inheritance: Inheritance scans
         :return 0 if the path has been added
         :return 1 if the path already exists
         :return 2 if the checksum is invalid
         :return 3 if the name is invalid
         :return 4 if the path type is invalid
+        :return 5 if the inheritance is invalid
         """
 
         path_row = self.get_path(path)
@@ -1058,6 +1060,11 @@ class Database:
             return 3
         if not isinstance(path_type, str):
             return 4
+        if not isinstance(inheritance, list):
+            return 5
+        for scan in inheritance:
+            if scan not in self.get_paths_names():
+                return 5
 
         path_to_add = self.table_classes[PATH_TABLE](name=path, type=path_type, checksum=checksum)
         self.session.add(path_to_add)
@@ -1068,6 +1075,11 @@ class Database:
         current = self.table_classes[CURRENT_TABLE](name=path)
         self.session.add(current)
         self.session.add(initial)
+
+        # Adding the inheritance
+        for scan in inheritance:
+            scan_inherit = self.table_classes[INHERITANCE_TABLE](name=path, link=scan)
+            self.session.add(scan_inherit)
 
         self.unsaved_modifications = True
 
