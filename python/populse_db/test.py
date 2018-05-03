@@ -782,6 +782,18 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(return_value, 3)
         return_value = database.add_path("scan", 5, "checksum")
         self.assertEqual(return_value, 4)
+        return_value = database.add_path("scan", "Scan", "checksum", False)
+        self.assertEqual(return_value, 5)
+
+        # Testing with inheritance
+        return_value = database.add_path("scan_inherit", "Scan", "checksum", ["scan1"])
+        self.assertEqual(return_value, 0)
+
+        return_value = database.add_path("scan_inherit_2", "Scan", "checksum", ["scan_not_existing"])
+        self.assertEqual(return_value, 5)
+
+        database.save_modifications()
+        shutil.copy(self.path, "/home/lucie/Documents/populse_db/test.db")
 
     def test_get_paths_matching_search(self):
         """
