@@ -1291,7 +1291,7 @@ class Database:
             return paths_list
 
     def get_paths_matching_advanced_search(self, links, fields, conditions,
-                                           values, nots, scans_list=None):
+                                           values, nots, scans_list):
         """
         Gives the paths matching the advanced search
         :param links: Links (AND/OR)
@@ -1387,11 +1387,10 @@ class Database:
                 result = list(set(result).union(set(queries[i + 1])))
 
         # Removing scans if they are not taken into account
-        print(scans_list)
-        if isinstance(scans_list, list):
-            for scan in result:
-                if scan not in scans_list:
-                    result.remove(scan)
+        result_copy = list(result)
+        for scan in result_copy:
+            if scan not in scans_list:
+                result.remove(scan)
 
         return result
 
