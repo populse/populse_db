@@ -792,9 +792,6 @@ class TestDatabaseMethods(unittest.TestCase):
         return_value = database.add_path("scan_inherit_2", "Scan", "checksum", ["scan_not_existing"])
         self.assertEqual(return_value, 5)
 
-        database.save_modifications()
-        shutil.copy(self.path, "/home/lucie/Documents/populse_db/test.db")
-
     def test_get_paths_matching_search(self):
         """
         Tests the method returning the list of paths matching the search(str)

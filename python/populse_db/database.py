@@ -5,7 +5,7 @@ from sqlalchemy import (create_engine, Column, String, Integer, Float,
                         MetaData, Date, DateTime, Time, Table,
                         ForeignKeyConstraint, event, or_)
 from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.schema import CreateTable, DropTable
 from sqlalchemy.engine import Engine
 
@@ -132,8 +132,7 @@ class Database:
             raise ValueError(
                 'The database schema is not coherent with the API.')
 
-        session_maker = sessionmaker(bind=self.engine)
-        self.session = session_maker()
+        self.session = scoped_session(sessionmaker(bind=self.engine))
 
         self.unsaved_modifications = False
 
@@ -1506,6 +1505,13 @@ class Database:
             final_result = list(set(final_result).intersection(
                 set(couple_results[i + 1])))
         return final_result
+
+    def start_transaction(self):
+        """
+        Starts a new transaction
+        """
+
+        self.session.begin_nested()
 
     def save_modifications(self):
         """
