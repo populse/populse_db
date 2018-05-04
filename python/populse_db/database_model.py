@@ -48,7 +48,6 @@ ALL_UNITS = [TAG_UNIT_MS, TAG_UNIT_MM, TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL, TAG_UN
 
 INITIAL_TABLE = "initial"
 CURRENT_TABLE = "current"
-PATH_TABLE = "path"
 TAG_TABLE = "tag"
 INHERITANCE_TABLE = "inheritance"
 
@@ -88,19 +87,12 @@ def fill_tables(metadata):
           Column("default_value", String, nullable=True),
           Column("description", String, nullable=True))
 
-    Table(PATH_TABLE, metadata,
-          Column("name", String, primary_key=True),
-          Column("checksum", String, nullable=True),
-          Column("type", String, nullable=False))
+    Table(INITIAL_TABLE, metadata, Column("name", String, primary_key=True), Column("checksum", String, nullable=True), Column("type", String, nullable=False))
 
-    Table(CURRENT_TABLE, metadata, Column("name", String, primary_key=True),
-          ForeignKeyConstraint(["name"], [PATH_TABLE + ".name"], ondelete="CASCADE",
-                               onupdate="CASCADE"))
-
-    Table(INITIAL_TABLE, metadata, Column("name", String, primary_key=True),
-          ForeignKeyConstraint(["name"], [PATH_TABLE + ".name"], ondelete="CASCADE",
+    Table(CURRENT_TABLE, metadata, Column("name", String, primary_key=True), Column("checksum", String, nullable=True), Column("type", String, nullable=False),
+          ForeignKeyConstraint(["name"], [INITIAL_TABLE + ".name"], ondelete="CASCADE",
                                onupdate="CASCADE"))
 
     Table(INHERITANCE_TABLE, metadata, Column("name", String, primary_key=True), Column("link", String, nullable=False),
-          ForeignKeyConstraint(["name"], [PATH_TABLE + ".name"], ondelete="CASCADE",
-                               onupdate="CASCADE"))
+          ForeignKeyConstraint(["name"], [INITIAL_TABLE + ".name"], ondelete="CASCADE",
+                               onupdate="CASCADE")) # Put Foreign key for link as it won't be remove with the path otherwise

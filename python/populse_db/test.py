@@ -10,7 +10,7 @@ from populse_db.database_model import (create_database, TAG_ORIGIN_BUILTIN,
                                        TAG_UNIT_MHZ, TAG_TYPE_INTEGER,
                                        TAG_TYPE_TIME, TAG_TYPE_DATETIME,
                                        TAG_TYPE_LIST_INTEGER,
-                                       TAG_TYPE_LIST_FLOAT, PATH_TABLE)
+                                       TAG_TYPE_LIST_FLOAT, CURRENT_TABLE)
 
 
 class TestDatabaseMethods(unittest.TestCase):
@@ -826,7 +826,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing that a scan is returned if it exists
         scan = database.get_path("scan1")
-        self.assertIsInstance(scan, database.table_classes[PATH_TABLE])
+        self.assertIsInstance(scan, database.table_classes[CURRENT_TABLE])
 
         # Testing that None is returned if the scan does not exist
         scan = database.get_path("scan3")
@@ -884,7 +884,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing that the scan has been added
         scan = database.get_path("scan1")
-        self.assertIsInstance(scan, database.table_classes[PATH_TABLE])
+        self.assertIsInstance(scan, database.table_classes[CURRENT_TABLE])
         self.assertEqual(scan.checksum, "159abc")
         self.assertEqual(scan.name, "scan1")
 
@@ -928,7 +928,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing with inheritance
         return_value = database.add_path("scan_inherit", "Scan", "checksum", ["scan1"])
-        self.assertEqual(return_value, 0)
+        self.assertIsNone(return_value)
 
         try:
             database.add_path("scan_inherit_2", "Scan", "checksum", ["scan_not_existing"])
