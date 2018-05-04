@@ -87,9 +87,9 @@ def fill_tables(metadata):
           Column("default_value", String, nullable=True),
           Column("description", String, nullable=True))
 
-    Table(INITIAL_TABLE, metadata, Column("name", String, primary_key=True), Column("checksum", String, nullable=True), Column("type", String, nullable=False))
+    Table(INITIAL_TABLE, metadata, Column("name", String, primary_key=True))
 
-    Table(CURRENT_TABLE, metadata, Column("name", String, primary_key=True), Column("checksum", String, nullable=True), Column("type", String, nullable=False),
+    Table(CURRENT_TABLE, metadata, Column("name", String, primary_key=True),
           ForeignKeyConstraint(["name"], [INITIAL_TABLE + ".name"], ondelete="CASCADE",
                                onupdate="CASCADE"))
 
