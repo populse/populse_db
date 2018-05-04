@@ -13,8 +13,6 @@ import hashlib
 
 import re
 
-import time as time_exec
-
 from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_TYPE_FLOAT, TAG_TYPE_TIME,
                                        TAG_TYPE_DATETIME, TAG_TYPE_DATE,
@@ -150,31 +148,28 @@ class Database:
         :param unit: Tag unit (ms, mm, degree, Hz/pixel, MHz, or None)
         :param default_value: Tag default value (str or None)
         :param description: Tag description (str or None)
-        :return 0 if the tag has been added
-        :return 1 if the tag already exists
-        :return 2 if the tag name is invalid
-        :return 3 if the tag origin is invalid
-        :return 4 if the tag type is invalid
-        :return 5 if the tag unit is invalid
-        :return 6 if the tag default value is invalid
-        :return 7 if the tag description is invalid
         """
 
         if not isinstance(name, str):
-            return 2
+            raise ValueError("The tag name must be of type " + str(str) + ", but tag name of type " + str(type(name)) + " given")
         tag_row = self.get_tag(name)
         if tag_row != None:
-            return 1
+            raise ValueError("A tag with the name " + str(name) + " already exists")
         if not origin in [TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN]:
-            return 3
+            raise ValueError("The tag origin must be in " + str([TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN]) + ", but " + str(origin) + " given")
         if not tag_type in ALL_TYPES:
-            return 4
+            raise ValueError("The tag type must be in " + str(ALL_TYPES) + ", but " + str(
+                tag_type) + " given")
         if not unit in ALL_UNITS and unit is not None:
-            return 5
+            raise ValueError("The tag unit must be in " + str(ALL_UNITS) + ", but " + str(
+                unit) + " given")
         if not isinstance(default_value, str) and default_value is not None:
-            return 6
+            raise ValueError(
+                "The tag default value must be of type " + str(str) + " or None, but tag default value of type " + str(type(default_value)) + " given")
         if not isinstance(description, str) and description is not None:
-            return 7
+            raise ValueError(
+                "The tag description must be of type " + str(str) + " or None, but tag description of type " + str(
+                    type(description)) + " given")
 
         # Adding the tag in the tag table (0.003 sec on average)
         tag = self.table_classes[TAG_TABLE](name=name, origin=origin,
@@ -248,8 +243,6 @@ class Database:
 
         # Redefinition of the table classes
         self.update_table_classes()
-
-        return 0
 
     def add_tags(self, tags):
         """
@@ -364,16 +357,14 @@ class Database:
         """
         Removes a tag
         :param name: Tag name (str)
-        :return 0 if the tag has been removed
-        :return 1 if the tag does not exist
-        :return 2 if the tag name is invalid
         """
 
         if not isinstance(name, str):
-            return 2
+            raise ValueError(
+                "The tag name must be of type " + str(str) + ", but tag name of type " + str(type(name)) + " given")
         tag_row = self.get_tag(name)
         if tag_row is None:
-            return 1
+            raise ValueError("The tag with the name " + str(name) + " does not exist")
 
         is_tag_list = self.is_tag_list(name)
         self.session.query(self.table_classes[TAG_TABLE]).filter(
@@ -442,7 +433,6 @@ class Database:
 
         self.update_table_classes()
         self.unsaved_modifications = True
-        return 0
 
     def get_tag(self, name):
         """
@@ -640,20 +630,16 @@ class Database:
         :param path: path name
         :param tag: tag name
         :param new_value: New value
-        :return 0 if the current value has been updated
-        :return 1 if the tag does not exist
-        :return 2 if the path does not exist
-        :return 3 if the new value is invalid
         """
 
         tag_row = self.get_tag(tag)
         if tag_row is None:
-            return 1
+            raise ValueError("The tag with the name " + str(tag) + " does not exist")
         path_row = self.get_path(path)
         if path_row is None:
-            return 2
+            raise ValueError("The path with the name " + str(path) + " does not exist")
         if not self.check_type_value(new_value, tag_row.type):
-            return 3
+            raise ValueError("The value " + str(new_value) + " is invalid")
 
         if self.is_tag_list(tag):
             # The path has a list type, the values are reset in the tag
@@ -678,23 +664,19 @@ class Database:
                 setattr(value, self.tag_name_to_column_name(tag), new_value)
 
         self.unsaved_modifications = True
-        return 0
 
     def reset_current_value(self, path, tag):
         """
         Resets the value associated to <path, tag>
         :param path: path name
         :param tag: tag name
-        :return 0 if the value has been reset
-        :return 1 if the tag does not exist
-        :return 2 if the path does not exist
         """
         tag_row = self.get_tag(tag)
         if tag_row is None:
-            return 1
+            raise ValueError("The tag with the name " + str(tag) + " does not exist")
         path_row = self.get_path(path)
         if path_row is None:
-            return 2
+            raise ValueError("The path with the name " + str(path) + " does not exist")
 
         if self.is_tag_list(tag):
             # The path has a list type, the values are reset in the tag
@@ -719,24 +701,20 @@ class Database:
                         self.get_initial_value(path, tag))
 
         self.unsaved_modifications = True
-        return 0
 
     def remove_value(self, path, tag):
         """
         Removes the value associated to <path, tag>
         :param path: path name
         :param tag: tag name
-        :return 0 if the value has been removed
-        :return 1 if the tag does not exist
-        :return 2 if the path does not exist
         """
 
         tag_row = self.get_tag(tag)
         if tag_row is None:
-            return 1
+            raise ValueError("The tag with the name " + str(tag) + " does not exist")
         path_row = self.get_path(path)
         if path_row is None:
-            return 2
+            raise ValueError("The path with the name " + str(path) + " does not exist")
 
         if self.is_tag_list(tag):
             # The tag has a list type, the values are removed from both tag
@@ -774,7 +752,6 @@ class Database:
                 setattr(value, tag_column_name, None)
 
         self.unsaved_modifications = True
-        return 0
 
     def check_type_value(self, value, valid_type):
         """
@@ -819,24 +796,18 @@ class Database:
         :param tag: tag name
         :param current_value: current value
         :param initial_value: initial value
-        :return 0 if the value has been added
-        :return 1 if the tag does not exist
-        :return 2 if the path does not exist
-        :return 3 if the current value is invalid
-        :return 4 if the initial value is invalid
-        :return 5 if the value already exists
         """
 
         tag_row = self.get_tag(tag)
         if tag_row is None:
-            return 1
+            raise ValueError("The tag with the name " + str(tag) + " does not exist")
         path_row = self.get_path(path)
         if path_row is None:
-            return 2
+            raise ValueError("The path with the name " + str(path) + " does not exist")
         if not self.check_type_value(current_value, tag_row.type):
-            return 3
+            raise ValueError("The current value " + str(current_value) + " is invalid")
         if not self.check_type_value(initial_value, tag_row.type):
-            return 4
+            raise ValueError("The initial value " + str(initial_value) + " is invalid")
 
         table_name = self.tag_name_to_column_name(tag)
 
@@ -866,8 +837,6 @@ class Database:
 
                 self.unsaved_modifications = True
 
-            return 0
-
         else:
             # The tag has a simple type, it is add it in both current and
             # initial tables
@@ -894,10 +863,9 @@ class Database:
                         current_value)
 
                 self.unsaved_modifications = True
-                return 0
 
             else:
-                return 5
+                raise ValueError("The tuple <" + str(tag) + ", " + str(path) + "> already has a value")
 
     def new_values(self, values):
         """
@@ -1015,13 +983,11 @@ class Database:
         """
         Removes a path
         :param path: path name
-        :return 0 if the path has been removed
-        :return 1 if the path does not exists
         """
 
         path_row = self.get_path(path)
         if path_row is None:
-            return 1
+            raise ValueError("The path with the name " + str(path) + " does not exist")
 
         self.session.query(self.table_classes[PATH_TABLE]).filter(
             self.table_classes[PATH_TABLE].name == path).delete()
@@ -1042,28 +1008,30 @@ class Database:
         :param path_type : path type (str)
         :param checksum: path checksum (str or None)
         :param inheritance: Inheritance scans
-        :return 0 if the path has been added
-        :return 1 if the path already exists
-        :return 2 if the checksum is invalid
-        :return 3 if the name is invalid
-        :return 4 if the path type is invalid
-        :return 5 if the inheritance is invalid
         """
 
         path_row = self.get_path(path)
         if path_row is not None:
-            return 1
+            raise ValueError("A path with the name " + str(path) + " already exists")
         if not isinstance(checksum, str) and checksum is not None:
-            return 2
+            raise ValueError(
+                "The path checksum must be of type " + str(str) + " or None, but path checksum of type " + str(type(checksum)) + " given")
         if not isinstance(path, str):
-            return 3
+            raise ValueError(
+                "The path name must be of type " + str(str) + ", but path name of type " + str(
+                    type(path)) + " given")
         if not isinstance(path_type, str):
-            return 4
+            raise ValueError(
+                "The path type must be of type " + str(str) + ", but path type of type " + str(
+                    type(path_type)) + " given")
         if not isinstance(inheritance, list):
-            return 5
+            raise ValueError(
+                "The path inheritance must be of type " + str(list) + ", but path inheritance of type " + str(
+                    type(checksum)) + " given")
         for scan in inheritance:
             if scan not in self.get_paths_names():
-                return 5
+                raise ValueError(
+                    "The path inheritance " + str(inheritance) + " contains paths not existing")
 
         path_to_add = self.table_classes[PATH_TABLE](name=path, type=path_type, checksum=checksum)
         self.session.add(path_to_add)
