@@ -527,7 +527,7 @@ class Database:
         """
 
         tag_row = self.get_tag(tag)
-        if tag_row is None and tag != "FileType":
+        if tag_row is None:
             return None
         path_row = self.get_path(path)
         if path_row is None:
@@ -558,10 +558,7 @@ class Database:
             value = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
                 self.table_classes[CURRENT_TABLE].name == path).first()
             if value is not None:
-                if tag == "FileType":
-                    return value.type
-                else:
-                    return getattr(value, self.tag_name_to_column_name(tag))
+                return getattr(value, self.tag_name_to_column_name(tag))
         return None
 
     def get_initial_value(self, path, tag):
@@ -573,7 +570,7 @@ class Database:
         """
 
         tag_row = self.get_tag(tag)
-        if tag_row is None and tag != "FileType":
+        if tag_row is None:
             return None
         path_row = self.get_path(path)
         if path_row is None:
@@ -603,10 +600,7 @@ class Database:
             value = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
                 self.table_classes[INITIAL_TABLE].name == path).first()
             if value is not None:
-                if tag == "FileType":
-                    return value.type
-                else:
-                    return getattr(value, self.tag_name_to_column_name(tag))
+                return getattr(value, self.tag_name_to_column_name(tag))
         return None
 
     def is_value_modified(self, path, tag):
@@ -636,16 +630,12 @@ class Database:
         """
 
         tag_row = self.get_tag(tag)
-        if tag_row is None and tag != "FileType":
+        if tag_row is None:
             raise ValueError("The tag with the name " + str(tag) + " does not exist")
         path_row = self.get_path(path)
         if path_row is None:
             raise ValueError("The path with the name " + str(path) + " does not exist")
-        if tag == "FileType":
-            tag_type = TAG_TYPE_STRING
-        else:
-            tag_type = tag_row.type
-        if not self.check_type_value(new_value, tag_type):
+        if not self.check_type_value(new_value, tag_row.type):
             raise ValueError("The value " + str(new_value) + " is invalid")
 
         if self.is_tag_list(tag):
@@ -667,10 +657,7 @@ class Database:
             value = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
                 self.table_classes[CURRENT_TABLE].name == path).first()
             if value is not None:
-                if tag == "FileType":
-                    value.type = new_value
-                else:
-                    setattr(value, self.tag_name_to_column_name(tag), new_value)
+                setattr(value, self.tag_name_to_column_name(tag), new_value)
 
         self.unsaved_modifications = True
 
@@ -681,7 +668,7 @@ class Database:
         :param tag: tag name
         """
         tag_row = self.get_tag(tag)
-        if tag_row is None and tag != "FileType":
+        if tag_row is None:
             raise ValueError("The tag with the name " + str(tag) + " does not exist")
         path_row = self.get_path(path)
         if path_row is None:
@@ -706,10 +693,7 @@ class Database:
 
             value = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
                 self.table_classes[CURRENT_TABLE].name == path).first()
-            if tag == "FileType":
-                value.type = self.get_initial_value(path, tag)
-            else:
-                setattr(value, self.tag_name_to_column_name(tag),
+            setattr(value, self.tag_name_to_column_name(tag),
                         self.get_initial_value(path, tag))
 
         self.unsaved_modifications = True
@@ -1004,9 +988,6 @@ class Database:
         self.session.query(self.table_classes[INITIAL_TABLE]).filter(
             self.table_classes[INITIAL_TABLE].name == path).delete()
 
-        self.session.query(self.table_classes[CURRENT_TABLE]).filter(
-            self.table_classes[CURRENT_TABLE].name == path).delete() # Should be removed
-
         # Thanks to the foreign key and on delete cascade, the path is
         # also removed from all other tables
 
@@ -1014,64 +995,39 @@ class Database:
 
         self.unsaved_modifications = True
 
-    def add_path(self, path, path_type, checksum=None, inheritance=[]):
+    def add_path(self, path):
         """
         Adds a path
         :param path: file path
-        :param path_type : path type (str)
-        :param checksum: path checksum (str or None)
-        :param inheritance: Inheritance scans
         """
 
         path_row = self.get_path(path)
         if path_row is not None:
             raise ValueError("A path with the name " + str(path) + " already exists")
-        if not isinstance(checksum, str) and checksum is not None:
-            raise ValueError(
-                "The path checksum must be of type " + str(str) + " or None, but path checksum of type " + str(type(checksum)) + " given")
         if not isinstance(path, str):
             raise ValueError(
                 "The path name must be of type " + str(str) + ", but path name of type " + str(
                     type(path)) + " given")
-        if not isinstance(path_type, str):
-            raise ValueError(
-                "The path type must be of type " + str(str) + ", but path type of type " + str(
-                    type(path_type)) + " given")
-        if not isinstance(inheritance, list):
-            raise ValueError(
-                "The path inheritance must be of type " + str(list) + ", but path inheritance of type " + str(
-                    type(checksum)) + " given")
-        for scan in inheritance:
-            if scan not in self.get_paths_names():
-                raise ValueError(
-                    "The path inheritance " + str(inheritance) + " contains paths not existing")
 
         # Adding the index to both initial and current tables
-        initial = self.table_classes[INITIAL_TABLE](name=path, checksum=checksum, type=path_type)
-        current = self.table_classes[CURRENT_TABLE](name=path, checksum=checksum, type=path_type)
+        initial = self.table_classes[INITIAL_TABLE](name=path)
+        current = self.table_classes[CURRENT_TABLE](name=path)
         self.session.add(current)
         self.session.add(initial)
 
         self.paths[path] = current
-
-        # Adding the inheritance
-        for scan in inheritance:
-            scan_inherit = self.table_classes[INHERITANCE_TABLE](name=path, link=scan)
-            self.session.add(scan_inherit)
 
         self.unsaved_modifications = True
 
     def add_paths(self, paths):
         """
         Adds all paths
-        :param paths: list of paths (path, type, checksum)
+        :param paths: list of paths
         """
 
         for path in paths:
 
-            path_name = path[0]
-            path_type = path[1]
-            path_checksum = path[2]
+            path_name = path
 
             # Adding the path in the Tag table
             paths_query = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
@@ -1079,8 +1035,8 @@ class Database:
             if paths_query is None:
 
                 # Adding the index to both initial and current tables
-                initial = self.table_classes[INITIAL_TABLE](name=path_name, checksum=path_checksum, type=path_type)
-                current = self.table_classes[CURRENT_TABLE](name=path_name, checksum=path_checksum, type=path_type)
+                initial = self.table_classes[INITIAL_TABLE](name=path_name)
+                current = self.table_classes[CURRENT_TABLE](name=path_name)
                 self.session.add(current)
                 self.session.add(initial)
 
@@ -1108,7 +1064,7 @@ class Database:
         # Iterating over all values and finding matches
 
         # Search in path name
-        values = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(or_(self.table_classes[CURRENT_TABLE].name.like("%" + search + "%"), self.table_classes[CURRENT_TABLE].type.like("%" + search + "%"))).distinct().all()
+        values = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(self.table_classes[CURRENT_TABLE].name.like("%" + search + "%")).distinct().all()
         for value in values:
             if value not in paths_matching:
                 paths_matching.append(value.name)
@@ -1177,42 +1133,6 @@ class Database:
             elif (condition == "IN"):
                 values = self.session.query(self.table_classes[INITIAL_TABLE].name).filter(
                     self.table_classes[INITIAL_TABLE].name._in(value)).distinct().all()
-
-            paths_list = []
-            for path in values:
-                if path.name not in paths_list:
-                    paths_list.append(path.name)
-            return paths_list
-
-        elif tag == "FileType":
-
-            if (condition == "="):
-                values = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    self.table_classes[CURRENT_TABLE].type == value).distinct().all()
-            elif (condition == "!="):
-                values = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    self.table_classes[CURRENT_TABLE].type != value).distinct().all()
-            elif (condition == ">="):
-                values = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    self.table_classes[CURRENT_TABLE].type >= value).distinct().all()
-            elif (condition == "<="):
-                values = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    self.table_classes[CURRENT_TABLE].type <= value).distinct().all()
-            elif (condition == ">"):
-                values = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    self.table_classes[CURRENT_TABLE].type > value).distinct().all()
-            elif (condition == "<"):
-                values = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    self.table_classes[CURRENT_TABLE].type < value).distinct().all()
-            elif (condition == "CONTAINS"):
-                values = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    self.table_classes[CURRENT_TABLE].type.contains(value)).distinct().all()
-            elif (condition == "BETWEEN"):
-                values = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    self.table_classes[CURRENT_TABLE].type.between(value[0], value[1])).distinct().all()
-            elif (condition == "IN"):
-                values = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    self.table_classes[CURRENT_TABLE].type._in(value)).distinct().all()
 
             paths_list = []
             for path in values:
@@ -1318,7 +1238,7 @@ class Database:
         """
         Gives the paths matching the advanced search
         :param links: Links (AND/OR)
-        :param fields: Fields (tag name/All visualized tags/FileName/FileType)
+        :param fields: Fields (tag name/List of tags/FileName)
         :param conditions: Conditions (=, !=, <, >, <=, >=, BETWEEN,
                            CONTAINS, IN)
         :param values: Values (Typed value for =, !=, <, >, <=, >=, and
@@ -1338,7 +1258,6 @@ class Database:
                 return []
         fields_list = self.get_tags_names()
         fields_list.append("FileName")
-        fields_list.append("FileType")
         for field in fields:
             if not isinstance(field, list) and field not in fields_list:
                 return []
@@ -1356,7 +1275,7 @@ class Database:
                     return []
             else:
                 field = fields[i]
-                if field == "FileName" or field == "FileType":
+                if field == "FileName":
                     if not isinstance(value, str):
                         return []
                 elif not isinstance(field, list):
@@ -1383,11 +1302,6 @@ class Database:
 
                 queries[i] = list(set(queries[i]).union(set(
                     self.get_paths_matching_constraints("FileName",
-                                                        values[i],
-                                                        conditions[i]))))
-
-                queries[i] = list(set(queries[i]).union(set(
-                    self.get_paths_matching_constraints("FileType",
                                                         values[i],
                                                         conditions[i]))))
 
