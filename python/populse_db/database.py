@@ -988,6 +988,9 @@ class Database:
         self.session.query(self.table_classes[INITIAL_TABLE]).filter(
             self.table_classes[INITIAL_TABLE].name == path).delete()
 
+        self.session.query(self.table_classes[CURRENT_TABLE]).filter(
+            self.table_classes[CURRENT_TABLE].name == path).delete() # Should be removed thanks to foreign key
+
         # Thanks to the foreign key and on delete cascade, the path is
         # also removed from all other tables
 
