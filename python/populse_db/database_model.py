@@ -49,7 +49,6 @@ ALL_UNITS = [TAG_UNIT_MS, TAG_UNIT_MM, TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL, TAG_UN
 INITIAL_TABLE = "initial"
 CURRENT_TABLE = "current"
 TAG_TABLE = "tag"
-INHERITANCE_TABLE = "inheritance"
 
 def create_database(string_engine):
     """
@@ -89,10 +88,4 @@ def fill_tables(metadata):
 
     Table(INITIAL_TABLE, metadata, Column("name", String, primary_key=True))
 
-    Table(CURRENT_TABLE, metadata, Column("name", String, primary_key=True),
-          ForeignKeyConstraint(["name"], [INITIAL_TABLE + ".name"], ondelete="CASCADE",
-                               onupdate="CASCADE"))
-
-    Table(INHERITANCE_TABLE, metadata, Column("name", String, primary_key=True), Column("link", String, nullable=False),
-          ForeignKeyConstraint(["name"], [INITIAL_TABLE + ".name"], ondelete="CASCADE",
-                               onupdate="CASCADE")) # Put Foreign key for link as it won't be remove with the path otherwise
+    Table(CURRENT_TABLE, metadata, Column("name", String, primary_key=True))

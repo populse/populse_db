@@ -27,7 +27,7 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN,
                                        LIST_TYPES, SIMPLE_TYPES, TYPE_TO_COLUMN,
                                        ALL_TYPES, ALL_UNITS, INITIAL_TABLE,
-                                       CURRENT_TABLE, TAG_TABLE, INHERITANCE_TABLE)
+                                       CURRENT_TABLE, TAG_TABLE)
 
 
 @event.listens_for(Engine, "connect")
@@ -104,8 +104,6 @@ class Database:
 
         self.string_engine = string_engine
         self.table_classes = {}
-        self.tags = {}
-        self.paths = {}
         self.names = {}
 
         # SQLite database: we create it if it does not exist
@@ -124,8 +122,7 @@ class Database:
         # Database schema checked
         if (CURRENT_TABLE not in self.table_classes.keys() or
                 INITIAL_TABLE not in self.table_classes.keys() or
-                TAG_TABLE not in self.table_classes.keys() or
-                INHERITANCE_TABLE not in self.table_classes.keys()):
+                TAG_TABLE not in self.table_classes.keys()):
             raise ValueError(
                 'The database schema is not coherent with the API.')
 
@@ -177,7 +174,6 @@ class Database:
                                         description=description)
 
         self.session.add(tag)
-        self.tags[name] = tag
 
         if tag_type in LIST_TYPES:
             # The tag has a list type: new tag tables added (0.04 sec on average)
@@ -193,11 +189,7 @@ class Database:
                                       Column("value",
                                              self.tag_type_to_column_type(
                                                  tag_type),
-                                             nullable=False),
-                                      ForeignKeyConstraint(["name"],
-                                                           [INITIAL_TABLE + ".name"],
-                                                           ondelete="CASCADE",
-                                                           onupdate="CASCADE"))
+                                             nullable=False))
             tag_table_initial = Table(table_name + "_initial", self.metadata,
                                       Column("name", String,
                                              primary_key=True),
@@ -206,11 +198,7 @@ class Database:
                                       Column("value",
                                              self.tag_type_to_column_type(
                                                  tag_type),
-                                             nullable=False),
-                                      ForeignKeyConstraint(["name"],
-                                                           [INITIAL_TABLE + ".name"],
-                                                           ondelete="CASCADE",
-                                                           onupdate="CASCADE"))
+                                             nullable=False))
 
             # Both tables added (0.03 sec on average)
             current_query = CreateTable(tag_table_current)
@@ -270,7 +258,6 @@ class Database:
                                             description=tag[5])
 
             tag_rows.append(tag_row)
-            self.tags[tag_name] = tag_row
 
             if tag_type in LIST_TYPES:
 
@@ -369,8 +356,6 @@ class Database:
         self.session.query(self.table_classes[TAG_TABLE]).filter(
             self.table_classes[TAG_TABLE].name == name).delete()
 
-        self.tags.pop(name, None)
-
         if is_tag_list:
             # The tag has a list type, both tag tables are removed
 
@@ -440,13 +425,9 @@ class Database:
         :return: The tag row if the tag exists, None otherwise
         """
 
-        if name in self.tags:
-            return self.tags[name]
-        else:
-            tag = self.session.query(self.table_classes[TAG_TABLE]).filter(
+        tag = self.session.query(self.table_classes[TAG_TABLE]).filter(
                 self.table_classes[TAG_TABLE].name == name).first()
-            self.tags[name] = tag
-            return tag
+        return tag
 
     def get_tags_names(self):
         """
@@ -943,13 +924,9 @@ class Database:
         :return The path row if the path exists, None otherwise
         """
 
-        if path in self.paths:
-            return self.paths[path]
-        else:
-            path_row = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
-            self.table_classes[CURRENT_TABLE].name == path).first()
-            self.paths[path] = path_row
-            return path_row
+        path_row = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
+        self.table_classes[CURRENT_TABLE].name == path).first()
+        return path_row
 
     def get_paths_names(self):
         """
@@ -985,16 +962,10 @@ class Database:
         if path_row is None:
             raise ValueError("The path with the name " + str(path) + " does not exist")
 
-        self.session.query(self.table_classes[INITIAL_TABLE]).filter(
-            self.table_classes[INITIAL_TABLE].name == path).delete()
-
-        self.session.query(self.table_classes[CURRENT_TABLE]).filter(
-            self.table_classes[CURRENT_TABLE].name == path).delete() # Should be removed thanks to foreign key
-
-        # Thanks to the foreign key and on delete cascade, the path is
-        # also removed from all other tables
-
-        self.paths.pop(path, None)
+        for table_class in self.table_classes:
+            if table_class != TAG_TABLE:
+                self.session.query(self.table_classes[table_class]).filter(
+                    self.table_classes[table_class].name == path).delete()
 
         self.unsaved_modifications = True
 
@@ -1018,8 +989,6 @@ class Database:
         self.session.add(current)
         self.session.add(initial)
 
-        self.paths[path] = current
-
         self.unsaved_modifications = True
 
     def add_paths(self, paths):
@@ -1042,8 +1011,6 @@ class Database:
                 current = self.table_classes[CURRENT_TABLE](name=path_name)
                 self.session.add(current)
                 self.session.add(initial)
-
-                self.paths[path_name] = current
 
                 self.unsaved_modifications = True
 

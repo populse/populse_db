@@ -165,6 +165,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database.new_value("scan1", "Dataset dimensions", [1, 2], [1, 2])
 
         # Removing tag
+
         database.remove_tag("PatientName")
         database.remove_tag("Dataset dimensions")
 
@@ -857,7 +858,7 @@ class TestDatabaseMethods(unittest.TestCase):
         # Removing scan
         database.remove_path("scan1")
 
-        # Testing that the scan is removed from Path table
+        # Testing that the scan is removed from all tables
         scan = database.get_path("scan1")
         self.assertIsNone(scan)
 
