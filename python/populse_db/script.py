@@ -17,6 +17,7 @@ if __name__ == '__main__':
     database = Database(string_engine)
 
     tags = []
+
     for i in range(0, 20):
         tags.append(["tag" + str(i), TAG_ORIGIN_BUILTIN, TAG_TYPE_FLOAT, None, None,
                      None])
@@ -29,23 +30,19 @@ if __name__ == '__main__':
     for i in range(50, 75):
         tags.append(["tag" + str(i), TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_FLOAT, None, None,
                      None])
+
     database.add_tags(tags)
 
-    paths = []
-    values = {}
     for i in range(0, 200):
-        paths.append("scan" + str(i))
-        values["scan" + str(i)] = []
+        database.add_path("scan" + str(i))
         for j in range(0, 20):
-            values["scan" + str(i)].append(["tag" + str(j), 1.5, 1.5])
+            database.new_value("scan" + str(i), "tag" + str(j), 1.5, 1.5)
         for j in range(20, 40):
-            values["scan" + str(i)].append(["tag" + str(j), "value", "value"])
+            database.new_value("scan" + str(i), "tag" + str(j), "value", "value")
         for j in range(40, 50):
-            values["scan" + str(i)].append(["tag" + str(j), 5, 5])
+            database.new_value("scan" + str(i), "tag" + str(j), 5, 5)
         for j in range(50, 75):
-            values["scan" + str(i)].append(["tag" + str(j), [1, 2, 3], [1, 2, 3]])
-    database.add_paths(paths)
-    database.new_values(values)
+            database.new_value("scan" + str(i), "tag" + str(j), [1, 2, 3], [1, 2, 3])
 
     shutil.rmtree(temp_folder)
 

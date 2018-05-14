@@ -54,6 +54,9 @@ class Database:
         - session_maker: session manager
         - unsaved_modifications: to know if there are unsaved
           modifications in the database
+        - paths: Paths rows
+        - tags: Tags rows
+        - initial_paths: Initial paths rows
 
     methods:
         - add_tag: adds a tag
@@ -130,10 +133,28 @@ class Database:
 
         self.unsaved_modifications = False
 
+        self.tags = {}
+        self.paths = {}
+        self.initial_paths = {}
+
     """ TAGS """
 
+    def add_tags(self, tags):
+        """
+        Adds the list of tags
+        :return: List of tags (name, origin, type, unit, default value, description)
+        """
+
+        for tag in tags:
+
+            # Adding each tag
+            self.add_tag(tag[0], tag[1], tag[2], tag[3], tag[4], tag[5], False)
+
+        # Updating the table classes
+        self.update_table_classes()
+
     def add_tag(self, name, origin, tag_type, unit, default_value,
-                description): # (0.05 sec on average)
+                description, update_base = True):
         """
         Adds a tag to the database, if it does not already exist
         :param name: Tag name (str)
@@ -144,6 +165,7 @@ class Database:
         :param unit: Tag unit (ms, mm, degree, Hz/pixel, MHz, or None)
         :param default_value: Tag default value (str or None)
         :param description: Tag description (str or None)
+        :param update_base: Bool to know if the base must be updated (put False if in the middle of filling tags)
         """
 
         if not isinstance(name, str):
@@ -174,6 +196,7 @@ class Database:
                                         description=description)
 
         self.session.add(tag)
+        self.tags[name] = tag
 
         if tag_type in LIST_TYPES:
             # The tag has a list type: new tag tables added (0.04 sec on average)
@@ -226,96 +249,14 @@ class Database:
                     CURRENT_TABLE, "\"" + self.tag_name_to_column_name(name) + "\"",
                     column_type))
 
-        self.unsaved_modifications = True
-
-        # Redefinition of the table classes
-        self.update_table_classes()
-
-    def add_tags(self, tags):
-        """
-        Add all the tags
-        :param tags: List of tags to add (name, origin, tag_type, unit, default_value,
-                description)
-        """
-
-        cascade_name = "CASCADE"
-        name_name = "name"
-        order_name = "order"
-        value_name = "value"
-        initial_name = INITIAL_TABLE + ".name"
-
-        tag_rows = []
-
-        for tag in tags:
-
-            tag_name = tag[0]
-            tag_type = tag[2]
-
-            # Adding the tag in the tag table (0.003 sec on average)
-            tag_row = self.table_classes["tag"](name=tag_name, origin=tag[1],
-                                            type=tag_type, unit=tag[3],
-                                            default_value=tag[4],
-                                            description=tag[5])
-
-            tag_rows.append(tag_row)
-
-            if tag_type in LIST_TYPES:
-
-                column_type = self.tag_type_to_column_type(tag_type)
-                table_name = self.tag_name_to_column_name(tag_name)
-
-                # Tag tables initial and current definition (0.00045 sec on average)
-                tag_table_current = Table(table_name + "_current", self.metadata,
-                                          Column(name_name, Integer,
-                                                 primary_key=True),
-                                          Column(order_name, Integer,
-                                                 primary_key=True),
-                                          Column(value_name,
-                                                 column_type,
-                                                 nullable=False),
-                                          ForeignKeyConstraint([name_name],
-                                                               [initial_name],
-                                                               ondelete=cascade_name,
-                                                               onupdate=cascade_name))
-
-                tag_table_initial = Table(table_name + "_initial", self.metadata,
-                                          Column(name_name, Integer,
-                                                 primary_key=True),
-                                          Column(order_name, Integer,
-                                                 primary_key=True),
-                                          Column(value_name,
-                                                 column_type,
-                                                 nullable=False),
-                                          ForeignKeyConstraint([name_name],
-                                                               [initial_name],
-                                                               ondelete=cascade_name,
-                                                               onupdate=cascade_name))
-
-                # Both tables added (0.03 sec on average)
-                current_query = CreateTable(tag_table_current)
-                initial_query = CreateTable(tag_table_initial)
-
-                # 0.03 seconds to execute those 2 queries
-                self.session.execute(current_query)
-                self.session.execute(initial_query)
-
-            elif tag_type in SIMPLE_TYPES:
-
-                # Columns creation
-                column = Column(tag_name, self.tag_type_to_column_type(tag_type))
-                column_type = column.type.compile(self.engine.dialect)
-                tag_column_name = "\"" + self.tag_name_to_column_name(tag_name) + "\""
-                self.session.execute(
-                    'ALTER TABLE %s ADD COLUMN %s %s;' % (INITIAL_TABLE, tag_column_name, column_type))
-                self.session.execute(
-                    'ALTER TABLE %s ADD COLUMN %s %s;' % (CURRENT_TABLE, tag_column_name, column_type))
-
-        self.session.add_all(tag_rows)
+            self.paths.clear()
+            self.initial_paths.clear()
 
         self.unsaved_modifications = True
 
         # Redefinition of the table classes
-        self.update_table_classes()
+        if update_base:
+            self.update_table_classes()
 
     def tag_type_to_column_type(self, tag_type):
         """
@@ -353,8 +294,6 @@ class Database:
             raise ValueError("The tag with the name " + str(name) + " does not exist")
 
         is_tag_list = self.is_tag_list(name)
-        self.session.query(self.table_classes[TAG_TABLE]).filter(
-            self.table_classes[TAG_TABLE].name == name).delete()
 
         if is_tag_list:
             # The tag has a list type, both tag tables are removed
@@ -415,8 +354,16 @@ class Database:
                             " FROM current_backup")
             self.session.execute("DROP TABLE current_backup")
 
+            self.paths.clear()
+            self.initial_paths.clear()
+
+        self.tags.pop(name, None)
+        self.session.delete(tag_row)
+
         self.update_table_classes()
         self.unsaved_modifications = True
+
+        self.session.flush()
 
     def get_tag(self, name):
         """
@@ -425,9 +372,13 @@ class Database:
         :return: The tag row if the tag exists, None otherwise
         """
 
-        tag = self.session.query(self.table_classes[TAG_TABLE]).filter(
+        if name in self.tags:
+            return self.tags[name]
+        else:
+            tag = self.session.query(self.table_classes[TAG_TABLE]).filter(
                 self.table_classes[TAG_TABLE].name == name).first()
-        return tag
+            self.tags[name] = tag
+            return tag
 
     def get_tags_names(self):
         """
@@ -536,11 +487,7 @@ class Database:
             # The tag has a simple type, the value is gotten from current
             # table
 
-            value = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
-                self.table_classes[CURRENT_TABLE].name == path).first()
-            if value is not None:
-                return getattr(value, self.tag_name_to_column_name(tag))
-        return None
+            return getattr(path_row, self.tag_name_to_column_name(tag))
 
     def get_initial_value(self, path, tag):
         """
@@ -578,11 +525,8 @@ class Database:
         else:
             # The tag has a simple type, the value is gotten from initial table
 
-            value = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
-                self.table_classes[INITIAL_TABLE].name == path).first()
-            if value is not None:
-                return getattr(value, self.tag_name_to_column_name(tag))
-        return None
+            initial_path_row = self.get_initial_path(path)
+            return getattr(initial_path_row, self.tag_name_to_column_name(tag))
 
     def is_value_modified(self, path, tag):
         """
@@ -635,10 +579,8 @@ class Database:
             # The path has a simple type, the values are reset in the tag
             # column in current table
 
-            value = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
-                self.table_classes[CURRENT_TABLE].name == path).first()
-            if value is not None:
-                setattr(value, self.tag_name_to_column_name(tag), new_value)
+
+            setattr(path_row, self.tag_name_to_column_name(tag), new_value)
 
         self.unsaved_modifications = True
 
@@ -672,9 +614,7 @@ class Database:
             # The path has a simple type, the value is reset in the current
             # table
 
-            value = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
-                self.table_classes[CURRENT_TABLE].name == path).first()
-            setattr(value, self.tag_name_to_column_name(tag),
+            setattr(path_row, self.tag_name_to_column_name(tag),
                         self.get_initial_value(path, tag))
 
         self.unsaved_modifications = True
@@ -715,18 +655,14 @@ class Database:
             # The tag has a simple type, the value is removed from both
             # current and initial tables tag columns
 
-            # Current table
-            value = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
-                self.table_classes[CURRENT_TABLE].name == path).first()
             tag_column_name = self.tag_name_to_column_name(tag)
-            if value is not None:
-                setattr(value, tag_column_name, None)
+
+            # Current table
+            setattr(path_row, tag_column_name, None)
 
             # Initial table
-            value = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
-                self.table_classes[INITIAL_TABLE].name == path).first()
-            if value is not None:
-                setattr(value, tag_column_name, None)
+            path_initial_row = self.get_initial_path(path)
+            setattr(path_initial_row, tag_column_name, None)
 
         self.unsaved_modifications = True
 
@@ -814,16 +750,15 @@ class Database:
 
                 self.unsaved_modifications = True
 
+                self.session.flush()
+
         else:
             # The tag has a simple type, it is add it in both current and
             # initial tables
 
-            path_initial = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
-                self.table_classes[INITIAL_TABLE].name == path).first()
-            path_current = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
-                self.table_classes[CURRENT_TABLE].name == path).first()
+            path_initial = self.get_initial_path(path)
             database_current_value = getattr(
-                path_current, self.tag_name_to_column_name(tag))
+                path_row, self.tag_name_to_column_name(tag))
             database_initial_value = getattr(
                 path_initial, self.tag_name_to_column_name(tag))
 
@@ -836,84 +771,15 @@ class Database:
                         initial_value)
                 if current_value is not None:
                     setattr(
-                        path_current, self.tag_name_to_column_name(tag),
+                        path_row, self.tag_name_to_column_name(tag),
                         current_value)
 
                 self.unsaved_modifications = True
 
+                self.session.flush()
+
             else:
                 raise ValueError("The tuple <" + str(tag) + ", " + str(path) + "> already has a value")
-
-    def new_values(self, values):
-        """
-        Adds all the values
-        :param values (dictionary with path key and [tag, current_value, initial_value] as value)
-        """
-
-        tags_is_list = {}
-        values_added = []
-
-        for path in values:
-
-            path_initial = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
-                self.table_classes[INITIAL_TABLE].name == path).first()
-            path_current = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
-                self.table_classes[CURRENT_TABLE].name == path).first()
-
-            path_values = values[path]
-
-            for value in path_values:
-
-                tag = value[0]
-                current_value = value[1]
-                initial_value = value[2]
-
-                if tag in tags_is_list:
-                    is_list = tags_is_list[tag]
-                else:
-                    is_list = self.is_tag_list(tag)
-                    tags_is_list[tag] = is_list
-
-                if is_list:
-
-                    table_name = self.tag_name_to_column_name(tag)
-                    current_table_name = table_name + "_current"
-                    initial_table_name = table_name + "_initial"
-
-                    # Old values removed first
-                    # Tag current table
-                    self.session.query(self.table_classes[current_table_name]).filter(
-                        self.table_classes[current_table_name].name == path).delete()
-
-                    # Tag initial table
-                    self.session.query(self.table_classes[initial_table_name]).filter(
-                        self.table_classes[initial_table_name].name == path).delete()
-
-                    # List values added
-                    if initial_value is not None and current_value is not None:
-                        for order in range(0, len(initial_value)):
-                            initial_to_add = self.table_classes[initial_table_name](
-                                name=path, order=order,
-                                value=initial_value[order])
-                            current_to_add = self.table_classes[current_table_name](
-                                name=path, order=order,
-                                value=current_value[order])
-                            values_added.append(initial_to_add)
-                            values_added.append(current_to_add)
-
-                else:
-
-                    column_name = self.tag_name_to_column_name(tag)
-
-                    setattr(path_initial, column_name,
-                            initial_value)
-
-                    setattr(path_current, column_name,
-                                current_value)
-
-
-        self.unsaved_modifications = True
-        self.session.add_all(values_added)
 
     """ PATHS """
 
@@ -924,9 +790,28 @@ class Database:
         :return The path row if the path exists, None otherwise
         """
 
-        path_row = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
+        if path in self.paths:
+            return self.paths[path]
+        else:
+            path_row = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
         self.table_classes[CURRENT_TABLE].name == path).first()
-        return path_row
+            self.paths[path] = path_row
+            return path_row
+
+    def get_initial_path(self, path):
+        """
+        Gives the initial path row of a path
+        :param path: path name
+        :return The initial path row if the path exists, None otherwise
+        """
+
+        if path in self.initial_paths:
+            return self.initial_paths[path]
+        else:
+            path_row = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
+        self.table_classes[INITIAL_TABLE].name == path).first()
+            self.initial_paths[path] = path_row
+            return path_row
 
     def get_paths_names(self):
         """
@@ -967,6 +852,9 @@ class Database:
                 self.session.query(self.table_classes[table_class]).filter(
                     self.table_classes[table_class].name == path).delete()
 
+        self.paths.pop(path, None)
+        self.initial_paths.pop(path, None)
+
         self.unsaved_modifications = True
 
     def add_path(self, path):
@@ -988,31 +876,10 @@ class Database:
         current = self.table_classes[CURRENT_TABLE](name=path)
         self.session.add(current)
         self.session.add(initial)
+        self.paths[path] = current
+        self.initial_paths[path] = initial
 
         self.unsaved_modifications = True
-
-    def add_paths(self, paths):
-        """
-        Adds all paths
-        :param paths: list of paths
-        """
-
-        for path in paths:
-
-            path_name = path
-
-            # Adding the path in the Tag table
-            paths_query = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
-                self.table_classes[INITIAL_TABLE].name == path_name).first()
-            if paths_query is None:
-
-                # Adding the index to both initial and current tables
-                initial = self.table_classes[INITIAL_TABLE](name=path_name)
-                current = self.table_classes[CURRENT_TABLE](name=path_name)
-                self.session.add(current)
-                self.session.add(initial)
-
-                self.unsaved_modifications = True
 
     """ UTILS """
 
