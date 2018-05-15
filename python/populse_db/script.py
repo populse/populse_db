@@ -36,13 +36,14 @@ if __name__ == '__main__':
     for i in range(0, 200):
         database.add_path("scan" + str(i))
         for j in range(0, 20):
-            database.new_value("scan" + str(i), "tag" + str(j), 1.5, 1.5)
+            database.new_value("scan" + str(i), "tag" + str(j), 1.5, 1.5, False)
         for j in range(20, 40):
-            database.new_value("scan" + str(i), "tag" + str(j), "value", "value")
+            database.new_value("scan" + str(i), "tag" + str(j), "value", "value", False)
         for j in range(40, 50):
-            database.new_value("scan" + str(i), "tag" + str(j), 5, 5)
+            database.new_value("scan" + str(i), "tag" + str(j), 5, 5, False)
         for j in range(50, 75):
-            database.new_value("scan" + str(i), "tag" + str(j), [1, 2, 3], [1, 2, 3])
+            database.new_value("scan" + str(i), "tag" + str(j), [1, 2, 3], [1, 2, 3], False)
+        database.session.flush()
 
     shutil.rmtree(temp_folder)
 

@@ -60,6 +60,7 @@ class Database:
 
     methods:
         - add_tag: adds a tag
+        - add_tags: adds a list of tags
         - tag_type_to_column_type: gives the column type corresponding
           to a tag type
         - tag_name_to_column_name: gives the column tag name corresponding
@@ -129,7 +130,7 @@ class Database:
             raise ValueError(
                 'The database schema is not coherent with the API.')
 
-        self.session = scoped_session(sessionmaker(bind=self.engine))
+        self.session = scoped_session(sessionmaker(bind=self.engine, autocommit=False, autoflush=False))
 
         self.unsaved_modifications = False
 
@@ -152,6 +153,7 @@ class Database:
 
         # Updating the table classes
         self.update_table_classes()
+        self.session.flush()
 
     def add_tag(self, name, origin, tag_type, unit, default_value,
                 description, update_base = True):
@@ -257,6 +259,7 @@ class Database:
         # Redefinition of the table classes
         if update_base:
             self.update_table_classes()
+            self.session.flush()
 
     def tag_type_to_column_type(self, tag_type):
         """
@@ -359,11 +362,9 @@ class Database:
 
         self.tags.pop(name, None)
         self.session.delete(tag_row)
-
+        self.session.flush()
         self.update_table_classes()
         self.unsaved_modifications = True
-
-        self.session.flush()
 
     def get_tag(self, name):
         """
@@ -582,6 +583,7 @@ class Database:
 
             setattr(path_row, self.tag_name_to_column_name(tag), new_value)
 
+        self.session.flush()
         self.unsaved_modifications = True
 
     def reset_current_value(self, path, tag):
@@ -617,6 +619,7 @@ class Database:
             setattr(path_row, self.tag_name_to_column_name(tag),
                         self.get_initial_value(path, tag))
 
+        self.session.flush()
         self.unsaved_modifications = True
 
     def remove_value(self, path, tag):
@@ -664,6 +667,7 @@ class Database:
             path_initial_row = self.get_initial_path(path)
             setattr(path_initial_row, tag_column_name, None)
 
+        self.session.flush()
         self.unsaved_modifications = True
 
     def check_type_value(self, value, valid_type):
@@ -702,13 +706,14 @@ class Database:
             return True
         return False
 
-    def new_value(self, path, tag, current_value, initial_value):
+    def new_value(self, path, tag, current_value, initial_value, flush=True):
         """
         Adds a value for <path, tag> (as initial and current)
         :param path: path name
         :param tag: tag name
         :param current_value: current value
         :param initial_value: initial value
+        :param flush: Bool to know if flush to do (Put False in the middle of adding values)
         """
 
         tag_row = self.get_tag(tag)
@@ -748,9 +753,9 @@ class Database:
                         value=element)
                     self.session.add(current_to_add)
 
+                if flush:
+                    self.session.flush()
                 self.unsaved_modifications = True
-
-                self.session.flush()
 
         else:
             # The tag has a simple type, it is add it in both current and
@@ -774,9 +779,9 @@ class Database:
                         path_row, self.tag_name_to_column_name(tag),
                         current_value)
 
+                if flush:
+                    self.session.flush()
                 self.unsaved_modifications = True
-
-                self.session.flush()
 
             else:
                 raise ValueError("The tuple <" + str(tag) + ", " + str(path) + "> already has a value")
@@ -854,7 +859,7 @@ class Database:
 
         self.paths.pop(path, None)
         self.initial_paths.pop(path, None)
-
+        self.session.flush()
         self.unsaved_modifications = True
 
     def add_path(self, path):
@@ -876,9 +881,9 @@ class Database:
         current = self.table_classes[CURRENT_TABLE](name=path)
         self.session.add(current)
         self.session.add(initial)
+        self.session.flush()
         self.paths[path] = current
         self.initial_paths[path] = initial
-
         self.unsaved_modifications = True
 
     """ UTILS """
