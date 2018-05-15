@@ -3,7 +3,7 @@ from datetime import date, time, datetime
 
 from sqlalchemy import (create_engine, Column, String, Integer, Float,
                         MetaData, Date, DateTime, Time, Table,
-                        ForeignKeyConstraint, event, or_)
+                        ForeignKeyConstraint, event, or_, and_)
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.schema import CreateTable, DropTable
@@ -902,14 +902,13 @@ class Database:
             return []
 
         paths_matching = []
+        simple_tags_filters = []
 
         # Iterating over all values and finding matches
 
         # Search in path name
-        values = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(self.table_classes[CURRENT_TABLE].name.like("%" + search + "%")).distinct().all()
-        for value in values:
-            if value not in paths_matching:
-                paths_matching.append(value.name)
+        values = self.session.query(self.table_classes[CURRENT_TABLE].name)
+        simple_tags_filters.append(self.table_classes[CURRENT_TABLE].name.like("%" + search + "%"))
 
         # Search for each tag
         for tag in tags:
@@ -919,21 +918,16 @@ class Database:
                 # The tag has a simple type, the tag column is used in the
                 # current table
 
-                values = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    getattr(self.table_classes[CURRENT_TABLE],
-                            self.tag_name_to_column_name(tag)).like(
-                                "%" + search + "%")).distinct().all()
-                for value in values:
-                    if value not in paths_matching:
-                        paths_matching.append(value.name)
+                simple_tags_filters.append(getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)).like("%" + search + "%"))
+
             elif is_list is True:
                 # The tag has a list type, the tag current table is used
 
-                for path in self.get_paths_names():
-                    path_value = self.get_current_value(path, tag)
-                    if (search in str(path_value) and
-                            path not in paths_matching):
-                        paths_matching.append(path)
+                simple_tags_filters.append(and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[self.tag_name_to_column_name(tag) + "_current"].name, self.table_classes[self.tag_name_to_column_name(tag) + "_current"].value.like("%" + search + "%")))
+
+        values = values.filter(or_(*simple_tags_filters)).distinct().all()
+        for value in values:
+            paths_matching.append(value.name)
 
         return paths_matching
 
