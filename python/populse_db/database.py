@@ -114,7 +114,9 @@ class Database:
         if string_engine.startswith('sqlite'):
             db_file = re.sub("sqlite.*:///", "", string_engine)
             if not os.path.exists(db_file):
-                os.makedirs(os.path.dirname(db_file), exist_ok=True)
+                parent_dir = os.path.dirname(db_file)
+                if not os.path.exists(parent_dir):
+                    os.makedirs(os.path.dirname(db_file))
                 create_database(string_engine)
 
         # Database opened
