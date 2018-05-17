@@ -3,7 +3,7 @@ from datetime import date, time, datetime
 
 from sqlalchemy import (create_engine, Column, String, Integer, Float,
                         MetaData, Date, DateTime, Time, Table,
-                        ForeignKeyConstraint, event, or_, and_, not_)
+                        ForeignKeyConstraint, event, or_, and_, not_, Enum)
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.schema import CreateTable, DropTable
@@ -26,8 +26,8 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_UNIT_DEGREE, TAG_UNIT_MHZ,
                                        TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN,
                                        LIST_TYPES, SIMPLE_TYPES, TYPE_TO_COLUMN,
-                                       ALL_TYPES, ALL_UNITS, INITIAL_TABLE,
-                                       CURRENT_TABLE, TAG_TABLE)
+                                       ALL_TYPES, ALL_UNITS, PATH_TABLE, TAG_TABLE,
+                                       VALUE_CURRENT, VALUE_INITIAL)
 
 
 @event.listens_for(Engine, "connect")
@@ -56,7 +56,6 @@ class Database:
           modifications in the database
         - paths: Paths rows
         - tags: Tags rows
-        - initial_paths: Initial paths rows
         - names: columns names
 
     methods:
@@ -126,8 +125,7 @@ class Database:
         self.update_table_classes()
 
         # Database schema checked
-        if (CURRENT_TABLE not in self.table_classes.keys() or
-                INITIAL_TABLE not in self.table_classes.keys() or
+        if (PATH_TABLE not in self.table_classes.keys() or
                 TAG_TABLE not in self.table_classes.keys()):
             raise ValueError(
                 'The database schema is not coherent with the API.')
@@ -138,7 +136,6 @@ class Database:
 
         self.tags = {}
         self.paths = {}
-        self.initial_paths = {}
         self.names = {}
 
     """ TAGS """
@@ -207,33 +204,18 @@ class Database:
             # The tag has a list type: new tag tables added
 
             table_name = self.tag_name_to_column_name(name)
+            column_type = self.tag_type_to_column_type(tag_type)
 
             # Tag tables initial and current definition
-            tag_table_current = Table(table_name + "_current", self.metadata,
-                                      Column("name", String,
-                                             primary_key=True),
-                                      Column("order", Integer,
-                                             primary_key=True),
-                                      Column("value",
-                                             self.tag_type_to_column_type(
-                                                 tag_type),
-                                             nullable=False))
-            tag_table_initial = Table(table_name + "_initial", self.metadata,
-                                      Column("name", String,
-                                             primary_key=True),
-                                      Column("order", Integer,
-                                             primary_key=True),
-                                      Column("value",
-                                             self.tag_type_to_column_type(
-                                                 tag_type),
-                                             nullable=False))
+            tag_table = Table(table_name, self.metadata,
+                                      Column("name", String, primary_key=True),
+                                      Column("order", Integer, primary_key=True),
+                                      Column("value", column_type, nullable=False),
+                                      Column("type", Enum(VALUE_CURRENT, VALUE_INITIAL), primary_key=True))
 
-            # Both tables added
-            current_query = CreateTable(tag_table_current)
-            initial_query = CreateTable(tag_table_initial)
-
-            self.session.execute(current_query)
-            self.session.execute(initial_query)
+            # Table added
+            tag_table_query = CreateTable(tag_table)
+            self.session.execute(tag_table_query)
 
         elif tag_type in SIMPLE_TYPES:
             # The tag has a simple type: new column added to both initial
@@ -242,19 +224,19 @@ class Database:
             # Column creation
             column = Column(name, self.tag_type_to_column_type(tag_type))
             column_type = column.type.compile(self.engine.dialect)
+            column_name = self.tag_name_to_column_name(name)
 
-            # Tag column added to both initial and current tables
+            # Tag current and initial columns added added to path table
             self.session.execute(
                 'ALTER TABLE %s ADD COLUMN %s %s' % (
-                    INITIAL_TABLE, "\"" + self.tag_name_to_column_name(name) + "\"",
+                    PATH_TABLE, "\"" + column_name + "_initial\"",
                     column_type))
             self.session.execute(
                 'ALTER TABLE %s ADD COLUMN %s %s' % (
-                    CURRENT_TABLE, "\"" + self.tag_name_to_column_name(name) + "\"",
+                    PATH_TABLE, "\"" + column_name + "_current\"",
                     column_type))
 
             self.paths.clear()
-            self.initial_paths.clear()
 
         self.unsaved_modifications = True
 
@@ -301,67 +283,41 @@ class Database:
         is_tag_list = self.is_tag_list(name)
 
         if is_tag_list:
-            # The tag has a list type, both tag tables are removed
+            # The tag has a list type, the tag table is removed
 
             table_name = self.tag_name_to_column_name(name)
-            initial_query = DropTable(self.table_classes[table_name + "_initial"].__table__)
-            self.session.execute(initial_query)
-            current_query = DropTable(self.table_classes[table_name + "_current"].__table__)
-            self.session.execute(current_query)
+            query = DropTable(self.table_classes[table_name].__table__)
+            self.session.execute(query)
 
         else:
-            # The tag has a simple type, the tag column is removed from
-            # both current and initial tables
+            # The tag has a simple type, the tag columns are removed from path table
 
-            # Tag column removed from initial table
             columns = ""
+            columns_to_remove = []
             sql_table_create = CreateTable(
-                self.table_classes[INITIAL_TABLE].__table__)
+                self.table_classes[PATH_TABLE].__table__)
             for column in sql_table_create.columns:
                 if self.tag_name_to_column_name(name) in str(column):
-                    column_to_remove = column
+                    columns_to_remove.append(column)
                 else:
                     columns += str(column).split(" ")[0] + ", "
-            sql_table_create.columns.remove(column_to_remove)
+            for column_to_remove in columns_to_remove:
+                sql_table_create.columns.remove(column_to_remove)
             sql_query = str(sql_table_create)
-            sql_query = sql_query[:21] + '_backup' + sql_query[21:]
+            sql_query = sql_query[:18] + '_backup' + sql_query[18:]
             columns = columns[:-2]
             self.session.execute(sql_query)
-            self.session.execute("INSERT INTO initial_backup SELECT " +
-                            columns + " FROM " + INITIAL_TABLE)
-            self.session.execute("DROP TABLE " + INITIAL_TABLE)
-            sql_query = sql_query[:21] + sql_query[29:]
+            self.session.execute("INSERT INTO path_backup SELECT " +
+                            columns + " FROM " + PATH_TABLE)
+            self.session.execute("DROP TABLE " + PATH_TABLE)
+            sql_query = sql_query[:18] + sql_query[26:]
             self.session.execute(sql_query)
-            self.session.execute("INSERT INTO " + INITIAL_TABLE + " SELECT " + columns +
-                            " FROM initial_backup")
-            self.session.execute("DROP TABLE initial_backup")
+            self.session.execute("INSERT INTO " + PATH_TABLE + " SELECT " + columns +
+                            " FROM path_backup")
+            self.session.execute("DROP TABLE path_backup")
 
-            # Tag column removed from current table
-            columns = ""
-            sql_table_create = CreateTable(
-                self.table_classes[CURRENT_TABLE].__table__)
-            for column in sql_table_create.columns:
-                if self.tag_name_to_column_name(name) in str(column):
-                    column_to_remove = column
-                else:
-                    columns += str(column).split(" ")[0] + ", "
-            sql_table_create.columns.remove(column_to_remove)
-            sql_query = str(sql_table_create)
-            sql_query = sql_query[:21] + '_backup' + sql_query[21:]
-            columns = columns[:-2]
-            self.session.execute(sql_query)
-            self.session.execute("INSERT INTO current_backup SELECT " +
-                            columns + " FROM " + CURRENT_TABLE)
-            self.session.execute("DROP TABLE " + CURRENT_TABLE)
-            sql_query = sql_query[:21] + sql_query[29:]
-            self.session.execute(sql_query)
-            self.session.execute("INSERT INTO " + CURRENT_TABLE + " SELECT " + columns +
-                            " FROM current_backup")
-            self.session.execute("DROP TABLE current_backup")
 
-            self.paths.clear()
-            self.initial_paths.clear()
-
+        self.paths.clear()
         self.tags.pop(name, None)
         self.session.delete(tag_row)
         self.session.flush()
@@ -473,8 +429,8 @@ class Database:
             # current table
 
             table_name = self.tag_name_to_column_name(tag)
-            values = self.session.query(self.table_classes[table_name + "_current"]).filter(
-                self.table_classes[table_name + "_current"].name == path).all()
+            values = self.session.query(self.table_classes[table_name]).filter(
+                self.table_classes[table_name].name == path).filter(self.table_classes[table_name].type == VALUE_CURRENT).all()
             if len(values) is 0:
                 return None
             values_list = []
@@ -490,7 +446,7 @@ class Database:
             # The tag has a simple type, the value is gotten from current
             # table
 
-            return getattr(path_row, self.tag_name_to_column_name(tag))
+            return getattr(path_row, self.tag_name_to_column_name(tag) + "_current")
 
     def get_initial_value(self, path, tag):
         """
@@ -512,8 +468,8 @@ class Database:
             # initial table
 
             table_name = self.tag_name_to_column_name(tag)
-            values = self.session.query(self.table_classes[table_name + "_initial"]).filter(
-                self.table_classes[table_name + "_initial"].name == path).all()
+            values = self.session.query(self.table_classes[table_name]).filter(
+                self.table_classes[table_name].name == path).filter(self.table_classes[table_name].type == VALUE_INITIAL).all()
             if len(values) is 0:
                 return None
             values_list = []
@@ -526,10 +482,9 @@ class Database:
             return values_list
 
         else:
-            # The tag has a simple type, the value is gotten from initial table
+            # The tag has a simple type, the value is gotten from path table
 
-            initial_path_row = self.get_initial_path(path)
-            return getattr(initial_path_row, self.tag_name_to_column_name(tag))
+            return getattr(path_row, self.tag_name_to_column_name(tag) + "_initial")
 
     def is_value_modified(self, path, tag):
         """
@@ -572,8 +527,8 @@ class Database:
 
             table_name = self.tag_name_to_column_name(tag)
 
-            values = self.session.query(self.table_classes[table_name + "_current"]).filter(
-                self.table_classes[table_name + "_current"].name == path).all()
+            values = self.session.query(self.table_classes[table_name]).filter(
+                self.table_classes[table_name].name == path).filter(self.table_classes[table_name].type == VALUE_CURRENT).all()
             for index in range(0, len(values)):
                 value_to_modify = values[index]
                 value_to_modify.value = new_value[index]
@@ -583,7 +538,7 @@ class Database:
             # column in current table
 
 
-            setattr(path_row, self.tag_name_to_column_name(tag), new_value)
+            setattr(path_row, self.tag_name_to_column_name(tag) + "_current", new_value)
 
         self.session.flush()
         self.unsaved_modifications = True
@@ -607,8 +562,8 @@ class Database:
 
             table_name = self.tag_name_to_column_name(tag)
 
-            values = self.session.query(self.table_classes[table_name + "_current"]).filter(
-                self.table_classes[table_name + "_current"].name == path).all()
+            values = self.session.query(self.table_classes[table_name]).filter(
+                self.table_classes[table_name].name == path).filter(self.table_classes[table_name].type == VALUE_CURRENT).all()
             for index in range(0, len(values)):
                 value_to_modify = values[index]
                 value_to_modify.value = self.get_initial_value(path,
@@ -618,7 +573,7 @@ class Database:
             # The path has a simple type, the value is reset in the current
             # table
 
-            setattr(path_row, self.tag_name_to_column_name(tag),
+            setattr(path_row, self.tag_name_to_column_name(tag) + "_current",
                         self.get_initial_value(path, tag))
 
         self.session.flush()
@@ -645,30 +600,19 @@ class Database:
 
             table_name = self.tag_name_to_column_name(tag)
 
-            # Tag current table
-            values = self.session.query(self.table_classes[table_name + "_current"]).filter(
-                self.table_classes[table_name + "_current"].name == path).all()
-            for value in values:
-                self.session.delete(value)
-
-            # Tag initial table
-            values = self.session.query(self.table_classes[table_name + "_initial"]).filter(
-                self.table_classes[table_name + "_initial"].name == path).all()
+            # Tag table
+            values = self.session.query(self.table_classes[table_name]).filter(
+                self.table_classes[table_name].name == path).all()
             for value in values:
                 self.session.delete(value)
 
         else:
-            # The tag has a simple type, the value is removed from both
-            # current and initial tables tag columns
+            # The tag has a simple type, the values are removed from path table
 
             tag_column_name = self.tag_name_to_column_name(tag)
 
-            # Current table
-            setattr(path_row, tag_column_name, None)
-
-            # Initial table
-            path_initial_row = self.get_initial_path(path)
-            setattr(path_initial_row, tag_column_name, None)
+            setattr(path_row, tag_column_name + "_current", None)
+            setattr(path_row, tag_column_name + "_initial", None)
 
         if flush:
             self.session.flush()
@@ -738,22 +682,20 @@ class Database:
 
             # Initial value
             if initial_value is not None:
-                initial_table_name = table_name + "_initial"
                 for order in range(0, len(initial_value)):
                     element = initial_value[order]
-                    initial_to_add = self.table_classes[initial_table_name](
+                    initial_to_add = self.table_classes[table_name](
                         name=path, order=order,
-                        value=element)
+                        value=element, type=VALUE_INITIAL)
                     self.session.add(initial_to_add)
 
             # Current value
             if current_value is not None:
-                current_table_name = table_name + "_current"
                 for order in range(0, len(current_value)):
                     element = current_value[order]
-                    current_to_add = self.table_classes[current_table_name](
+                    current_to_add = self.table_classes[table_name](
                         name=path, order=order,
-                        value=element)
+                        value=element, type=VALUE_CURRENT)
                     self.session.add(current_to_add)
 
             if flush:
@@ -761,26 +703,24 @@ class Database:
             self.unsaved_modifications = True
 
         else:
-            # The tag has a simple type, it is add it in both current and
-            # initial tables
+            # The tag has a simple type, the values are added in path table
 
             column_name = self.tag_name_to_column_name(tag)
-            path_initial = self.get_initial_path(path)
             database_current_value = getattr(
-                path_row, column_name)
+                path_row, column_name + "_current")
             database_initial_value = getattr(
-                path_initial, column_name)
+                path_row, column_name + "_initial")
 
             # We add the value only if it does not already exist
             if (database_current_value is None and
                     database_initial_value is None):
                 if initial_value is not None:
                     setattr(
-                        path_initial, column_name,
+                        path_row, column_name + "_initial",
                         initial_value)
                 if current_value is not None:
                     setattr(
-                        path_row, column_name,
+                        path_row, column_name + "_current",
                         current_value)
 
                 if flush:
@@ -802,24 +742,9 @@ class Database:
         if path in self.paths:
             return self.paths[path]
         else:
-            path_row = self.session.query(self.table_classes[CURRENT_TABLE]).filter(
-        self.table_classes[CURRENT_TABLE].name == path).first()
+            path_row = self.session.query(self.table_classes[PATH_TABLE]).filter(
+        self.table_classes[PATH_TABLE].name == path).first()
             self.paths[path] = path_row
-            return path_row
-
-    def get_initial_path(self, path):
-        """
-        Gives the initial path row of a path
-        :param path: path name
-        :return The initial path row if the path exists, None otherwise
-        """
-
-        if path in self.initial_paths:
-            return self.initial_paths[path]
-        else:
-            path_row = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
-        self.table_classes[INITIAL_TABLE].name == path).first()
-            self.initial_paths[path] = path_row
             return path_row
 
     def get_paths_names(self):
@@ -829,7 +754,7 @@ class Database:
         """
 
         paths_list = []
-        paths = self.session.query(self.table_classes[CURRENT_TABLE]).all()
+        paths = self.session.query(self.table_classes[PATH_TABLE]).all()
         for path in paths:
             paths_list.append(path.name)
         return paths_list
@@ -841,7 +766,7 @@ class Database:
         """
 
         paths_list = []
-        paths = self.session.query(self.table_classes[CURRENT_TABLE]).all()
+        paths = self.session.query(self.table_classes[PATH_TABLE]).all()
         for path in paths:
             paths_list.append(path)
         return paths_list
@@ -862,7 +787,6 @@ class Database:
                     self.table_classes[table_class].name == path).delete()
 
         self.paths.pop(path, None)
-        self.initial_paths.pop(path, None)
         self.session.flush()
         self.unsaved_modifications = True
 
@@ -881,13 +805,10 @@ class Database:
                     type(path)) + " given")
 
         # Adding the index to both initial and current tables
-        initial = self.table_classes[INITIAL_TABLE](name=path)
-        current = self.table_classes[CURRENT_TABLE](name=path)
-        self.session.add(current)
-        self.session.add(initial)
+        path_row = self.table_classes[PATH_TABLE](name=path)
+        self.session.add(path_row)
         self.session.flush()
-        self.paths[path] = current
-        self.initial_paths[path] = initial
+        self.paths[path] = path_row
         self.unsaved_modifications = True
 
     """ UTILS """
@@ -910,10 +831,10 @@ class Database:
 
         # Iterating over all values and finding matches
 
-        values = self.session.query(self.table_classes[CURRENT_TABLE].name)
+        values = self.session.query(self.table_classes[PATH_TABLE].name)
 
         # Search in path name
-        simple_tags_filters.append(self.table_classes[CURRENT_TABLE].name.like("%" + search + "%"))
+        simple_tags_filters.append(self.table_classes[PATH_TABLE].name.like("%" + search + "%"))
 
         # Search for each tag
         for tag in tags:
@@ -923,13 +844,13 @@ class Database:
                 # The tag has a simple type, the tag column is used in the
                 # current table
 
-                simple_tags_filters.append(getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)).like("%" + search + "%"))
+                simple_tags_filters.append(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current").like("%" + search + "%"))
 
             elif is_list is True:
                 # The tag has a list type, the tag current table is used
 
-                table_name = self.tag_name_to_column_name(tag) + "_current"
-                simple_tags_filters.append(and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name, self.table_classes[table_name].value.like("%" + search + "%")))
+                table_name = self.tag_name_to_column_name(tag)
+                simple_tags_filters.append(and_(self.table_classes[PATH_TABLE].name == self.table_classes[table_name].name, self.table_classes[table_name].value.like("%" + search + "%"), self.table_classes[table_name].type == VALUE_CURRENT))
 
         values = values.filter(or_(*simple_tags_filters)).distinct().all()
         for value in values:
@@ -986,14 +907,16 @@ class Database:
                         if not isinstance(value, str):
                             return []
                     else:
-                        tag_type = self.get_tag(tag).type
+                        tag_type = self.get_tag(tag).type.replace("list_", "")
                         if not self.check_type_value(value, tag_type):
                             return []
         for not_choice in nots:
             if not_choice not in ["", "NOT"]:
                 return []
 
-        query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(self.table_classes[CURRENT_TABLE].name.in_(paths_list))
+        print("end checks")
+
+        query = self.session.query(self.table_classes[PATH_TABLE].name).filter(self.table_classes[PATH_TABLE].name.in_(paths_list))
         row_filters = []
         paths_matching = []
 
@@ -1008,25 +931,25 @@ class Database:
                 if tag == "FileName":
 
                     if (conditions[i] == "="):
-                        row_filter.append(self.table_classes[CURRENT_TABLE].name == values[i])
+                        row_filter.append(self.table_classes[PATH_TABLE].name == values[i])
                     elif (conditions[i] == "!="):
-                        row_filter.append(self.table_classes[CURRENT_TABLE].name != values[i])
+                        row_filter.append(self.table_classes[PATH_TABLE].name != values[i])
                     elif (conditions[i] == "<="):
-                        row_filter.append(self.table_classes[CURRENT_TABLE].name <= values[i])
+                        row_filter.append(self.table_classes[PATH_TABLE].name <= values[i])
                     elif (conditions[i] == "<"):
-                        row_filter.append(self.table_classes[CURRENT_TABLE].name < values[i])
+                        row_filter.append(self.table_classes[PATH_TABLE].name < values[i])
                     elif (conditions[i] == ">="):
-                        row_filter.append(self.table_classes[CURRENT_TABLE].name >= values[i])
+                        row_filter.append(self.table_classes[PATH_TABLE].name >= values[i])
                     elif (conditions[i] == ">"):
-                        row_filter.append(self.table_classes[CURRENT_TABLE].name > values[i])
+                        row_filter.append(self.table_classes[PATH_TABLE].name > values[i])
                     elif (conditions[i] == "CONTAINS"):
-                        row_filter.append(self.table_classes[CURRENT_TABLE].name.contains(
+                        row_filter.append(self.table_classes[PATH_TABLE].name.contains(
                                 values[i]))
                     elif (conditions[i] == "BETWEEN"):
-                        row_filter.append(self.table_classes[CURRENT_TABLE].name.between(
+                        row_filter.append(self.table_classes[PATH_TABLE].name.between(
                                 values[i][0], values[i][1]))
                     elif (conditions[i] == "IN"):
-                        row_filter.append(self.table_classes[CURRENT_TABLE].name.in_(
+                        row_filter.append(self.table_classes[PATH_TABLE].name.in_(
                                 values[i]))
 
                 else:
@@ -1038,72 +961,72 @@ class Database:
 
                         if (conditions[i] == "="):
                             row_filter.append(
-                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)) == values[i])
+                                getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") == values[i])
                         elif (conditions[i] == "!="):
                             row_filter.append(
-                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)) != values[i])
+                                getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") != values[i])
                         elif (conditions[i] == "<="):
                             row_filter.append(
-                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)) <= values[i])
+                                getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") <= values[i])
                         elif (conditions[i] == "<"):
                             row_filter.append(
-                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)) < values[i])
+                                getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") < values[i])
                         elif (conditions[i] == ">="):
                             row_filter.append(
-                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)) >= values[i])
+                                getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") >= values[i])
                         elif (conditions[i] == ">"):
                             row_filter.append(
-                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)) > values[i])
+                                getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") > values[i])
                         elif (conditions[i] == "CONTAINS"):
                             row_filter.append(
-                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)).contains(values[i]))
+                                getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current").contains(values[i]))
                         elif (conditions[i] == "BETWEEN"):
                             row_filter.append(
-                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)).between(values[i][0], values[i][1]))
+                                getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current").between(values[i][0], values[i][1]))
                         elif (conditions[i] == "IN"):
                             row_filter.append(
-                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)).in_(values[i]))
+                                getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current").in_(values[i]))
 
                     elif is_list is True:
                         # The tag has a list type, the tag current table is used
 
-                        table_name = self.tag_name_to_column_name(tag) + "_current"
+                        table_name = self.tag_name_to_column_name(tag)
                         if (conditions[i] == "="):
                             row_filter.append(
-                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
-                                     self.table_classes[table_name].value == values[i]))
+                                and_(self.table_classes[PATH_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value == values[i], self.table_classes[table_name].type == VALUE_CURRENT))
                         elif (conditions[i] == "!="):
                             row_filter.append(
-                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
-                                     self.table_classes[table_name].value != values[i]))
+                                and_(self.table_classes[PATH_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value != values[i], self.table_classes[table_name].type == VALUE_CURRENT))
                         elif (conditions[i] == "<="):
                             row_filter.append(
-                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
-                                     self.table_classes[table_name].value <= values[i]))
+                                and_(self.table_classes[PATH_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value <= values[i], self.table_classes[table_name].type == VALUE_CURRENT))
                         elif (conditions[i] == "<"):
                             row_filter.append(
-                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
-                                     self.table_classes[table_name].value < values[i]))
+                                and_(self.table_classes[PATH_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value < values[i], self.table_classes[table_name].type == VALUE_CURRENT))
                         elif (conditions[i] == ">="):
                             row_filter.append(
-                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
-                                     self.table_classes[table_name].value >= values[i]))
+                                and_(self.table_classes[PATH_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value >= values[i], self.table_classes[table_name].type == VALUE_CURRENT))
                         elif (conditions[i] == ">"):
                             row_filter.append(
-                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
-                                     self.table_classes[table_name].value > values[i]))
+                                and_(self.table_classes[PATH_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value > values[i], self.table_classes[table_name].type == VALUE_CURRENT))
                         elif (conditions[i] == "CONTAINS"):
                             row_filter.append(
-                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
-                                     self.table_classes[table_name].value.contains(values[i])))
+                                and_(self.table_classes[PATH_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value.contains(values[i]), self.table_classes[table_name].type == VALUE_CURRENT))
                         elif (conditions[i] == "BETWEEN"):
                             row_filter.append(
-                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
-                                     self.table_classes[table_name].value.between(values[i][0], values[i][1])))
+                                and_(self.table_classes[PATH_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value.between(values[i][0], values[i][1]), self.table_classes[table_name].type == VALUE_CURRENT))
                         elif (conditions[i] == "IN"):
                             row_filter.append(
-                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
-                                     self.table_classes[table_name].value.in_(values[i])))
+                                and_(self.table_classes[PATH_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value.in_(values[i]), self.table_classes[table_name].type == VALUE_CURRENT))
 
             # Putting OR condition between all row filters
             if len(row_filter) > 1:
@@ -1167,9 +1090,9 @@ class Database:
                 # table is used
 
                 couple_query_result = self.session.query(
-                    self.table_classes[CURRENT_TABLE].name).filter(
-                    getattr(self.table_classes[CURRENT_TABLE],
-                            self.tag_name_to_column_name(tag)) == value)
+                    self.table_classes[PATH_TABLE].name).filter(
+                    getattr(self.table_classes[PATH_TABLE],
+                            self.tag_name_to_column_name(tag) + "_current") == value)
                 for query_result in couple_query_result:
                     couple_result.append(query_result.name)
 

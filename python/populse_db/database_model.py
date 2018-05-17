@@ -1,4 +1,4 @@
-from sqlalchemy import (Column, Table, ForeignKeyConstraint, String,
+from sqlalchemy import (Column, Table, String,
                         Enum, Integer, MetaData, create_engine, Float, Date, DateTime, Time)
 
 # Tag origin
@@ -46,9 +46,12 @@ TAG_UNIT_MHZ = "MHz"
 
 ALL_UNITS = [TAG_UNIT_MS, TAG_UNIT_MM, TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL, TAG_UNIT_MHZ]
 
-INITIAL_TABLE = "initial"
-CURRENT_TABLE = "current"
+PATH_TABLE = "path"
 TAG_TABLE = "tag"
+
+# List value type
+VALUE_CURRENT = "current"
+VALUE_INITIAL = "initial"
 
 def create_database(string_engine):
     """
@@ -86,6 +89,4 @@ def fill_tables(metadata):
           Column("default_value", String, nullable=True),
           Column("description", String, nullable=True))
 
-    Table(INITIAL_TABLE, metadata, Column("name", String, primary_key=True))
-
-    Table(CURRENT_TABLE, metadata, Column("name", String, primary_key=True))
+    Table(PATH_TABLE, metadata, Column("name", String, primary_key=True))
