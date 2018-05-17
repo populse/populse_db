@@ -101,6 +101,8 @@ class Database:
         - tables_redefinition: redefines the model after schema update
     """
 
+    escape_sql_keywords = {'group': 'group_'}
+    
     def __init__(self, string_engine):
         """
         Creates an API of the database instance
@@ -265,7 +267,10 @@ class Database:
         if tag in self.names:
             return self.names[tag]
         else:
-            column_name = hashlib.md5(tag.encode('utf-8')).hexdigest()
+            if re.match('^[A-Za-z][A-Za-z0-9_]*', tag):
+                column_name = self.escape_sql_keywords.get(tag, tag)
+            else:
+                column_name = hashlib.md5(tag.encode('utf-8')).hexdigest()
             self.names[tag] = column_name
             return column_name
 
