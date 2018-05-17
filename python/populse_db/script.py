@@ -42,7 +42,11 @@ if __name__ == '__main__':
     for i in range(0, 1000):
         path_name = "path" + str(i)
         if not path_name in current_paths:
-            database.add_path(path_name)
+            database.add_path(path_name, False)
+    database.session.flush()
+
+    for i in range(0, 1000):
+        path_name = "path" + str(i)
         for j in range(0, 20):
             if path_name in current_paths:
                 database.remove_value(path_name, "tag" + str(j), False)
@@ -59,7 +63,7 @@ if __name__ == '__main__':
             if path_name in current_paths:
                 database.remove_value(path_name, "tag" + str(j), False)
             database.new_value(path_name, "tag" + str(j), [1, 2, 3], [1, 2, 3], False)
-        database.session.flush()
+    database.session.flush()
 
     """
     simple_search = database.get_paths_matching_search("1", ["tag0", "tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7", "tag8", "tag9"])
