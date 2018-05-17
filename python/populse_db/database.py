@@ -804,10 +804,12 @@ class Database:
 
                     if (conditions[i] == "="):
                         row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") == values[i])
+                            and_(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") != None,
+                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") == values[i]))
                     elif (conditions[i] == "!="):
                         row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") != values[i])
+                            or_(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") == None,
+                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") != values[i]))
                     elif (conditions[i] == "<="):
                         row_filter.append(
                             getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") <= values[i])
