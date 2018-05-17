@@ -529,26 +529,27 @@ class Database:
             return True
         return False
 
-    def new_value(self, path, tag, current_value, initial_value, flush=True):
+    def new_value(self, path, tag, current_value, initial_value, checks=True):
         """
         Adds a value for <path, tag> (as initial and current)
         :param path: path name
         :param tag: tag name
         :param current_value: current value
         :param initial_value: initial value
-        :param flush: Bool to know if flush to do (Put False in the middle of adding values)
+        :param checks: Bool to know if flush to do and value check (Put False in the middle of adding values, during import)
         """
 
         tag_row = self.get_tag(tag)
-        if tag_row is None:
-            raise ValueError("The tag with the name " + str(tag) + " does not exist")
         path_row = self.get_path(path)
-        if path_row is None:
-            raise ValueError("The path with the name " + str(path) + " does not exist")
-        if not self.check_type_value(current_value, tag_row.type):
-            raise ValueError("The current value " + str(current_value) + " is invalid")
-        if not self.check_type_value(initial_value, tag_row.type):
-            raise ValueError("The initial value " + str(initial_value) + " is invalid")
+        if checks:
+            if tag_row is None:
+                raise ValueError("The tag with the name " + str(tag) + " does not exist")
+            if path_row is None:
+                raise ValueError("The path with the name " + str(path) + " does not exist")
+            if not self.check_type_value(current_value, tag_row.type):
+                raise ValueError("The current value " + str(current_value) + " is invalid")
+            if not self.check_type_value(initial_value, tag_row.type):
+                raise ValueError("The initial value " + str(initial_value) + " is invalid")
 
         column_name = self.tag_name_to_column_name(tag)
         database_current_value = getattr(
@@ -572,7 +573,7 @@ class Database:
                     path_row, column_name + "_current",
                     current_value)
 
-            if flush:
+            if checks:
                 self.session.flush()
             self.unsaved_modifications = True
 
@@ -639,14 +640,14 @@ class Database:
         self.session.flush()
         self.unsaved_modifications = True
 
-    def add_path(self, path, check_path=True):
+    def add_path(self, path, checks=True):
         """
         Adds a path
         :param path: file path
-        :param check_path: checks if the path already exists, put False in the middle of filling the table
+        :param checks: checks if the path already exists and flushes, put False in the middle of filling the table
         """
 
-        if check_path:
+        if checks:
             path_row = self.get_path(path)
             if path_row is not None:
                 raise ValueError("A path with the name " + str(path) + " already exists")
@@ -658,7 +659,8 @@ class Database:
         # Adding the index to both initial and current tables
         path_row = self.table_classes[PATH_TABLE](name=path)
         self.session.add(path_row)
-        self.session.flush()
+        if checks:
+            self.session.flush()
         self.paths[path] = path_row
         self.unsaved_modifications = True
 

@@ -8,6 +8,10 @@ import pprofile
 
 if __name__ == '__main__':
 
+    #import pprofile
+    #prof = pprofile.Profile()
+    #with prof():
+
     start_time = time.time()
 
     temp_folder = tempfile.mkdtemp()
@@ -34,19 +38,26 @@ if __name__ == '__main__':
     database.add_tags(tags)
 
     for i in range(0, 1000):
-        database.add_path("path" + str(i))
+        current_paths = database.get_paths_names()
+        path_name = "path" + str(i)
+        if not path_name in current_paths:
+            database.add_path(path_name)
         for j in range(0, 20):
-            database.remove_value("path" + str(i), "tag" + str(j), False)
-            database.new_value("path" + str(i), "tag" + str(j), 1.5, 1.5, False)
+            if path_name in current_paths:
+                database.remove_value(path_name, "tag" + str(j), False)
+            database.new_value(path_name, "tag" + str(j), 1.5, 1.5, False)
         for j in range(20, 40):
-            database.remove_value("path" + str(i), "tag" + str(j), False)
-            database.new_value("path" + str(i), "tag" + str(j), "value", "value", False)
+            if path_name in current_paths:
+                database.remove_value(path_name, "tag" + str(j), False)
+            database.new_value(path_name, "tag" + str(j), "value", "value", False)
         for j in range(40, 50):
-            database.remove_value("path" + str(i), "tag" + str(j), False)
-            database.new_value("path" + str(i), "tag" + str(j), 5, 5, False)
+            if path_name in current_paths:
+                database.remove_value(path_name, "tag" + str(j), False)
+            database.new_value(path_name, "tag" + str(j), 5, 5, False)
         for j in range(50, 75):
-            database.remove_value("path" + str(i), "tag" + str(j), False)
-            database.new_value("path" + str(i), "tag" + str(j), [1, 2, 3], [1, 2, 3], False)
+            if path_name in current_paths:
+                database.remove_value(path_name, "tag" + str(j), False)
+            database.new_value(path_name, "tag" + str(j), [1, 2, 3], [1, 2, 3], False)
         database.session.flush()
 
     """
@@ -71,3 +82,5 @@ if __name__ == '__main__':
     shutil.rmtree(temp_folder)
 
     print("--- %s seconds ---" % (time.time() - start_time))
+
+    #prof.print_stats()
