@@ -228,26 +228,6 @@ class TestDatabaseMethods(unittest.TestCase):
         tag = database.get_tag("Test")
         self.assertIsNone(tag)
 
-    def test_is_tag_list(self):
-        """
-        Tests the method telling if the tag has a list type or not
-        """
-        database = Database(self.string_engine)
-
-        # Adding tags
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("Dataset dimensions",
-                         TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
-
-        # Testing that the correct boolean is returned
-        tag_list = database.is_tag_list("PatientName")
-        self.assertFalse(tag_list)
-        tag_list = database.is_tag_list("Test")
-        self.assertFalse(tag_list)
-        tag_list = database.is_tag_list("Dataset dimensions")
-        self.assertTrue(tag_list)
-
     def test_get_current_value(self):
         """
         Tests the method giving the current value, given a tag and a scan
