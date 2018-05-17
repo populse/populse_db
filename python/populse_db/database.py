@@ -712,7 +712,7 @@ class Database:
         :param fields: Fields (List of tags) (FileName for search in name column)
         :param conditions: Conditions (=, !=, <, >, <=, >=, BETWEEN,
                            CONTAINS, IN)
-        :param values: Values (Typed value for =, !=, <, >, <=, >=, and
+        :param values: Values (Str value for =, !=, <, >, <=, >=, and
                        CONTAINS/list for BETWEEN and IN)
         :param nots: Nots (Empty or NOT)
         :param paths_list: List of paths to take into account
@@ -746,20 +746,8 @@ class Database:
                 if not isinstance(value, list):
                     return []
             else:
-                field = fields[i]
-                if len(field) == 1:
-                    tag = field[0]
-                    if tag == "FileName":
-                        if not isinstance(value, str):
-                            return []
-                    else:
-                        tag_type = self.get_tag(tag).type
-                        if tag_type in LIST_TYPES:
-                            if not isinstance(value, str):
-                                return []
-                        else:
-                            if not self.check_type_value(value, tag_type):
-                                return []
+                if not isinstance(value, str):
+                    return []
         for not_choice in nots:
             if not_choice not in ["", "NOT"]:
                 return []
@@ -824,7 +812,7 @@ class Database:
                             getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") > values[i])
                     elif (conditions[i] == "CONTAINS"):
                         row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current").contains(values[i]))
+                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current").like("%" + str(values[i]) + "%"))
                     elif (conditions[i] == "BETWEEN"):
                         row_filter.append(
                             getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current").between(values[i][0], values[i][1]))

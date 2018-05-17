@@ -973,9 +973,9 @@ class TestDatabaseMethods(unittest.TestCase):
                                                                   ["=", "CONTAINS"], ["Guerbet", "RARE"], ["", ""], ["scan1", "scan2", "scan3"])
         self.assertEqual(return_list, [])
         return_list = database.get_paths_matching_advanced_search([], [["BandWidth"]], ["="], ["50000"], [""], ["scan1", "scan2", "scan3"])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_advanced_search([], [["BandWidth"]], ["="], [50000], [""], ["scan1", "scan2", "scan3"])
         self.assertEqual(return_list, ["scan3"])
+        return_list = database.get_paths_matching_advanced_search([], [["BandWidth"]], ["="], [50000], [""], ["scan1", "scan2", "scan3"])
+        self.assertEqual(return_list, [])
         return_list = database.get_paths_matching_advanced_search([], [["BandWidth"]], ["="], [50000], [""],
                                                                   ["scan1", "scan2"])
         self.assertEqual(return_list, [])
