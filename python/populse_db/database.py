@@ -11,6 +11,8 @@ from sqlalchemy.engine import Engine
 
 import hashlib
 
+import inspect
+
 import re
 
 from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
@@ -318,7 +320,7 @@ class Database:
 
 
         self.paths.clear()
-        self.tags.pop(name, None)
+        self.tags[name] = None
         self.session.delete(tag_row)
         self.session.flush()
         self.update_table_classes()
@@ -601,10 +603,8 @@ class Database:
             table_name = self.tag_name_to_column_name(tag)
 
             # Tag table
-            values = self.session.query(self.table_classes[table_name]).filter(
-                self.table_classes[table_name].name == path).all()
-            for value in values:
-                self.session.delete(value)
+            self.session.query(self.table_classes[table_name]).filter(
+                self.table_classes[table_name].name == path).delete()
 
         else:
             # The tag has a simple type, the values are removed from path table
@@ -786,7 +786,7 @@ class Database:
                 self.session.query(self.table_classes[table_class]).filter(
                     self.table_classes[table_class].name == path).delete()
 
-        self.paths.pop(path, None)
+        self.paths[path] = None
         self.session.flush()
         self.unsaved_modifications = True
 
@@ -913,8 +913,6 @@ class Database:
         for not_choice in nots:
             if not_choice not in ["", "NOT"]:
                 return []
-
-        print("end checks")
 
         query = self.session.query(self.table_classes[PATH_TABLE].name).filter(self.table_classes[PATH_TABLE].name.in_(paths_list))
         row_filters = []
