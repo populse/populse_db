@@ -37,8 +37,9 @@ if __name__ == '__main__':
 
     database.add_tags(tags)
 
+    current_paths = database.get_paths_names()
+
     for i in range(0, 1000):
-        current_paths = database.get_paths_names()
         path_name = "path" + str(i)
         if not path_name in current_paths:
             database.add_path(path_name)
