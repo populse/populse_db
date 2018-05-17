@@ -33,17 +33,40 @@ if __name__ == '__main__':
 
     database.add_tags(tags)
 
-    for i in range(0, 200):
-        database.add_path("scan" + str(i))
+    for i in range(0, 1000):
+        database.add_path("path" + str(i))
         for j in range(0, 20):
-            database.new_value("scan" + str(i), "tag" + str(j), 1.5, 1.5, False)
+            database.remove_value("path" + str(i), "tag" + str(j), False)
+            database.new_value("path" + str(i), "tag" + str(j), 1.5, 1.5, False)
         for j in range(20, 40):
-            database.new_value("scan" + str(i), "tag" + str(j), "value", "value", False)
+            database.remove_value("path" + str(i), "tag" + str(j), False)
+            database.new_value("path" + str(i), "tag" + str(j), "value", "value", False)
         for j in range(40, 50):
-            database.new_value("scan" + str(i), "tag" + str(j), 5, 5, False)
+            database.remove_value("path" + str(i), "tag" + str(j), False)
+            database.new_value("path" + str(i), "tag" + str(j), 5, 5, False)
         for j in range(50, 75):
-            database.new_value("scan" + str(i), "tag" + str(j), [1, 2, 3], [1, 2, 3], False)
+            database.remove_value("path" + str(i), "tag" + str(j), False)
+            database.new_value("path" + str(i), "tag" + str(j), [1, 2, 3], [1, 2, 3], False)
         database.session.flush()
+
+    """
+    simple_search = database.get_paths_matching_search("1", ["tag0", "tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7", "tag8", "tag9"])
+    print(simple_search) # All paths
+
+    simple_search = database.get_paths_matching_search("1.2",
+                                                       ["tag0", "tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7",
+                                                        "tag8", "tag9"])
+    print(simple_search) # No path
+
+    simple_search = database.get_paths_matching_search("1.5",
+                                                       ["tag0", "tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7",
+                                                        "tag8", "tag9"])
+    print(simple_search) # All paths
+
+    advanced_search = database.get_paths_matching_advanced_search([], [["tag1"]], ["="], [1.5], [""],
+                                                              ["path0", "path1", "path2", "path3", "path4", "path5", "path6", "path7", "path8", "path9"])
+    print(advanced_search) # 10 first paths
+    """
 
     shutil.rmtree(temp_folder)
 

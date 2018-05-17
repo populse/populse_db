@@ -3,7 +3,7 @@ from datetime import date, time, datetime
 
 from sqlalchemy import (create_engine, Column, String, Integer, Float,
                         MetaData, Date, DateTime, Time, Table,
-                        ForeignKeyConstraint, event, or_, and_)
+                        ForeignKeyConstraint, event, or_, and_, not_)
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.schema import CreateTable, DropTable
@@ -57,6 +57,7 @@ class Database:
         - paths: Paths rows
         - tags: Tags rows
         - initial_paths: Initial paths rows
+        - names: columns names
 
     methods:
         - add_tag: adds a tag
@@ -110,7 +111,6 @@ class Database:
 
         self.string_engine = string_engine
         self.table_classes = {}
-        self.names = {}
 
         # SQLite database: we create it if it does not exist
         if string_engine.startswith('sqlite'):
@@ -141,6 +141,7 @@ class Database:
         self.tags = {}
         self.paths = {}
         self.initial_paths = {}
+        self.names = {}
 
     """ TAGS """
 
@@ -195,7 +196,7 @@ class Database:
                 "The tag description must be of type " + str(str) + " or None, but tag description of type " + str(
                     type(description)) + " given")
 
-        # Adding the tag in the tag table (0.003 sec on average)
+        # Adding the tag in the tag table
         tag = self.table_classes[TAG_TABLE](name=name, origin=origin,
                                         type=tag_type, unit=unit,
                                         default_value=default_value,
@@ -205,11 +206,11 @@ class Database:
         self.tags[name] = tag
 
         if tag_type in LIST_TYPES:
-            # The tag has a list type: new tag tables added (0.04 sec on average)
+            # The tag has a list type: new tag tables added
 
             table_name = self.tag_name_to_column_name(name)
 
-            # Tag tables initial and current definition (0.00045 sec on average)
+            # Tag tables initial and current definition
             tag_table_current = Table(table_name + "_current", self.metadata,
                                       Column("name", String,
                                              primary_key=True),
@@ -229,23 +230,22 @@ class Database:
                                                  tag_type),
                                              nullable=False))
 
-            # Both tables added (0.03 sec on average)
+            # Both tables added
             current_query = CreateTable(tag_table_current)
             initial_query = CreateTable(tag_table_initial)
 
-            # 0.03 seconds to execute those 2 queries
             self.session.execute(current_query)
             self.session.execute(initial_query)
 
         elif tag_type in SIMPLE_TYPES:
             # The tag has a simple type: new column added to both initial
-            # and current tables (0.06 sec on average)
+            # and current tables
 
             # Column creation
             column = Column(name, self.tag_type_to_column_type(tag_type))
             column_type = column.type.compile(self.engine.dialect)
 
-            # Tag column added to both initial and current tables (0.05 sec on average)
+            # Tag column added to both initial and current tables
             self.session.execute(
                 'ALTER TABLE %s ADD COLUMN %s %s' % (
                     INITIAL_TABLE, "\"" + self.tag_name_to_column_name(name) + "\"",
@@ -629,11 +629,12 @@ class Database:
         self.session.flush()
         self.unsaved_modifications = True
 
-    def remove_value(self, path, tag):
+    def remove_value(self, path, tag, flush=True):
         """
         Removes the value associated to <path, tag>
         :param path: path name
         :param tag: tag name
+        :param flush: To know if flush to do (put False in the middle of removing values)
         """
 
         tag_row = self.get_tag(tag)
@@ -674,7 +675,8 @@ class Database:
             path_initial_row = self.get_initial_path(path)
             setattr(path_initial_row, tag_column_name, None)
 
-        self.session.flush()
+        if flush:
+            self.session.flush()
         self.unsaved_modifications = True
 
     def check_type_value(self, value, valid_type):
@@ -741,49 +743,49 @@ class Database:
 
             # Initial value
             if initial_value is not None:
-
+                initial_table_name = table_name + "_initial"
                 for order in range(0, len(initial_value)):
                     element = initial_value[order]
-                    initial_to_add = self.table_classes[table_name + "_initial"](
+                    initial_to_add = self.table_classes[initial_table_name](
                         name=path, order=order,
                         value=element)
                     self.session.add(initial_to_add)
 
-                self.unsaved_modifications = True
-
             # Current value
             if current_value is not None:
+                current_table_name = table_name + "_current"
                 for order in range(0, len(current_value)):
                     element = current_value[order]
-                    current_to_add = self.table_classes[table_name + "_current"](
+                    current_to_add = self.table_classes[current_table_name](
                         name=path, order=order,
                         value=element)
                     self.session.add(current_to_add)
 
-                if flush:
-                    self.session.flush()
-                self.unsaved_modifications = True
+            if flush:
+                self.session.flush()
+            self.unsaved_modifications = True
 
         else:
             # The tag has a simple type, it is add it in both current and
             # initial tables
 
+            column_name = self.tag_name_to_column_name(tag)
             path_initial = self.get_initial_path(path)
             database_current_value = getattr(
-                path_row, self.tag_name_to_column_name(tag))
+                path_row, column_name)
             database_initial_value = getattr(
-                path_initial, self.tag_name_to_column_name(tag))
+                path_initial, column_name)
 
             # We add the value only if it does not already exist
             if (database_current_value is None and
                     database_initial_value is None):
                 if initial_value is not None:
                     setattr(
-                        path_initial, self.tag_name_to_column_name(tag),
+                        path_initial, column_name,
                         initial_value)
                 if current_value is not None:
                     setattr(
-                        path_row, self.tag_name_to_column_name(tag),
+                        path_row, column_name,
                         current_value)
 
                 if flush:
@@ -913,8 +915,9 @@ class Database:
 
         # Iterating over all values and finding matches
 
-        # Search in path name
         values = self.session.query(self.table_classes[CURRENT_TABLE].name)
+
+        # Search in path name
         simple_tags_filters.append(self.table_classes[CURRENT_TABLE].name.like("%" + search + "%"))
 
         # Search for each tag
@@ -930,7 +933,8 @@ class Database:
             elif is_list is True:
                 # The tag has a list type, the tag current table is used
 
-                simple_tags_filters.append(and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[self.tag_name_to_column_name(tag) + "_current"].name, self.table_classes[self.tag_name_to_column_name(tag) + "_current"].value.like("%" + search + "%")))
+                table_name = self.tag_name_to_column_name(tag) + "_current"
+                simple_tags_filters.append(and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name, self.table_classes[table_name].value.like("%" + search + "%")))
 
         values = values.filter(or_(*simple_tags_filters)).distinct().all()
         for value in values:
@@ -938,160 +942,22 @@ class Database:
 
         return paths_matching
 
-    def get_paths_matching_constraints(self, tag, value, condition):
-        """
-        Gives the paths corresponding to the constraints
-        :param tag: tag name
-        :param value: value
-        :param condition: condition
-        :return: List of paths matching the constraints given in parameter
-        """
-
-        if tag == "FileName":
-
-            if (condition == "="):
-                values = self.session.query(self.table_classes[INITIAL_TABLE].name).filter(
-                    self.table_classes[INITIAL_TABLE].name == value).distinct().all()
-            elif (condition == "!="):
-                values = self.session.query(self.table_classes[INITIAL_TABLE].name).filter(
-                    self.table_classes[INITIAL_TABLE].name != value).distinct().all()
-            elif (condition == ">="):
-                values = self.session.query(self.table_classes[INITIAL_TABLE].name).filter(
-                    self.table_classes[INITIAL_TABLE].name >= value).distinct().all()
-            elif (condition == "<="):
-                values = self.session.query(self.table_classes[INITIAL_TABLE].name).filter(
-                    self.table_classes[INITIAL_TABLE].name <= value).distinct().all()
-            elif (condition == ">"):
-                values = self.session.query(self.table_classes[INITIAL_TABLE].name).filter(
-                    self.table_classes[INITIAL_TABLE].name > value).distinct().all()
-            elif (condition == "<"):
-                values = self.session.query(self.table_classes[INITIAL_TABLE].name).filter(
-                    self.table_classes[INITIAL_TABLE].name < value).distinct().all()
-            elif (condition == "CONTAINS"):
-                values = self.session.query(self.table_classes[INITIAL_TABLE].name).filter(
-                    self.table_classes[INITIAL_TABLE].name.contains(value)).distinct().all()
-            elif (condition == "BETWEEN"):
-                values = self.session.query(self.table_classes[INITIAL_TABLE].name).filter(
-                    self.table_classes[INITIAL_TABLE].name.between(value[0], value[1])).distinct().all()
-            elif (condition == "IN"):
-                values = self.session.query(self.table_classes[INITIAL_TABLE].name).filter(
-                    self.table_classes[INITIAL_TABLE].name._in(value)).distinct().all()
-
-            paths_list = []
-            for path in values:
-                if path.name not in paths_list:
-                    paths_list.append(path.name)
-            return paths_list
-
-        elif not self.is_tag_list(tag):
-            # The tag has a simple type, the tag column is used in the current
-            # table
-
-            if (condition == "="):
-                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    getattr(self.table_classes[CURRENT_TABLE],
-                            self.tag_name_to_column_name(tag)) ==
-                    value).distinct().all()
-            elif (condition == "!="):
-                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    getattr(self.table_classes[CURRENT_TABLE],
-                            self.tag_name_to_column_name(tag))
-                    != value).distinct().all()
-            elif (condition == ">="):
-                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    getattr(self.table_classes[CURRENT_TABLE],
-                            self.tag_name_to_column_name(tag)) >=
-                    value).distinct().all()
-            elif (condition == "<="):
-                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    getattr(self.table_classes[CURRENT_TABLE],
-                            self.tag_name_to_column_name(tag))
-                    <= value).distinct().all()
-            elif (condition == ">"):
-                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    getattr(self.table_classes[CURRENT_TABLE],
-                            self.tag_name_to_column_name(tag))
-                    > value).distinct().all()
-            elif (condition == "<"):
-                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    getattr(self.table_classes[CURRENT_TABLE],
-                            self.tag_name_to_column_name(tag))
-                    < value).distinct().all()
-            elif (condition == "CONTAINS"):
-                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    getattr(self.table_classes[CURRENT_TABLE],
-                            self.tag_name_to_column_name(tag)).contains(
-                        value)).distinct().all()
-            elif (condition == "BETWEEN"):
-                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    getattr(self.table_classes[CURRENT_TABLE],
-                            self.tag_name_to_column_name(tag)).between(
-                                value[0],
-                                value[1])).distinct().all()
-            elif (condition == "IN"):
-                query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(
-                    getattr(self.table_classes[CURRENT_TABLE],
-                            self.tag_name_to_column_name(tag)).in_(
-                        value)).distinct().all()
-
-            paths_list = []
-            for path in query:
-                if path.name not in paths_list:
-                    paths_list.append(path.name)
-
-            return paths_list
-
-        else:
-            # The tag has a list type, the tag current table is used
-
-            paths_list = []
-            for path in self.get_paths_names():
-                current_value = self.get_current_value(path, tag)
-                if condition == "=":
-                    if str(current_value) == value:
-                        paths_list.append(path)
-                elif condition == "!=":
-                    if str(current_value) != value:
-                        paths_list.append(path)
-                elif condition == ">=":
-                    if str(current_value) >= value:
-                        paths_list.append(path)
-                elif condition == "<=":
-                    if str(current_value) <= value:
-                        paths_list.append(path)
-                elif condition == ">":
-                    if str(current_value) > value:
-                        paths_list.append(path)
-                elif condition == "<":
-                    if str(current_value) < value:
-                        paths_list.append(path)
-                elif condition == "CONTAINS":
-                    if value in str(current_value):
-                        paths_list.append(path)
-                elif condition == "IN":
-                    if str(current_value) in value:
-                        paths_list.append(path)
-                elif condition == "BETWEEN":
-                    if value[0] <= str(current_value) <= value[1]:
-                        paths_list.append(path)
-            return paths_list
-
     def get_paths_matching_advanced_search(self, links, fields, conditions,
-                                           values, nots, scans_list):
+                                           values, nots, paths_list):
         """
         Gives the paths matching the advanced search
         :param links: Links (AND/OR)
-        :param fields: Fields (tag name/List of tags/FileName)
+        :param fields: Fields (List of tags) (FileName for search in name column)
         :param conditions: Conditions (=, !=, <, >, <=, >=, BETWEEN,
                            CONTAINS, IN)
         :param values: Values (Typed value for =, !=, <, >, <=, >=, and
                        CONTAINS/list for BETWEEN and IN)
         :param nots: Nots (Empty or NOT)
-        :param scans_list: List of scans to take into account
+        :param paths_list: List of paths to take into account
         :return: List of path names matching all the constraints
         """
 
-        if not isinstance(links, list) or not isinstance(fields, list) or not isinstance(conditions, list) or not isinstance(values, list) or not isinstance(nots, list) or not isinstance(scans_list, list):
+        if not isinstance(links, list) or not isinstance(fields, list) or not isinstance(conditions, list) or not isinstance(values, list) or not isinstance(nots, list) or not isinstance(paths_list, list):
             return []
         if (not len(links) == len(fields) - 1 == len(conditions) - 1 ==
                 len(values) - 1 == len(nots) - 1):
@@ -1102,8 +968,9 @@ class Database:
         fields_list = self.get_tags_names()
         fields_list.append("FileName")
         for field in fields:
-            if not isinstance(field, list) and field not in fields_list:
-                return []
+            for tag in field:
+                if tag not in fields_list:
+                    return []
         for condition in conditions:
             if condition not in ["=", "!=", "<", ">", "<=", ">=", "BETWEEN",
                                  "IN", "CONTAINS"]:
@@ -1118,68 +985,158 @@ class Database:
                     return []
             else:
                 field = fields[i]
-                if field == "FileName":
-                    if not isinstance(value, str):
-                        return []
-                elif not isinstance(field, list):
-                    tag_type = self.get_tag(field).type
-                    if not self.check_type_value(value, tag_type):
-                        return []
-        for not_ in nots:
-            if not_ not in ["", "NOT"]:
+                if len(field) == 1:
+                    tag = field[0]
+                    if tag == "FileName":
+                        if not isinstance(value, str):
+                            return []
+                    else:
+                        tag_type = self.get_tag(tag).type
+                        if not self.check_type_value(value, tag_type):
+                            return []
+        for not_choice in nots:
+            if not_choice not in ["", "NOT"]:
                 return []
 
-        queries = []  # list of paths of each query (row)
+        query = self.session.query(self.table_classes[CURRENT_TABLE].name).filter(self.table_classes[CURRENT_TABLE].name.in_(paths_list))
+        row_filters = []
+        paths_matching = []
+
+        # For each row of condition
         for i in range(0, len(conditions)):
-            queries.append([])
-            if not isinstance(fields[i], list):
 
-                # Tag filter: Only those values are read
+            row_filter = []
 
-                queries[i] = self.get_paths_matching_constraints(fields[i],
-                                                                 values[i],
-                                                                 conditions[i])
+            # For each tag to check
+            for tag in fields[i]:
 
+                if tag == "FileName":
+
+                    if (conditions[i] == "="):
+                        row_filter.append(self.table_classes[CURRENT_TABLE].name == values[i])
+                    elif (conditions[i] == "!="):
+                        row_filter.append(self.table_classes[CURRENT_TABLE].name != values[i])
+                    elif (conditions[i] == "<="):
+                        row_filter.append(self.table_classes[CURRENT_TABLE].name <= values[i])
+                    elif (conditions[i] == "<"):
+                        row_filter.append(self.table_classes[CURRENT_TABLE].name < values[i])
+                    elif (conditions[i] == ">="):
+                        row_filter.append(self.table_classes[CURRENT_TABLE].name >= values[i])
+                    elif (conditions[i] == ">"):
+                        row_filter.append(self.table_classes[CURRENT_TABLE].name > values[i])
+                    elif (conditions[i] == "CONTAINS"):
+                        row_filter.append(self.table_classes[CURRENT_TABLE].name.contains(
+                                values[i]))
+                    elif (conditions[i] == "BETWEEN"):
+                        row_filter.append(self.table_classes[CURRENT_TABLE].name.between(
+                                values[i][0], values[i][1]))
+                    elif (conditions[i] == "IN"):
+                        row_filter.append(self.table_classes[CURRENT_TABLE].name.in_(
+                                values[i]))
+
+                else:
+
+                    is_list = self.is_tag_list(tag)
+                    if is_list is False:
+                        # The tag has a simple type, the tag column is used in the
+                        # current table
+
+                        if (conditions[i] == "="):
+                            row_filter.append(
+                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)) == values[i])
+                        elif (conditions[i] == "!="):
+                            row_filter.append(
+                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)) != values[i])
+                        elif (conditions[i] == "<="):
+                            row_filter.append(
+                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)) <= values[i])
+                        elif (conditions[i] == "<"):
+                            row_filter.append(
+                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)) < values[i])
+                        elif (conditions[i] == ">="):
+                            row_filter.append(
+                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)) >= values[i])
+                        elif (conditions[i] == ">"):
+                            row_filter.append(
+                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)) > values[i])
+                        elif (conditions[i] == "CONTAINS"):
+                            row_filter.append(
+                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)).contains(values[i]))
+                        elif (conditions[i] == "BETWEEN"):
+                            row_filter.append(
+                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)).between(values[i][0], values[i][1]))
+                        elif (conditions[i] == "IN"):
+                            row_filter.append(
+                                getattr(self.table_classes[CURRENT_TABLE], self.tag_name_to_column_name(tag)).in_(values[i]))
+
+                    elif is_list is True:
+                        # The tag has a list type, the tag current table is used
+
+                        table_name = self.tag_name_to_column_name(tag) + "_current"
+                        if (conditions[i] == "="):
+                            row_filter.append(
+                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value == values[i]))
+                        elif (conditions[i] == "!="):
+                            row_filter.append(
+                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value != values[i]))
+                        elif (conditions[i] == "<="):
+                            row_filter.append(
+                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value <= values[i]))
+                        elif (conditions[i] == "<"):
+                            row_filter.append(
+                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value < values[i]))
+                        elif (conditions[i] == ">="):
+                            row_filter.append(
+                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value >= values[i]))
+                        elif (conditions[i] == ">"):
+                            row_filter.append(
+                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value > values[i]))
+                        elif (conditions[i] == "CONTAINS"):
+                            row_filter.append(
+                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value.contains(values[i])))
+                        elif (conditions[i] == "BETWEEN"):
+                            row_filter.append(
+                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value.between(values[i][0], values[i][1])))
+                        elif (conditions[i] == "IN"):
+                            row_filter.append(
+                                and_(self.table_classes[CURRENT_TABLE].name == self.table_classes[table_name].name,
+                                     self.table_classes[table_name].value.in_(values[i])))
+
+            # Putting OR condition between all row filters
+            if len(row_filter) > 1:
+                final_row_filter = or_(*row_filter)
             else:
-                # No tag filter, all values are read
+                final_row_filter = row_filter[0]
 
-                queries[i] = list(set(queries[i]).union(set(
-                    self.get_paths_matching_constraints("FileName",
-                                                        values[i],
-                                                        conditions[i]))))
+            # Putting the negation if needed
+            if nots[i] == "NOT":
+                final_row_filter = not_(final_row_filter)
 
-                for tag in fields[i]:
-                    queries[i] = list(set(queries[i]).union(set(
-                        self.get_paths_matching_constraints(tag,
-                                                            values[i],
-                                                            conditions[i]))))
+            row_filters.append(final_row_filter)
 
-            # Putting negation if needed
-            if (nots[i] == "NOT"):
-                queries[i] = list(set(self.get_paths_names()) -
-                                  set(queries[i]))
+        # Row filters linked
+        linked_filters = row_filters[0]
 
-        # We start with the first row to put the link between the conditions
-        # Links are made row by row, there is no priority like in SQL where AND
-        # is stronger than OR
-        result = queries[0]
         for i in range(0, len(links)):
-            if (links[i] == "AND"):
-                # If the link is AND, we do an intersection between the current
-                # result and the next row
-                result = list(set(result).intersection(set(queries[i + 1])))
+            if links[i] == "OR":
+                linked_filters = or_(linked_filters, row_filters[i + 1])
             else:
-                # If the link is OR, we do an union between the current result
-                # and the next row
-                result = list(set(result).union(set(queries[i + 1])))
+                linked_filters = and_(linked_filters, row_filters[i + 1])
 
-        # Removing scans if they are not taken into account
-        result_copy = list(result)
-        for scan in result_copy:
-            if scan not in scans_list:
-                result.remove(scan)
+        query = query.filter(linked_filters).distinct().all()
 
-        return result
+        for result in query:
+            paths_matching.append(result.name)
+
+        return paths_matching
 
     def get_paths_matching_tag_value_couples(self, tag_value_couples):
         """
