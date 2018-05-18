@@ -1,12 +1,11 @@
 import os
 from datetime import date, time, datetime
 
-from sqlalchemy import (create_engine, Column, String, Integer, Float,
-                        MetaData, Date, DateTime, Time, Table,
-                        ForeignKeyConstraint, event, or_, and_, not_, Enum)
+from sqlalchemy import (create_engine, Column, String,
+                        MetaData, event, or_, and_, not_)
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.schema import CreateTable, DropTable
+from sqlalchemy.schema import CreateTable
 from sqlalchemy.engine import Engine
 
 import hashlib
@@ -98,7 +97,7 @@ class Database:
         - unsave_modifications: unsaves the pending modifications
         - has_unsaved_modifications: to know if there are unsaved
           modifications
-        - tables_redefinition: redefines the model after schema update
+        - update_table_classes: redefines the model after schema update
     """
 
     def __init__(self, string_engine):
@@ -122,8 +121,6 @@ class Database:
 
         # Database opened
         self.engine = create_engine(self.string_engine)
-
-        # Metadata generated
         self.update_table_classes()
 
         # Database schema checked
@@ -158,7 +155,7 @@ class Database:
         self.session.flush()
 
     def add_tag(self, name, origin, tag_type, unit, default_value,
-                description, update_base = True):
+                description, flush = True):
         """
         Adds a tag to the database, if it does not already exist
         :param name: Tag name (str)
@@ -209,25 +206,26 @@ class Database:
         else:
             column_type = self.tag_type_to_column_type(tag_type)
         column = Column(name, column_type)
-        column_type = column.type.compile(self.engine.dialect)
+        column_str_type = column.type.compile(self.engine.dialect)
         column_name = self.tag_name_to_column_name(name)
 
         # Tag current and initial columns added added to path table
-        self.session.execute(
+
+        self.session.execute((
             'ALTER TABLE %s ADD COLUMN %s %s' % (
                 PATH_TABLE, "\"" + column_name + "_initial\"",
-                column_type))
+                column_str_type)))
+
         self.session.execute(
             'ALTER TABLE %s ADD COLUMN %s %s' % (
                 PATH_TABLE, "\"" + column_name + "_current\"",
-                column_type))
+                column_str_type))
 
         self.paths.clear()
-
         self.unsaved_modifications = True
 
         # Redefinition of the table classes
-        if update_base:
+        if flush:
             self.update_table_classes()
             self.session.flush()
 
@@ -939,7 +937,7 @@ class Database:
 
         return self.unsaved_modifications
 
-    def update_table_classes(self): # (0.015 sec on average)
+    def update_table_classes(self):
         """
         Redefines the model after an update of the schema
         """
@@ -949,6 +947,6 @@ class Database:
         self.metadata.reflect(self.engine)
         self.base = automap_base(metadata=self.metadata)
         self.base.prepare()
+
         for table in self.metadata.tables.values():
-            self.table_classes[table.name] = getattr(self.base.classes,
-                                                     table.name)
+            self.table_classes[table.name] = getattr(self.base.classes, table.name)
