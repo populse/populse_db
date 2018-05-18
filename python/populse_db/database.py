@@ -166,7 +166,7 @@ class Database:
         :param unit: Tag unit (ms, mm, degree, Hz/pixel, MHz, or None)
         :param default_value: Tag default value (str or None)
         :param description: Tag description (str or None)
-        :param update_base: Bool to know if the base must be updated (put False if in the middle of filling tags)
+        :param flush: Bool to know if the base must be updated (put False if in the middle of filling tags)
         """
 
         if not isinstance(name, str):
@@ -521,8 +521,7 @@ class Database:
         if (valid_type in LIST_TYPES
                 and value_type == list):
             for value_element in value:
-                if not self.check_type_value(value_element,
-                                             valid_type.replace("list_", "")):
+                if not self.check_type_value(value_element, valid_type.replace("list_", "")):
                     return False
             return True
         return False
@@ -709,8 +708,8 @@ class Database:
         :param links: Links (AND/OR)
         :param fields: Fields (List of tags) (FileName for search in name column)
         :param conditions: Conditions (=, !=, <, >, <=, >=, BETWEEN,
-                           CONTAINS, IN)
-        :param values: Values (Str value for =, !=, <, >, <=, >=, and
+                           CONTAINS, IN, HAS VALUE, HAS NO VALUE)
+        :param values: Values (Str value for =, !=, <, >, <=, >=, HAS VALUE, HAS NO VALUE, and
                        CONTAINS/list for BETWEEN and IN)
         :param nots: Nots (Empty or NOT)
         :param paths_list: List of paths to take into account
@@ -733,7 +732,7 @@ class Database:
                     return []
         for condition in conditions:
             if condition not in ["=", "!=", "<", ">", "<=", ">=", "BETWEEN",
-                                 "IN", "CONTAINS"]:
+                                 "IN", "CONTAINS", "HAS VALUE", "HAS NO VALUE"]:
                 return []
         for i in range(0, len(values)):
             value = values[i]
@@ -785,6 +784,12 @@ class Database:
                     elif (conditions[i] == "IN"):
                         row_filter.append(self.table_classes[PATH_TABLE].name.in_(
                                 values[i]))
+                    elif (conditions[i] == "HAS VALUE"):
+                        row_filter.append(
+                            self.table_classes[PATH_TABLE].name != None)
+                    elif (conditions[i] == "HAS NO VALUE"):
+                        row_filter.append(
+                            self.table_classes[PATH_TABLE].name == None)
 
                 else:
 
@@ -817,6 +822,14 @@ class Database:
                     elif (conditions[i] == "IN"):
                         row_filter.append(
                             getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current").in_(values[i]))
+                    elif (conditions[i] == "HAS VALUE"):
+                        row_filter.append(
+                            getattr(self.table_classes[PATH_TABLE],
+                                         self.tag_name_to_column_name(tag) + "_current") != None)
+                    elif (conditions[i] == "HAS NO VALUE"):
+                        row_filter.append(
+                            getattr(self.table_classes[PATH_TABLE],
+                                    self.tag_name_to_column_name(tag) + "_current") == None)
 
             # Putting OR condition between all row filters
             if len(row_filter) > 1:
