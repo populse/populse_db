@@ -100,15 +100,19 @@ class Database:
         - update_table_classes: redefines the model after schema update
     """
 
-    def __init__(self, string_engine, initial_table=False):
+    def __init__(self, string_engine, initial_table=False, path_caches=False):
         """
         Creates an API of the database instance
         :param string_engine: String engine of the database file, can be already existing, or not
-        :param initial_table: To know if the initial table must be created
+        :param initial_table: To know if the initial table must be created, False by default
+        :param path_caches: To know if the path caches must be used, False by default
         """
 
         self.string_engine = string_engine
+
         self.initial_table = initial_table
+        self.paths_caches = path_caches
+
         self.table_classes = {}
 
         # SQLite database: we create it if it does not exist
@@ -138,9 +142,11 @@ class Database:
         self.unsaved_modifications = False
 
         self.tags = {}
-        self.paths = {}
-        self.initial_paths = {}
         self.names = {}
+
+        if self.paths_caches:
+            self.paths = {}
+            self.initial_paths = {}
 
     """ TAGS """
 
@@ -227,8 +233,10 @@ class Database:
                     INITIAL_TABLE, "\"" + column_name + "\"",
                     column_str_type))
 
-        self.paths.clear()
-        self.initial_paths.clear()
+        if self.paths_caches:
+            self.paths.clear()
+            self.initial_paths.clear()
+
         self.unsaved_modifications = True
 
         # Redefinition of the table classes
@@ -295,7 +303,10 @@ class Database:
                         " FROM path_backup")
         self.session.execute("DROP TABLE path_backup")
 
-        self.paths.clear()
+        if self.paths_caches:
+            self.paths.clear()
+            self.initial_paths.clear()
+
         self.tags[name] = None
         self.session.delete(tag_row)
         self.session.flush()
@@ -605,12 +616,13 @@ class Database:
         :return The path row if the path exists, None otherwise
         """
 
-        if path in self.paths:
+        if self.paths_caches and path in self.paths:
             return self.paths[path]
         else:
             path_row = self.session.query(self.table_classes[PATH_TABLE]).filter(
         self.table_classes[PATH_TABLE].name == path).first()
-            self.paths[path] = path_row
+            if self.paths_caches:
+                self.paths[path] = path_row
             return path_row
 
     def get_initial_path(self, path):
@@ -622,12 +634,13 @@ class Database:
 
         if not self.initial_table:
             raise ValueError("The initial values aren't activated, you can activate the flag initial_table when creating the Database instance")
-        if path in self.initial_paths:
+        if self.paths_caches and path in self.initial_paths:
             return self.initial_paths[path]
         else:
             path_row = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
         self.table_classes[INITIAL_TABLE].name == path).first()
-            self.initial_paths[path] = path_row
+            if self.paths_caches:
+                self.initial_paths[path] = path_row
             return path_row
 
     def get_paths_names(self):
@@ -669,7 +682,10 @@ class Database:
                 self.session.query(self.table_classes[table_class]).filter(
                     self.table_classes[table_class].name == path).delete()
 
-        self.paths[path] = None
+        if self.paths_caches:
+            self.paths[path] = None
+            self.initial_paths = None
+
         self.session.flush()
         self.unsaved_modifications = True
 
@@ -692,13 +708,17 @@ class Database:
         # Adding the index to path table
         path_row = self.table_classes[PATH_TABLE](name=path)
         self.session.add(path_row)
-        self.paths[path] = path_row
+
+        if self.paths_caches:
+            self.paths[path] = path_row
 
         # Adding the index to initial table if initial values are used
         if self.initial_table:
             initial_path_row = self.table_classes[INITIAL_TABLE](name=path)
             self.session.add(initial_path_row)
-            self.initial_paths[path] = initial_path_row
+
+            if self.paths_caches:
+                self.initial_paths[path] = initial_path_row
 
         if checks:
             self.session.flush()
