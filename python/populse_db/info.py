@@ -42,7 +42,8 @@ VERSION = __version__
 CLASSIFIERS = CLASSIFIERS
 PLATFORMS = 'OS Independent'
 REQUIRES = [
-    'sqlalchemy'
+    'sqlalchemy',
+    'lark-parser'
 ]
 EXTRA_REQUIRES = {
     'doc': [
