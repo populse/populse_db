@@ -28,7 +28,7 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN,
                                        LIST_TYPES, SIMPLE_TYPES, TYPE_TO_COLUMN,
                                        ALL_TYPES, ALL_UNITS, PATH_TABLE, TAG_TABLE,
-                                       VALUE_CURRENT, VALUE_INITIAL)
+                                       VALUE_CURRENT, VALUE_INITIAL, INITIAL_TABLE)
 
 
 @event.listens_for(Engine, "connect")
@@ -100,14 +100,15 @@ class Database:
         - update_table_classes: redefines the model after schema update
     """
 
-    def __init__(self, string_engine):
+    def __init__(self, string_engine, initial_table=False):
         """
         Creates an API of the database instance
-        :param string_engine: String engine of the database file, can be already
-        existing, or not
+        :param string_engine: String engine of the database file, can be already existing, or not
+        :param initial_table: To know if the initial table must be created
         """
 
         self.string_engine = string_engine
+        self.initial_table = initial_table
         self.table_classes = {}
 
         # SQLite database: we create it if it does not exist
@@ -117,7 +118,7 @@ class Database:
                 parent_dir = os.path.dirname(db_file)
                 if not os.path.exists(parent_dir):
                     os.makedirs(os.path.dirname(db_file))
-                create_database(string_engine)
+                create_database(string_engine, self.initial_table)
 
         # Database opened
         self.engine = create_engine(self.string_engine)
@@ -127,7 +128,10 @@ class Database:
         if (PATH_TABLE not in self.table_classes.keys() or
                 TAG_TABLE not in self.table_classes.keys()):
             raise ValueError(
-                'The database schema is not coherent with the API.')
+                'The database schema is not coherent with the API')
+        if self.initial_table and INITIAL_TABLE not in self.table_classes.keys():
+            raise ValueError(
+                'The initial_table flag cannot be True if the database has been created without the initial_table flag')
 
         self.session = scoped_session(sessionmaker(bind=self.engine, autocommit=False, autoflush=False))
 
@@ -135,6 +139,7 @@ class Database:
 
         self.tags = {}
         self.paths = {}
+        self.initial_paths = {}
         self.names = {}
 
     """ TAGS """
@@ -213,15 +218,17 @@ class Database:
 
         self.session.execute((
             'ALTER TABLE %s ADD COLUMN %s %s' % (
-                PATH_TABLE, "\"" + column_name + "_initial\"",
+                PATH_TABLE, "\"" + column_name + "\"",
                 column_str_type)))
 
-        self.session.execute(
-            'ALTER TABLE %s ADD COLUMN %s %s' % (
-                PATH_TABLE, "\"" + column_name + "_current\"",
-                column_str_type))
+        if self.initial_table:
+            self.session.execute(
+                'ALTER TABLE %s ADD COLUMN %s %s' % (
+                    INITIAL_TABLE, "\"" + column_name + "\"",
+                    column_str_type))
 
         self.paths.clear()
+        self.initial_paths.clear()
         self.unsaved_modifications = True
 
         # Redefinition of the table classes
@@ -372,7 +379,7 @@ class Database:
         if path_row is None:
             return None
 
-        column_value = getattr(path_row, self.tag_name_to_column_name(tag) + "_current")
+        column_value = getattr(path_row, self.tag_name_to_column_name(tag))
 
         if tag_row.type in LIST_TYPES and column_value is not None:
             column_value = ast.literal_eval(column_value)
@@ -390,11 +397,11 @@ class Database:
         tag_row = self.get_tag(tag)
         if tag_row is None:
             return None
-        path_row = self.get_path(path)
-        if path_row is None:
+        initial_path_row = self.get_initial_path(path)
+        if initial_path_row is None:
             return None
 
-        column_value = getattr(path_row, self.tag_name_to_column_name(tag) + "_initial")
+        column_value = getattr(initial_path_row, self.tag_name_to_column_name(tag))
 
         if tag_row.type in LIST_TYPES and column_value is not None:
             column_value = ast.literal_eval(column_value)
@@ -439,7 +446,7 @@ class Database:
         if tag_row.type in LIST_TYPES:
             new_value = str(new_value)
 
-        setattr(path_row, self.tag_name_to_column_name(tag) + "_current", new_value)
+        setattr(path_row, self.tag_name_to_column_name(tag), new_value)
 
         self.session.flush()
         self.unsaved_modifications = True
@@ -456,13 +463,15 @@ class Database:
         path_row = self.get_path(path)
         if path_row is None:
             raise ValueError("The path with the name " + str(path) + " does not exist")
+        if not self.initial_table:
+            raise ValueError("Impossible to reset values if the initial values are not activated, you can activate the flag initial_table when creating the Database instance")
 
         initial_value = self.get_initial_value(path, tag)
 
         if tag_row.type in LIST_TYPES:
             initial_value = str(initial_value)
 
-        setattr(path_row, self.tag_name_to_column_name(tag) + "_current", initial_value)
+        setattr(path_row, self.tag_name_to_column_name(tag), initial_value)
 
         self.session.flush()
         self.unsaved_modifications = True
@@ -484,8 +493,11 @@ class Database:
 
         tag_column_name = self.tag_name_to_column_name(tag)
 
-        setattr(path_row, tag_column_name + "_current", None)
-        setattr(path_row, tag_column_name + "_initial", None)
+        setattr(path_row, tag_column_name , None)
+
+        if self.initial_table:
+            initial_path_row = self.get_initial_path(path)
+            setattr(initial_path_row, tag_column_name, None)
 
         if flush:
             self.session.flush()
@@ -526,7 +538,7 @@ class Database:
             return True
         return False
 
-    def new_value(self, path, tag, current_value, initial_value, checks=True):
+    def new_value(self, path, tag, current_value, initial_value=None, checks=True):
         """
         Adds a value for <path, tag> (as initial and current)
         :param path: path name
@@ -547,12 +559,19 @@ class Database:
                 raise ValueError("The current value " + str(current_value) + " is invalid")
             if not self.check_type_value(initial_value, tag_row.type):
                 raise ValueError("The initial value " + str(initial_value) + " is invalid")
+            if not self.initial_table and not initial_value is None:
+                raise ValueError("Impossible to add an initial value if the initial values are not activated, you can activate the flag initial_table when creating the Database instance")
 
         column_name = self.tag_name_to_column_name(tag)
         database_current_value = getattr(
-            path_row, column_name + "_current")
-        database_initial_value = getattr(
-            path_row, column_name + "_initial")
+            path_row, column_name)
+
+        if self.initial_table:
+            path_initial_row = self.get_initial_path(path)
+            database_initial_value = getattr(
+                path_initial_row, column_name)
+        else:
+            database_initial_value = None
 
         # We add the value only if it does not already exist
         if (database_current_value is None and
@@ -561,13 +580,13 @@ class Database:
                 if tag_row.type in LIST_TYPES:
                     initial_value = str(initial_value)
                 setattr(
-                    path_row, column_name + "_initial",
+                    path_initial_row, column_name,
                     initial_value)
             if current_value is not None:
                 if tag_row.type in LIST_TYPES:
                     current_value = str(current_value)
                 setattr(
-                    path_row, column_name + "_current",
+                    path_row, column_name,
                     current_value)
 
             if checks:
@@ -592,6 +611,23 @@ class Database:
             path_row = self.session.query(self.table_classes[PATH_TABLE]).filter(
         self.table_classes[PATH_TABLE].name == path).first()
             self.paths[path] = path_row
+            return path_row
+
+    def get_initial_path(self, path):
+        """
+        Gives the initial path row of a path
+        :param path: path name
+        :return The initial path row if the path exists, None otherwise
+        """
+
+        if not self.initial_table:
+            raise ValueError("The initial values aren't activated, you can activate the flag initial_table when creating the Database instance")
+        if path in self.initial_paths:
+            return self.initial_paths[path]
+        else:
+            path_row = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
+        self.table_classes[INITIAL_TABLE].name == path).first()
+            self.initial_paths[path] = path_row
             return path_row
 
     def get_paths_names(self):
@@ -653,12 +689,20 @@ class Database:
                 "The path name must be of type " + str(str) + ", but path name of type " + str(
                     type(path)) + " given")
 
-        # Adding the index to both initial and current tables
+        # Adding the index to path table
         path_row = self.table_classes[PATH_TABLE](name=path)
         self.session.add(path_row)
+        self.paths[path] = path_row
+
+        # Adding the index to initial table if initial values are used
+        if self.initial_table:
+            initial_path_row = self.table_classes[INITIAL_TABLE](name=path)
+            self.session.add(initial_path_row)
+            self.initial_paths[path] = initial_path_row
+
         if checks:
             self.session.flush()
-        self.paths[path] = path_row
+
         self.unsaved_modifications = True
 
     """ UTILS """
@@ -693,7 +737,7 @@ class Database:
         # Search for each tag
         for tag in tags:
 
-            simple_tags_filters.append(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current").like("%" + search + "%"))
+            simple_tags_filters.append(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).like("%" + search + "%"))
 
         values = values.filter(or_(*simple_tags_filters)).distinct().all()
         for value in values:
@@ -795,33 +839,33 @@ class Database:
 
                     if (conditions[i] == "="):
                         row_filter.append(
-                            and_(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") != None,
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") == values[i]))
+                            and_(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) != None,
+                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) == values[i]))
                     elif (conditions[i] == "!="):
                         row_filter.append(
-                            or_(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") == None,
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") != values[i]))
+                            or_(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) == None,
+                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) != values[i]))
                     elif (conditions[i] == "<="):
                         row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") <= values[i])
+                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) <= values[i])
                     elif (conditions[i] == "<"):
                         row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") < values[i])
+                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) < values[i])
                     elif (conditions[i] == ">="):
                         row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") >= values[i])
+                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) >= values[i])
                     elif (conditions[i] == ">"):
                         row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current") > values[i])
+                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) > values[i])
                     elif (conditions[i] == "CONTAINS"):
                         row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current").like("%" + str(values[i]) + "%"))
+                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).like("%" + str(values[i]) + "%"))
                     elif (conditions[i] == "BETWEEN"):
                         row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current").between(values[i][0], values[i][1]))
+                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).between(values[i][0], values[i][1]))
                     elif (conditions[i] == "IN"):
                         row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag) + "_current").in_(values[i]))
+                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).in_(values[i]))
                     elif (conditions[i] == "HAS VALUE"):
                         row_filter.append(
                             getattr(self.table_classes[PATH_TABLE],
@@ -895,7 +939,7 @@ class Database:
                 couple_query_result = self.session.query(
                     self.table_classes[PATH_TABLE].name).filter(
                     getattr(self.table_classes[PATH_TABLE],
-                            self.tag_name_to_column_name(tag) + "_current") == value)
+                            self.tag_name_to_column_name(tag)) == value)
                 for query_result in couple_query_result:
                     couple_result.append(query_result.name)
 

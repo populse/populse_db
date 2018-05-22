@@ -47,28 +47,31 @@ TAG_UNIT_MHZ = "MHz"
 ALL_UNITS = [TAG_UNIT_MS, TAG_UNIT_MM, TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL, TAG_UNIT_MHZ]
 
 PATH_TABLE = "path"
+INITIAL_TABLE = "initial"
 TAG_TABLE = "tag"
 
 # List value type
 VALUE_CURRENT = "current"
 VALUE_INITIAL = "initial"
 
-def create_database(string_engine):
+def create_database(string_engine, initial_table=False):
     """
     Creates the database file with an empty schema
     :param string_engine: Path of the new database file
+    :param initial_table: To know if the initial table must be created
     """
 
     engine = create_engine(string_engine)
     metadata = MetaData(bind=engine)
-    fill_tables(metadata)
+    fill_tables(metadata, initial_table)
     metadata.create_all(engine)
 
 
-def fill_tables(metadata):
+def fill_tables(metadata, initial_table):
     """
     Fills the metadata with an empty schema
     :param metadata: Metadata filled
+    :param initial_table: To know if the initial table must be created
     """
     Table(TAG_TABLE, metadata,
           Column("name", String, primary_key=True),
@@ -90,3 +93,6 @@ def fill_tables(metadata):
           Column("description", String, nullable=True))
 
     Table(PATH_TABLE, metadata, Column("name", String, primary_key=True))
+
+    if initial_table:
+        Table(INITIAL_TABLE, metadata, Column("name", String, primary_key=True))
