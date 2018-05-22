@@ -1,5 +1,10 @@
+import six
 import os
 from datetime import date, time, datetime
+import hashlib
+import ast
+import re
+import types
 
 from sqlalchemy import (create_engine, Column, String,
                         MetaData, event, or_, and_, not_)
@@ -8,11 +13,6 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.schema import CreateTable
 from sqlalchemy.engine import Engine
 
-import hashlib
-
-import ast
-
-import re
 
 from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_TYPE_FLOAT, TAG_TYPE_TIME,
@@ -29,6 +29,8 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        LIST_TYPES, SIMPLE_TYPES, TYPE_TO_COLUMN,
                                        ALL_TYPES, ALL_UNITS, PATH_TABLE, TAG_TABLE,
                                        VALUE_CURRENT, VALUE_INITIAL, INITIAL_TABLE)
+
+from populse_db.filter import filter_parser, FilterToQuery
 
 
 @event.listens_for(Engine, "connect")
@@ -1027,3 +1029,34 @@ class Database:
 
         for table in self.metadata.tables.values():
             self.table_classes[table.name] = getattr(self.base.classes, table.name)
+    
+    def filter_query(self, filter):
+        '''
+        Given a filter string, return a query that can be used with
+        filter_paths() to select paths.
+        '''
+        tree = filter_parser().parse(filter)
+        query = FilterToQuery(self).transform(tree)
+
+    def filter_paths(self, filter_query):
+        '''
+        Iterate over paths selected by filter_query. Each item yieled is a
+        row of the path table returned by sqlalchemy. filter_query can be
+        the result of self.filter_query() or a string containing a filter
+        (in this case self.fliter_query() is called to get the actual query).
+        '''
+        if isinstance(filter_query, six.string_types):
+            filter_query = self.filter_query(filter_query)
+        if isinstance(filter_query, types.FunctionType):
+            select = self.metadata.tables[PATH_TABLE].select()
+            python_filter = filter_query
+        elif isinstance(filter_query, tuple):
+            sql_condition, python_filter = filter_query
+            select = select = self.metadata.tables[PATH_TABLE].select(sql_condition)
+        else:
+            select = select = self.metadata.tables[PATH_TABLE].select(filter_query)
+            python_filter = None
+        for row in self.session.execute(select):
+            if python_filter is None or python_filter(row):
+                yield row
+        
