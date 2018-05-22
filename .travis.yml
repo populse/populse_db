@@ -1,8 +1,6 @@
 language: python
 python:
-# populse_db is not working on Python > 3.5
-# The test on 3.6 is removed until the problem gets fixed
-#  - '3.6'
+  - '3.6'
   - '3.5'
   - '3.4'
   - '2.7'
