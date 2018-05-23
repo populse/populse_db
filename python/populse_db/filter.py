@@ -1,3 +1,4 @@
+import six
 import operator
 import types
 
@@ -36,11 +37,19 @@ condition : operand CONDITION_OPERATOR operand
 ?operand : litteral
          | list
          | tag_name
-         
-litteral : ESCAPED_STRING -> string
-         | SIGNED_NUMBER  -> number
-         | KEYWORD_LITTERAL
 
+         
+litteral : ESCAPED_STRING   -> string
+         | SIGNED_NUMBER    -> number
+         | KEYWORD_LITTERAL -> keyword_litteral
+         | DATE             -> date
+         | TIME             -> time
+         | DATETIME         -> datetime
+
+
+DATE : INT "-" INT "-" INT
+TIME : INT ":" INT (":" INT ("." INT)?)?
+DATETIME : DATE "T" TIME
 
 KEYWORD_LITTERAL : "TRUE"
                  | "FALSE"
@@ -50,6 +59,7 @@ list : "[" [litteral ("," litteral)*] "]"
 
 tag_name : CNAME
 
+%import common.INT
 %import common.ESCAPED_STRING
 %import common.SIGNED_NUMBER
 %import common.CNAME
@@ -166,7 +176,7 @@ class FilterToQuery(Transformer):
         operator_str = str(operator)
         if operator_str == 'IN':
             if self.is_list_tag(right_operand):
-                if not isinstance(left_operand, (basestring, float)): #TODO date, datetime, bool, none
+                if not isinstance(left_operand, six.string_types + (float,)): #TODO date, datetime, bool, none
                     raise ValueError('Left operand of IN <list tag> must be a string or a number tag but "%s" was used' % str(left_operand))
                 # Check if a single value is in a list tag
                 # Cannot be done in SQL with SQLite => return a Python function
