@@ -1069,7 +1069,7 @@ class Database:
             select = select = self.metadata.tables[PATH_TABLE].select(filter_query)
             python_filter = None
         for row in self.session.execute(select):
-            row = TagRow(row)
+            row = TagRow(self, row)
             if python_filter is None or python_filter(row):
                 yield row
 

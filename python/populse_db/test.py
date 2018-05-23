@@ -9,6 +9,7 @@ from populse_db.database_model import (create_database, TAG_ORIGIN_BUILTIN,
                                        TAG_TYPE_STRING, TAG_TYPE_FLOAT,
                                        TAG_UNIT_MHZ, TAG_TYPE_INTEGER,
                                        TAG_TYPE_TIME, TAG_TYPE_DATETIME,
+                                       TAG_TYPE_LIST_STRING,
                                        TAG_TYPE_LIST_INTEGER,
                                        TAG_TYPE_LIST_FLOAT, PATH_TABLE,
                                        TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_TIME,
@@ -1107,5 +1108,51 @@ class TestDatabaseMethods(unittest.TestCase):
         database.new_value("scan1", "list_datetime", list_datetime)
         self.assertEqual(list_datetime, database.get_current_value("scan1", "list_datetime"))
 
+    def test_filters(self):
+        database = Database(self.string_engine)
+        
+        database.add_tag('format', tag_type='string', origin=TAG_ORIGIN_BUILTIN,
+                unit=None, description=None, default_value=None)
+        database.add_tag('strings', tag_type=TAG_TYPE_LIST_STRING, origin=TAG_ORIGIN_BUILTIN,
+                unit=None, description=None, default_value=None)
+        database.add_tag('times', tag_type=TAG_TYPE_LIST_TIME, origin=TAG_ORIGIN_BUILTIN,
+                unit=None, description=None, default_value=None)
+        database.add_tag('dates', tag_type=TAG_TYPE_LIST_DATE, origin=TAG_ORIGIN_BUILTIN,
+                unit=None, description=None, default_value=None)
+        database.add_tag('datetimes', tag_type=TAG_TYPE_LIST_DATETIME, origin=TAG_ORIGIN_BUILTIN,
+                unit=None, description=None, default_value=None)
+
+        database.save_modifications()
+        files = ('abc', 'bcd', 'def', 'xyz')
+        for file in files:
+            for format, ext in (('NIFTI', 'nii'), 
+                                ('DICOM', 'dcm'),
+                                ('Freesurfer', 'mgz')):
+                path = '/%s.%s' % (file, ext    )
+                database.add_path(path)
+                database.new_value(path, 'format', format)
+                database.new_value(path, 'strings', list(file))
+
+        for filter, expected in (
+            ('format == "NIFTI"', set('/%s.nii' %i for i in files)),
+            ('"b" IN strings', {'/abc.nii',
+                                '/abc.mgz',
+                                '/abc.dcm',
+                                '/bcd.nii',
+                                '/bcd.dcm',
+                                '/bcd.mgz'}
+            ),
+            ('(format == "NIFTI" OR NOT format == "DICOM") AND ("a" IN strings OR NOT "b" IN strings)',
+             {'/xyz.nii',
+              '/abc.nii',
+              '/abc.mgz',
+              '/xyz.mgz',
+              '/def.mgz',
+              '/def.nii'}
+            )):
+            paths = set(path.name for path in database.filter_paths(filter))
+            self.assertEqual(paths, expected)
+
+            
 if __name__ == '__main__':
     unittest.main()
