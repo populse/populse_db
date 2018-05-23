@@ -2,7 +2,7 @@ import os
 import shutil
 import unittest
 import tempfile
-from datetime import datetime
+import datetime
 
 from populse_db.database import Database
 from populse_db.database_model import (create_database, TAG_ORIGIN_BUILTIN,
@@ -10,7 +10,9 @@ from populse_db.database_model import (create_database, TAG_ORIGIN_BUILTIN,
                                        TAG_UNIT_MHZ, TAG_TYPE_INTEGER,
                                        TAG_TYPE_TIME, TAG_TYPE_DATETIME,
                                        TAG_TYPE_LIST_INTEGER,
-                                       TAG_TYPE_LIST_FLOAT, PATH_TABLE)
+                                       TAG_TYPE_LIST_FLOAT, PATH_TABLE,
+                                       TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_TIME,
+                                       TAG_TYPE_LIST_DATETIME)
 
 
 class TestDatabaseMethods(unittest.TestCase):
@@ -410,18 +412,18 @@ class TestDatabaseMethods(unittest.TestCase):
         database.new_value("scan1", "Bits per voxel", 1, 1)
         database.set_current_value("scan1", "Bits per voxel", 2)
 
-        date = datetime(2014, 2, 11, 8, 5, 7)
+        date = datetime.datetime(2014, 2, 11, 8, 5, 7)
         database.new_value("scan1", "AcquisitionDate", date, date)
         value = database.get_current_value("scan1", "AcquisitionDate")
         self.assertEqual(value, date)
-        date = datetime(2015, 2, 11, 8, 5, 7)
+        date = datetime.datetime(2015, 2, 11, 8, 5, 7)
         database.set_current_value("scan1", "AcquisitionDate", date)
 
-        time = datetime(2014, 2, 11, 0, 2, 20).time()
+        time = datetime.datetime(2014, 2, 11, 0, 2, 20).time()
         database.new_value("scan1", "AcquisitionTime", time, time)
         value = database.get_current_value("scan1", "AcquisitionTime")
         self.assertEqual(value, time)
-        time = datetime(2014, 2, 11, 15, 24, 20).time()
+        time = datetime.datetime(2014, 2, 11, 15, 24, 20).time()
         database.set_current_value("scan1", "AcquisitionTime", time)
 
         # Testing that the values are actually set
@@ -714,9 +716,9 @@ class TestDatabaseMethods(unittest.TestCase):
         return_value = database.new_value("scan1", "BandWidth", 45, 45)
         self.assertIsNone(return_value)
 
-        date = datetime(2014, 2, 11, 8, 5, 7)
+        date = datetime.datetime(2014, 2, 11, 8, 5, 7)
         database.new_value("scan1", "AcquisitionDate", date, date)
-        time = datetime(2014, 2, 11, 0, 2, 2).time()
+        time = datetime.datetime(2014, 2, 11, 0, 2, 2).time()
         database.new_value("scan1", "AcquisitionTime", time, time)
 
         # Testing that the values are actually added
@@ -807,7 +809,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing that a scan is returned if it exists
         scan = database.get_path("scan1")
-        self.assertIsInstance(scan, database.table_classes[PATH_TABLE])
+        self.assertIsInstance(scan.row, database.table_classes[PATH_TABLE])
 
         # Testing that None is returned if the scan does not exist
         scan = database.get_path("scan3")
@@ -865,7 +867,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing that the scan has been added
         scan = database.get_path("scan1")
-        self.assertIsInstance(scan, database.table_classes[PATH_TABLE])
+        self.assertIsInstance(scan.row, database.table_classes[PATH_TABLE])
         self.assertEqual(scan.name, "scan1")
 
         # Testing when trying to add a scan that already exists
@@ -1078,6 +1080,32 @@ class TestDatabaseMethods(unittest.TestCase):
             self.fail()
         except ValueError:
             pass
+
+    def test_list_dates(self):
+        """
+        Tests the storage and retrieval of tags of type list of time, date
+        and datetime
+        """
+
+        database = Database(self.string_engine)
+
+        database.add_tag("list_date", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_DATE, None, None, None)
+        database.add_tag("list_time", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_TIME, None, None, None)
+        database.add_tag("list_datetime", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_DATETIME, None, None, None)
+        
+        database.add_path("scan1")
+
+        list_date = [datetime.date(2018, 5, 23), datetime.date(1899, 12, 31)]
+        list_time = [datetime.time(12, 41, 33, 540), datetime.time(1, 2, 3)]
+        list_datetime = [datetime.datetime(2018, 5, 23, 12, 41, 33, 540), 
+                         datetime.datetime(1899, 12, 31, 1, 2, 3)]
+        
+        database.new_value("scan1", "list_date", list_date)
+        self.assertEqual(list_date, database.get_current_value("scan1", "list_date"))
+        database.new_value("scan1", "list_time", list_time)
+        self.assertEqual(list_time, database.get_current_value("scan1", "list_time"))
+        database.new_value("scan1", "list_datetime", list_datetime)
+        self.assertEqual(list_datetime, database.get_current_value("scan1", "list_datetime"))
 
 if __name__ == '__main__':
     unittest.main()
