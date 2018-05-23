@@ -1,6 +1,7 @@
 import six
 import os
 from datetime import date, time, datetime
+import dateutil.parser
 import hashlib
 import ast
 import re
@@ -102,6 +103,25 @@ class Database:
         - update_table_classes: redefines the model after schema update
     """
 
+    # Some types (e.g. time, date and datetime) cannot be
+    # serialized/deserialized into string with repr/ast.literal_eval.
+    # This is a problem for storing the corresponding list_tags in
+    # database. For the list types with this problem, we record in the
+    # following dictionaries the functions that must be used to serialize
+    # (in _list_item_to_string) and deserialize (in _string_to_list_item)
+    # the list items.
+    _list_item_to_string = {
+        TAG_TYPE_LIST_DATE: lambda x: x.isoformat(),
+        TAG_TYPE_LIST_DATETIME: lambda x: x.isoformat(),
+        TAG_TYPE_LIST_TIME: lambda x: x.isoformat()
+    }
+    
+    _string_to_list_item = {
+        TAG_TYPE_LIST_DATE: lambda x: dateutil.parser.parse(x).date(),
+        TAG_TYPE_LIST_DATETIME: lambda x: dateutil.parser.parse(x),
+        TAG_TYPE_LIST_TIME: lambda x: dateutil.parser.parse(x).time(),
+    }
+
     def __init__(self, string_engine, initial_table=False, path_caches=False):
         """
         Creates an API of the database instance
@@ -143,7 +163,9 @@ class Database:
 
         self.unsaved_modifications = False
 
-        self.tags = {}
+        tags = self.session.query(self.table_classes[TAG_TABLE])
+        self.tags = dict((tag.name, tag) for tag in tags)
+        
         self.names = {}
 
         if self.paths_caches:
@@ -309,7 +331,7 @@ class Database:
             self.paths.clear()
             self.initial_paths.clear()
 
-        self.tags[name] = None
+        self.tags.pop(name, None)
         self.session.delete(tag_row)
         self.session.flush()
         self.update_table_classes()
@@ -321,39 +343,22 @@ class Database:
         :param name: Tag name
         :return: The tag row if the tag exists, None otherwise
         """
-
-        if name in self.tags:
-            return self.tags[name]
-        else:
-            tag = self.session.query(self.table_classes[TAG_TABLE]).filter(
-                self.table_classes[TAG_TABLE].name == name).first()
-            self.tags[name] = tag
-            return tag
+        return self.tags.get(name)
 
     def get_tags_names(self):
         """
         Gives the list of tags
         :return: List of tag names
         """
-
-        tags_list = []
-        tags = self.session.query(self.table_classes[TAG_TABLE].name).all()
-        for tag in tags:
-            tags_list.append(tag.name)
-        return tags_list
+        return list(tag.name for tag in self.get_tags())
 
     def get_tags(self):
         """
         Gives the list of tag table objects
         :return: List of tag table objects
         """
-
-        tags_list = []
-        tags = self.session.query(self.table_classes[TAG_TABLE]).all()
-        for tag in tags:
-            tags_list.append(tag)
-        return tags_list
-
+        return self.tags.values()
+    
     """ VALUES """
 
     def list_value_to_typed_value(self, value, tag_type):
@@ -392,12 +397,7 @@ class Database:
         if path_row is None:
             return None
 
-        column_value = getattr(path_row, self.tag_name_to_column_name(tag))
-
-        if tag_row.type in LIST_TYPES and column_value is not None:
-            column_value = ast.literal_eval(column_value)
-
-        return column_value
+        return TagRow(self, path_row)[tag]
 
     def get_initial_value(self, path, tag):
         """
@@ -414,12 +414,7 @@ class Database:
         if initial_path_row is None:
             return None
 
-        column_value = getattr(initial_path_row, self.tag_name_to_column_name(tag))
-
-        if tag_row.type in LIST_TYPES and column_value is not None:
-            column_value = ast.literal_eval(column_value)
-
-        return column_value
+        return TagRow(self, initial_path_row)[tag]
 
     def is_value_modified(self, path, tag):
         """
@@ -456,10 +451,9 @@ class Database:
         if not self.check_type_value(new_value, tag_row.type):
             raise ValueError("The value " + str(new_value) + " is invalid")
 
-        if tag_row.type in LIST_TYPES:
-            new_value = str(new_value)
+        new_value = self.python_to_column(tag_row.type, new_value)
 
-        setattr(path_row, self.tag_name_to_column_name(tag), new_value)
+        setattr(path_row.row, self.tag_name_to_column_name(tag), new_value)
 
         self.session.flush()
         self.unsaved_modifications = True
@@ -484,7 +478,7 @@ class Database:
         if tag_row.type in LIST_TYPES:
             initial_value = str(initial_value)
 
-        setattr(path_row, self.tag_name_to_column_name(tag), initial_value)
+        setattr(path_row.row, self.tag_name_to_column_name(tag), initial_value)
 
         self.session.flush()
         self.unsaved_modifications = True
@@ -506,11 +500,11 @@ class Database:
 
         tag_column_name = self.tag_name_to_column_name(tag)
 
-        setattr(path_row, tag_column_name , None)
+        setattr(path_row.row, tag_column_name , None)
 
         if self.initial_table:
             initial_path_row = self.get_initial_path(path)
-            setattr(initial_path_row, tag_column_name, None)
+            setattr(initial_path_row.row, tag_column_name, None)
 
         if flush:
             self.session.flush()
@@ -523,7 +517,7 @@ class Database:
         :param type: type that the value is supposed to have
         :return: True if the value is valid, False otherwise
         """
-
+        
         value_type = type(value)
         if valid_type is None:
             return False
@@ -590,16 +584,14 @@ class Database:
         if (database_current_value is None and
                 database_initial_value is None):
             if initial_value is not None:
-                if tag_row.type in LIST_TYPES:
-                    initial_value = str(initial_value)
+                initial_value = self.python_to_column(tag_row.type, initial_value)
                 setattr(
-                    path_initial_row, column_name,
+                    path_initial_row.row, column_name,
                     initial_value)
             if current_value is not None:
-                if tag_row.type in LIST_TYPES:
-                    current_value = str(current_value)
+                current_value = self.python_to_column(tag_row.type, current_value)
                 setattr(
-                    path_row, column_name,
+                    path_row.row, column_name,
                     current_value)
 
             if checks:
@@ -623,6 +615,8 @@ class Database:
         else:
             path_row = self.session.query(self.table_classes[PATH_TABLE]).filter(
         self.table_classes[PATH_TABLE].name == path).first()
+            if path_row is not None:
+                path_row = TagRow(self, path_row)
             if self.paths_caches:
                 self.paths[path] = path_row
             return path_row
@@ -640,7 +634,9 @@ class Database:
             return self.initial_paths[path]
         else:
             path_row = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
-        self.table_classes[INITIAL_TABLE].name == path).first()
+                            self.table_classes[INITIAL_TABLE].name == path).first()
+            if path_row is not None:
+                path_row = TagRow(self, path_row)
             if self.paths_caches:
                 self.initial_paths[path] = path_row
             return path_row
@@ -666,7 +662,7 @@ class Database:
         paths_list = []
         paths = self.session.query(self.table_classes[PATH_TABLE]).all()
         for path in paths:
-            paths_list.append(path)
+            paths_list.append(TagRow(self,path))
         return paths_list
 
     def remove_path(self, path):
@@ -1031,21 +1027,23 @@ class Database:
             self.table_classes[table.name] = getattr(self.base.classes, table.name)
     
     def filter_query(self, filter):
-        '''
+        """
         Given a filter string, return a query that can be used with
         filter_paths() to select paths.
-        '''
+        """
+        
         tree = filter_parser().parse(filter)
         query = FilterToQuery(self).transform(tree)
         return query
 
     def filter_paths(self, filter_query):
-        '''
+        """
         Iterate over paths selected by filter_query. Each item yieled is a
         row of the path table returned by sqlalchemy. filter_query can be
         the result of self.filter_query() or a string containing a filter
         (in this case self.fliter_query() is called to get the actual query).
-        '''
+        """
+        
         if isinstance(filter_query, six.string_types):
             filter_query = self.filter_query(filter_query)
         if filter_query is None:
@@ -1065,6 +1063,53 @@ class Database:
             if python_filter is None or python_filter(row):
                 yield row
 
+    def python_to_column(self, tag_type, value):
+        """
+        Convert a python value into a suitable value to put in a
+        database column.
+        """
+        if isinstance(value, list):
+            return self.list_to_column(tag_type, value)
+        else:
+            return value
+    
+    def column_to_python(self, tag_type, value):
+        """
+        Convert a value of a database column into the corresponding
+        Python value.
+        """
+        if tag_type.startswith('list_'):
+            return self.column_to_list(tag_type, value)
+        else:
+            return value
+            
+    def list_to_column(self, tag_type, value):
+        """
+        Convert a python list value into a suitable value to put in a
+        database column.
+        """
+        converter = self._list_item_to_string.get(tag_type)
+        if converter is None:
+            list_value = value
+        else:
+            list_value = [converter(i) for i in value]
+        return repr(list_value)
+    
+    def column_to_list(self, tag_type, value):
+        """
+        Convert a value of a database column into the corresponding
+        Python list value.
+        """
+        if value is None:
+            return None
+        list_value = ast.literal_eval(value)
+        converter = self._string_to_list_item.get(tag_type)
+        if converter is None:
+            return list_value
+        return [converter(i) for i in list_value]
+        
+class Undefined:
+    pass
 
 class TagRow:
     '''
@@ -1073,7 +1118,9 @@ class TagRow:
     attribute with the tag name is not found, it is hashed and search in the
     actual row. If found, it is stored in the TagRow instance.
     '''
-    def __init__(self, row):
+    
+    def __init__(self, database, row):
+        self.database = database
         self.row = row
     
     def __getattr__(self, name):
@@ -1081,9 +1128,10 @@ class TagRow:
             return getattr(self.row, name)
         except AttributeError as e:
             hashed_name = hashlib.md5(name.encode('utf-8')).hexdigest()
-            result = getattr(self.row, hashed_name, None)
-            if result is None:
+            result = getattr(self.row, hashed_name, Undefined)
+            if result is Undefined:
                 raise
+            result = self.database.column_to_python(self.database.tags[name].type, result)
             setattr(self, hashed_name, result)
             return result
     
