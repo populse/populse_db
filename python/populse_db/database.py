@@ -339,7 +339,7 @@ class Database:
             self.paths.clear()
             self.initial_paths.clear()
 
-        self.tags[name] = None
+        self.tags.pop(name, None)
 
         self.session.delete(tag_row)
 

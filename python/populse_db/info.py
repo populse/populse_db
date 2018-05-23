@@ -43,7 +43,8 @@ CLASSIFIERS = CLASSIFIERS
 PLATFORMS = 'OS Independent'
 REQUIRES = [
     'sqlalchemy',
-    'lark-parser'
+    'lark-parser',
+    'python-dateutil'
 ]
 EXTRA_REQUIRES = {
     'doc': [
