@@ -1,18 +1,16 @@
 import os
+import hashlib
+import ast
+import re
+import copy
 from datetime import date, time, datetime
 
 from sqlalchemy import (create_engine, Column, String,
-                        MetaData, event, or_, and_, not_)
+                        MetaData, event, or_, and_, not_, Table, sql)
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.schema import CreateTable
+from sqlalchemy.schema import CreateTable, DropTable
 from sqlalchemy.engine import Engine
-
-import hashlib
-
-import ast
-
-import re
 
 from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_TYPE_FLOAT, TAG_TYPE_TIME,
@@ -22,14 +20,10 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_TYPE_LIST_FLOAT,
                                        TAG_TYPE_LIST_INTEGER,
                                        TAG_TYPE_LIST_STRING,
-                                       TAG_TYPE_LIST_TIME, TAG_UNIT_MS,
-                                       TAG_UNIT_MM, TAG_UNIT_HZPIXEL,
-                                       TAG_UNIT_DEGREE, TAG_UNIT_MHZ,
+                                       TAG_TYPE_LIST_TIME,
                                        TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN,
-                                       LIST_TYPES, SIMPLE_TYPES, TYPE_TO_COLUMN,
-                                       ALL_TYPES, ALL_UNITS, PATH_TABLE, TAG_TABLE,
-                                       VALUE_CURRENT, VALUE_INITIAL, INITIAL_TABLE)
-
+                                       LIST_TYPES, TYPE_TO_COLUMN,
+                                       ALL_TYPES, ALL_UNITS, PATH_TABLE, TAG_TABLE, INITIAL_TABLE)
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -113,19 +107,19 @@ class Database:
         self.initial_table = initial_table
         self.paths_caches = path_caches
 
-        self.table_classes = {}
-
         # SQLite database: we create it if it does not exist
         if string_engine.startswith('sqlite'):
-            db_file = re.sub("sqlite.*:///", "", string_engine)
-            if not os.path.exists(db_file):
-                parent_dir = os.path.dirname(db_file)
+            self.db_file = re.sub("sqlite.*:///", "", string_engine)
+            if not os.path.exists(self.db_file):
+                parent_dir = os.path.dirname(self.db_file)
                 if not os.path.exists(parent_dir):
-                    os.makedirs(os.path.dirname(db_file))
+                    os.makedirs(os.path.dirname(self.db_file))
                 create_database(string_engine, self.initial_table)
 
         # Database opened
         self.engine = create_engine(self.string_engine)
+        self.metadata = MetaData()
+        self.metadata.reflect(self.engine)
         self.update_table_classes()
 
         # Database schema checked
@@ -162,8 +156,8 @@ class Database:
             self.add_tag(tag[0], tag[1], tag[2], tag[3], tag[4], tag[5], False)
 
         # Updating the table classes
-        self.update_table_classes()
         self.session.flush()
+        self.update_table_classes()
 
     def add_tag(self, name, origin, tag_type, unit, default_value,
                 description, flush = True):
@@ -216,22 +210,21 @@ class Database:
             column_type = String
         else:
             column_type = self.tag_type_to_column_type(tag_type)
-        column = Column(name, column_type)
+        column = Column(self.tag_name_to_column_name(name), column_type)
         column_str_type = column.type.compile(self.engine.dialect)
-        column_name = self.tag_name_to_column_name(name)
+        column_name = column.compile(dialect=self.engine.dialect)
 
         # Tag current and initial columns added added to path table
 
-        self.session.execute((
-            'ALTER TABLE %s ADD COLUMN %s %s' % (
-                PATH_TABLE, "\"" + column_name + "\"",
-                column_str_type)))
+        path_query = str('ALTER TABLE %s ADD COLUMN %s %s' % (PATH_TABLE, column_name, column_str_type))
+        self.session.execute(path_query)
+        self.table_classes[PATH_TABLE].__table__.append_column(column)
 
         if self.initial_table:
-            self.session.execute(
-                'ALTER TABLE %s ADD COLUMN %s %s' % (
-                    INITIAL_TABLE, "\"" + column_name + "\"",
-                    column_str_type))
+            column_initial = Column(self.tag_name_to_column_name(name), column_type)
+            initial_query = str('ALTER TABLE %s ADD COLUMN %s %s' % (INITIAL_TABLE, column_name, column_str_type))
+            self.session.execute(initial_query)
+            self.table_classes[INITIAL_TABLE].__table__.append_column(column_initial)
 
         if self.paths_caches:
             self.paths.clear()
@@ -241,8 +234,8 @@ class Database:
 
         # Redefinition of the table classes
         if flush:
-            self.update_table_classes()
             self.session.flush()
+            self.update_table_classes()
 
     def tag_type_to_column_type(self, tag_type):
         """
@@ -262,7 +255,7 @@ class Database:
         if tag in self.names:
             return self.names[tag]
         else:
-            column_name = hashlib.md5(tag.encode('utf-8')).hexdigest()
+            column_name = hashlib.md5(tag.encode('ascii')).hexdigest()
             self.names[tag] = column_name
             return column_name
 
@@ -279,12 +272,13 @@ class Database:
         if tag_row is None:
             raise ValueError("The tag with the name " + str(name) + " does not exist")
 
+        """
         columns = ""
         columns_to_remove = []
         sql_table_create = CreateTable(
             self.table_classes[PATH_TABLE].__table__)
         for column in sql_table_create.columns:
-            if self.tag_name_to_column_name(name) in str(column):
+            if column_name in str(column):
                 columns_to_remove.append(column)
             else:
                 columns += str(column).split(" ")[0] + ", "
@@ -302,15 +296,54 @@ class Database:
         self.session.execute("INSERT INTO " + PATH_TABLE + " SELECT " + columns +
                         " FROM path_backup")
         self.session.execute("DROP TABLE path_backup")
+        """
+
+        column_name = self.tag_name_to_column_name(name)
+
+        old_path_table = Table(PATH_TABLE, self.metadata)
+        select = sql.select([c for c in old_path_table.c if column_name not in c.name])
+
+        remaining_columns = [copy.copy(c) for c in old_path_table.columns
+                             if column_name not in c.name]
+
+        path_backup_table = Table(PATH_TABLE + "_backup", self.metadata)
+        for column in old_path_table.columns:
+            if column_name not in str(column):
+                path_backup_table.append_column(column.copy())
+        self.session.execute(CreateTable(path_backup_table))
+
+        insert = sql.insert(path_backup_table).from_select(
+            [c.name for c in remaining_columns], select)
+        self.session.execute(insert)
+
+        self.metadata.remove(old_path_table)
+        self.session.execute(DropTable(old_path_table))
+
+        new_path_table = Table(PATH_TABLE, self.metadata)
+        for column in path_backup_table.columns:
+            new_path_table.append_column(column.copy())
+
+        self.session.execute(CreateTable(new_path_table))
+
+        select = sql.select([c for c in path_backup_table.c if column_name not in c.name])
+        insert = sql.insert(new_path_table).from_select(
+            [c.name for c in remaining_columns], select)
+        self.session.execute(insert)
+
+        self.session.execute(DropTable(path_backup_table))
 
         if self.paths_caches:
             self.paths.clear()
             self.initial_paths.clear()
 
         self.tags[name] = None
+
         self.session.delete(tag_row)
+
         self.session.flush()
+
         self.update_table_classes()
+
         self.unsaved_modifications = True
 
     def get_tag(self, name):
@@ -1019,11 +1052,9 @@ class Database:
         Redefines the model after an update of the schema
         """
 
-        self.table_classes.clear()
-        self.metadata = MetaData()
-        self.metadata.reflect(self.engine)
+        self.table_classes = {}
         self.base = automap_base(metadata=self.metadata)
-        self.base.prepare()
+        self.base.prepare(engine=self.engine)
 
         for table in self.metadata.tables.values():
             self.table_classes[table.name] = getattr(self.base.classes, table.name)
