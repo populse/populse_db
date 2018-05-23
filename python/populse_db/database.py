@@ -28,7 +28,7 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_TYPE_LIST_STRING,
                                        TAG_TYPE_LIST_TIME,
                                        TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN,
-                                       LIST_TYPES, TYPE_TO_COLUMN,
+                                       LIST_TYPES, TYPE_TO_COLUMN, TAG_TYPE_BOOLEAN,
                                        ALL_TYPES, ALL_UNITS, PATH_TABLE, TAG_TABLE, INITIAL_TABLE)
 
 from populse_db.filter import filter_parser, FilterToQuery
@@ -339,7 +339,7 @@ class Database:
             self.paths.clear()
             self.initial_paths.clear()
 
-        self.tags[name] = None
+        self.tags.pop(name, None)
 
         self.session.delete(tag_row)
 
@@ -541,6 +541,8 @@ class Database:
             return True
         if valid_type == TAG_TYPE_FLOAT and value_type == float:
             return True
+        if valid_type == TAG_TYPE_BOOLEAN and value_type == bool:
+            return True
         if valid_type == TAG_TYPE_STRING and value_type == str:
             return True
         if valid_type == TAG_TYPE_DATETIME and value_type == datetime:
@@ -720,6 +722,7 @@ class Database:
         self.session.add(path_row)
 
         if self.paths_caches:
+            path_row = TagRow(self, path_row)
             self.paths[path] = path_row
 
         # Adding the index to initial table if initial values are used
@@ -728,6 +731,7 @@ class Database:
             self.session.add(initial_path_row)
 
             if self.paths_caches:
+                initial_path_row = TagRow(self, initial_path_row)
                 self.initial_paths[path] = initial_path_row
 
         if checks:
