@@ -2,13 +2,15 @@ import operator
 import types
 
 from lark import Lark, Transformer
+import sqlalchemy
 from sqlalchemy.ext.automap import AutomapBase
-
+from sqlalchemy.sql.elements import TextClause
 from populse_db.database_model import PATH_TABLE
 
 # The grammar (in Lark format) used to parse filter strings
 filter_grammar = '''
-?filter : conditions
+?filter : "ALL"                         -> all
+        | conditions
         | negation
         | "(" filter ")"
         | filter BOOLEAN_OPERATOR filter -> conditions
@@ -110,6 +112,9 @@ class FilterToQuery(Transformer):
     def is_list_tag(tag):
         return (isinstance(tag, AutomapBase) and
                 tag.type.startswith('list_'))
+    
+    def all(self, items):
+        return sqlalchemy.text('1')
     
     def conditions(self, items):
         stack = list(items)

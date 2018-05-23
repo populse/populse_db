@@ -1037,6 +1037,7 @@ class Database:
         '''
         tree = filter_parser().parse(filter)
         query = FilterToQuery(self).transform(tree)
+        return query
 
     def filter_paths(self, filter_query):
         '''
@@ -1047,7 +1048,10 @@ class Database:
         '''
         if isinstance(filter_query, six.string_types):
             filter_query = self.filter_query(filter_query)
-        if isinstance(filter_query, types.FunctionType):
+        if filter_query is None:
+            select = self.metadata.tables[PATH_TABLE].select()
+            python_filter = None
+        elif isinstance(filter_query, types.FunctionType):
             select = self.metadata.tables[PATH_TABLE].select()
             python_filter = filter_query
         elif isinstance(filter_query, tuple):
@@ -1057,6 +1061,31 @@ class Database:
             select = select = self.metadata.tables[PATH_TABLE].select(filter_query)
             python_filter = None
         for row in self.session.execute(select):
+            row = TagRow(row)
             if python_filter is None or python_filter(row):
                 yield row
-        
+
+
+class TagRow:
+    '''
+    A TagRow is an object that makes it possible to access to attributes of
+    a database row returned by sqlalchemy using the tag name. If the 
+    attribute with the tag name is not found, it is hashed and search in the
+    actual row. If found, it is stored in the TagRow instance.
+    '''
+    def __init__(self, row):
+        self.row = row
+    
+    def __getattr__(self, name):
+        try:
+            return getattr(self.row, name)
+        except AttributeError as e:
+            hashed_name = hashlib.md5(name.encode('utf-8')).hexdigest()
+            result = getattr(self.row, hashed_name, None)
+            if result is None:
+                raise
+            setattr(self, hashed_name, result)
+            return result
+    
+    def __getitem__(self, name):
+        return getattr(self, name)
