@@ -42,6 +42,7 @@ VERSION = __version__
 CLASSIFIERS = CLASSIFIERS
 PLATFORMS = 'OS Independent'
 REQUIRES = [
+    'python-dateutil',
     'sqlalchemy',
     'lark-parser',
     'python-dateutil'
