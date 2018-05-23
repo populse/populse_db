@@ -722,6 +722,7 @@ class Database:
         self.session.add(path_row)
 
         if self.paths_caches:
+            path_row = TagRow(self, path_row)
             self.paths[path] = path_row
 
         # Adding the index to initial table if initial values are used
@@ -730,6 +731,7 @@ class Database:
             self.session.add(initial_path_row)
 
             if self.paths_caches:
+                initial_path_row = TagRow(self, initial_path_row)
                 self.initial_paths[path] = initial_path_row
 
         if checks:
