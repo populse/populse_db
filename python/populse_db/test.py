@@ -12,7 +12,7 @@ from populse_db.database_model import (create_database, TAG_ORIGIN_BUILTIN,
                                        TAG_TYPE_LIST_INTEGER,
                                        TAG_TYPE_LIST_FLOAT, PATH_TABLE,
                                        TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_TIME,
-                                       TAG_TYPE_LIST_DATETIME)
+                                       TAG_TYPE_LIST_DATETIME, TAG_TYPE_BOOLEAN, TAG_TYPE_LIST_BOOLEAN)
 
 
 class TestDatabaseMethods(unittest.TestCase):
@@ -106,6 +106,10 @@ class TestDatabaseMethods(unittest.TestCase):
             "Bitspervoxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, "without space")
         self.assertEqual(database.get_tag("Bitspervoxel").description, "without space")
         self.assertEqual(database.get_tag("Bits per voxel").description, "with space")
+        database.add_tag("Boolean",
+                         TAG_ORIGIN_BUILTIN, TAG_TYPE_BOOLEAN, None, None, None)
+        database.add_tag("Boolean list",
+                         TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_BOOLEAN, None, None, None)
 
         # Testing with wrong parameters
         try:
@@ -687,6 +691,10 @@ class TestDatabaseMethods(unittest.TestCase):
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
         database.add_tag(
             "Grids spacing", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_FLOAT, None, None, None)
+        database.add_tag("Boolean",
+                         TAG_ORIGIN_BUILTIN, TAG_TYPE_BOOLEAN, None, None, None)
+        database.add_tag("Boolean list",
+                         TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_BOOLEAN, None, None, None)
 
         # Adding values
         database.new_value("scan1", "PatientName", "test", None)
@@ -696,6 +704,7 @@ class TestDatabaseMethods(unittest.TestCase):
             "scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
         database.new_value("scan2", "Grids spacing", [
                            0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
+        database.new_value("scan1", "Boolean", True)
 
         # Testing when not existing
         try:
@@ -740,6 +749,8 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(value, [3, 28, 28, 3])
         value = database.get_current_value("scan2", "Grids spacing")
         self.assertEqual(value, [0.234375, 0.234375, 0.4])
+        value = database.get_current_value("scan1", "Boolean")
+        self.assertEqual(value, True)
 
         # Test value override
         try:
@@ -793,6 +804,11 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(value, "test")
         try:
             database.new_value(1, None, True, False)
+            self.fail()
+        except ValueError:
+            pass
+        try:
+            database.new_value("scan2", "Boolean", "boolean")
             self.fail()
         except ValueError:
             pass

@@ -28,7 +28,7 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_TYPE_LIST_STRING,
                                        TAG_TYPE_LIST_TIME,
                                        TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN,
-                                       LIST_TYPES, TYPE_TO_COLUMN,
+                                       LIST_TYPES, TYPE_TO_COLUMN, TAG_TYPE_BOOLEAN,
                                        ALL_TYPES, ALL_UNITS, PATH_TABLE, TAG_TABLE, INITIAL_TABLE)
 
 from populse_db.filter import filter_parser, FilterToQuery
@@ -540,6 +540,8 @@ class Database:
         if valid_type == TAG_TYPE_FLOAT and value_type == int:
             return True
         if valid_type == TAG_TYPE_FLOAT and value_type == float:
+            return True
+        if valid_type == TAG_TYPE_BOOLEAN and value_type == bool:
             return True
         if valid_type == TAG_TYPE_STRING and value_type == str:
             return True
