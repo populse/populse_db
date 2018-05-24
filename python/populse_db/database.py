@@ -169,7 +169,8 @@ class Database:
 
         if self.paths_caches:
             self.paths = {}
-            self.initial_paths = {}
+            if self.initial_table:
+                self.initial_paths = {}
 
     """ TAGS """
 
@@ -257,7 +258,8 @@ class Database:
 
         if self.paths_caches:
             self.paths.clear()
-            self.initial_paths.clear()
+            if self.initial_table:
+                self.initial_paths.clear()
 
         self.unsaved_modifications = True
 
@@ -303,6 +305,7 @@ class Database:
 
         column_name = self.tag_name_to_column_name(name)
 
+        # Tag removed from path table
         old_path_table = Table(PATH_TABLE, self.metadata)
         select = sql.select([c for c in old_path_table.c if column_name not in c.name])
 
@@ -335,9 +338,45 @@ class Database:
 
         self.session.execute(DropTable(path_backup_table))
 
+        # Tag removed from initial table if initial values are used
+        if self.initial_table:
+            old_initial_table = Table(INITIAL_TABLE, self.metadata)
+            select = sql.select([c for c in old_initial_table.c if column_name not in c.name])
+
+            remaining_columns = [copy.copy(c) for c in old_initial_table.columns
+                                 if column_name not in c.name]
+
+            initial_backup_table = Table(INITIAL_TABLE + "_backup", self.metadata)
+
+            for column in old_initial_table.columns:
+                if column_name not in str(column):
+                    initial_backup_table.append_column(column.copy())
+            self.session.execute(CreateTable(initial_backup_table))
+
+            insert = sql.insert(initial_backup_table).from_select(
+                [c.name for c in remaining_columns], select)
+            self.session.execute(insert)
+
+            self.metadata.remove(old_initial_table)
+            self.session.execute(DropTable(old_initial_table))
+
+            new_initial_table = Table(INITIAL_TABLE, self.metadata)
+            for column in initial_backup_table.columns:
+                new_initial_table.append_column(column.copy())
+
+            self.session.execute(CreateTable(new_initial_table))
+
+            select = sql.select([c for c in initial_backup_table.c if column_name not in c.name])
+            insert = sql.insert(new_initial_table).from_select(
+                [c.name for c in remaining_columns], select)
+            self.session.execute(insert)
+
+            self.session.execute(DropTable(initial_backup_table))
+
         if self.paths_caches:
             self.paths.clear()
-            self.initial_paths.clear()
+            if self.initial_table:
+                self.initial_paths.clear()
 
         self.tags.pop(name, None)
 

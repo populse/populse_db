@@ -39,7 +39,6 @@ class TestDatabaseMethods(unittest.TestCase):
 
         shutil.rmtree(self.temp_folder)
         
-        
     def test_database_creation(self):
         """
         Tests the database creation
@@ -151,7 +150,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method removing a tag
         """
 
-        database = Database(self.string_engine)
+        database = Database(self.string_engine, True)
 
         # Adding tags
         return_value = database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
@@ -167,7 +166,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("scan2")
 
         # Adding values
-        database.new_value("scan1", "PatientName", "Guerbet")
+        database.new_value("scan1", "PatientName", "Guerbet", "Guerbet_init")
         database.new_value("scan1", "SequenceName", "RARE")
         database.new_value("scan1", "Dataset dimensions", [1, 2])
 
@@ -184,6 +183,8 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing that the tag values are removed
         value = database.get_current_value("scan1", "PatientName")
+        self.assertIsNone(value)
+        value = database.get_initial_value("scan1", "PatientName")
         self.assertIsNone(value)
         value = database.get_current_value("scan1", "SequenceName")
         self.assertEqual(value, "RARE")
