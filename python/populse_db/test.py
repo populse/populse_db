@@ -168,14 +168,14 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("Dataset dimensions",
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
 
-        # Adding scans
-        database.add_path("scan1")
-        database.add_path("scan2")
+        # Adding paths
+        database.add_path("path1")
+        database.add_path("path2")
 
         # Adding values
-        database.new_value("scan1", "PatientName", "Guerbet", "Guerbet_init")
-        database.new_value("scan1", "SequenceName", "RARE")
-        database.new_value("scan1", "Dataset dimensions", [1, 2])
+        database.new_value("path1", "PatientName", "Guerbet", "Guerbet_init")
+        database.new_value("path1", "SequenceName", "RARE")
+        database.new_value("path1", "Dataset dimensions", [1, 2])
 
         # Removing tag
 
@@ -183,20 +183,14 @@ class TestDatabaseMethods(unittest.TestCase):
         database.remove_tag("Dataset dimensions")
 
         # Testing that the tag does not exist anymore
-        tag = database.get_tag("PatientName")
-        self.assertIsNone(tag)
-        tag = database.get_tag("Dataset dimensions")
-        self.assertIsNone(tag)
+        self.assertIsNone(database.get_tag("PatientName"))
+        self.assertIsNone(database.get_tag("Dataset dimensions"))
 
         # Testing that the tag values are removed
-        value = database.get_current_value("scan1", "PatientName")
-        self.assertIsNone(value)
-        value = database.get_initial_value("scan1", "PatientName")
-        self.assertIsNone(value)
-        value = database.get_current_value("scan1", "SequenceName")
-        self.assertEqual(value, "RARE")
-        value = database.get_current_value("scan1", "Dataset dimensions")
-        self.assertIsNone(value)
+        self.assertIsNone(database.get_current_value("path1", "PatientName"))
+        self.assertIsNone(database.get_initial_value("path1", "PatientName"))
+        self.assertEqual(database.get_current_value("path1", "SequenceName"), "RARE")
+        self.assertIsNone(database.get_current_value("path1", "Dataset dimensions"))
 
         # Testing with a tag not existing
         try:
@@ -226,7 +220,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
     def test_get_tag(self):
         """
-        Tests the method giving the Tag table object of a tag
+        Tests the method giving the tag row of a tag
         """
 
         database = Database(self.string_engine)
@@ -236,22 +230,20 @@ class TestDatabaseMethods(unittest.TestCase):
                          TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Testing that the tag is returned if it exists
-        tag = database.get_tag("PatientName")
-        self.assertIsNotNone(tag)
+        self.assertIsNotNone(database.get_tag("PatientName"))
 
         # Testing that None is returned if the tag does not exist
-        tag = database.get_tag("Test")
-        self.assertIsNone(tag)
+        self.assertIsNone(database.get_tag("Test"))
 
     def test_get_current_value(self):
         """
-        Tests the method giving the current value, given a tag and a scan
+        Tests the method giving the current value, given a tag and a path
         """
 
         database = Database(self.string_engine)
 
-        # Adding scans
-        database.add_path("scan1")
+        # Adding paths
+        database.add_path("path1")
 
         # Adding tags
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
@@ -264,51 +256,39 @@ class TestDatabaseMethods(unittest.TestCase):
             "Grids spacing", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_FLOAT, None, None, None)
 
         # Adding values
-        database.new_value("scan1", "PatientName", "test")
-        database.new_value("scan1", "Bits per voxel", 10)
+        database.new_value("path1", "PatientName", "test")
+        database.new_value("path1", "Bits per voxel", 10)
         database.new_value(
-            "scan1", "Dataset dimensions", [3, 28, 28, 3])
-        database.new_value("scan1", "Grids spacing", [
+            "path1", "Dataset dimensions", [3, 28, 28, 3])
+        database.new_value("path1", "Grids spacing", [
                            0.234375, 0.234375, 0.4])
-        #database.new_value("scan2", "Grids spacing", [0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
 
         # Testing that the value is returned if it exists
-        value = database.get_current_value("scan1", "PatientName")
-        self.assertEqual(value, "test")
-        value = database.get_current_value("scan1", "Bits per voxel")
-        self.assertEqual(value, 10)
-        value = database.get_current_value("scan1", "Dataset dimensions")
-        self.assertEqual(value, [3, 28, 28, 3])
-        value = database.get_current_value("scan1", "Grids spacing")
-        self.assertEqual(value, [0.234375, 0.234375, 0.4])
+        self.assertEqual(database.get_current_value("path1", "PatientName"), "test")
+        self.assertEqual(database.get_current_value("path1", "Bits per voxel"), 10)
+        self.assertEqual(database.get_current_value("path1", "Dataset dimensions"), [3, 28, 28, 3])
+        self.assertEqual(database.get_current_value("path1", "Grids spacing"), [0.234375, 0.234375, 0.4])
 
         # Testing when not existing
-        value = database.get_current_value("scan3", "PatientName")
-        self.assertIsNone(value)
-        value = database.get_current_value("scan1", "NotExisting")
-        self.assertIsNone(value)
-        value = database.get_current_value("scan3", "NotExisting")
-        self.assertIsNone(value)
-        value = database.get_current_value("scan2", "Grids spacing")
-        self.assertIsNone(value)
+        self.assertIsNone(database.get_current_value("path3", "PatientName"))
+        self.assertIsNone(database.get_current_value("path1", "NotExisting"))
+        self.assertIsNone(database.get_current_value("path3", "NotExisting"))
+        self.assertIsNone(database.get_current_value("path2", "Grids spacing"))
 
         # Testing with wrong parameters
-        value = database.get_current_value(1, "Grids spacing")
-        self.assertIsNone(value)
-        value = database.get_current_value("scan1", None)
-        self.assertIsNone(value)
-        value = database.get_current_value(3.5, None)
-        self.assertIsNone(value)
+        self.assertIsNone(database.get_current_value(1, "Grids spacing"))
+        self.assertIsNone(database.get_current_value("path1", None))
+        self.assertIsNone(database.get_current_value(3.5, None))
 
     def test_get_initial_value(self):
         """
-        Tests the method giving the initial value, given a tag and a scan
+        Tests the method giving the initial value, given a tag and a path
         """
 
         database = Database(self.string_engine, True)
 
-        # Adding scans
-        database.add_path("scan1")
+        # Adding paths
+        database.add_path("path1")
 
         # Adding tags
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
@@ -321,38 +301,35 @@ class TestDatabaseMethods(unittest.TestCase):
             "Grids spacing", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_FLOAT, None, None, None)
 
         # Adding values
-        database.new_value("scan1", "PatientName", "test", "test")
-        database.new_value("scan1", "Bits per voxel", 50, 50)
+        database.new_value("path1", "PatientName", "test", "test")
+        database.new_value("path1", "Bits per voxel", 50, 50)
         database.new_value(
-            "scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
-        database.new_value("scan1", "Grids spacing", [
+            "path1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
+        database.new_value("path1", "Grids spacing", [
                            0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
 
         # Testing that the value is returned if it exists
-        value = database.get_initial_value("scan1", "PatientName")
+        value = database.get_initial_value("path1", "PatientName")
         self.assertEqual(value, "test")
-        value = database.get_initial_value("scan1", "Bits per voxel")
+        value = database.get_initial_value("path1", "Bits per voxel")
         self.assertEqual(value, 50)
-        value = database.get_initial_value("scan1", "Dataset dimensions")
+        value = database.get_initial_value("path1", "Dataset dimensions")
         self.assertEqual(value, [3, 28, 28, 3])
-        value = database.get_initial_value("scan1", "Grids spacing")
+        value = database.get_initial_value("path1", "Grids spacing")
         self.assertEqual(value, [0.234375, 0.234375, 0.4])
 
         # Testing when not existing
-        value = database.get_initial_value("scan3", "PatientName")
+        value = database.get_initial_value("path3", "PatientName")
         self.assertIsNone(value)
-        value = database.get_initial_value("scan1", "NotExisting")
+        value = database.get_initial_value("path1", "NotExisting")
         self.assertIsNone(value)
-        value = database.get_initial_value("scan3", "NotExisting")
+        value = database.get_initial_value("path3", "NotExisting")
         self.assertIsNone(value)
 
         # Testing with wrong parameters
-        value = database.get_initial_value(1, "Grids spacing")
-        self.assertIsNone(value)
-        value = database.get_initial_value("scan1", None)
-        self.assertIsNone(value)
-        value = database.get_initial_value(3.5, None)
-        self.assertIsNone(value)
+        self.assertIsNone(database.get_initial_value(1, "Grids spacing"))
+        self.assertIsNone(database.get_initial_value("path1", None))
+        self.assertIsNone(database.get_initial_value(3.5, None))
 
     def test_is_value_modified(self):
         """
@@ -361,42 +338,36 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine, True)
 
-        # Adding scan
-        database.add_path("scan1")
+        # Adding path
+        database.add_path("path1")
 
         # Adding tag
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Adding a value
-        database.new_value("scan1", "PatientName", "test", "test")
+        database.new_value("path1", "PatientName", "test", "test")
 
         # Testing that the value has not been modified
-        is_modified = database.is_value_modified("scan1", "PatientName")
+        is_modified = database.is_value_modified("path1", "PatientName")
         self.assertFalse(is_modified)
 
         # Value modified
-        database.set_current_value("scan1", "PatientName", "test2")
+        database.set_current_value("path1", "PatientName", "test2")
 
         # Testing that the value has been modified
-        is_modified = database.is_value_modified("scan1", "PatientName")
+        is_modified = database.is_value_modified("path1", "PatientName")
         self.assertTrue(is_modified)
 
         # Testing with values not existing
-        is_modified = database.is_value_modified("scan2", "PatientName")
-        self.assertFalse(is_modified)
-        is_modified = database.is_value_modified("scan1", "NotExisting")
-        self.assertFalse(is_modified)
-        is_modified = database.is_value_modified("scan2", "NotExisting")
-        self.assertFalse(is_modified)
+        self.assertFalse(database.is_value_modified("path2", "PatientName"))
+        self.assertFalse(database.is_value_modified("path1", "NotExisting"))
+        self.assertFalse(database.is_value_modified("path2", "NotExisting"))
 
         # Testing with wrong parameters
-        value = database.is_value_modified(1, "Grids spacing")
-        self.assertFalse(value)
-        value = database.is_value_modified("scan1", None)
-        self.assertFalse(value)
-        value = database.is_value_modified(3.5, None)
-        self.assertFalse(value)
+        self.assertFalse(database.is_value_modified(1, "Grids spacing"))
+        self.assertFalse(database.is_value_modified("path1", None))
+        self.assertFalse(database.is_value_modified(3.5, None))
 
     def test_set_value(self):
         """
@@ -405,8 +376,8 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine, True)
 
-        # Adding scan
-        database.add_path("scan1")
+        # Adding path
+        database.add_path("path1")
 
         # Adding tags
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
@@ -419,71 +390,63 @@ class TestDatabaseMethods(unittest.TestCase):
             "AcquisitionTime", TAG_ORIGIN_BUILTIN, TAG_TYPE_TIME, None, None, None)
 
         # Adding values and changing it
-        database.new_value("scan1", "PatientName", "test", "test")
-        database.set_current_value("scan1", "PatientName", "test2")
+        database.new_value("path1", "PatientName", "test", "test")
+        database.set_current_value("path1", "PatientName", "test2")
 
-        database.new_value("scan1", "Bits per voxel", 1, 1)
-        database.set_current_value("scan1", "Bits per voxel", 2)
+        database.new_value("path1", "Bits per voxel", 1, 1)
+        database.set_current_value("path1", "Bits per voxel", 2)
 
         date = datetime.datetime(2014, 2, 11, 8, 5, 7)
-        database.new_value("scan1", "AcquisitionDate", date, date)
-        value = database.get_current_value("scan1", "AcquisitionDate")
+        database.new_value("path1", "AcquisitionDate", date, date)
+        value = database.get_current_value("path1", "AcquisitionDate")
         self.assertEqual(value, date)
         date = datetime.datetime(2015, 2, 11, 8, 5, 7)
-        database.set_current_value("scan1", "AcquisitionDate", date)
+        database.set_current_value("path1", "AcquisitionDate", date)
 
         time = datetime.datetime(2014, 2, 11, 0, 2, 20).time()
-        database.new_value("scan1", "AcquisitionTime", time, time)
-        value = database.get_current_value("scan1", "AcquisitionTime")
-        self.assertEqual(value, time)
+        database.new_value("path1", "AcquisitionTime", time, time)
+        self.assertEqual(database.get_current_value("path1", "AcquisitionTime"), time)
         time = datetime.datetime(2014, 2, 11, 15, 24, 20).time()
-        database.set_current_value("scan1", "AcquisitionTime", time)
+        database.set_current_value("path1", "AcquisitionTime", time)
 
         # Testing that the values are actually set
-        value = database.get_current_value("scan1", "PatientName")
-        self.assertEqual(value, "test2")
-        value = database.get_current_value("scan1", "Bits per voxel")
-        self.assertEqual(value, 2)
-        value = database.get_current_value("scan1", "AcquisitionDate")
-        self.assertEqual(value, date)
-        value = database.get_current_value("scan1", "AcquisitionTime")
-        self.assertEqual(value, time)
-        database.set_current_value("scan1", "PatientName", None)
-        value = database.get_current_value("scan1", "PatientName")
-        self.assertIsNone(value)
+        self.assertEqual(database.get_current_value("path1", "PatientName"), "test2")
+        self.assertEqual(database.get_current_value("path1", "Bits per voxel"), 2)
+        self.assertEqual(database.get_current_value("path1", "AcquisitionDate"), date)
+        self.assertEqual(database.get_current_value("path1", "AcquisitionTime"), time)
+        database.set_current_value("path1", "PatientName", None)
+        self.assertIsNone(database.get_current_value("path1", "PatientName"))
 
         # Testing when not existing
         try:
-            database.set_current_value("scan3", "PatientName", None)
+            database.set_current_value("path3", "PatientName", None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.set_current_value("scan1", "NotExisting", None)
+            database.set_current_value("path1", "NotExisting", None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.set_current_value("scan3", "NotExisting", None)
+            database.set_current_value("path3", "NotExisting", None)
             self.fail()
         except ValueError:
             pass
 
         # Testing with wrong types
         try:
-            database.set_current_value("scan1", "Bits per voxel", "test")
+            database.set_current_value("path1", "Bits per voxel", "test")
             self.fail()
         except ValueError:
             pass
-        value = database.get_current_value("scan1", "Bits per voxel")
-        self.assertEqual(value, 2)
+        self.assertEqual(database.get_current_value("path1", "Bits per voxel"), 2)
         try:
-            database.set_current_value("scan1", "Bits per voxel", 35.8)
+            database.set_current_value("path1", "Bits per voxel", 35.8)
             self.fail()
         except ValueError:
             pass
-        value = database.get_current_value("scan1", "Bits per voxel")
-        self.assertEqual(value, 2)
+        self.assertEqual(database.get_current_value("path1", "Bits per voxel"), 2)
 
         # Testing with wrong parameters
         try:
@@ -492,7 +455,7 @@ class TestDatabaseMethods(unittest.TestCase):
         except ValueError:
             pass
         try:
-            database.set_current_value("scan1", None, "1")
+            database.set_current_value("path1", None, "1")
             self.fail()
         except ValueError:
             pass
@@ -509,8 +472,8 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine, True)
 
-        # Adding scan
-        database.add_path("scan1")
+        # Adding path
+        database.add_path("path1")
 
         # Adding tags
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
@@ -521,51 +484,45 @@ class TestDatabaseMethods(unittest.TestCase):
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Adding values and changing it
-        database.new_value("scan1", "PatientName", "test", "test")
-        database.set_current_value("scan1", "PatientName", "test2")
+        database.new_value("path1", "PatientName", "test", "test")
+        database.set_current_value("path1", "PatientName", "test2")
 
-        database.new_value("scan1", "Bits per voxel", 5, 5)
-        database.set_current_value("scan1", "Bits per voxel", 15)
-        value = database.get_current_value("scan1", "Bits per voxel")
-        self.assertEqual(value, 15)
+        database.new_value("path1", "Bits per voxel", 5, 5)
+        database.set_current_value("path1", "Bits per voxel", 15)
+        self.assertEqual(database.get_current_value("path1", "Bits per voxel"), 15)
 
         database.new_value(
-            "scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
-        value = database.get_current_value("scan1", "Dataset dimensions")
-        self.assertEqual(value, [3, 28, 28, 3])
-        database.set_current_value("scan1", "Dataset dimensions", [1, 2, 3, 4])
-        value = database.get_current_value("scan1", "Dataset dimensions")
-        self.assertEqual(value, [1, 2, 3, 4])
+            "path1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
+        self.assertEqual(database.get_current_value("path1", "Dataset dimensions"), [3, 28, 28, 3])
+        database.set_current_value("path1", "Dataset dimensions", [1, 2, 3, 4])
+        self.assertEqual(database.get_current_value("path1", "Dataset dimensions"), [1, 2, 3, 4])
 
         # Reset of the values
-        database.reset_current_value("scan1", "PatientName")
-        database.reset_current_value("scan1", "Bits per voxel")
-        database.reset_current_value("scan1", "Dataset dimensions")
+        database.reset_current_value("path1", "PatientName")
+        database.reset_current_value("path1", "Bits per voxel")
+        database.reset_current_value("path1", "Dataset dimensions")
 
         # Testing when not existing
         try:
-            database.reset_current_value("scan3", "PatientName")
+            database.reset_current_value("path3", "PatientName")
             self.fail()
         except ValueError:
             pass
         try:
-            database.reset_current_value("scan1", "NotExisting")
+            database.reset_current_value("path1", "NotExisting")
             self.fail()
         except ValueError:
             pass
         try:
-            database.reset_current_value("scan3", "NotExisting")
+            database.reset_current_value("path3", "NotExisting")
             self.fail()
         except ValueError:
             pass
 
         # Testing that the values are actually reset
-        value = database.get_current_value("scan1", "PatientName")
-        self.assertEqual(value, "test")
-        value = database.get_current_value("scan1", "Bits per voxel")
-        self.assertEqual(value, 5)
-        value = database.get_current_value("scan1", "Dataset dimensions")
-        self.assertEqual(value, [3, 28, 28, 3])
+        self.assertEqual(database.get_current_value("path1", "PatientName"), "test")
+        self.assertEqual(database.get_current_value("path1", "Bits per voxel"), 5)
+        self.assertEqual(database.get_current_value("path1", "Dataset dimensions"), [3, 28, 28, 3])
 
         # Testing with wrong parameters
         try:
@@ -574,7 +531,7 @@ class TestDatabaseMethods(unittest.TestCase):
         except ValueError:
             pass
         try:
-            database.reset_current_value("scan1", None)
+            database.reset_current_value("path1", None)
             self.fail()
         except ValueError:
             pass
@@ -591,8 +548,8 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine, True)
 
-        # Adding scan
-        database.add_path("scan1")
+        # Adding path
+        database.add_path("path1")
 
         # Adding tags
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
@@ -603,48 +560,44 @@ class TestDatabaseMethods(unittest.TestCase):
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
 
         # Adding values
-        database.new_value("scan1", "PatientName", "test")
+        database.new_value("path1", "PatientName", "test")
         try:
-            database.new_value("scan1", "Bits per voxel", "space_tag")
+            database.new_value("path1", "Bits per voxel", "space_tag")
             self.fail()
         except ValueError:
             pass
         database.new_value(
-            "scan1", "Dataset dimensions", [3, 28, 28, 3])
-        value = database.get_current_value("scan1", "Dataset dimensions")
+            "path1", "Dataset dimensions", [3, 28, 28, 3])
+        value = database.get_current_value("path1", "Dataset dimensions")
         self.assertEqual(value, [3, 28, 28, 3])
 
         # Removing values
-        database.remove_value("scan1", "PatientName")
-        database.remove_value("scan1", "Bits per voxel")
-        database.remove_value("scan1", "Dataset dimensions")
+        database.remove_value("path1", "PatientName")
+        database.remove_value("path1", "Bits per voxel")
+        database.remove_value("path1", "Dataset dimensions")
 
         # Testing when not existing
         try:
-            database.remove_value("scan3", "PatientName")
+            database.remove_value("path3", "PatientName")
             self.fail()
         except ValueError:
             pass
         try:
-            database.remove_value("scan1", "NotExisting")
+            database.remove_value("path1", "NotExisting")
             self.fail()
         except ValueError:
             pass
         try:
-            database.remove_value("scan3", "NotExisting")
+            database.remove_value("path3", "NotExisting")
             self.fail()
         except ValueError:
             pass
 
         # Testing that the values are actually removed
-        value = database.get_current_value("scan1", "PatientName")
-        self.assertIsNone(value)
-        value = database.get_current_value("scan1", "Bits per voxel")
-        self.assertIsNone(value)
-        value = database.get_current_value("scan1", "Dataset dimensions")
-        self.assertIsNone(value)
-        value = database.get_initial_value("scan1", "Dataset dimensions")
-        self.assertIsNone(value)
+        self.assertIsNone(database.get_current_value("path1", "PatientName"))
+        self.assertIsNone(database.get_current_value("path1", "Bits per voxel"))
+        self.assertIsNone(database.get_current_value("path1", "Dataset dimensions"))
+        self.assertIsNone(database.get_initial_value("path1", "Dataset dimensions"))
 
     def test_check_type_value(self):
         """
@@ -681,9 +634,9 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine, True)
 
-        # Adding scans
-        database.add_path("scan1")
-        database.add_path("scan2")
+        # Adding paths
+        database.add_path("path1")
+        database.add_path("path2")
 
         # Adding tags
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
@@ -706,92 +659,78 @@ class TestDatabaseMethods(unittest.TestCase):
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_BOOLEAN, None, None, None)
 
         # Adding values
-        database.new_value("scan1", "PatientName", "test", None)
-        database.new_value("scan2", "BandWidth", 35.5, 35.5)
-        database.new_value("scan1", "Bits per voxel", 1, 1)
+        database.new_value("path1", "PatientName", "test", None)
+        database.new_value("path2", "BandWidth", 35.5, 35.5)
+        database.new_value("path1", "Bits per voxel", 1, 1)
         database.new_value(
-            "scan1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
-        database.new_value("scan2", "Grids spacing", [
+            "path1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
+        database.new_value("path2", "Grids spacing", [
                            0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
-        database.new_value("scan1", "Boolean", True)
+        database.new_value("path1", "Boolean", True)
 
         # Testing when not existing
         try:
-            database.new_value("scan1", "NotExisting", "none", "none")
+            database.new_value("path1", "NotExisting", "none", "none")
             self.fail()
         except ValueError:
             pass
         try:
-            database.new_value("scan3", "SequenceName", "none", "none")
+            database.new_value("path3", "SequenceName", "none", "none")
             self.fail()
         except ValueError:
             pass
         try:
-            database.new_value("scan3", "NotExisting", "none", "none")
+            database.new_value("path3", "NotExisting", "none", "none")
             self.fail()
         except ValueError:
             pass
-        return_value = database.new_value("scan1", "BandWidth", 45, 45)
-        self.assertIsNone(return_value)
+        self.assertIsNone(database.new_value("path1", "BandWidth", 45, 45))
 
         date = datetime.datetime(2014, 2, 11, 8, 5, 7)
-        database.new_value("scan1", "AcquisitionDate", date, date)
+        database.new_value("path1", "AcquisitionDate", date, date)
         time = datetime.datetime(2014, 2, 11, 0, 2, 2).time()
-        database.new_value("scan1", "AcquisitionTime", time, time)
+        database.new_value("path1", "AcquisitionTime", time, time)
 
         # Testing that the values are actually added
-        value = database.get_current_value("scan1", "PatientName")
-        self.assertEqual(value, "test")
-        value = database.get_initial_value("scan1", "PatientName")
-        self.assertIsNone(value)
-        value = database.get_current_value("scan2", "BandWidth")
-        self.assertEqual(value, 35.5)
-        value = database.get_current_value("scan1", "Bits per voxel")
-        self.assertEqual(value, 1)
-        value = database.get_current_value("scan1", "BandWidth")
-        self.assertEqual(value, 45)
-        value = database.get_current_value("scan1", "AcquisitionDate")
-        self.assertEqual(value, date)
-        value = database.get_current_value("scan1", "AcquisitionTime")
-        self.assertEqual(value, time)
-        value = database.get_current_value("scan1", "Dataset dimensions")
-        self.assertEqual(value, [3, 28, 28, 3])
-        value = database.get_current_value("scan2", "Grids spacing")
-        self.assertEqual(value, [0.234375, 0.234375, 0.4])
-        value = database.get_current_value("scan1", "Boolean")
-        self.assertEqual(value, True)
+        self.assertEqual(database.get_current_value("path1", "PatientName"), "test")
+        self.assertIsNone(database.get_initial_value("path1", "PatientName"))
+        self.assertEqual(database.get_current_value("path2", "BandWidth"), 35.5)
+        self.assertEqual(database.get_current_value("path1", "Bits per voxel"), 1)
+        self.assertEqual(database.get_current_value("path1", "BandWidth"), 45)
+        self.assertEqual(database.get_current_value("path1", "AcquisitionDate"), date)
+        self.assertEqual(database.get_current_value("path1", "AcquisitionTime"), time)
+        self.assertEqual(database.get_current_value("path1", "Dataset dimensions"), [3, 28, 28, 3])
+        self.assertEqual(database.get_current_value("path2", "Grids spacing"), [0.234375, 0.234375, 0.4])
+        self.assertEqual(database.get_current_value("path1", "Boolean"), True)
 
         # Test value override
         try:
-            database.new_value("scan1", "PatientName", "test2", "test2")
+            database.new_value("path1", "PatientName", "test2", "test2")
             self.fail()
         except ValueError:
             pass
-        value = database.get_current_value("scan1", "PatientName")
+        value = database.get_current_value("path1", "PatientName")
         self.assertEqual(value, "test")
 
         # Testing with wrong types
         try:
-            database.new_value("scan2", "Bits per voxel", "space_tag", "space_tag")
+            database.new_value("path2", "Bits per voxel", "space_tag", "space_tag")
             self.fail()
         except ValueError:
             pass
-        value = database.get_current_value("scan2", "Bits per voxel")
-        self.assertIsNone(value)
+        self.assertIsNone(database.get_current_value("path2", "Bits per voxel"))
         try:
-            database.new_value("scan2", "Bits per voxel", 35, 35.5)
+            database.new_value("path2", "Bits per voxel", 35, 35.5)
             self.fail()
         except ValueError:
             pass
-        value = database.get_current_value("scan2", "Bits per voxel")
-        self.assertIsNone(value)
+        self.assertIsNone(database.get_current_value("path2", "Bits per voxel"))
         try:
-            database.new_value("scan1", "BandWidth", "test", "test")
+            database.new_value("path1", "BandWidth", "test", "test")
             self.fail()
         except ValueError:
             pass
-        value = database.get_current_value("scan1", "BandWidth")
-        self.assertEqual(value, 45)
+        self.assertEqual(database.get_current_value("path1", "BandWidth"), 45)
 
         # Testing with wrong parameters
         try:
@@ -800,104 +739,111 @@ class TestDatabaseMethods(unittest.TestCase):
         except ValueError:
             pass
         try:
-            database.new_value("scan1", None, "1", "1")
+            database.new_value("path1", None, "1", "1")
             self.fail()
         except ValueError:
             pass
         try:
-            database.new_value("scan1", "PatientName", None, None)
+            database.new_value("path1", "PatientName", None, None)
             self.fail()
         except ValueError:
             pass
-        value = database.get_current_value("scan1", "PatientName")
-        self.assertEqual(value, "test")
+        self.assertEqual(database.get_current_value("path1", "PatientName"), "test")
         try:
             database.new_value(1, None, True, False)
             self.fail()
         except ValueError:
             pass
         try:
-            database.new_value("scan2", "Boolean", "boolean")
+            database.new_value("path2", "Boolean", "boolean")
             self.fail()
         except ValueError:
             pass
 
     def test_get_path(self):
         """
-        Tests the method giving the Path table object of a scan
+        Tests the method giving the path row of a path
         """
 
         database = Database(self.string_engine)
 
-        # Adding scan
-        database.add_path("scan1")
+        # Adding path
+        database.add_path("path1")
 
-        # Testing that a scan is returned if it exists
-        scan = database.get_path("scan1")
-        self.assertIsInstance(scan.row, database.table_classes[PATH_TABLE])
+        # Testing that a path is returned if it exists
+        self.assertIsInstance(database.get_path("path1").row, database.table_classes[PATH_TABLE])
 
-        # Testing that None is returned if the scan does not exist
-        scan = database.get_path("scan3")
-        self.assertIsNone(scan)
+        # Testing that None is returned if the path does not exist
+        self.assertIsNone(database.get_path("path3"))
 
         # Testing with wrong parameter
-        scan = database.get_path(None)
-        self.assertIsNone(scan)
-        scan = database.get_path(1)
-        self.assertIsNone(scan)
+        self.assertIsNone(database.get_path(None))
+        self.assertIsNone(database.get_path(1))
 
     def test_remove_path(self):
         """
-        Tests the method removing a scan
+        Tests the method removing a path
         """
         database = Database(self.string_engine)
 
-        # Adding scan
-        database.add_path("scan1")
+        # Adding path
+        database.add_path("path1")
+        database.add_path("path2")
 
         # Adding tag
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
                          TAG_TYPE_STRING, None, None, "Name of the patient")
 
         # Adding value
-        database.new_value("scan1", "PatientName", "test")
+        database.new_value("path1", "PatientName", "test")
 
-        # Removing scan
-        database.remove_path("scan1")
+        # Removing path
+        database.remove_path("path1")
 
-        # Testing that the scan is removed from all tables
-        scan = database.get_path("scan1")
-        self.assertIsNone(scan)
+        # Testing that the path is removed from all tables
+        self.assertIsNone(database.get_path("path1"))
 
         # Testing that the values associated are removed
-        value = database.get_current_value("scan1", "PatientName")
-        self.assertIsNone(value)
+        self.assertIsNone(database.get_current_value("path1", "PatientName"))
 
-        # Testing with a scan not existing
+        # Testing with a path not existing
         try:
             database.remove_path("NotExisting")
             self.fail()
         except ValueError:
             pass
 
+        # Removing path
+        database.remove_path("path2")
+
+        # Testing that the path is removed from all tables
+        self.assertIsNone(database.get_path("path2"))
+
+        # Removing path a second time
+        try:
+            database.remove_path("path1")
+            self.fail()
+        except ValueError:
+            pass
+
     def test_add_path(self):
         """
-        Tests the method adding a scan
+        Tests the method adding a path
         """
 
         database = Database(self.string_engine)
 
-        # Adding scan
-        database.add_path("scan1")
+        # Adding path
+        database.add_path("path1")
 
-        # Testing that the scan has been added
-        scan = database.get_path("scan1")
-        self.assertIsInstance(scan.row, database.table_classes[PATH_TABLE])
-        self.assertEqual(scan.name, "scan1")
+        # Testing that the path has been added
+        path = database.get_path("path1")
+        self.assertIsInstance(path.row, database.table_classes[PATH_TABLE])
+        self.assertEqual(path.name, "path1")
 
-        # Testing when trying to add a scan that already exists
+        # Testing when trying to add a path that already exists
         try:
-            database.add_path("scan1")
+            database.add_path("path1")
             self.fail()
         except ValueError:
             pass
@@ -908,6 +854,9 @@ class TestDatabaseMethods(unittest.TestCase):
             self.fail()
         except ValueError:
             pass
+
+        # Testing the add of several paths
+        database.add_path("path2")
 
     def test_get_paths_matching_search(self):
         """
@@ -921,24 +870,19 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(return_list, [])
         return_list = database.get_paths_matching_search("search", 1)
         self.assertEqual(return_list, [])
-        database.add_path("scan1")
+        database.add_path("path1")
         return_list = database.get_paths_matching_search("search", ["tag_not_existing"])
         self.assertEqual(return_list, [])
 
-        database.add_path("scan2")
+        database.add_path("path2")
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
-        database.new_value("scan1", "PatientName", "Guerbet1", "Guerbet")
-        database.new_value("scan2", "PatientName", "Guerbet2", "Guerbet")
-        return_list = database.get_paths_matching_search("search", ["PatientName"])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_search("scan", ["PatientName", "name"])
-        self.assertEqual(return_list, ["scan1", "scan2"])
-        return_list = database.get_paths_matching_search("Guerbet", ["PatientName"])
-        self.assertEqual(return_list, ["scan1", "scan2"])
-        return_list = database.get_paths_matching_search("Guerbet1", ["PatientName"])
-        self.assertEqual(return_list, ["scan1"])
-        return_list = database.get_paths_matching_search("Guerbet2", ["PatientName"])
-        self.assertEqual(return_list, ["scan2"])
+        database.new_value("path1", "PatientName", "Guerbet1", "Guerbet")
+        database.new_value("path2", "PatientName", "Guerbet2", "Guerbet")
+        self.assertEqual(database.get_paths_matching_search("search", ["PatientName"]), [])
+        self.assertEqual(database.get_paths_matching_search("path", ["PatientName", "name"]), ["path1", "path2"])
+        self.assertEqual(database.get_paths_matching_search("Guerbet", ["PatientName"]), ["path1", "path2"])
+        self.assertEqual(database.get_paths_matching_search("Guerbet1", ["PatientName"]), ["path1"])
+        self.assertEqual(database.get_paths_matching_search("Guerbet2", ["PatientName"]), ["path2"])
 
     def test_get_paths_matching_advanced_search(self):
         """
@@ -951,108 +895,84 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(return_list, [])
 
         # Testing with wrong parameters
-        return_list = database.get_paths_matching_advanced_search(1, [], [], [], [], [])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_advanced_search(["AND"], ["PatientName"], ["="], ["Guerbet"], [""], [])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_advanced_search([], [["PatientName"]], ["wrong_condition"], ["Guerbet"], [""], [])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_advanced_search([], [["PatientName"]], ["wrong_condition"], ["Guerbet"],["wrong_not"], [])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_advanced_search([], [["PatientName"]], ["BETWEEN"], ["Guerbet"],["NOT"], [])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_advanced_search([], [["PatientName"]], ["BETWEEN"], ["Guerbet"],["NOT"], 1)
-        self.assertEqual(return_list, [])
+        self.assertEqual(database.get_paths_matching_advanced_search(1, [], [], [], [], []), [])
+        self.assertEqual(database.get_paths_matching_advanced_search(["AND"], ["PatientName"], ["="], ["Guerbet"], [""], []), [])
+        self.assertEqual(database.get_paths_matching_advanced_search([], [["PatientName"]], ["wrong_condition"], ["Guerbet"], [""], []), [])
+        self.assertEqual(database.get_paths_matching_advanced_search([], [["PatientName"]], ["wrong_condition"], ["Guerbet"],["wrong_not"], []), [])
+        self.assertEqual(database.get_paths_matching_advanced_search([], [["PatientName"]], ["BETWEEN"], ["Guerbet"],["NOT"], []), [])
+        self.assertEqual(database.get_paths_matching_advanced_search([], [["PatientName"]], ["BETWEEN"], ["Guerbet"],["NOT"], 1), [])
 
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
         database.add_tag("SequenceName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
         database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
-        database.add_path("scan1")
-        database.add_path("scan2")
-        database.add_path("scan3")
-        database.new_value("scan1", "PatientName", "Guerbet")
-        database.new_value("scan2", "SequenceName", "RARE")
-        database.new_value("scan3", "BandWidth", 50000)
-        return_list = database.get_paths_matching_advanced_search([], [["PatientName"]], ["="], ["Guerbet"], [""], ["scan1", "scan2", "scan3"])
-        self.assertEqual(return_list, ["scan1"])
-        return_list = database.get_paths_matching_advanced_search([], [["PatientName"]], ["="], ["Guerbet"], ["NOT"], ["scan1", "scan2", "scan3"])
-        self.assertTrue("scan2" in return_list)
-        self.assertTrue("scan3" in return_list)
+        database.add_path("path1")
+        database.add_path("path2")
+        database.add_path("path3")
+        database.new_value("path1", "PatientName", "Guerbet")
+        database.new_value("path2", "SequenceName", "RARE")
+        database.new_value("path3", "BandWidth", 50000)
+        self.assertEqual(database.get_paths_matching_advanced_search([], [["PatientName"]], ["="], ["Guerbet"], [""], ["path1", "path2", "path3"]), ["path1"])
+        return_list = database.get_paths_matching_advanced_search([], [["PatientName"]], ["="], ["Guerbet"], ["NOT"], ["path1", "path2", "path3"])
+        self.assertTrue("path2" in return_list)
+        self.assertTrue("path3" in return_list)
         self.assertEqual(len(return_list), 2)
-        database.new_value("scan2", "PatientName", "Guerbet2")
-        database.new_value("scan3", "PatientName", "Guerbet3")
-        return_list = database.get_paths_matching_advanced_search([], [["PatientName"]], ["="], ["Guerbet"], ["NOT"],["scan1", "scan2", "scan3"])
-        self.assertTrue("scan2" in return_list)
-        self.assertTrue("scan3" in return_list)
+        database.new_value("path2", "PatientName", "Guerbet2")
+        database.new_value("path3", "PatientName", "Guerbet3")
+        return_list = database.get_paths_matching_advanced_search([], [["PatientName"]], ["="], ["Guerbet"], ["NOT"],["path1", "path2", "path3"])
+        self.assertTrue("path2" in return_list)
+        self.assertTrue("path3" in return_list)
         self.assertEqual(len(return_list), 2)
-        return_list = database.get_paths_matching_advanced_search([], [["TagNotExisting"]], ["="], ["Guerbet"], [""], ["scan1", "scan2", "scan3"])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_advanced_search([], [["name"]], ["CONTAINS"], ["scan"], [""], ["scan1", "scan2", "scan3"])
-        self.assertTrue("scan1" in return_list)
-        self.assertTrue("scan2" in return_list)
-        self.assertTrue("scan3" in return_list)
+        self.assertEqual(database.get_paths_matching_advanced_search([], [["TagNotExisting"]], ["="], ["Guerbet"], [""], ["path1", "path2", "path3"]), [])
+        return_list = database.get_paths_matching_advanced_search([], [["name"]], ["CONTAINS"], ["path"], [""], ["path1", "path2", "path3"])
+        self.assertTrue("path1" in return_list)
+        self.assertTrue("path2" in return_list)
+        self.assertTrue("path3" in return_list)
         self.assertEqual(len(return_list), 3)
-        return_list = database.get_paths_matching_advanced_search(["OR"], [["PatientName"], ["SequenceName"]], ["=", "CONTAINS"], ["Guerbet", "RARE"], ["", ""], ["scan1", "scan2", "scan3"])
-        self.assertTrue("scan1" in return_list)
-        self.assertTrue("scan2" in return_list)
+        return_list = database.get_paths_matching_advanced_search(["OR"], [["PatientName"], ["SequenceName"]], ["=", "CONTAINS"], ["Guerbet", "RARE"], ["", ""], ["path1", "path2", "path3"])
+        self.assertTrue("path1" in return_list)
+        self.assertTrue("path2" in return_list)
         self.assertEqual(len(return_list), 2)
-        return_list = database.get_paths_matching_advanced_search(["AND"], [["PatientName"], ["SequenceName"]],
-                                                                  ["=", "CONTAINS"], ["Guerbet", "RARE"], ["", ""], ["scan1", "scan2", "scan3"])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_advanced_search([], [["BandWidth"]], ["="], ["50000"], [""], ["scan1", "scan2", "scan3"])
-        self.assertEqual(return_list, ["scan3"])
-        return_list = database.get_paths_matching_advanced_search([], [["BandWidth"]], ["="], [50000], [""], ["scan1", "scan2", "scan3"])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_advanced_search([], [["BandWidth"]], ["="], [50000], [""],
-                                                                  ["scan1", "scan2"])
-        self.assertEqual(return_list, [])
+        self.assertEqual(database.get_paths_matching_advanced_search(["AND"], [["PatientName"], ["SequenceName"]],
+                                                                  ["=", "CONTAINS"], ["Guerbet", "RARE"], ["", ""], ["path1", "path2", "path3"]), [])
+        self.assertEqual(database.get_paths_matching_advanced_search([], [["BandWidth"]], ["="], ["50000"], [""], ["path1", "path2", "path3"]), ["path3"])
+        self.assertEqual(database.get_paths_matching_advanced_search([], [["BandWidth"]], ["="], [50000], [""], ["path1", "path2", "path3"]), [])
+        self.assertEqual(database.get_paths_matching_advanced_search([], [["BandWidth"]], ["="], [50000], [""],
+                                                                  ["path1", "path2"]), [])
 
     def test_get_paths_matching_tag_value_couples(self):
         """
-        Tests the method giving the list of scans having all the values given
+        Tests the method giving the list of paths having all the values given
         """
 
         database = Database(self.string_engine)
 
         # Testing with wrong parameters
-        return_list = database.get_paths_matching_tag_value_couples([])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_tag_value_couples(False)
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_tag_value_couples([["tag_not_existing", "Guerbet"]])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_tag_value_couples([["tag_not_existing"]])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_tag_value_couples([["tag_not_existing", "Guerbet", "too_many"]])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_tag_value_couples([1])
-        self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_tag_value_couples("test")
-        self.assertEqual(return_list, [])
+        self.assertEqual(database.get_paths_matching_tag_value_couples([]), [])
+        self.assertEqual(database.get_paths_matching_tag_value_couples(False), [])
+        self.assertEqual(database.get_paths_matching_tag_value_couples([["tag_not_existing", "Guerbet"]]), [])
+        self.assertEqual(database.get_paths_matching_tag_value_couples([["tag_not_existing"]]), [])
+        self.assertEqual(database.get_paths_matching_tag_value_couples([["tag_not_existing", "Guerbet", "too_many"]]), [])
+        self.assertEqual(database.get_paths_matching_tag_value_couples([1]), [])
+        self.assertEqual(database.get_paths_matching_tag_value_couples("test"), [])
 
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
         database.add_tag("SequenceName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
         database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
-        database.add_path("scan1")
-        database.add_path("scan2")
-        database.add_path("scan3")
-        database.new_value("scan1", "PatientName", "Guerbet")
-        database.new_value("scan2", "SequenceName", "RARE")
-        database.new_value("scan2", "BandWidth", 50000)
+        database.add_path("path1")
+        database.add_path("path2")
+        database.add_path("path3")
+        database.new_value("path1", "PatientName", "Guerbet")
+        database.new_value("path2", "SequenceName", "RARE")
+        database.new_value("path2", "BandWidth", 50000)
 
-        return_list = database.get_paths_matching_tag_value_couples([["PatientName", "Guerbet"]])
-        self.assertEqual(return_list, ["scan1"])
-        return_list = database.get_paths_matching_tag_value_couples([["PatientName", "Guerbet"], ["SequenceName", "RARE"]])
-        self.assertEqual(return_list, [])
-        database.new_value("scan2", "PatientName", "Guerbet")
-        return_list = database.get_paths_matching_tag_value_couples([["PatientName", "Guerbet"], ["SequenceName", "RARE"]])
-        self.assertEqual(return_list, ["scan2"])
-        return_list = database.get_paths_matching_tag_value_couples(
-            [["PatientName", "Guerbet"], ["SequenceName", "RARE"], ["BandWidth", 50000]])
-        self.assertEqual(return_list, ["scan2"])
-        return_list = database.get_paths_matching_tag_value_couples(
-            [["PatientName", "Guerbet"], ["SequenceName", "RARE"], ["BandWidth", "50000"]])
-        self.assertEqual(return_list, [])
+        self.assertEqual(database.get_paths_matching_tag_value_couples([["PatientName", "Guerbet"]]), ["path1"])
+        self.assertEqual(database.get_paths_matching_tag_value_couples([["PatientName", "Guerbet"], ["SequenceName", "RARE"]]), [])
+        database.new_value("path2", "PatientName", "Guerbet")
+        self.assertEqual(database.get_paths_matching_tag_value_couples([["PatientName", "Guerbet"], ["SequenceName", "RARE"]]), ["path2"])
+        self.assertEqual(database.get_paths_matching_tag_value_couples(
+            [["PatientName", "Guerbet"], ["SequenceName", "RARE"], ["BandWidth", 50000]]), ["path2"])
+        self.assertEqual(database.get_paths_matching_tag_value_couples(
+            [["PatientName", "Guerbet"], ["SequenceName", "RARE"], ["BandWidth", "50000"]]), [])
 
     def test_initial_table(self):
         """
@@ -1063,36 +983,34 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
 
-        database.add_path("scan1")
+        database.add_path("path1")
 
-        database.new_value("scan1", "PatientName", "Guerbet")
+        database.new_value("path1", "PatientName", "Guerbet")
 
         # Testing that the value can be set
-        current_value = database.get_current_value("scan1", "PatientName")
-        self.assertEqual(current_value, "Guerbet")
-        database.set_current_value("scan1", "PatientName", "Guerbet2")
-        current_value = database.get_current_value("scan1", "PatientName")
-        self.assertEqual(current_value, "Guerbet2")
+        self.assertEqual(database.get_current_value("path1", "PatientName"), "Guerbet")
+        database.set_current_value("path1", "PatientName", "Guerbet2")
+        self.assertEqual(database.get_current_value("path1", "PatientName"), "Guerbet2")
 
         # Testing that the values cannot be reset
         try:
-            database.reset_current_value("scan1", "PatientName")
+            database.reset_current_value("path1", "PatientName")
             self.fail()
         except ValueError:
             pass
 
-        database.remove_value("scan1", "PatientName")
+        database.remove_value("path1", "PatientName")
 
         # Testing that initial cannot be added if the flag initial_table is put to False
         try:
-            database.new_value("scan1", "PatientName", "Guerbet_current", "Guerbet_initial")
+            database.new_value("path1", "PatientName", "Guerbet_current", "Guerbet_initial")
             self.fail()
         except ValueError:
             pass
 
         # Testing that initial paths do not exist
         try:
-            database.get_initial_path("scan1")
+            database.get_initial_path("path1")
             self.fail()
         except ValueError:
             pass
@@ -1118,19 +1036,19 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_tag("list_time", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_TIME, None, None, None)
         database.add_tag("list_datetime", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_DATETIME, None, None, None)
         
-        database.add_path("scan1")
+        database.add_path("path1")
 
         list_date = [datetime.date(2018, 5, 23), datetime.date(1899, 12, 31)]
         list_time = [datetime.time(12, 41, 33, 540), datetime.time(1, 2, 3)]
         list_datetime = [datetime.datetime(2018, 5, 23, 12, 41, 33, 540), 
                          datetime.datetime(1899, 12, 31, 1, 2, 3)]
         
-        database.new_value("scan1", "list_date", list_date)
-        self.assertEqual(list_date, database.get_current_value("scan1", "list_date"))
-        database.new_value("scan1", "list_time", list_time)
-        self.assertEqual(list_time, database.get_current_value("scan1", "list_time"))
-        database.new_value("scan1", "list_datetime", list_datetime)
-        self.assertEqual(list_datetime, database.get_current_value("scan1", "list_datetime"))
+        database.new_value("path1", "list_date", list_date)
+        self.assertEqual(list_date, database.get_current_value("path1", "list_date"))
+        database.new_value("path1", "list_time", list_time)
+        self.assertEqual(list_time, database.get_current_value("path1", "list_time"))
+        database.new_value("path1", "list_datetime", list_datetime)
+        self.assertEqual(list_datetime, database.get_current_value("path1", "list_datetime"))
 
     def test_filters(self):
         database = Database(self.string_engine)
