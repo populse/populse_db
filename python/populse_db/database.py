@@ -735,7 +735,7 @@ class Database:
 
         if self.paths_caches:
             self.paths[path] = None
-            self.initial_paths = None
+            self.initial_paths[path] = None
 
         self.session.flush()
         self.unsaved_modifications = True
