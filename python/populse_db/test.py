@@ -14,6 +14,7 @@ from populse_db.database_model import (create_database, TAG_ORIGIN_BUILTIN,
                                        TAG_TYPE_LIST_FLOAT, PATH_TABLE,
                                        TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_TIME,
                                        TAG_TYPE_LIST_DATETIME, TAG_TYPE_BOOLEAN, TAG_TYPE_LIST_BOOLEAN)
+from populse_db.filter import literal_parser, FilterToQuery
 
 
 class TestDatabaseMethods(unittest.TestCase):
@@ -1091,10 +1092,55 @@ class TestDatabaseMethods(unittest.TestCase):
               '/xyz.mgz',
               '/def.mgz',
               '/def.nii'}
-            )):
+            ),
+            ('format in [True, false, null]',set())):
             paths = set(path.name for path in database.filter_paths(filter))
             self.assertEqual(paths, expected)
 
-            
+    def test_filter_literals(self):
+        """
+        Test the Python values returned (internaly) for literals by the
+        interpretor of filter expression 
+        """
+        literals = {
+            'True': True,
+            'TRUE': True,
+            'true': True,
+            'False': False,
+            'FALSE': False,
+            'false': False,
+            'Null': None,
+            'null': None,
+            'Null': None,
+            '0': 0,
+            '123456789101112': 123456789101112,
+            '-45': -45,
+            '-46.8': -46.8,
+            '1.5654353456363e-15': 1.5654353456363e-15,
+            '""': '',
+            '"2018-05-25"': '2018-05-25',
+            '"a\n b\n  c"': 'a\n b\n  c',
+            '"\\""': '"',
+            '2018-05-25': datetime.date(2018, 5, 25),
+            '2018-5-25': datetime.date(2018, 5, 25),
+            '12:54': datetime.time(12, 54),
+            '02:4:9': datetime.time(2, 4, 9),
+            # The following interpretation of microsecond is a strange
+            # behavior of datetime.strptime that expect up to 6 digits
+            # with zeroes padded on the right !?
+            '12:34:56.789': datetime.time(12, 34, 56, 789000),
+            '12:34:56.000789': datetime.time(12, 34, 56, 789),
+            '2018-05-25T12:34:56.000789': datetime.datetime(2018, 5, 25, 12, 34, 56, 789),
+            '2018-5-25T12:34': datetime.datetime(2018, 5, 25, 12, 34),
+            '[]': [],
+        }
+        # Adds the literal for a list of all elements in the dictionary
+        literals['[%s]' % ','.join(literals.keys())] = list(literals.values())
+        
+        parser = literal_parser()
+        for literal, expected_value in literals.items():
+            tree = parser.parse(literal)
+            value = FilterToQuery(None).transform(tree)
+            self.assertEqual(value, expected_value)
 if __name__ == '__main__':
     unittest.main()

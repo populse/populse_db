@@ -1,15 +1,22 @@
 import six
 import operator
 import types
+import ast
 
 from lark import Lark, Transformer
+
+import dateutil.parser
+
 import sqlalchemy
 from sqlalchemy.ext.automap import AutomapBase
 from sqlalchemy.sql.elements import TextClause
+
 from populse_db.database_model import PATH_TABLE
 
 # The grammar (in Lark format) used to parse filter strings
 filter_grammar = '''
+?start : filter
+
 ?filter : "ALL"i                         -> all
         | conditions
         | negation
@@ -34,35 +41,34 @@ CONDITION_OPERATOR : "=="i
                    | "IN"i
 
 condition : operand CONDITION_OPERATOR operand
-?operand : litteral
-         | list
+?operand : literal
          | tag_name
 
+tag_name : CNAME
+%import common.CNAME
          
-litteral : ESCAPED_STRING   -> string
+?literal : ESCAPED_STRING   -> string
          | SIGNED_NUMBER    -> number
-         | KEYWORD_LITTERAL -> keyword_litteral
+         | KEYWORD_LITERAL -> keyword_literal
          | DATE             -> date
          | TIME             -> time
          | DATETIME         -> datetime
+         | list
 
 
 DATE : INT "-" INT "-" INT
 TIME : INT ":" INT (":" INT ("." INT)?)?
 DATETIME : DATE "T" TIME
 
-KEYWORD_LITTERAL : "TRUE"i
+KEYWORD_LITERAL : "TRUE"i
                  | "FALSE"i
                  | "NULL"i
 
-list : "[" [litteral ("," litteral)*] "]"
-
-tag_name : CNAME
+list : "[" [literal ("," literal)*] "]"
 
 %import common.INT
 %import common.ESCAPED_STRING
 %import common.SIGNED_NUMBER
-%import common.CNAME
 
 %import common.WS
 %ignore WS
@@ -78,8 +84,16 @@ def filter_parser():
     '''
     global _grammar_parser
     if _grammar_parser is None:
-        _grammar_parser = Lark(filter_grammar, start='filter')
+        _grammar_parser = Lark(filter_grammar)
     return _grammar_parser
+
+def literal_parser():
+    '''
+    Return an instance of Lark grammar parser for parsing only a literal
+    value (int, string, list, date, etc.) from a filter expression. This
+    is used for testing the parsing of literals.
+    '''
+    return Lark(filter_grammar, start='literal')
 
 
 class FilterToQuery(Transformer):
@@ -108,6 +122,12 @@ class FilterToQuery(Transformer):
         '>=': operator.ge,
         'and': operator.and_,
         'or': operator.or_,
+    }
+    
+    keyword_literals = {
+        'true': True,
+        'false': False,
+        'null': None,
     }
     
     def __init__(self, database):
@@ -238,10 +258,25 @@ class FilterToQuery(Transformer):
           return ~ condition
     
     def string(self, items):
-        return items[0][1:-1]
+        return ast.literal_eval(items[0].replace('\n','\\n'))
     
     def number(self, items):
         return float(items[0])
+
+    def date(self, items):
+        return dateutil.parser.parse(items[0]).date()
+    
+    def time(self, items):
+        return dateutil.parser.parse(items[0]).time()
+    
+    def datetime(self, items):
+        return dateutil.parser.parse(items[0])
+    
+    def keyword_literal(self, items):
+        return self.keyword_literals[items[0].lower()]
+
+    def list(self, items):
+        return items
 
     def tag_name(self, items):
         tag_name = items[0]
