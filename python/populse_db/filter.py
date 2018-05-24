@@ -10,7 +10,7 @@ from populse_db.database_model import PATH_TABLE
 
 # The grammar (in Lark format) used to parse filter strings
 filter_grammar = '''
-?filter : "ALL"                         -> all
+?filter : "ALL"i                         -> all
         | conditions
         | negation
         | "(" filter ")"
@@ -19,19 +19,19 @@ filter_grammar = '''
 ?conditions : condition (BOOLEAN_OPERATOR condition)*
 
                    
-negation : "NOT" condition
-         | "NOT" "(" filter ")"
+negation : "NOT"i condition
+         | "NOT"i "(" filter ")"
 
-BOOLEAN_OPERATOR : "AND"
-                 | "OR"
+BOOLEAN_OPERATOR : "AND"i
+                 | "OR"i
 
-CONDITION_OPERATOR : "=="
-                   | "!="
-                   | "<"
-                   | "<="
-                   | ">"
-                   | ">="
-                   | "IN"
+CONDITION_OPERATOR : "=="i
+                   | "!="i
+                   | "<"i
+                   | "<="i
+                   | ">"i
+                   | ">="i
+                   | "IN"i
 
 condition : operand CONDITION_OPERATOR operand
 ?operand : litteral
@@ -51,9 +51,9 @@ DATE : INT "-" INT "-" INT
 TIME : INT ":" INT (":" INT ("." INT)?)?
 DATETIME : DATE "T" TIME
 
-KEYWORD_LITTERAL : "TRUE"
-                 | "FALSE"
-                 | "NULL"
+KEYWORD_LITTERAL : "TRUE"i
+                 | "FALSE"i
+                 | "NULL"i
 
 list : "[" [litteral ("," litteral)*] "]"
 
