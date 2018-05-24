@@ -38,7 +38,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
 
         shutil.rmtree(self.temp_folder)
-        
+
     def test_database_creation(self):
         """
         Tests the database creation
@@ -71,7 +71,7 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing with a first tag
         database = Database(self.string_engine)
         return_value = database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, "Name of the patient")
+                                        TAG_TYPE_STRING, None, None, "Name of the patient")
         self.assertIsNone(return_value)
 
         # Checking the tag properties
@@ -85,7 +85,8 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing with a tag that already exists
         try:
-            database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,TAG_TYPE_STRING, None, None, "Name of the patient")
+            database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
+                             TAG_TYPE_STRING, None, None, "Name of the patient")
             self.fail()
         except ValueError:
             pass
@@ -104,8 +105,10 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database.add_tag(
             "Bitspervoxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, "without space")
-        self.assertEqual(database.get_tag("Bitspervoxel").description, "without space")
-        self.assertEqual(database.get_tag("Bits per voxel").description, "with space")
+        self.assertEqual(database.get_tag(
+            "Bitspervoxel").description, "without space")
+        self.assertEqual(database.get_tag(
+            "Bits per voxel").description, "with space")
         database.add_tag("Boolean",
                          TAG_ORIGIN_BUILTIN, TAG_TYPE_BOOLEAN, None, None, None)
         database.add_tag("Boolean list",
@@ -113,39 +116,46 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing with wrong parameters
         try:
-            database.add_tag(None, TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
+            database.add_tag(None, TAG_ORIGIN_BUILTIN,
+                             TAG_TYPE_LIST_INTEGER, None, None, None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.add_tag("Patient Name", True, TAG_TYPE_LIST_INTEGER, None, None, None)
+            database.add_tag("Patient Name", True,
+                             TAG_TYPE_LIST_INTEGER, None, None, None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN, None, None, None, None)
+            database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN,
+                             None, None, None, None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, "unit", None, None)
+            database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN,
+                             TAG_TYPE_LIST_INTEGER, "unit", None, None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, True, None)
+            database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN,
+                             TAG_TYPE_STRING, None, True, None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, 1.5)
+            database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN,
+                             TAG_TYPE_STRING, None, None, 1.5)
             self.fail()
         except ValueError:
             pass
 
         # Testing that the tag name is taken for the primary key name column
         try:
-            database.add_tag("name", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
+            database.add_tag("name", TAG_ORIGIN_BUILTIN,
+                             TAG_TYPE_STRING, None, None, None)
             self.fail()
         except ValueError:
             pass
@@ -161,7 +171,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Adding tags
         return_value = database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, "Name of the patient")
+                                        TAG_TYPE_STRING, None, None, "Name of the patient")
         self.assertEqual(return_value, None)
         database.add_tag(
             "SequenceName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
@@ -189,8 +199,10 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing that the tag values are removed
         self.assertIsNone(database.get_current_value("path1", "PatientName"))
         self.assertIsNone(database.get_initial_value("path1", "PatientName"))
-        self.assertEqual(database.get_current_value("path1", "SequenceName"), "RARE")
-        self.assertIsNone(database.get_current_value("path1", "Dataset dimensions"))
+        self.assertEqual(database.get_current_value(
+            "path1", "SequenceName"), "RARE")
+        self.assertIsNone(database.get_current_value(
+            "path1", "Dataset dimensions"))
 
         # Testing with a tag not existing
         try:
@@ -264,10 +276,14 @@ class TestDatabaseMethods(unittest.TestCase):
                            0.234375, 0.234375, 0.4])
 
         # Testing that the value is returned if it exists
-        self.assertEqual(database.get_current_value("path1", "PatientName"), "test")
-        self.assertEqual(database.get_current_value("path1", "Bits per voxel"), 10)
-        self.assertEqual(database.get_current_value("path1", "Dataset dimensions"), [3, 28, 28, 3])
-        self.assertEqual(database.get_current_value("path1", "Grids spacing"), [0.234375, 0.234375, 0.4])
+        self.assertEqual(database.get_current_value(
+            "path1", "PatientName"), "test")
+        self.assertEqual(database.get_current_value(
+            "path1", "Bits per voxel"), 10)
+        self.assertEqual(database.get_current_value(
+            "path1", "Dataset dimensions"), [3, 28, 28, 3])
+        self.assertEqual(database.get_current_value(
+            "path1", "Grids spacing"), [0.234375, 0.234375, 0.4])
 
         # Testing when not existing
         self.assertIsNone(database.get_current_value("path3", "PatientName"))
@@ -405,15 +421,20 @@ class TestDatabaseMethods(unittest.TestCase):
 
         time = datetime.datetime(2014, 2, 11, 0, 2, 20).time()
         database.new_value("path1", "AcquisitionTime", time, time)
-        self.assertEqual(database.get_current_value("path1", "AcquisitionTime"), time)
+        self.assertEqual(database.get_current_value(
+            "path1", "AcquisitionTime"), time)
         time = datetime.datetime(2014, 2, 11, 15, 24, 20).time()
         database.set_current_value("path1", "AcquisitionTime", time)
 
         # Testing that the values are actually set
-        self.assertEqual(database.get_current_value("path1", "PatientName"), "test2")
-        self.assertEqual(database.get_current_value("path1", "Bits per voxel"), 2)
-        self.assertEqual(database.get_current_value("path1", "AcquisitionDate"), date)
-        self.assertEqual(database.get_current_value("path1", "AcquisitionTime"), time)
+        self.assertEqual(database.get_current_value(
+            "path1", "PatientName"), "test2")
+        self.assertEqual(database.get_current_value(
+            "path1", "Bits per voxel"), 2)
+        self.assertEqual(database.get_current_value(
+            "path1", "AcquisitionDate"), date)
+        self.assertEqual(database.get_current_value(
+            "path1", "AcquisitionTime"), time)
         database.set_current_value("path1", "PatientName", None)
         self.assertIsNone(database.get_current_value("path1", "PatientName"))
 
@@ -440,13 +461,15 @@ class TestDatabaseMethods(unittest.TestCase):
             self.fail()
         except ValueError:
             pass
-        self.assertEqual(database.get_current_value("path1", "Bits per voxel"), 2)
+        self.assertEqual(database.get_current_value(
+            "path1", "Bits per voxel"), 2)
         try:
             database.set_current_value("path1", "Bits per voxel", 35.8)
             self.fail()
         except ValueError:
             pass
-        self.assertEqual(database.get_current_value("path1", "Bits per voxel"), 2)
+        self.assertEqual(database.get_current_value(
+            "path1", "Bits per voxel"), 2)
 
         # Testing with wrong parameters
         try:
@@ -489,13 +512,16 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database.new_value("path1", "Bits per voxel", 5, 5)
         database.set_current_value("path1", "Bits per voxel", 15)
-        self.assertEqual(database.get_current_value("path1", "Bits per voxel"), 15)
+        self.assertEqual(database.get_current_value(
+            "path1", "Bits per voxel"), 15)
 
         database.new_value(
             "path1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
-        self.assertEqual(database.get_current_value("path1", "Dataset dimensions"), [3, 28, 28, 3])
+        self.assertEqual(database.get_current_value(
+            "path1", "Dataset dimensions"), [3, 28, 28, 3])
         database.set_current_value("path1", "Dataset dimensions", [1, 2, 3, 4])
-        self.assertEqual(database.get_current_value("path1", "Dataset dimensions"), [1, 2, 3, 4])
+        self.assertEqual(database.get_current_value(
+            "path1", "Dataset dimensions"), [1, 2, 3, 4])
 
         # Reset of the values
         database.reset_current_value("path1", "PatientName")
@@ -520,9 +546,12 @@ class TestDatabaseMethods(unittest.TestCase):
             pass
 
         # Testing that the values are actually reset
-        self.assertEqual(database.get_current_value("path1", "PatientName"), "test")
-        self.assertEqual(database.get_current_value("path1", "Bits per voxel"), 5)
-        self.assertEqual(database.get_current_value("path1", "Dataset dimensions"), [3, 28, 28, 3])
+        self.assertEqual(database.get_current_value(
+            "path1", "PatientName"), "test")
+        self.assertEqual(database.get_current_value(
+            "path1", "Bits per voxel"), 5)
+        self.assertEqual(database.get_current_value(
+            "path1", "Dataset dimensions"), [3, 28, 28, 3])
 
         # Testing with wrong parameters
         try:
@@ -595,9 +624,12 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing that the values are actually removed
         self.assertIsNone(database.get_current_value("path1", "PatientName"))
-        self.assertIsNone(database.get_current_value("path1", "Bits per voxel"))
-        self.assertIsNone(database.get_current_value("path1", "Dataset dimensions"))
-        self.assertIsNone(database.get_initial_value("path1", "Dataset dimensions"))
+        self.assertIsNone(database.get_current_value(
+            "path1", "Bits per voxel"))
+        self.assertIsNone(database.get_current_value(
+            "path1", "Dataset dimensions"))
+        self.assertIsNone(database.get_initial_value(
+            "path1", "Dataset dimensions"))
 
     def test_check_type_value(self):
         """
@@ -692,15 +724,22 @@ class TestDatabaseMethods(unittest.TestCase):
         database.new_value("path1", "AcquisitionTime", time, time)
 
         # Testing that the values are actually added
-        self.assertEqual(database.get_current_value("path1", "PatientName"), "test")
+        self.assertEqual(database.get_current_value(
+            "path1", "PatientName"), "test")
         self.assertIsNone(database.get_initial_value("path1", "PatientName"))
-        self.assertEqual(database.get_current_value("path2", "BandWidth"), 35.5)
-        self.assertEqual(database.get_current_value("path1", "Bits per voxel"), 1)
+        self.assertEqual(database.get_current_value(
+            "path2", "BandWidth"), 35.5)
+        self.assertEqual(database.get_current_value(
+            "path1", "Bits per voxel"), 1)
         self.assertEqual(database.get_current_value("path1", "BandWidth"), 45)
-        self.assertEqual(database.get_current_value("path1", "AcquisitionDate"), date)
-        self.assertEqual(database.get_current_value("path1", "AcquisitionTime"), time)
-        self.assertEqual(database.get_current_value("path1", "Dataset dimensions"), [3, 28, 28, 3])
-        self.assertEqual(database.get_current_value("path2", "Grids spacing"), [0.234375, 0.234375, 0.4])
+        self.assertEqual(database.get_current_value(
+            "path1", "AcquisitionDate"), date)
+        self.assertEqual(database.get_current_value(
+            "path1", "AcquisitionTime"), time)
+        self.assertEqual(database.get_current_value(
+            "path1", "Dataset dimensions"), [3, 28, 28, 3])
+        self.assertEqual(database.get_current_value(
+            "path2", "Grids spacing"), [0.234375, 0.234375, 0.4])
         self.assertEqual(database.get_current_value("path1", "Boolean"), True)
 
         # Test value override
@@ -714,17 +753,20 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing with wrong types
         try:
-            database.new_value("path2", "Bits per voxel", "space_tag", "space_tag")
+            database.new_value("path2", "Bits per voxel",
+                               "space_tag", "space_tag")
             self.fail()
         except ValueError:
             pass
-        self.assertIsNone(database.get_current_value("path2", "Bits per voxel"))
+        self.assertIsNone(database.get_current_value(
+            "path2", "Bits per voxel"))
         try:
             database.new_value("path2", "Bits per voxel", 35, 35.5)
             self.fail()
         except ValueError:
             pass
-        self.assertIsNone(database.get_current_value("path2", "Bits per voxel"))
+        self.assertIsNone(database.get_current_value(
+            "path2", "Bits per voxel"))
         try:
             database.new_value("path1", "BandWidth", "test", "test")
             self.fail()
@@ -748,7 +790,8 @@ class TestDatabaseMethods(unittest.TestCase):
             self.fail()
         except ValueError:
             pass
-        self.assertEqual(database.get_current_value("path1", "PatientName"), "test")
+        self.assertEqual(database.get_current_value(
+            "path1", "PatientName"), "test")
         try:
             database.new_value(1, None, True, False)
             self.fail()
@@ -771,7 +814,8 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("path1")
 
         # Testing that a path is returned if it exists
-        self.assertIsInstance(database.get_path("path1").row, database.table_classes[PATH_TABLE])
+        self.assertIsInstance(database.get_path(
+            "path1").row, database.table_classes[PATH_TABLE])
 
         # Testing that None is returned if the path does not exist
         self.assertIsNone(database.get_path("path3"))
@@ -871,18 +915,25 @@ class TestDatabaseMethods(unittest.TestCase):
         return_list = database.get_paths_matching_search("search", 1)
         self.assertEqual(return_list, [])
         database.add_path("path1")
-        return_list = database.get_paths_matching_search("search", ["tag_not_existing"])
+        return_list = database.get_paths_matching_search(
+            "search", ["tag_not_existing"])
         self.assertEqual(return_list, [])
 
         database.add_path("path2")
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
+                         TAG_TYPE_STRING, None, None, None)
         database.new_value("path1", "PatientName", "Guerbet1", "Guerbet")
         database.new_value("path2", "PatientName", "Guerbet2", "Guerbet")
-        self.assertEqual(database.get_paths_matching_search("search", ["PatientName"]), [])
-        self.assertEqual(database.get_paths_matching_search("path", ["PatientName", "name"]), ["path1", "path2"])
-        self.assertEqual(database.get_paths_matching_search("Guerbet", ["PatientName"]), ["path1", "path2"])
-        self.assertEqual(database.get_paths_matching_search("Guerbet1", ["PatientName"]), ["path1"])
-        self.assertEqual(database.get_paths_matching_search("Guerbet2", ["PatientName"]), ["path2"])
+        self.assertEqual(database.get_paths_matching_search(
+            "search", ["PatientName"]), [])
+        self.assertEqual(database.get_paths_matching_search(
+            "path", ["PatientName", "name"]), ["path1", "path2"])
+        self.assertEqual(database.get_paths_matching_search(
+            "Guerbet", ["PatientName"]), ["path1", "path2"])
+        self.assertEqual(database.get_paths_matching_search(
+            "Guerbet1", ["PatientName"]), ["path1"])
+        self.assertEqual(database.get_paths_matching_search(
+            "Guerbet2", ["PatientName"]), ["path2"])
 
     def test_get_paths_matching_advanced_search(self):
         """
@@ -891,53 +942,71 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine)
 
-        return_list = database.get_paths_matching_advanced_search([], [], [], [], [], [])
+        return_list = database.get_paths_matching_advanced_search(
+            [], [], [], [], [], [])
         self.assertEqual(return_list, [])
 
         # Testing with wrong parameters
-        self.assertEqual(database.get_paths_matching_advanced_search(1, [], [], [], [], []), [])
-        self.assertEqual(database.get_paths_matching_advanced_search(["AND"], ["PatientName"], ["="], ["Guerbet"], [""], []), [])
-        self.assertEqual(database.get_paths_matching_advanced_search([], [["PatientName"]], ["wrong_condition"], ["Guerbet"], [""], []), [])
-        self.assertEqual(database.get_paths_matching_advanced_search([], [["PatientName"]], ["wrong_condition"], ["Guerbet"],["wrong_not"], []), [])
-        self.assertEqual(database.get_paths_matching_advanced_search([], [["PatientName"]], ["BETWEEN"], ["Guerbet"],["NOT"], []), [])
-        self.assertEqual(database.get_paths_matching_advanced_search([], [["PatientName"]], ["BETWEEN"], ["Guerbet"],["NOT"], 1), [])
+        self.assertEqual(database.get_paths_matching_advanced_search(
+            1, [], [], [], [], []), [])
+        self.assertEqual(database.get_paths_matching_advanced_search(
+            ["AND"], ["PatientName"], ["="], ["Guerbet"], [""], []), [])
+        self.assertEqual(database.get_paths_matching_advanced_search(
+            [], [["PatientName"]], ["wrong_condition"], ["Guerbet"], [""], []), [])
+        self.assertEqual(database.get_paths_matching_advanced_search(
+            [], [["PatientName"]], ["wrong_condition"], ["Guerbet"], ["wrong_not"], []), [])
+        self.assertEqual(database.get_paths_matching_advanced_search(
+            [], [["PatientName"]], ["BETWEEN"], ["Guerbet"], ["NOT"], []), [])
+        self.assertEqual(database.get_paths_matching_advanced_search(
+            [], [["PatientName"]], ["BETWEEN"], ["Guerbet"], ["NOT"], 1), [])
 
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
-        database.add_tag("SequenceName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
-        database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
+                         TAG_TYPE_STRING, None, None, None)
+        database.add_tag("SequenceName", TAG_ORIGIN_BUILTIN,
+                         TAG_TYPE_STRING, None, None, None)
+        database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN,
+                         TAG_TYPE_INTEGER, None, None, None)
         database.add_path("path1")
         database.add_path("path2")
         database.add_path("path3")
         database.new_value("path1", "PatientName", "Guerbet")
         database.new_value("path2", "SequenceName", "RARE")
         database.new_value("path3", "BandWidth", 50000)
-        self.assertEqual(database.get_paths_matching_advanced_search([], [["PatientName"]], ["="], ["Guerbet"], [""], ["path1", "path2", "path3"]), ["path1"])
-        return_list = database.get_paths_matching_advanced_search([], [["PatientName"]], ["="], ["Guerbet"], ["NOT"], ["path1", "path2", "path3"])
+        self.assertEqual(database.get_paths_matching_advanced_search([], [["PatientName"]], [
+                         "="], ["Guerbet"], [""], ["path1", "path2", "path3"]), ["path1"])
+        return_list = database.get_paths_matching_advanced_search(
+            [], [["PatientName"]], ["="], ["Guerbet"], ["NOT"], ["path1", "path2", "path3"])
         self.assertTrue("path2" in return_list)
         self.assertTrue("path3" in return_list)
         self.assertEqual(len(return_list), 2)
         database.new_value("path2", "PatientName", "Guerbet2")
         database.new_value("path3", "PatientName", "Guerbet3")
-        return_list = database.get_paths_matching_advanced_search([], [["PatientName"]], ["="], ["Guerbet"], ["NOT"],["path1", "path2", "path3"])
+        return_list = database.get_paths_matching_advanced_search(
+            [], [["PatientName"]], ["="], ["Guerbet"], ["NOT"], ["path1", "path2", "path3"])
         self.assertTrue("path2" in return_list)
         self.assertTrue("path3" in return_list)
         self.assertEqual(len(return_list), 2)
-        self.assertEqual(database.get_paths_matching_advanced_search([], [["TagNotExisting"]], ["="], ["Guerbet"], [""], ["path1", "path2", "path3"]), [])
-        return_list = database.get_paths_matching_advanced_search([], [["name"]], ["CONTAINS"], ["path"], [""], ["path1", "path2", "path3"])
+        self.assertEqual(database.get_paths_matching_advanced_search(
+            [], [["TagNotExisting"]], ["="], ["Guerbet"], [""], ["path1", "path2", "path3"]), [])
+        return_list = database.get_paths_matching_advanced_search(
+            [], [["name"]], ["CONTAINS"], ["path"], [""], ["path1", "path2", "path3"])
         self.assertTrue("path1" in return_list)
         self.assertTrue("path2" in return_list)
         self.assertTrue("path3" in return_list)
         self.assertEqual(len(return_list), 3)
-        return_list = database.get_paths_matching_advanced_search(["OR"], [["PatientName"], ["SequenceName"]], ["=", "CONTAINS"], ["Guerbet", "RARE"], ["", ""], ["path1", "path2", "path3"])
+        return_list = database.get_paths_matching_advanced_search(["OR"], [["PatientName"], ["SequenceName"]], [
+                                                                  "=", "CONTAINS"], ["Guerbet", "RARE"], ["", ""], ["path1", "path2", "path3"])
         self.assertTrue("path1" in return_list)
         self.assertTrue("path2" in return_list)
         self.assertEqual(len(return_list), 2)
         self.assertEqual(database.get_paths_matching_advanced_search(["AND"], [["PatientName"], ["SequenceName"]],
-                                                                  ["=", "CONTAINS"], ["Guerbet", "RARE"], ["", ""], ["path1", "path2", "path3"]), [])
-        self.assertEqual(database.get_paths_matching_advanced_search([], [["BandWidth"]], ["="], ["50000"], [""], ["path1", "path2", "path3"]), ["path3"])
-        self.assertEqual(database.get_paths_matching_advanced_search([], [["BandWidth"]], ["="], [50000], [""], ["path1", "path2", "path3"]), [])
+                                                                     ["=", "CONTAINS"], ["Guerbet", "RARE"], ["", ""], ["path1", "path2", "path3"]), [])
+        self.assertEqual(database.get_paths_matching_advanced_search([], [["BandWidth"]], [
+                         "="], ["50000"], [""], ["path1", "path2", "path3"]), ["path3"])
+        self.assertEqual(database.get_paths_matching_advanced_search(
+            [], [["BandWidth"]], ["="], [50000], [""], ["path1", "path2", "path3"]), [])
         self.assertEqual(database.get_paths_matching_advanced_search([], [["BandWidth"]], ["="], [50000], [""],
-                                                                  ["path1", "path2"]), [])
+                                                                     ["path1", "path2"]), [])
 
     def test_get_paths_matching_tag_value_couples(self):
         """
@@ -948,16 +1017,25 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing with wrong parameters
         self.assertEqual(database.get_paths_matching_tag_value_couples([]), [])
-        self.assertEqual(database.get_paths_matching_tag_value_couples(False), [])
-        self.assertEqual(database.get_paths_matching_tag_value_couples([["tag_not_existing", "Guerbet"]]), [])
-        self.assertEqual(database.get_paths_matching_tag_value_couples([["tag_not_existing"]]), [])
-        self.assertEqual(database.get_paths_matching_tag_value_couples([["tag_not_existing", "Guerbet", "too_many"]]), [])
-        self.assertEqual(database.get_paths_matching_tag_value_couples([1]), [])
-        self.assertEqual(database.get_paths_matching_tag_value_couples("test"), [])
+        self.assertEqual(
+            database.get_paths_matching_tag_value_couples(False), [])
+        self.assertEqual(database.get_paths_matching_tag_value_couples(
+            [["tag_not_existing", "Guerbet"]]), [])
+        self.assertEqual(database.get_paths_matching_tag_value_couples(
+            [["tag_not_existing"]]), [])
+        self.assertEqual(database.get_paths_matching_tag_value_couples(
+            [["tag_not_existing", "Guerbet", "too_many"]]), [])
+        self.assertEqual(
+            database.get_paths_matching_tag_value_couples([1]), [])
+        self.assertEqual(
+            database.get_paths_matching_tag_value_couples("test"), [])
 
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
-        database.add_tag("SequenceName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
-        database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
+                         TAG_TYPE_STRING, None, None, None)
+        database.add_tag("SequenceName", TAG_ORIGIN_BUILTIN,
+                         TAG_TYPE_STRING, None, None, None)
+        database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN,
+                         TAG_TYPE_INTEGER, None, None, None)
         database.add_path("path1")
         database.add_path("path2")
         database.add_path("path3")
@@ -965,10 +1043,13 @@ class TestDatabaseMethods(unittest.TestCase):
         database.new_value("path2", "SequenceName", "RARE")
         database.new_value("path2", "BandWidth", 50000)
 
-        self.assertEqual(database.get_paths_matching_tag_value_couples([["PatientName", "Guerbet"]]), ["path1"])
-        self.assertEqual(database.get_paths_matching_tag_value_couples([["PatientName", "Guerbet"], ["SequenceName", "RARE"]]), [])
+        self.assertEqual(database.get_paths_matching_tag_value_couples(
+            [["PatientName", "Guerbet"]]), ["path1"])
+        self.assertEqual(database.get_paths_matching_tag_value_couples(
+            [["PatientName", "Guerbet"], ["SequenceName", "RARE"]]), [])
         database.new_value("path2", "PatientName", "Guerbet")
-        self.assertEqual(database.get_paths_matching_tag_value_couples([["PatientName", "Guerbet"], ["SequenceName", "RARE"]]), ["path2"])
+        self.assertEqual(database.get_paths_matching_tag_value_couples(
+            [["PatientName", "Guerbet"], ["SequenceName", "RARE"]]), ["path2"])
         self.assertEqual(database.get_paths_matching_tag_value_couples(
             [["PatientName", "Guerbet"], ["SequenceName", "RARE"], ["BandWidth", 50000]]), ["path2"])
         self.assertEqual(database.get_paths_matching_tag_value_couples(
@@ -981,16 +1062,19 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine)
 
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
+        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
+                         TAG_TYPE_STRING, None, None, None)
 
         database.add_path("path1")
 
         database.new_value("path1", "PatientName", "Guerbet")
 
         # Testing that the value can be set
-        self.assertEqual(database.get_current_value("path1", "PatientName"), "Guerbet")
+        self.assertEqual(database.get_current_value(
+            "path1", "PatientName"), "Guerbet")
         database.set_current_value("path1", "PatientName", "Guerbet2")
-        self.assertEqual(database.get_current_value("path1", "PatientName"), "Guerbet2")
+        self.assertEqual(database.get_current_value(
+            "path1", "PatientName"), "Guerbet2")
 
         # Testing that the values cannot be reset
         try:
@@ -1003,7 +1087,8 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing that initial cannot be added if the flag initial_table is put to False
         try:
-            database.new_value("path1", "PatientName", "Guerbet_current", "Guerbet_initial")
+            database.new_value("path1", "PatientName",
+                               "Guerbet_current", "Guerbet_initial")
             self.fail()
         except ValueError:
             pass
@@ -1032,58 +1117,64 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine)
 
-        database.add_tag("list_date", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_DATE, None, None, None)
-        database.add_tag("list_time", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_TIME, None, None, None)
-        database.add_tag("list_datetime", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_DATETIME, None, None, None)
-        
+        database.add_tag("list_date", TAG_ORIGIN_BUILTIN,
+                         TAG_TYPE_LIST_DATE, None, None, None)
+        database.add_tag("list_time", TAG_ORIGIN_BUILTIN,
+                         TAG_TYPE_LIST_TIME, None, None, None)
+        database.add_tag("list_datetime", TAG_ORIGIN_BUILTIN,
+                         TAG_TYPE_LIST_DATETIME, None, None, None)
+
         database.add_path("path1")
 
         list_date = [datetime.date(2018, 5, 23), datetime.date(1899, 12, 31)]
         list_time = [datetime.time(12, 41, 33, 540), datetime.time(1, 2, 3)]
-        list_datetime = [datetime.datetime(2018, 5, 23, 12, 41, 33, 540), 
+        list_datetime = [datetime.datetime(2018, 5, 23, 12, 41, 33, 540),
                          datetime.datetime(1899, 12, 31, 1, 2, 3)]
-        
+
         database.new_value("path1", "list_date", list_date)
-        self.assertEqual(list_date, database.get_current_value("path1", "list_date"))
+        self.assertEqual(
+            list_date, database.get_current_value("path1", "list_date"))
         database.new_value("path1", "list_time", list_time)
-        self.assertEqual(list_time, database.get_current_value("path1", "list_time"))
+        self.assertEqual(
+            list_time, database.get_current_value("path1", "list_time"))
         database.new_value("path1", "list_datetime", list_datetime)
-        self.assertEqual(list_datetime, database.get_current_value("path1", "list_datetime"))
+        self.assertEqual(list_datetime, database.get_current_value(
+            "path1", "list_datetime"))
 
     def test_filters(self):
         database = Database(self.string_engine)
-        
+
         database.add_tag('format', tag_type='string', origin=TAG_ORIGIN_BUILTIN,
-                unit=None, description=None, default_value=None)
+                         unit=None, description=None, default_value=None)
         database.add_tag('strings', tag_type=TAG_TYPE_LIST_STRING, origin=TAG_ORIGIN_BUILTIN,
-                unit=None, description=None, default_value=None)
+                         unit=None, description=None, default_value=None)
         database.add_tag('times', tag_type=TAG_TYPE_LIST_TIME, origin=TAG_ORIGIN_BUILTIN,
-                unit=None, description=None, default_value=None)
+                         unit=None, description=None, default_value=None)
         database.add_tag('dates', tag_type=TAG_TYPE_LIST_DATE, origin=TAG_ORIGIN_BUILTIN,
-                unit=None, description=None, default_value=None)
+                         unit=None, description=None, default_value=None)
         database.add_tag('datetimes', tag_type=TAG_TYPE_LIST_DATETIME, origin=TAG_ORIGIN_BUILTIN,
-                unit=None, description=None, default_value=None)
+                         unit=None, description=None, default_value=None)
 
         database.save_modifications()
         files = ('abc', 'bcd', 'def', 'xyz')
         for file in files:
-            for format, ext in (('NIFTI', 'nii'), 
+            for format, ext in (('NIFTI', 'nii'),
                                 ('DICOM', 'dcm'),
                                 ('Freesurfer', 'mgz')):
-                path = '/%s.%s' % (file, ext    )
+                path = '/%s.%s' % (file, ext)
                 database.add_path(path)
                 database.new_value(path, 'format', format)
                 database.new_value(path, 'strings', list(file))
 
         for filter, expected in (
-            ('format == "NIFTI"', set('/%s.nii' %i for i in files)),
+            ('format == "NIFTI"', set('/%s.nii' % i for i in files)),
             ('"b" IN strings', {'/abc.nii',
                                 '/abc.mgz',
                                 '/abc.dcm',
                                 '/bcd.nii',
                                 '/bcd.dcm',
                                 '/bcd.mgz'}
-            ),
+             ),
             ('(format == "NIFTI" OR NOT format == "DICOM") AND ("a" IN strings OR NOT "b" IN strings)',
              {'/xyz.nii',
               '/abc.nii',
@@ -1091,10 +1182,10 @@ class TestDatabaseMethods(unittest.TestCase):
               '/xyz.mgz',
               '/def.mgz',
               '/def.nii'}
-            )):
+             )):
             paths = set(path.name for path in database.filter_paths(filter))
             self.assertEqual(paths, expected)
 
-            
+
 if __name__ == '__main__':
     unittest.main()

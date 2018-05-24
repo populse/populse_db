@@ -1,19 +1,19 @@
-import six
-import os
-import copy
-from datetime import date, time, datetime
-import dateutil.parser
-import hashlib
 import ast
+import copy
+import hashlib
+import os
 import re
 import types
+from datetime import date, time, datetime
 
+import dateutil.parser
+import six
 from sqlalchemy import (create_engine, Column, String,
                         MetaData, event, or_, and_, not_, Table, sql)
+from sqlalchemy.engine import Engine
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.schema import CreateTable, DropTable
-from sqlalchemy.engine import Engine
 
 from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_TYPE_FLOAT, TAG_TYPE_TIME,
@@ -27,8 +27,8 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN,
                                        LIST_TYPES, TYPE_TO_COLUMN, TAG_TYPE_BOOLEAN,
                                        ALL_TYPES, ALL_UNITS, PATH_TABLE, TAG_TABLE, INITIAL_TABLE)
-
 from populse_db.filter import filter_parser, FilterToQuery
+
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -39,6 +39,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     """
     dbapi_connection.execute('pragma case_sensitive_like=ON')
     dbapi_connection.execute('pragma foreign_keys=ON')
+
 
 class Database:
 
@@ -55,6 +56,7 @@ class Database:
         - unsaved_modifications: to know if there are unsaved
           modifications in the database
         - paths: Paths rows
+        - initial_paths: Initial paths rows
         - tags: Tags rows
         - names: columns names
 
@@ -79,7 +81,8 @@ class Database:
         - check_type_value: checks the type of a value
         - is_tag_list: to know if a tag has a list type
         - add_value: adds a value to <path, tag>
-        - get_path: gives the path table object of a path
+        - get_path: gives the path row of a path
+        - get_initial_path: gives the initial path row of a path
         - get_paths: gives all path table objects
         - get_paths_names: gives all path names
         - add_path: adds a path
@@ -111,7 +114,7 @@ class Database:
         TAG_TYPE_LIST_DATETIME: lambda x: x.isoformat(),
         TAG_TYPE_LIST_TIME: lambda x: x.isoformat()
     }
-    
+
     _string_to_list_item = {
         TAG_TYPE_LIST_DATE: lambda x: dateutil.parser.parse(x).date(),
         TAG_TYPE_LIST_DATETIME: lambda x: dateutil.parser.parse(x),
@@ -155,13 +158,14 @@ class Database:
             raise ValueError(
                 'The initial_table flag cannot be True if the database has been created without the initial_table flag')
 
-        self.session = scoped_session(sessionmaker(bind=self.engine, autocommit=False, autoflush=False))
+        self.session = scoped_session(sessionmaker(
+            bind=self.engine, autocommit=False, autoflush=False))
 
         self.unsaved_modifications = False
 
         tags = self.session.query(self.table_classes[TAG_TABLE])
         self.tags = dict((tag.name, tag) for tag in tags)
-        
+
         self.names = {}
 
         # name is the only tag not hashed
@@ -190,7 +194,7 @@ class Database:
         self.update_table_classes()
 
     def add_tag(self, name, origin, tag_type, unit, default_value,
-                description, flush = True):
+                description, flush=True):
         """
         Adds a tag to the database, if it does not already exist
         :param name: Tag name (str)
@@ -205,12 +209,15 @@ class Database:
         """
 
         if not isinstance(name, str):
-            raise ValueError("The tag name must be of type " + str(str) + ", but tag name of type " + str(type(name)) + " given")
+            raise ValueError("The tag name must be of type " + str(str) +
+                             ", but tag name of type " + str(type(name)) + " given")
         tag_row = self.get_tag(name)
         if tag_row != None:
-            raise ValueError("A tag with the name " + str(name) + " already exists")
+            raise ValueError("A tag with the name " +
+                             str(name) + " already exists")
         if not origin in [TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN]:
-            raise ValueError("The tag origin must be in " + str([TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN]) + ", but " + str(origin) + " given")
+            raise ValueError("The tag origin must be in " + str(
+                [TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN]) + ", but " + str(origin) + " given")
         if not tag_type in ALL_TYPES:
             raise ValueError("The tag type must be in " + str(ALL_TYPES) + ", but " + str(
                 tag_type) + " given")
@@ -227,9 +234,9 @@ class Database:
 
         # Adding the tag in the tag table
         tag = self.table_classes[TAG_TABLE](name=name, origin=origin,
-                                        type=tag_type, unit=unit,
-                                        default_value=default_value,
-                                        description=description)
+                                            type=tag_type, unit=unit,
+                                            default_value=default_value,
+                                            description=description)
 
         self.session.add(tag)
         self.tags[name] = tag
@@ -246,15 +253,19 @@ class Database:
 
         # Tag current and initial columns added added to path table
 
-        path_query = str('ALTER TABLE %s ADD COLUMN %s %s' % (PATH_TABLE, column_name, column_str_type))
+        path_query = str('ALTER TABLE %s ADD COLUMN %s %s' %
+                         (PATH_TABLE, column_name, column_str_type))
         self.session.execute(path_query)
         self.table_classes[PATH_TABLE].__table__.append_column(column)
 
         if self.initial_table:
-            column_initial = Column(self.tag_name_to_column_name(name), column_type)
-            initial_query = str('ALTER TABLE %s ADD COLUMN %s %s' % (INITIAL_TABLE, column_name, column_str_type))
+            column_initial = Column(
+                self.tag_name_to_column_name(name), column_type)
+            initial_query = str('ALTER TABLE %s ADD COLUMN %s %s' % (
+                INITIAL_TABLE, column_name, column_str_type))
             self.session.execute(initial_query)
-            self.table_classes[INITIAL_TABLE].__table__.append_column(column_initial)
+            self.table_classes[INITIAL_TABLE].__table__.append_column(
+                column_initial)
 
         if self.paths_caches:
             self.paths.clear()
@@ -301,13 +312,15 @@ class Database:
                 "The tag name must be of type " + str(str) + ", but tag name of type " + str(type(name)) + " given")
         tag_row = self.get_tag(name)
         if tag_row is None:
-            raise ValueError("The tag with the name " + str(name) + " does not exist")
+            raise ValueError("The tag with the name " +
+                             str(name) + " does not exist")
 
         column_name = self.tag_name_to_column_name(name)
 
         # Tag removed from path table
         old_path_table = Table(PATH_TABLE, self.metadata)
-        select = sql.select([c for c in old_path_table.c if column_name not in c.name])
+        select = sql.select(
+            [c for c in old_path_table.c if column_name not in c.name])
 
         remaining_columns = [copy.copy(c) for c in old_path_table.columns
                              if column_name not in c.name]
@@ -331,7 +344,8 @@ class Database:
 
         self.session.execute(CreateTable(new_path_table))
 
-        select = sql.select([c for c in path_backup_table.c if column_name not in c.name])
+        select = sql.select(
+            [c for c in path_backup_table.c if column_name not in c.name])
         insert = sql.insert(new_path_table).from_select(
             [c.name for c in remaining_columns], select)
         self.session.execute(insert)
@@ -341,12 +355,14 @@ class Database:
         # Tag removed from initial table if initial values are used
         if self.initial_table:
             old_initial_table = Table(INITIAL_TABLE, self.metadata)
-            select = sql.select([c for c in old_initial_table.c if column_name not in c.name])
+            select = sql.select(
+                [c for c in old_initial_table.c if column_name not in c.name])
 
             remaining_columns = [copy.copy(c) for c in old_initial_table.columns
                                  if column_name not in c.name]
 
-            initial_backup_table = Table(INITIAL_TABLE + "_backup", self.metadata)
+            initial_backup_table = Table(
+                INITIAL_TABLE + "_backup", self.metadata)
 
             for column in old_initial_table.columns:
                 if column_name not in str(column):
@@ -366,7 +382,8 @@ class Database:
 
             self.session.execute(CreateTable(new_initial_table))
 
-            select = sql.select([c for c in initial_backup_table.c if column_name not in c.name])
+            select = sql.select(
+                [c for c in initial_backup_table.c if column_name not in c.name])
             insert = sql.insert(new_initial_table).from_select(
                 [c.name for c in remaining_columns], select)
             self.session.execute(insert)
@@ -409,7 +426,7 @@ class Database:
         :return: List of tag table objects
         """
         return self.tags.values()
-    
+
     """ VALUES """
 
     def list_value_to_typed_value(self, value, tag_type):
@@ -495,10 +512,12 @@ class Database:
 
         tag_row = self.get_tag(tag)
         if tag_row is None:
-            raise ValueError("The tag with the name " + str(tag) + " does not exist")
+            raise ValueError("The tag with the name " +
+                             str(tag) + " does not exist")
         path_row = self.get_path(path)
         if path_row is None:
-            raise ValueError("The path with the name " + str(path) + " does not exist")
+            raise ValueError("The path with the name " +
+                             str(path) + " does not exist")
         if not self.check_type_value(new_value, tag_row.type):
             raise ValueError("The value " + str(new_value) + " is invalid")
 
@@ -517,12 +536,15 @@ class Database:
         """
         tag_row = self.get_tag(tag)
         if tag_row is None:
-            raise ValueError("The tag with the name " + str(tag) + " does not exist")
+            raise ValueError("The tag with the name " +
+                             str(tag) + " does not exist")
         path_row = self.get_path(path)
         if path_row is None:
-            raise ValueError("The path with the name " + str(path) + " does not exist")
+            raise ValueError("The path with the name " +
+                             str(path) + " does not exist")
         if not self.initial_table:
-            raise ValueError("Impossible to reset values if the initial values are not activated, you can activate the flag initial_table when creating the Database instance")
+            raise ValueError(
+                "Impossible to reset values if the initial values are not activated, you can activate the flag initial_table when creating the Database instance")
 
         initial_value = self.get_initial_value(path, tag)
 
@@ -544,14 +566,16 @@ class Database:
 
         tag_row = self.get_tag(tag)
         if tag_row is None:
-            raise ValueError("The tag with the name " + str(tag) + " does not exist")
+            raise ValueError("The tag with the name " +
+                             str(tag) + " does not exist")
         path_row = self.get_path(path)
         if path_row is None:
-            raise ValueError("The path with the name " + str(path) + " does not exist")
+            raise ValueError("The path with the name " +
+                             str(path) + " does not exist")
 
         tag_column_name = self.tag_name_to_column_name(tag)
 
-        setattr(path_row.row, tag_column_name , None)
+        setattr(path_row.row, tag_column_name, None)
 
         if self.initial_table:
             initial_path_row = self.get_initial_path(path)
@@ -568,7 +592,7 @@ class Database:
         :param type: type that the value is supposed to have
         :return: True if the value is valid, False otherwise
         """
-        
+
         value_type = type(value)
         if valid_type is None:
             return False
@@ -612,15 +636,20 @@ class Database:
         path_row = self.get_path(path)
         if checks:
             if tag_row is None:
-                raise ValueError("The tag with the name " + str(tag) + " does not exist")
+                raise ValueError("The tag with the name " +
+                                 str(tag) + " does not exist")
             if path_row is None:
-                raise ValueError("The path with the name " + str(path) + " does not exist")
+                raise ValueError("The path with the name " +
+                                 str(path) + " does not exist")
             if not self.check_type_value(current_value, tag_row.type):
-                raise ValueError("The current value " + str(current_value) + " is invalid")
+                raise ValueError("The current value " +
+                                 str(current_value) + " is invalid")
             if not self.check_type_value(initial_value, tag_row.type):
-                raise ValueError("The initial value " + str(initial_value) + " is invalid")
+                raise ValueError("The initial value " +
+                                 str(initial_value) + " is invalid")
             if not self.initial_table and not initial_value is None:
-                raise ValueError("Impossible to add an initial value if the initial values are not activated, you can activate the flag initial_table when creating the Database instance")
+                raise ValueError(
+                    "Impossible to add an initial value if the initial values are not activated, you can activate the flag initial_table when creating the Database instance")
 
         column_name = self.tag_name_to_column_name(tag)
         database_current_value = getattr(
@@ -637,12 +666,14 @@ class Database:
         if (database_current_value is None and
                 database_initial_value is None):
             if initial_value is not None:
-                initial_value = self.python_to_column(tag_row.type, initial_value)
+                initial_value = self.python_to_column(
+                    tag_row.type, initial_value)
                 setattr(
                     path_initial_row.row, column_name,
                     initial_value)
             if current_value is not None:
-                current_value = self.python_to_column(tag_row.type, current_value)
+                current_value = self.python_to_column(
+                    tag_row.type, current_value)
                 setattr(
                     path_row.row, column_name,
                     current_value)
@@ -652,7 +683,8 @@ class Database:
             self.unsaved_modifications = True
 
         else:
-            raise ValueError("The tuple <" + str(tag) + ", " + str(path) + "> already has a value")
+            raise ValueError("The tuple <" + str(tag) + ", " +
+                             str(path) + "> already has a value")
 
     """ PATHS """
 
@@ -667,7 +699,7 @@ class Database:
             return self.paths[path]
         else:
             path_row = self.session.query(self.table_classes[PATH_TABLE]).filter(
-        self.table_classes[PATH_TABLE].name == path).first()
+                self.table_classes[PATH_TABLE].name == path).first()
             if path_row is not None:
                 path_row = TagRow(self, path_row)
             if self.paths_caches:
@@ -682,12 +714,13 @@ class Database:
         """
 
         if not self.initial_table:
-            raise ValueError("The initial values aren't activated, you can activate the flag initial_table when creating the Database instance")
+            raise ValueError(
+                "The initial values aren't activated, you can activate the flag initial_table when creating the Database instance")
         if self.paths_caches and path in self.initial_paths:
             return self.initial_paths[path]
         else:
             path_row = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
-                            self.table_classes[INITIAL_TABLE].name == path).first()
+                self.table_classes[INITIAL_TABLE].name == path).first()
             if path_row is not None:
                 path_row = TagRow(self, path_row)
             if self.paths_caches:
@@ -715,7 +748,7 @@ class Database:
         paths_list = []
         paths = self.session.query(self.table_classes[PATH_TABLE]).all()
         for path in paths:
-            paths_list.append(TagRow(self,path))
+            paths_list.append(TagRow(self, path))
         return paths_list
 
     def remove_path(self, path):
@@ -726,7 +759,8 @@ class Database:
 
         path_row = self.get_path(path)
         if path_row is None:
-            raise ValueError("The path with the name " + str(path) + " does not exist")
+            raise ValueError("The path with the name " +
+                             str(path) + " does not exist")
 
         for table_class in self.table_classes:
             if table_class != TAG_TABLE:
@@ -750,7 +784,8 @@ class Database:
         if checks:
             path_row = self.get_path(path)
             if path_row is not None:
-                raise ValueError("A path with the name " + str(path) + " already exists")
+                raise ValueError("A path with the name " +
+                                 str(path) + " already exists")
         if not isinstance(path, str):
             raise ValueError(
                 "The path name must be of type " + str(str) + ", but path name of type " + str(
@@ -807,7 +842,8 @@ class Database:
         # Search for each tag
         for tag in tags:
 
-            simple_tags_filters.append(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).like("%" + search + "%"))
+            simple_tags_filters.append(getattr(
+                self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).like("%" + search + "%"))
 
         values = values.filter(or_(*simple_tags_filters)).distinct().all()
         for value in values:
@@ -862,7 +898,8 @@ class Database:
             if not_choice not in ["", "NOT"]:
                 return []
 
-        query = self.session.query(self.table_classes[PATH_TABLE].name).filter(self.table_classes[PATH_TABLE].name.in_(paths_list))
+        query = self.session.query(self.table_classes[PATH_TABLE].name).filter(
+            self.table_classes[PATH_TABLE].name.in_(paths_list))
         row_filters = []
         paths_matching = []
 
@@ -877,11 +914,11 @@ class Database:
                 if (conditions[i] == "="):
                     row_filter.append(
                         and_(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) != None,
-                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) == values[i]))
+                             getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) == values[i]))
                 elif (conditions[i] == "!="):
                     row_filter.append(
                         or_(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) == None,
-                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) != values[i]))
+                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) != values[i]))
                 elif (conditions[i] == "<="):
                     row_filter.append(
                         getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) <= values[i])
@@ -906,7 +943,7 @@ class Database:
                 elif (conditions[i] == "HAS VALUE"):
                     row_filter.append(
                         getattr(self.table_classes[PATH_TABLE],
-                                     self.tag_name_to_column_name(tag)) != None)
+                                self.tag_name_to_column_name(tag)) != None)
                 elif (conditions[i] == "HAS NO VALUE"):
                     row_filter.append(
                         getattr(self.table_classes[PATH_TABLE],
@@ -1041,14 +1078,15 @@ class Database:
         self.base.prepare(engine=self.engine)
 
         for table in self.metadata.tables.values():
-            self.table_classes[table.name] = getattr(self.base.classes, table.name)
-    
+            self.table_classes[table.name] = getattr(
+                self.base.classes, table.name)
+
     def filter_query(self, filter):
         """
         Given a filter string, return a query that can be used with
         filter_paths() to select paths.
         """
-        
+
         tree = filter_parser().parse(filter)
         query = FilterToQuery(self).transform(tree)
         return query
@@ -1060,7 +1098,7 @@ class Database:
         the result of self.filter_query() or a string containing a filter
         (in this case self.fliter_query() is called to get the actual query).
         """
-        
+
         if isinstance(filter_query, six.string_types):
             filter_query = self.filter_query(filter_query)
         if filter_query is None:
@@ -1071,9 +1109,11 @@ class Database:
             python_filter = filter_query
         elif isinstance(filter_query, tuple):
             sql_condition, python_filter = filter_query
-            select = select = self.metadata.tables[PATH_TABLE].select(sql_condition)
+            select = select = self.metadata.tables[PATH_TABLE].select(
+                sql_condition)
         else:
-            select = select = self.metadata.tables[PATH_TABLE].select(filter_query)
+            select = select = self.metadata.tables[PATH_TABLE].select(
+                filter_query)
             python_filter = None
         for row in self.session.execute(select):
             row = TagRow(self, row)
@@ -1089,7 +1129,7 @@ class Database:
             return self.list_to_column(tag_type, value)
         else:
             return value
-    
+
     def column_to_python(self, tag_type, value):
         """
         Convert a value of a database column into the corresponding
@@ -1099,7 +1139,7 @@ class Database:
             return self.column_to_list(tag_type, value)
         else:
             return value
-            
+
     def list_to_column(self, tag_type, value):
         """
         Convert a python list value into a suitable value to put in a
@@ -1111,7 +1151,7 @@ class Database:
         else:
             list_value = [converter(i) for i in value]
         return repr(list_value)
-    
+
     def column_to_list(self, tag_type, value):
         """
         Convert a value of a database column into the corresponding
@@ -1124,22 +1164,24 @@ class Database:
         if converter is None:
             return list_value
         return [converter(i) for i in list_value]
-        
+
+
 class Undefined:
     pass
+
 
 class TagRow:
     '''
     A TagRow is an object that makes it possible to access to attributes of
-    a database row returned by sqlalchemy using the tag name. If the 
+    a database row returned by sqlalchemy using the tag name. If the
     attribute with the tag name is not found, it is hashed and search in the
     actual row. If found, it is stored in the TagRow instance.
     '''
-    
+
     def __init__(self, database, row):
         self.database = database
         self.row = row
-    
+
     def __getattr__(self, name):
         try:
             return getattr(self.row, name)
@@ -1148,9 +1190,10 @@ class TagRow:
             result = getattr(self.row, hashed_name, Undefined)
             if result is Undefined:
                 raise
-            result = self.database.column_to_python(self.database.tags[name].type, result)
+            result = self.database.column_to_python(
+                self.database.tags[name].type, result)
             setattr(self, hashed_name, result)
             return result
-    
+
     def __getitem__(self, name):
         return getattr(self, name)
