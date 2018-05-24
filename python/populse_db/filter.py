@@ -106,8 +106,8 @@ class FilterToQuery(Transformer):
         '<=': operator.le,
         '>': operator.gt,
         '>=': operator.ge,
-        'AND': operator.and_,
-        'OR': operator.or_,
+        'and': operator.and_,
+        'or': operator.or_,
     }
     
     def __init__(self, database):
@@ -130,7 +130,7 @@ class FilterToQuery(Transformer):
         stack = list(items)
         result = stack.pop(0)
         while stack:
-            operator_str = stack.pop(0)
+            operator_str = stack.pop(0).lower()
             operator = self.python_operators[operator_str]
             right_operand = stack.pop(0)
             if isinstance(result, types.FunctionType):
@@ -150,7 +150,7 @@ class FilterToQuery(Transformer):
                     # is allowed once with AND operator. In that case, the
                     # result is a tuple with the SqlAlchemy expression and 
                     # the Python function condition.
-                    if operator_str != 'AND':
+                    if operator_str != 'and':
                         raise ValueError('Combination of simple tags '
                             'conditions with list tags conditions is only '
                             'allowed with AND but not with %s' % operator_str)
@@ -173,8 +173,8 @@ class FilterToQuery(Transformer):
     
     def condition(self, items):
         left_operand, operator, right_operand = items
-        operator_str = str(operator)
-        if operator_str == 'IN':
+        operator_str = str(operator).lower()
+        if operator_str == 'in':
             if self.is_list_tag(right_operand):
                 if not isinstance(left_operand, six.string_types + (float,)): #TODO date, datetime, bool, none
                     raise ValueError('Left operand of IN <list tag> must be a string or a number tag but "%s" was used' % str(left_operand))
