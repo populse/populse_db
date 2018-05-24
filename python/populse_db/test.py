@@ -143,6 +143,13 @@ class TestDatabaseMethods(unittest.TestCase):
         except ValueError:
             pass
 
+        # Testing that the tag name is taken for the primary key name column
+        try:
+            database.add_tag("name", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
+            self.fail()
+        except ValueError:
+            pass
+
         # TODO Testing tag table or tag column creation
 
     def test_remove_tag(self):
@@ -924,7 +931,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database.new_value("scan2", "PatientName", "Guerbet2", "Guerbet")
         return_list = database.get_paths_matching_search("search", ["PatientName"])
         self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_search("scan", ["PatientName"])
+        return_list = database.get_paths_matching_search("scan", ["PatientName", "name"])
         self.assertEqual(return_list, ["scan1", "scan2"])
         return_list = database.get_paths_matching_search("Guerbet", ["PatientName"])
         self.assertEqual(return_list, ["scan1", "scan2"])
@@ -980,7 +987,7 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(len(return_list), 2)
         return_list = database.get_paths_matching_advanced_search([], [["TagNotExisting"]], ["="], ["Guerbet"], [""], ["scan1", "scan2", "scan3"])
         self.assertEqual(return_list, [])
-        return_list = database.get_paths_matching_advanced_search([], [["FileName"]], ["CONTAINS"], ["scan"], [""], ["scan1", "scan2", "scan3"])
+        return_list = database.get_paths_matching_advanced_search([], [["name"]], ["CONTAINS"], ["scan"], [""], ["scan1", "scan2", "scan3"])
         self.assertTrue("scan1" in return_list)
         self.assertTrue("scan2" in return_list)
         self.assertTrue("scan3" in return_list)

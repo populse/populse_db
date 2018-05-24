@@ -1,8 +1,5 @@
 import six
 import os
-import hashlib
-import ast
-import re
 import copy
 from datetime import date, time, datetime
 import dateutil.parser
@@ -166,6 +163,9 @@ class Database:
         self.tags = dict((tag.name, tag) for tag in tags)
         
         self.names = {}
+
+        # name is the only tag not hashed
+        self.names["name"] = "name"
 
         if self.paths_caches:
             self.paths = {}
@@ -804,9 +804,6 @@ class Database:
 
         values = self.session.query(self.table_classes[PATH_TABLE].name)
 
-        # Search in path name
-        simple_tags_filters.append(self.table_classes[PATH_TABLE].name.like("%" + search + "%"))
-
         # Search for each tag
         for tag in tags:
 
@@ -823,7 +820,7 @@ class Database:
         """
         Gives the paths matching the advanced search
         :param links: Links (AND/OR)
-        :param fields: Fields (List of tags) (FileName for search in name column)
+        :param fields: Fields (List of tags)
         :param conditions: Conditions (=, !=, <, >, <=, >=, BETWEEN,
                            CONTAINS, IN, HAS VALUE, HAS NO VALUE)
         :param values: Values (Str value for =, !=, <, >, <=, >=, HAS VALUE, HAS NO VALUE, and
@@ -842,7 +839,6 @@ class Database:
             if link not in ["AND", "OR"]:
                 return []
         fields_list = self.get_tags_names()
-        fields_list.append("FileName")
         for field in fields:
             for tag in field:
                 if tag not in fields_list:
@@ -878,75 +874,43 @@ class Database:
             # For each tag to check
             for tag in fields[i]:
 
-                if tag == "FileName":
-
-                    if (conditions[i] == "="):
-                        row_filter.append(self.table_classes[PATH_TABLE].name == values[i])
-                    elif (conditions[i] == "!="):
-                        row_filter.append(self.table_classes[PATH_TABLE].name != values[i])
-                    elif (conditions[i] == "<="):
-                        row_filter.append(self.table_classes[PATH_TABLE].name <= values[i])
-                    elif (conditions[i] == "<"):
-                        row_filter.append(self.table_classes[PATH_TABLE].name < values[i])
-                    elif (conditions[i] == ">="):
-                        row_filter.append(self.table_classes[PATH_TABLE].name >= values[i])
-                    elif (conditions[i] == ">"):
-                        row_filter.append(self.table_classes[PATH_TABLE].name > values[i])
-                    elif (conditions[i] == "CONTAINS"):
-                        row_filter.append(self.table_classes[PATH_TABLE].name.contains(
-                                values[i]))
-                    elif (conditions[i] == "BETWEEN"):
-                        row_filter.append(self.table_classes[PATH_TABLE].name.between(
-                                values[i][0], values[i][1]))
-                    elif (conditions[i] == "IN"):
-                        row_filter.append(self.table_classes[PATH_TABLE].name.in_(
-                                values[i]))
-                    elif (conditions[i] == "HAS VALUE"):
-                        row_filter.append(
-                            self.table_classes[PATH_TABLE].name != None)
-                    elif (conditions[i] == "HAS NO VALUE"):
-                        row_filter.append(
-                            self.table_classes[PATH_TABLE].name == None)
-
-                else:
-
-                    if (conditions[i] == "="):
-                        row_filter.append(
-                            and_(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) != None,
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) == values[i]))
-                    elif (conditions[i] == "!="):
-                        row_filter.append(
-                            or_(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) == None,
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) != values[i]))
-                    elif (conditions[i] == "<="):
-                        row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) <= values[i])
-                    elif (conditions[i] == "<"):
-                        row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) < values[i])
-                    elif (conditions[i] == ">="):
-                        row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) >= values[i])
-                    elif (conditions[i] == ">"):
-                        row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) > values[i])
-                    elif (conditions[i] == "CONTAINS"):
-                        row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).like("%" + str(values[i]) + "%"))
-                    elif (conditions[i] == "BETWEEN"):
-                        row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).between(values[i][0], values[i][1]))
-                    elif (conditions[i] == "IN"):
-                        row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).in_(values[i]))
-                    elif (conditions[i] == "HAS VALUE"):
-                        row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE],
-                                         self.tag_name_to_column_name(tag) + "_current") != None)
-                    elif (conditions[i] == "HAS NO VALUE"):
-                        row_filter.append(
-                            getattr(self.table_classes[PATH_TABLE],
-                                    self.tag_name_to_column_name(tag) + "_current") == None)
+                if (conditions[i] == "="):
+                    row_filter.append(
+                        and_(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) != None,
+                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) == values[i]))
+                elif (conditions[i] == "!="):
+                    row_filter.append(
+                        or_(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) == None,
+                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) != values[i]))
+                elif (conditions[i] == "<="):
+                    row_filter.append(
+                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) <= values[i])
+                elif (conditions[i] == "<"):
+                    row_filter.append(
+                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) < values[i])
+                elif (conditions[i] == ">="):
+                    row_filter.append(
+                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) >= values[i])
+                elif (conditions[i] == ">"):
+                    row_filter.append(
+                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) > values[i])
+                elif (conditions[i] == "CONTAINS"):
+                    row_filter.append(
+                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).like("%" + str(values[i]) + "%"))
+                elif (conditions[i] == "BETWEEN"):
+                    row_filter.append(
+                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).between(values[i][0], values[i][1]))
+                elif (conditions[i] == "IN"):
+                    row_filter.append(
+                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).in_(values[i]))
+                elif (conditions[i] == "HAS VALUE"):
+                    row_filter.append(
+                        getattr(self.table_classes[PATH_TABLE],
+                                     self.tag_name_to_column_name(tag)) != None)
+                elif (conditions[i] == "HAS NO VALUE"):
+                    row_filter.append(
+                        getattr(self.table_classes[PATH_TABLE],
+                                self.tag_name_to_column_name(tag)) == None)
 
             # Putting OR condition between all row filters
             if len(row_filter) > 1:

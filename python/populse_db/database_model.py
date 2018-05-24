@@ -70,6 +70,10 @@ def create_database(string_engine, initial_table=False):
     fill_tables(metadata, initial_table)
     metadata.create_all(engine)
 
+    # Path primary key name added to the list of tags
+    tag_table = metadata.tables[TAG_TABLE]
+    insert = tag_table.insert().values(name="name", origin=TAG_ORIGIN_BUILTIN, type=TAG_TYPE_STRING, unit=None, default_value=None, description=None)
+    engine.execute(insert)
 
 def fill_tables(metadata, initial_table):
     """
