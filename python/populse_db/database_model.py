@@ -65,7 +65,7 @@ def create_database(string_engine, initial_table=False):
 
     # Path primary key name added to the list of tags
     tag_table = metadata.tables[TAG_TABLE]
-    insert = tag_table.insert().values(name=PATH_PRIMARY_KEY, type=TAG_TYPE_STRING, description=None)
+    insert = tag_table.insert().values(name=PATH_PRIMARY_KEY, type=TAG_TYPE_STRING, description="Path name")
     engine.execute(insert)
 
 
