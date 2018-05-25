@@ -5,15 +5,15 @@ import tempfile
 import datetime
 
 from populse_db.database import Database
-from populse_db.database_model import (create_database, TAG_ORIGIN_BUILTIN,
+from populse_db.database_model import (create_database, TAG_TYPE_BOOLEAN,
                                        TAG_TYPE_STRING, TAG_TYPE_FLOAT,
-                                       TAG_UNIT_MHZ, TAG_TYPE_INTEGER,
+                                       TAG_TYPE_INTEGER, TAG_TYPE_LIST_BOOLEAN,
                                        TAG_TYPE_TIME, TAG_TYPE_DATETIME,
                                        TAG_TYPE_LIST_STRING,
                                        TAG_TYPE_LIST_INTEGER,
                                        TAG_TYPE_LIST_FLOAT, PATH_TABLE,
                                        TAG_TYPE_LIST_DATE, TAG_TYPE_LIST_TIME,
-                                       TAG_TYPE_LIST_DATETIME, TAG_TYPE_BOOLEAN, TAG_TYPE_LIST_BOOLEAN)
+                                       TAG_TYPE_LIST_DATETIME)
 from populse_db.filter import literal_parser, FilterToQuery
 
 
@@ -71,92 +71,57 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing with a first tag
         database = Database(self.string_engine)
-        return_value = database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                                        TAG_TYPE_STRING, None, None, "Name of the patient")
+        return_value = database.add_tag("PatientName", TAG_TYPE_STRING, "Name of the patient")
         self.assertIsNone(return_value)
 
         # Checking the tag properties
         tag = database.get_tag("PatientName")
         self.assertEqual(tag.name, "PatientName")
-        self.assertEqual(tag.origin, TAG_ORIGIN_BUILTIN)
         self.assertEqual(tag.type, TAG_TYPE_STRING)
-        self.assertIsNone(tag.unit)
-        self.assertIsNone(tag.default_value)
         self.assertEqual(tag.description, "Name of the patient")
 
         # Testing with a tag that already exists
         try:
-            database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                             TAG_TYPE_STRING, None, None, "Name of the patient")
+            database.add_tag("PatientName", TAG_TYPE_STRING, "Name of the patient")
             self.fail()
         except ValueError:
             pass
 
         # Testing with all tag types
-        database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_FLOAT, TAG_UNIT_MHZ, None, None)
-        database.add_tag(
-            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, "with space")
-        database.add_tag(
-            "AcquisitionTime", TAG_ORIGIN_BUILTIN, TAG_TYPE_TIME, None, None, None)
-        database.add_tag(
-            "AcquisitionDate", TAG_ORIGIN_BUILTIN, TAG_TYPE_DATETIME, None, None, None)
-        database.add_tag("Dataset dimensions",
-                         TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag("BandWidth", TAG_TYPE_FLOAT, None)
+        database.add_tag("Bits per voxel", TAG_TYPE_INTEGER, "with space")
+        database.add_tag("AcquisitionTime", TAG_TYPE_TIME, None)
+        database.add_tag("AcquisitionDate", TAG_TYPE_DATETIME, None)
+        database.add_tag("Dataset dimensions", TAG_TYPE_LIST_INTEGER, None)
 
-        database.add_tag(
-            "Bitspervoxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, "without space")
+        database.add_tag("Bitspervoxel", TAG_TYPE_INTEGER, "without space")
         self.assertEqual(database.get_tag(
             "Bitspervoxel").description, "without space")
         self.assertEqual(database.get_tag(
             "Bits per voxel").description, "with space")
-        database.add_tag("Boolean",
-                         TAG_ORIGIN_BUILTIN, TAG_TYPE_BOOLEAN, None, None, None)
-        database.add_tag("Boolean list",
-                         TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_BOOLEAN, None, None, None)
+        database.add_tag("Boolean", TAG_TYPE_BOOLEAN, None)
+        database.add_tag("Boolean list", TAG_TYPE_LIST_BOOLEAN, None)
 
         # Testing with wrong parameters
         try:
-            database.add_tag(None, TAG_ORIGIN_BUILTIN,
-                             TAG_TYPE_LIST_INTEGER, None, None, None)
+            database.add_tag(None, TAG_TYPE_LIST_INTEGER, None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.add_tag("Patient Name", True,
-                             TAG_TYPE_LIST_INTEGER, None, None, None)
+            database.add_tag("Patient Name", None, None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN,
-                             None, None, None, None)
-            self.fail()
-        except ValueError:
-            pass
-        try:
-            database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN,
-                             TAG_TYPE_LIST_INTEGER, "unit", None, None)
-            self.fail()
-        except ValueError:
-            pass
-        try:
-            database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN,
-                             TAG_TYPE_STRING, None, True, None)
-            self.fail()
-        except ValueError:
-            pass
-        try:
-            database.add_tag("Patient Name", TAG_ORIGIN_BUILTIN,
-                             TAG_TYPE_STRING, None, None, 1.5)
+            database.add_tag("Patient Name", TAG_TYPE_STRING, 1.5)
             self.fail()
         except ValueError:
             pass
 
         # Testing that the tag name is taken for the primary key name column
         try:
-            database.add_tag("name", TAG_ORIGIN_BUILTIN,
-                             TAG_TYPE_STRING, None, None, None)
+            database.add_tag("name", TAG_TYPE_STRING, None)
             self.fail()
         except ValueError:
             pass
@@ -171,13 +136,10 @@ class TestDatabaseMethods(unittest.TestCase):
         database = Database(self.string_engine, True)
 
         # Adding tags
-        return_value = database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                                        TAG_TYPE_STRING, None, None, "Name of the patient")
+        return_value = database.add_tag("PatientName", TAG_TYPE_STRING, "Name of the patient")
         self.assertEqual(return_value, None)
-        database.add_tag(
-            "SequenceName", TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None, None)
-        database.add_tag("Dataset dimensions",
-                         TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag("SequenceName", TAG_TYPE_STRING, None)
+        database.add_tag("Dataset dimensions", TAG_TYPE_LIST_INTEGER, None)
 
         # Adding paths
         database.add_path("path1")
@@ -239,8 +201,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database = Database(self.string_engine)
 
         # Adding a tag
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("PatientName", TAG_TYPE_STRING, "Name of the patient")
 
         # Testing that the tag is returned if it exists
         self.assertIsNotNone(database.get_tag("PatientName"))
@@ -259,14 +220,10 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("path1")
 
         # Adding tags
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag("Dataset dimensions",
-                         TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
-        database.add_tag(
-            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag(
-            "Grids spacing", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_FLOAT, None, None, None)
+        database.add_tag("PatientName", TAG_TYPE_STRING, "Name of the patient")
+        database.add_tag("Dataset dimensions", TAG_TYPE_LIST_INTEGER, None)
+        database.add_tag("Bits per voxel", TAG_TYPE_INTEGER, None)
+        database.add_tag("Grids spacing", TAG_TYPE_LIST_FLOAT, None)
 
         # Adding values
         database.new_value("path1", "PatientName", "test")
@@ -308,14 +265,10 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("path1")
 
         # Adding tags
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag(
-            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag("Dataset dimensions",
-                         TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
-        database.add_tag(
-            "Grids spacing", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_FLOAT, None, None, None)
+        database.add_tag("PatientName", TAG_TYPE_STRING, "Name of the patient")
+        database.add_tag("Bits per voxel", TAG_TYPE_INTEGER, None)
+        database.add_tag("Dataset dimensions", TAG_TYPE_LIST_INTEGER, None)
+        database.add_tag("Grids spacing", TAG_TYPE_LIST_FLOAT, None)
 
         # Adding values
         database.new_value("path1", "PatientName", "test", "test")
@@ -359,8 +312,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("path1")
 
         # Adding tag
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("PatientName", TAG_TYPE_STRING, "Name of the patient")
 
         # Adding a value
         database.new_value("path1", "PatientName", "test", "test")
@@ -397,14 +349,13 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("path1")
 
         # Adding tags
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("PatientName", TAG_TYPE_STRING, "Name of the patient")
         database.add_tag(
-            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
+            "Bits per voxel", TAG_TYPE_INTEGER, None)
         database.add_tag(
-            "AcquisitionDate", TAG_ORIGIN_BUILTIN, TAG_TYPE_DATETIME, None, None, None)
+            "AcquisitionDate", TAG_TYPE_DATETIME, None)
         database.add_tag(
-            "AcquisitionTime", TAG_ORIGIN_BUILTIN, TAG_TYPE_TIME, None, None, None)
+            "AcquisitionTime", TAG_TYPE_TIME, None)
 
         # Adding values and changing it
         database.new_value("path1", "PatientName", "test", "test")
@@ -500,12 +451,9 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("path1")
 
         # Adding tags
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag(
-            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag("Dataset dimensions",
-                         TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag("PatientName", TAG_TYPE_STRING, "Name of the patient")
+        database.add_tag("Bits per voxel", TAG_TYPE_INTEGER, None)
+        database.add_tag("Dataset dimensions", TAG_TYPE_LIST_INTEGER, None)
 
         # Adding values and changing it
         database.new_value("path1", "PatientName", "test", "test")
@@ -582,12 +530,9 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("path1")
 
         # Adding tags
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, "Name of the patient")
-        database.add_tag(
-            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag("Dataset dimensions",
-                         TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
+        database.add_tag("PatientName", TAG_TYPE_STRING, "Name of the patient")
+        database.add_tag("Bits per voxel", TAG_TYPE_INTEGER, None)
+        database.add_tag("Dataset dimensions", TAG_TYPE_LIST_INTEGER, None)
 
         # Adding values
         database.new_value("path1", "PatientName", "test")
@@ -672,24 +617,16 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("path2")
 
         # Adding tags
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("PatientName", TAG_TYPE_STRING, "Name of the patient")
         database.add_tag(
-            "Bits per voxel", TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None, None)
-        database.add_tag(
-            "BandWidth", TAG_ORIGIN_BUILTIN, TAG_TYPE_FLOAT, None, None, None)
-        database.add_tag(
-            "AcquisitionTime", TAG_ORIGIN_BUILTIN, TAG_TYPE_TIME, None, None, None)
-        database.add_tag(
-            "AcquisitionDate", TAG_ORIGIN_BUILTIN, TAG_TYPE_DATETIME, None, None, None)
-        database.add_tag("Dataset dimensions",
-                         TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_INTEGER, None, None, None)
-        database.add_tag(
-            "Grids spacing", TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_FLOAT, None, None, None)
-        database.add_tag("Boolean",
-                         TAG_ORIGIN_BUILTIN, TAG_TYPE_BOOLEAN, None, None, None)
-        database.add_tag("Boolean list",
-                         TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_BOOLEAN, None, None, None)
+            "Bits per voxel", TAG_TYPE_INTEGER, None)
+        database.add_tag("BandWidth", TAG_TYPE_FLOAT, None)
+        database.add_tag("AcquisitionTime", TAG_TYPE_TIME, None)
+        database.add_tag("AcquisitionDate", TAG_TYPE_DATETIME, None)
+        database.add_tag("Dataset dimensions", TAG_TYPE_LIST_INTEGER, None)
+        database.add_tag("Grids spacing", TAG_TYPE_LIST_FLOAT, None)
+        database.add_tag("Boolean", TAG_TYPE_BOOLEAN, None)
+        database.add_tag("Boolean list", TAG_TYPE_LIST_BOOLEAN, None)
 
         # Adding values
         database.new_value("path1", "PatientName", "test", None)
@@ -836,8 +773,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_path("path2")
 
         # Adding tag
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, "Name of the patient")
+        database.add_tag("PatientName", TAG_TYPE_STRING, "Name of the patient")
 
         # Adding value
         database.new_value("path1", "PatientName", "test")
@@ -921,8 +857,7 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(return_list, [])
 
         database.add_path("path2")
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, None)
+        database.add_tag("PatientName", TAG_TYPE_STRING, None)
         database.new_value("path1", "PatientName", "Guerbet1", "Guerbet")
         database.new_value("path2", "PatientName", "Guerbet2", "Guerbet")
         self.assertEqual(database.get_paths_matching_search(
@@ -961,12 +896,9 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(database.get_paths_matching_advanced_search(
             [], [["PatientName"]], ["BETWEEN"], ["Guerbet"], ["NOT"], 1), [])
 
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, None)
-        database.add_tag("SequenceName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, None)
-        database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag("PatientName", TAG_TYPE_STRING, None)
+        database.add_tag("SequenceName", TAG_TYPE_STRING, None)
+        database.add_tag("BandWidth", TAG_TYPE_INTEGER, None)
         database.add_path("path1")
         database.add_path("path2")
         database.add_path("path3")
@@ -1031,12 +963,9 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(
             database.get_paths_matching_tag_value_couples("test"), [])
 
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, None)
-        database.add_tag("SequenceName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, None)
-        database.add_tag("BandWidth", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_INTEGER, None, None, None)
+        database.add_tag("PatientName", TAG_TYPE_STRING, None)
+        database.add_tag("SequenceName", TAG_TYPE_STRING, None)
+        database.add_tag("BandWidth", TAG_TYPE_INTEGER, None)
         database.add_path("path1")
         database.add_path("path2")
         database.add_path("path3")
@@ -1063,8 +992,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine)
 
-        database.add_tag("PatientName", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_STRING, None, None, None)
+        database.add_tag("PatientName", TAG_TYPE_STRING, None)
 
         database.add_path("path1")
 
@@ -1118,12 +1046,9 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine)
 
-        database.add_tag("list_date", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_LIST_DATE, None, None, None)
-        database.add_tag("list_time", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_LIST_TIME, None, None, None)
-        database.add_tag("list_datetime", TAG_ORIGIN_BUILTIN,
-                         TAG_TYPE_LIST_DATETIME, None, None, None)
+        database.add_tag("list_date", TAG_TYPE_LIST_DATE, None)
+        database.add_tag("list_time", TAG_TYPE_LIST_TIME, None)
+        database.add_tag("list_datetime", TAG_TYPE_LIST_DATETIME, None)
 
         database.add_path("path1")
 
@@ -1145,16 +1070,11 @@ class TestDatabaseMethods(unittest.TestCase):
     def test_filters(self):
         database = Database(self.string_engine)
 
-        database.add_tag('format', tag_type='string', origin=TAG_ORIGIN_BUILTIN,
-                         unit=None, description=None, default_value=None)
-        database.add_tag('strings', tag_type=TAG_TYPE_LIST_STRING, origin=TAG_ORIGIN_BUILTIN,
-                         unit=None, description=None, default_value=None)
-        database.add_tag('times', tag_type=TAG_TYPE_LIST_TIME, origin=TAG_ORIGIN_BUILTIN,
-                         unit=None, description=None, default_value=None)
-        database.add_tag('dates', tag_type=TAG_TYPE_LIST_DATE, origin=TAG_ORIGIN_BUILTIN,
-                         unit=None, description=None, default_value=None)
-        database.add_tag('datetimes', tag_type=TAG_TYPE_LIST_DATETIME, origin=TAG_ORIGIN_BUILTIN,
-                         unit=None, description=None, default_value=None)
+        database.add_tag('format', tag_type='string', description=None)
+        database.add_tag('strings', tag_type=TAG_TYPE_LIST_STRING, description=None)
+        database.add_tag('times', tag_type=TAG_TYPE_LIST_TIME, description=None)
+        database.add_tag('dates', tag_type=TAG_TYPE_LIST_DATE, description=None)
+        database.add_tag('datetimes', tag_type=TAG_TYPE_LIST_DATETIME, description=None)
 
         database.save_modifications()
         files = ('abc', 'bcd', 'def', 'xyz')

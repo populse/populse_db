@@ -1,10 +1,6 @@
 from sqlalchemy import (Column, Table, String, Boolean,
                         Enum, Integer, MetaData, create_engine, Float, Date, DateTime, Time)
 
-# Tag origin
-TAG_ORIGIN_BUILTIN = "builtin"
-TAG_ORIGIN_USER = "user"
-
 # Tag type
 TAG_TYPE_STRING = "string"
 TAG_TYPE_INTEGER = "int"
@@ -44,19 +40,11 @@ TYPE_TO_COLUMN[TAG_TYPE_LIST_TIME] = Time
 TYPE_TO_COLUMN[TAG_TYPE_STRING] = String
 TYPE_TO_COLUMN[TAG_TYPE_LIST_STRING] = String
 
-# Tag unit
-TAG_UNIT_MS = "ms"
-TAG_UNIT_MM = "mm"
-TAG_UNIT_DEGREE = "degree"
-TAG_UNIT_HZPIXEL = "Hz/pixel"
-TAG_UNIT_MHZ = "MHz"
-
-ALL_UNITS = [TAG_UNIT_MS, TAG_UNIT_MM,
-             TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL, TAG_UNIT_MHZ]
-
 PATH_TABLE = "path"
 INITIAL_TABLE = "initial"
 TAG_TABLE = "tag"
+
+PATH_PRIMARY_KEY = "name"
 
 # List value type
 VALUE_CURRENT = "current"
@@ -77,8 +65,7 @@ def create_database(string_engine, initial_table=False):
 
     # Path primary key name added to the list of tags
     tag_table = metadata.tables[TAG_TABLE]
-    insert = tag_table.insert().values(name="name", origin=TAG_ORIGIN_BUILTIN,
-                                       type=TAG_TYPE_STRING, unit=None, default_value=None, description=None)
+    insert = tag_table.insert().values(name=PATH_PRIMARY_KEY, type=TAG_TYPE_STRING, description=None)
     engine.execute(insert)
 
 
@@ -91,24 +78,16 @@ def fill_tables(metadata, initial_table):
     Table(TAG_TABLE, metadata,
           Column("name", String, primary_key=True),
           Column(
-              "origin", Enum(TAG_ORIGIN_BUILTIN, TAG_ORIGIN_USER), nullable=False),
-          Column(
               "type", Enum(TAG_TYPE_STRING, TAG_TYPE_INTEGER, TAG_TYPE_FLOAT, TAG_TYPE_BOOLEAN,
                            TAG_TYPE_DATE, TAG_TYPE_DATETIME, TAG_TYPE_TIME,
                            TAG_TYPE_LIST_STRING, TAG_TYPE_LIST_INTEGER,
                            TAG_TYPE_LIST_FLOAT, TAG_TYPE_LIST_BOOLEAN, TAG_TYPE_LIST_DATE,
                            TAG_TYPE_LIST_DATETIME, TAG_TYPE_LIST_TIME),
               nullable=False),
-          Column(
-              "unit", Enum(
-                  TAG_UNIT_MS, TAG_UNIT_MM, TAG_UNIT_DEGREE, TAG_UNIT_HZPIXEL,
-                  TAG_UNIT_MHZ),
-              nullable=True),
-          Column("default_value", String, nullable=True),
           Column("description", String, nullable=True))
 
-    Table(PATH_TABLE, metadata, Column("name", String, primary_key=True))
+    Table(PATH_TABLE, metadata, Column(PATH_PRIMARY_KEY, String, primary_key=True))
 
     if initial_table:
         Table(INITIAL_TABLE, metadata, Column(
-            "name", String, primary_key=True))
+            PATH_PRIMARY_KEY, String, primary_key=True))
