@@ -1,5 +1,5 @@
 from populse_db.database import Database
-from populse_db.database_model import TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, TAG_TYPE_FLOAT, TAG_TYPE_INTEGER, TAG_TYPE_LIST_FLOAT
+from populse_db.database_model import COLUMN_TYPE_STRING, COLUMN_TYPE_FLOAT, COLUMN_TYPE_INTEGER, COLUMN_TYPE_LIST_FLOAT
 import os
 import tempfile
 import shutil
@@ -18,71 +18,65 @@ if __name__ == '__main__':
     path = os.path.join(temp_folder, "test.db")
     string_engine = 'sqlite:///' + path
 
-    database = Database(string_engine)
+    database = Database(string_engine, True, True)
 
-    tags = []
+    columns = []
 
     for i in range(0, 20):
-        tags.append(["tag" + str(i), TAG_ORIGIN_BUILTIN, TAG_TYPE_FLOAT, None, None,
-                     None])
+        columns.append(["column" + str(i), COLUMN_TYPE_FLOAT, None])
     for i in range(20, 40):
-        tags.append(["tag" + str(i), TAG_ORIGIN_BUILTIN, TAG_TYPE_STRING, None, None,
-                     None])
+        columns.append(["column" + str(i), COLUMN_TYPE_STRING, None])
     for i in range(40, 50):
-        tags.append(["tag" + str(i), TAG_ORIGIN_BUILTIN, TAG_TYPE_INTEGER, None, None,
-                     None])
+        columns.append(["column" + str(i), COLUMN_TYPE_INTEGER, None])
     for i in range(50, 75):
-        tags.append(["tag" + str(i), TAG_ORIGIN_BUILTIN, TAG_TYPE_LIST_FLOAT, None, None,
-                     None])
+        columns.append(["column" + str(i), COLUMN_TYPE_LIST_FLOAT, None])
 
-    database.add_tags(tags)
+    database.add_columns(columns)
 
-    current_paths = database.get_paths_names()
+    current_documents = database.get_documents_names()
 
     for i in range(0, 1000):
-        path_name = "path" + str(i)
-        if not path_name in current_paths:
-            database.add_path(path_name, False)
+        document_name = "document" + str(i)
+        if not document_name in current_documents:
+            database.add_document(document_name, False)
     database.session.flush()
 
     for i in range(0, 1000):
-        path_name = "path" + str(i)
+        document_name = "document" + str(i)
         for j in range(0, 20):
-            if path_name in current_paths:
-                database.remove_value(path_name, "tag" + str(j), False)
-            database.new_value(path_name, "tag" + str(j), 1.5, 1.5, False)
+            if document_name in current_documents:
+                database.remove_value(document_name, "column" + str(j), False)
+            database.new_value(document_name, "column" + str(j), 1.5, 1.5, False)
         for j in range(20, 40):
-            if path_name in current_paths:
-                database.remove_value(path_name, "tag" + str(j), False)
-            database.new_value(path_name, "tag" + str(j), "value", "value", False)
+            if document_name in current_documents:
+                database.remove_value(document_name, "column" + str(j), False)
+            database.new_value(document_name, "column" + str(j), "value", "value", False)
         for j in range(40, 50):
-            if path_name in current_paths:
-                database.remove_value(path_name, "tag" + str(j), False)
-            database.new_value(path_name, "tag" + str(j), 5, 5, False)
+            if document_name in current_documents:
+                database.remove_value(document_name, "column" + str(j), False)
+            database.new_value(document_name, "column" + str(j), 5, 5, False)
         for j in range(50, 75):
-            if path_name in current_paths:
-                database.remove_value(path_name, "tag" + str(j), False)
-            database.new_value(path_name, "tag" + str(j), [1, 2, 3], [1, 2, 3], False)
+            if document_name in current_documents:
+                database.remove_value(document_name, "column" + str(j), False)
+            database.new_value(document_name, "column" + str(j), [1, 2, 3], [1, 2, 3], False)
     database.session.flush()
 
-    """
-    simple_search = database.get_paths_matching_search("1", ["tag0", "tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7", "tag8", "tag9"])
+    simple_search = database.get_documents_matching_search("1", ["column0", "column1", "column2", "column3", "column4", "column5", "column6", "column7", "column8", "column9"])
     print(simple_search) # All paths
 
-    simple_search = database.get_paths_matching_search("1.2",
-                                                       ["tag0", "tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7",
-                                                        "tag8", "tag9"])
-    print(simple_search) # No path
+    simple_search = database.get_documents_matching_search("1.2",
+                                                       ["column0", "column1", "column2", "column3", "column4", "column5", "column6", "column7",
+                                                        "column8", "column9"])
+    print(simple_search) # No document
 
-    simple_search = database.get_paths_matching_search("1.5",
-                                                       ["tag0", "tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7",
-                                                        "tag8", "tag9"])
-    print(simple_search) # All paths
+    simple_search = database.get_documents_matching_search("1.5",
+                                                       ["column0", "column1", "column2", "column3", "column4", "column5", "column6", "column7",
+                                                        "column8", "column9"])
+    print(simple_search) # All documents
 
-    advanced_search = database.get_paths_matching_advanced_search([], [["tag1"]], ["="], [1.5], [""],
-                                                              ["path0", "path1", "path2", "path3", "path4", "path5", "path6", "path7", "path8", "path9"])
-    print(advanced_search) # 10 first paths
-    """
+    advanced_search = database.get_documents_matching_advanced_search([], [["column1"]], ["="], ["1.5"], [""],
+                                                              ["document0", "document1", "document2", "document3", "document4", "document5", "document6", "document7", "document8", "document9"])
+    print(advanced_search) # 10 first columns
 
     shutil.rmtree(temp_folder)
 

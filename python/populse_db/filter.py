@@ -9,9 +9,8 @@ import dateutil.parser
 
 import sqlalchemy
 from sqlalchemy.ext.automap import AutomapBase
-from sqlalchemy.sql.elements import TextClause
 
-from populse_db.database_model import PATH_TABLE
+from populse_db.database_model import DOCUMENT_TABLE, DOCUMENT_PRIMARY_KEY
 
 # The grammar (in Lark format) used to parse filter strings
 filter_grammar = '''
@@ -42,9 +41,9 @@ CONDITION_OPERATOR : "=="i
 
 condition : operand CONDITION_OPERATOR operand
 ?operand : literal
-         | tag_name
+         | column_name
 
-tag_name : CNAME
+column_name : CNAME
 %import common.CNAME
          
 ?literal : ESCAPED_STRING   -> string
@@ -111,7 +110,7 @@ class FilterToQuery(Transformer):
     '''
     
     invalidCombinationMessage = ('Invalid combination of conditions on simple '
-                                 'tags and on list tags')
+                                 'columns and on list columns')
     
     python_operators = {
         '==': operator.eq,
@@ -135,13 +134,13 @@ class FilterToQuery(Transformer):
         self.database = database
    
     @staticmethod
-    def is_tag(object):
+    def is_column(object):
         return isinstance(object, AutomapBase)
     
     @staticmethod
-    def is_list_tag(tag):
-        return (isinstance(tag, AutomapBase) and
-                tag.type.startswith('list_'))
+    def is_list_column(column):
+        return (isinstance(column, AutomapBase) and
+                column.type.startswith('list_'))
     
     def all(self, items):
         return sqlalchemy.text('1')
@@ -171,8 +170,8 @@ class FilterToQuery(Transformer):
                     # result is a tuple with the SqlAlchemy expression and 
                     # the Python function condition.
                     if operator_str != 'and':
-                        raise ValueError('Combination of simple tags '
-                            'conditions with list tags conditions is only '
+                        raise ValueError('Combination of simple columns '
+                            'conditions with list columns conditions is only '
                             'allowed with AND but not with %s' % operator_str)
                     result = (result, right_operand)
                 elif isinstance(right_operand, tuple):
@@ -183,67 +182,67 @@ class FilterToQuery(Transformer):
                     result = operator(result, right_operand)
         return result
     
-    def get_column(self, tag):
+    def get_column(self, column):
         '''
         Return the SqlAlchemy Column object corresponding to
-        a populse_db tag object.
+        a populse_db column object.
         '''
-        return getattr(self.database.metadata.tables[PATH_TABLE].c, 
-                       self.database.tag_name_to_column_name(tag.name)) 
+        return getattr(self.database.metadata.tables[DOCUMENT_TABLE].c,
+                       self.database.column_name_to_sql_column_name(getattr(column, DOCUMENT_PRIMARY_KEY)))
     
     def condition(self, items):
         left_operand, operator, right_operand = items
         operator_str = str(operator).lower()
         if operator_str == 'in':
-            if self.is_list_tag(right_operand):
+            if self.is_list_column(right_operand):
                 if not isinstance(left_operand, six.string_types + (float,)): #TODO date, datetime, bool, none
-                    raise ValueError('Left operand of IN <list tag> must be a string or a number tag but "%s" was used' % str(left_operand))
-                # Check if a single value is in a list tag
+                    raise ValueError('Left operand of IN <list column> must be a string or a number column but "%s" was used' % str(left_operand))
+                # Check if a single value is in a list column
                 # Cannot be done in SQL with SQLite => return a Python function
-                return lambda x: left_operand in x[right_operand.name]
+                return lambda x: left_operand in x[getattr(right_operand, DOCUMENT_PRIMARY_KEY)]
             elif isinstance(right_operand, list):
-                if self.is_tag(left_operand):
-                    # Check if a simple tag value is in a list of values
+                if self.is_column(left_operand):
+                    # Check if a simple column value is in a list of values
                     # Can be done in SQL => return an SqlAlchemy expression
                     return self.get_column(left_operand).in_(right_operand)
                 else:
-                    raise ValueError('Left operand of IN <list> must be a simple tag but "%s" was used' % str(left_operand))
+                    raise ValueError('Left operand of IN <list> must be a simple column but "%s" was used' % str(left_operand))
             else:
-                raise ValueError('Right operand of IN must be a list or a list tag but "%s" was used' % str(right_operand))
+                raise ValueError('Right operand of IN must be a list or a list column but "%s" was used' % str(right_operand))
         
         # Check if using an SQL expression is possible
         # This is always possible for operator == and != (using string
         # comparison for lists). Otherwise, it is only possible if no
-        # list tag is involved in the expression.
-        do_sql = (operator_str in ('==', '!=') 
-                  or 
-                  (not self.is_list_tag(left_operand) 
-                   and not self.is_list_tag(right_operand)))
+        # list column is involved in the expression.
+        do_sql = (operator_str in ('==', '!=')
+                  or
+                  (not self.is_list_column(left_operand)
+                   and not self.is_list_column(right_operand)))
         operator = self.python_operators[operator_str]
         if do_sql:
-            if self.is_tag(left_operand):
+            if self.is_column(left_operand):
                 left_operand = self.get_column(left_operand) 
-            if self.is_tag(right_operand):
+            if self.is_column(right_operand):
                 right_operand = self.get_column(right_operand)
             # Return SqlAlchemy expression of the condition
             return operator(left_operand, right_operand)
         
         # SQL is not possible : build and return a Python function for the
         # condition.
-        if self.is_tag(left_operand):
-            if self.is_tag(right_operand):
-                python = lambda x: operator(x[left_operand.name],
-                                            x[right_operand.name])
+        if self.is_column(left_operand):
+            if self.is_column(right_operand):
+                python = lambda x: operator(x[getattr(left_operand, DOCUMENT_PRIMARY_KEY)],
+                                            x[getattr(right_operand, DOCUMENT_PRIMARY_KEY)])
             else:
-                python = lambda x: operator(x[left_operand.name],
+                python = lambda x: operator(x[getattr(left_operand, DOCUMENT_PRIMARY_KEY)],
                                             right_operand)
         else:
-            if self.is_tag(right_operand):
+            if self.is_column(right_operand):
                 python = lambda x: operator(left_operand,
-                                            x[right_operand.name])
+                                            x[getattr(right_operand, DOCUMENT_PRIMARY_KEY)])
             else:
                 raise ValueError('Either left or right operand of a condition'
-                                 ' must be a tag name')
+                                 ' must be a column name')
         return python
     
     def negation(self, items):
@@ -278,9 +277,9 @@ class FilterToQuery(Transformer):
     def list(self, items):
         return items
 
-    def tag_name(self, items):
-        tag_name = items[0]
-        tag = self.database.get_tag(tag_name)
-        if tag is None:
-            raise ValueError('No tag named "%s"' % tag_name)
-        return tag
+    def column_name(self, items):
+        column_name = items[0]
+        column = self.database.get_column(column_name)
+        if column is None:
+            raise ValueError('No column named "%s"' % column_name)
+        return column

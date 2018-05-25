@@ -15,17 +15,17 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.schema import CreateTable, DropTable
 
-from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
-                                       TAG_TYPE_FLOAT, TAG_TYPE_TIME,
-                                       TAG_TYPE_DATETIME, TAG_TYPE_DATE,
-                                       TAG_TYPE_STRING, TAG_TYPE_LIST_DATE,
-                                       TAG_TYPE_LIST_DATETIME,
-                                       TAG_TYPE_LIST_FLOAT,
-                                       TAG_TYPE_LIST_INTEGER,
-                                       TAG_TYPE_LIST_STRING,
-                                       TAG_TYPE_LIST_TIME,
-                                       LIST_TYPES, TYPE_TO_COLUMN, TAG_TYPE_BOOLEAN,
-                                       ALL_TYPES, PATH_PRIMARY_KEY, PATH_TABLE, TAG_TABLE, INITIAL_TABLE)
+from populse_db.database_model import (create_database, COLUMN_TYPE_INTEGER,
+                                       COLUMN_TYPE_FLOAT, COLUMN_TYPE_TIME,
+                                       COLUMN_TYPE_DATETIME, COLUMN_TYPE_DATE,
+                                       COLUMN_TYPE_STRING, COLUMN_TYPE_LIST_DATE,
+                                       COLUMN_TYPE_LIST_DATETIME,
+                                       COLUMN_TYPE_LIST_FLOAT,
+                                       COLUMN_TYPE_LIST_INTEGER,
+                                       COLUMN_TYPE_LIST_STRING,
+                                       COLUMN_TYPE_LIST_TIME,
+                                       LIST_TYPES, TYPE_TO_COLUMN, COLUMN_TYPE_BOOLEAN,
+                                       ALL_TYPES, DOCUMENT_PRIMARY_KEY, DOCUMENT_TABLE, COLUMN_TABLE, INITIAL_TABLE)
 from populse_db.filter import filter_parser, FilterToQuery
 
 
@@ -54,46 +54,45 @@ class Database:
         - session_maker: session manager
         - unsaved_modifications: to know if there are unsaved
           modifications in the database
-        - paths: Paths rows
-        - initial_paths: Initial paths rows
-        - tags: Tags rows
+        - documents: Document rows
+        - initial_documents: Initial document rows
+        - columns: Columns rows
         - names: columns names
 
     methods:
-        - add_tag: adds a tag
-        - add_tags: adds a list of tags
-        - tag_type_to_column_type: gives the column type corresponding
-          to a tag type
-        - tag_name_to_column_name: gives the column tag name corresponding
-          to the original tag name
-        - remove_tag: removes a tag
-        - get_tag: Gives the tag table object of a tag
-        - get_tag_type: gives the tag type
-        - get_tags_names: gives all tag names
-        - get_tags: gives all tag table objects
-        - get_current_value: gives the current value of <path, tag>
-        - get_initial_value: gives the initial value of <path, tag>
+        - add_column: adds a column
+        - add_columns: adds a list of columns
+        - column_type_to_sql_column_type: gives the column type corresponding
+          to a column type
+        - column_name_to_sql_column_name: gives the sql column name corresponding
+          to the original column name
+        - remove_column: removes a column
+        - get_column: Gives the column row of a column
+        - get_columns_names: gives all column names
+        - get_documents: gives all document rows
+        - get_documents_names: gives all document names
+        - get_current_value: gives the current value of <document, column>
+        - get_initial_value: gives the initial value of <document, column>
         - is_value_modified: to know if a value has been modified
-        - set_value: sets the value of <path, tag>
-        - reset_value: resets the value of <path, tag>
-        - remove_value: removes the value of <path, tag>
+        - set_value: sets the value of <document, column>
+        - reset_value: resets the value of <document, column>
+        - remove_value: removes the value of <document, column>
         - check_type_value: checks the type of a value
-        - is_tag_list: to know if a tag has a list type
-        - add_value: adds a value to <path, tag>
-        - get_path: gives the path row of a path
-        - get_initial_path: gives the initial path row of a path
-        - get_paths: gives all path table objects
-        - get_paths_names: gives all path names
-        - add_path: adds a path
-        - remove_path: removes a path
-        - get_paths_matching_constraints: gives the paths matching the
+        - add_value: adds a value to <document, column>
+        - get_document: gives the document row of a document
+        - get_initial_document: gives the initial row of a document
+        - get_documents: gives all document rows
+        - get_documents_names: gives all document names
+        - add_document: adds a document
+        - remove_document: removes a document
+        - get_documents_matching_constraints: gives the documents matching the
           constraints given in parameter
-        - get_paths_matching_search: gives the paths matching the
+        - get_documents_matching_search: gives the documents matching the
           search
-        - get_paths_matching_advanced_search: gives the paths matching
+        - get_documents_matching_advanced_search: gives the documents matching
           the advanced search
-        - get_paths_matching_tag_value_couples: gives the paths
-          containing all <tag, value> given in parameter
+        - get_documents_matching_column_value_couples: gives the documents
+          containing all <column, value> given in parameter
         - save_modifications: saves the pending modifications
         - unsave_modifications: unsaves the pending modifications
         - has_unsaved_modifications: to know if there are unsaved
@@ -103,35 +102,35 @@ class Database:
 
     # Some types (e.g. time, date and datetime) cannot be
     # serialized/deserialized into string with repr/ast.literal_eval.
-    # This is a problem for storing the corresponding list_tags in
+    # This is a problem for storing the corresponding list_columns in
     # database. For the list types with this problem, we record in the
     # following dictionaries the functions that must be used to serialize
     # (in _list_item_to_string) and deserialize (in _string_to_list_item)
     # the list items.
     _list_item_to_string = {
-        TAG_TYPE_LIST_DATE: lambda x: x.isoformat(),
-        TAG_TYPE_LIST_DATETIME: lambda x: x.isoformat(),
-        TAG_TYPE_LIST_TIME: lambda x: x.isoformat()
+        COLUMN_TYPE_LIST_DATE: lambda x: x.isoformat(),
+        COLUMN_TYPE_LIST_DATETIME: lambda x: x.isoformat(),
+        COLUMN_TYPE_LIST_TIME: lambda x: x.isoformat()
     }
 
     _string_to_list_item = {
-        TAG_TYPE_LIST_DATE: lambda x: dateutil.parser.parse(x).date(),
-        TAG_TYPE_LIST_DATETIME: lambda x: dateutil.parser.parse(x),
-        TAG_TYPE_LIST_TIME: lambda x: dateutil.parser.parse(x).time(),
+        COLUMN_TYPE_LIST_DATE: lambda x: dateutil.parser.parse(x).date(),
+        COLUMN_TYPE_LIST_DATETIME: lambda x: dateutil.parser.parse(x),
+        COLUMN_TYPE_LIST_TIME: lambda x: dateutil.parser.parse(x).time(),
     }
 
-    def __init__(self, string_engine, initial_table=False, path_caches=False):
+    def __init__(self, string_engine, initial_table=False, document_caches=False):
         """
         Creates an API of the database instance
-        :param string_engine: String engine of the database file, can be already existing, or not
-        :param initial_table: To know if the initial table must be created, False by default
-        :param path_caches: To know if the path caches must be used, False by default
+        :param string_engine: string engine of the database file, can be already existing, or not
+        :param initial_table: to know if the initial table must be created, False by default
+        :param document_caches: to know if the document caches must be used, False by default
         """
 
         self.string_engine = string_engine
 
         self.initial_table = initial_table
-        self.paths_caches = path_caches
+        self.documents_caches = document_caches
 
         # SQLite database: we create it if it does not exist
         if string_engine.startswith('sqlite'):
@@ -149,8 +148,8 @@ class Database:
         self.update_table_classes()
 
         # Database schema checked
-        if (PATH_TABLE not in self.table_classes.keys() or
-                TAG_TABLE not in self.table_classes.keys()):
+        if (DOCUMENT_TABLE not in self.table_classes.keys() or
+                COLUMN_TABLE not in self.table_classes.keys()):
             raise ValueError(
                 'The database schema is not coherent with the API')
         if self.initial_table and INITIAL_TABLE not in self.table_classes.keys():
@@ -162,98 +161,98 @@ class Database:
 
         self.unsaved_modifications = False
 
-        tags = self.session.query(self.table_classes[TAG_TABLE])
-        self.tags = dict((tag.name, tag) for tag in tags)
+        columns = self.session.query(self.table_classes[COLUMN_TABLE])
+        self.columns = dict((getattr(column, DOCUMENT_PRIMARY_KEY), column) for column in columns)
 
         self.names = {}
 
-        # name is the only tag not hashed
-        self.names[PATH_PRIMARY_KEY] = PATH_PRIMARY_KEY
+        # name is the only column not hashed
+        self.names[DOCUMENT_PRIMARY_KEY] = DOCUMENT_PRIMARY_KEY
 
-        if self.paths_caches:
-            self.paths = {}
+        if self.documents_caches:
+            self.documents = {}
             if self.initial_table:
-                self.initial_paths = {}
+                self.initial_documents = {}
 
-    """ TAGS """
+    """ COLUMNS """
 
-    def add_tags(self, tags):
+    def add_columns(self, columns):
         """
-        Adds the list of tags
-        :return: List of tags (name, origin, type, unit, default value, description)
+        Adds the list of columns
+        :param columns: list of columns (name, type, description)
         """
 
-        for tag in tags:
+        for column in columns:
 
-            # Adding each tag
-            self.add_tag(tag[0], tag[1], tag[2], False)
+            # Adding each column
+            self.add_column(column[0], column[1], column[2], False)
 
         # Updating the table classes
         self.session.flush()
         self.update_table_classes()
 
-    def add_tag(self, name, tag_type, description, flush=True):
+    def add_column(self, name, column_type, description, flush=True):
         """
-        Adds a tag to the database, if it does not already exist
-        :param name: Tag name (str)
-        :param type: Tag type (string, int, float, date, datetime,
-                     time, list_string, list_int, list_float, list_date,
+        Adds a column to the database, if it does not already exist
+        :param name: column name (str)
+        :param column_type: column type (string, int, float, boolean, date, datetime,
+                     time, list_string, list_int, list_float, list_boolean, list_date,
                      list_datetime, or list_time)
-        :param description: Tag description (str or None)
-        :param flush: Bool to know if the base must be updated (put False if in the middle of filling tags)
+        :param description: column description (str or None)
+        :param flush: bool to know if the table classes must be updated (put False if in the middle of filling columns)
         """
 
         if not isinstance(name, str):
-            raise ValueError("The tag name must be of type " + str(str) +
-                             ", but tag name of type " + str(type(name)) + " given")
-        tag_row = self.get_tag(name)
-        if tag_row != None:
-            raise ValueError("A tag with the name " +
+            raise ValueError("The column name must be of type " + str(str) +
+                             ", but column name of type " + str(type(name)) + " given")
+        column_row = self.get_column(name)
+        if column_row != None:
+            raise ValueError("A column with the name " +
                              str(name) + " already exists")
-        if not tag_type in ALL_TYPES:
-            raise ValueError("The tag type must be in " + str(ALL_TYPES) + ", but " + str(
-                tag_type) + " given")
+        if not column_type in ALL_TYPES:
+            raise ValueError("The column type must be in " + str(ALL_TYPES) + ", but " + str(
+                column_type) + " given")
         if not isinstance(description, str) and description is not None:
             raise ValueError(
-                "The tag description must be of type " + str(str) + " or None, but tag description of type " + str(
+                "The column description must be of type " + str(str) + " or None, but column description of type " + str(
                     type(description)) + " given")
 
-        # Adding the tag in the tag table
-        tag = self.table_classes[TAG_TABLE](name=name, type=tag_type, description=description)
+        # Adding the column in the column table
+        column_row = self.table_classes[COLUMN_TABLE](name=name, type=column_type, description=description)
 
-        self.session.add(tag)
-        self.tags[name] = tag
+        self.session.add(column_row)
+        self.columns[name] = column_row
 
         # Columns creation
-        if tag_type in LIST_TYPES:
+        if column_type in LIST_TYPES:
             # String columns if it list type, as the str representation of the list will be stored
             column_type = String
         else:
-            column_type = self.tag_type_to_column_type(tag_type)
-        column = Column(self.tag_name_to_column_name(name), column_type)
+            column_type = self.column_type_to_sql_column_type(column_type)
+        column = Column(self.column_name_to_sql_column_name(name), column_type)
         column_str_type = column.type.compile(self.engine.dialect)
         column_name = column.compile(dialect=self.engine.dialect)
 
-        # Tag current and initial columns added added to path table
+        # Column created in document table, and in initial table if initial values are used
 
-        path_query = str('ALTER TABLE %s ADD COLUMN %s %s' %
-                         (PATH_TABLE, column_name, column_str_type))
-        self.session.execute(path_query)
-        self.table_classes[PATH_TABLE].__table__.append_column(column)
+        document_query = str('ALTER TABLE %s ADD COLUMN %s %s' %
+                         (DOCUMENT_TABLE, column_name, column_str_type))
+        self.session.execute(document_query)
+        self.table_classes[DOCUMENT_TABLE].__table__.append_column(column)
 
         if self.initial_table:
             column_initial = Column(
-                self.tag_name_to_column_name(name), column_type)
+                self.column_name_to_sql_column_name(name), column_type)
             initial_query = str('ALTER TABLE %s ADD COLUMN %s %s' % (
                 INITIAL_TABLE, column_name, column_str_type))
             self.session.execute(initial_query)
             self.table_classes[INITIAL_TABLE].__table__.append_column(
                 column_initial)
 
-        if self.paths_caches:
-            self.paths.clear()
+        if self.documents_caches:
+            self.documents.clear()
             if self.initial_table:
-                self.initial_paths.clear()
+                self.initial_documents.clear()
 
         self.unsaved_modifications = True
 
@@ -262,80 +261,81 @@ class Database:
             self.session.flush()
             self.update_table_classes()
 
-    def tag_type_to_column_type(self, tag_type):
+    def column_type_to_sql_column_type(self, column_type):
         """
-        Gives the column type corresponding to the tag type
-        :param tag_type: Tag type
-        :return: The column type given the tag type
-        """
-
-        return TYPE_TO_COLUMN[tag_type]
-
-    def tag_name_to_column_name(self, tag):
-        """
-        Transforms the tag name into a valid and unique column name, by hashing the tag name
-        :return: Valid column name
+        Gives the sqlalchemy column type corresponding to the column type
+        :param column_type: column type
+        :return: The sql column type given the column type
         """
 
-        if tag in self.names:
-            return self.names[tag]
+        return TYPE_TO_COLUMN[column_type]
+
+    def column_name_to_sql_column_name(self, name):
+        """
+        Transforms the column name into a valid and unique sql column name, by hashing the column name
+        :param name: column name (str)
+        :return: Valid and unique (hashed) column name
+        """
+
+        if name in self.names:
+            return self.names[name]
         else:
-            column_name = hashlib.md5(tag.encode('ascii')).hexdigest()
-            self.names[tag] = column_name
+            column_name = hashlib.md5(name.encode('ascii')).hexdigest()
+            self.names[name] = column_name
             return column_name
 
-    def remove_tag(self, name):
+    def remove_column(self, name):
         """
-        Removes a tag
-        :param name: Tag name (str)
+        Removes a column
+        :param name: column name (str)
         """
 
         if not isinstance(name, str):
             raise ValueError(
-                "The tag name must be of type " + str(str) + ", but tag name of type " + str(type(name)) + " given")
-        tag_row = self.get_tag(name)
-        if tag_row is None:
-            raise ValueError("The tag with the name " +
+                "The column name must be of type " + str(str) + ", but column name of type " + str(type(name)) + " given")
+        column_row = self.get_column(name)
+        if column_row is None:
+            raise ValueError("The column with the name " +
                              str(name) + " does not exist")
 
-        column_name = self.tag_name_to_column_name(name)
+        column_name = self.column_name_to_sql_column_name(name)
 
-        # Tag removed from path table
-        old_path_table = Table(PATH_TABLE, self.metadata)
+        # Column removed from document table
+        old_document_table = Table(DOCUMENT_TABLE, self.metadata)
         select = sql.select(
-            [c for c in old_path_table.c if column_name not in c.name])
+            [c for c in old_document_table.c if column_name not in c.name])
 
-        remaining_columns = [copy.copy(c) for c in old_path_table.columns
+        remaining_columns = [copy.copy(c) for c in old_document_table.columns
                              if column_name not in c.name]
 
-        path_backup_table = Table(PATH_TABLE + "_backup", self.metadata)
-        for column in old_path_table.columns:
+        document_backup_table = Table(DOCUMENT_TABLE + "_backup", self.metadata)
+        for column in old_document_table.columns:
             if column_name not in str(column):
-                path_backup_table.append_column(column.copy())
-        self.session.execute(CreateTable(path_backup_table))
+                document_backup_table.append_column(column.copy())
+        self.session.execute(CreateTable(document_backup_table))
 
-        insert = sql.insert(path_backup_table).from_select(
-            [c.name for c in remaining_columns], select)
+        insert = sql.insert(document_backup_table).from_select(
+            [getattr(c, DOCUMENT_PRIMARY_KEY) for c in remaining_columns], select)
         self.session.execute(insert)
 
-        self.metadata.remove(old_path_table)
-        self.session.execute(DropTable(old_path_table))
+        self.metadata.remove(old_document_table)
+        self.session.execute(DropTable(old_document_table))
 
-        new_path_table = Table(PATH_TABLE, self.metadata)
-        for column in path_backup_table.columns:
-            new_path_table.append_column(column.copy())
+        new_document_table = Table(DOCUMENT_TABLE, self.metadata)
+        for column in document_backup_table.columns:
+            new_document_table.append_column(column.copy())
 
-        self.session.execute(CreateTable(new_path_table))
+        self.session.execute(CreateTable(new_document_table))
 
         select = sql.select(
-            [c for c in path_backup_table.c if column_name not in c.name])
-        insert = sql.insert(new_path_table).from_select(
-            [c.name for c in remaining_columns], select)
+            [c for c in document_backup_table.c if column_name not in c.name])
+        insert = sql.insert(new_document_table).from_select(
+            [getattr(c, DOCUMENT_PRIMARY_KEY) for c in remaining_columns], select)
         self.session.execute(insert)
 
-        self.session.execute(DropTable(path_backup_table))
+        self.session.execute(DropTable(document_backup_table))
 
-        # Tag removed from initial table if initial values are used
+        # Column removed from initial table if initial values are used
         if self.initial_table:
             old_initial_table = Table(INITIAL_TABLE, self.metadata)
             select = sql.select(
@@ -353,7 +353,7 @@ class Database:
             self.session.execute(CreateTable(initial_backup_table))
 
             insert = sql.insert(initial_backup_table).from_select(
-                [c.name for c in remaining_columns], select)
+                [getattr(c, DOCUMENT_PRIMARY_KEY) for c in remaining_columns], select)
             self.session.execute(insert)
 
             self.metadata.remove(old_initial_table)
@@ -368,19 +368,19 @@ class Database:
             select = sql.select(
                 [c for c in initial_backup_table.c if column_name not in c.name])
             insert = sql.insert(new_initial_table).from_select(
-                [c.name for c in remaining_columns], select)
+                [getattr(c, DOCUMENT_PRIMARY_KEY) for c in remaining_columns], select)
             self.session.execute(insert)
 
             self.session.execute(DropTable(initial_backup_table))
 
-        if self.paths_caches:
-            self.paths.clear()
+        if self.documents_caches:
+            self.documents.clear()
             if self.initial_table:
-                self.initial_paths.clear()
+                self.initial_documents.clear()
 
-        self.tags.pop(name, None)
+        self.columns.pop(name, None)
 
-        self.session.delete(tag_row)
+        self.session.delete(column_row)
 
         self.session.flush()
 
@@ -388,181 +388,160 @@ class Database:
 
         self.unsaved_modifications = True
 
-    def get_tag(self, name):
+    def get_column(self, name):
         """
-        Gives the tag row given a tag name
-        :param name: Tag name
-        :return: The tag row if the tag exists, None otherwise
+        Gives the column row given a column name
+        :param name: column name
+        :return: The column row if the column exists, None otherwise
         """
-        return self.tags.get(name)
+        return self.columns.get(name)
 
-    def get_tags_names(self):
+    def get_columns_names(self):
         """
-        Gives the list of tags
-        :return: List of tag names
+        Gives the list of columns
+        :return: List of columns names
         """
-        return list(tag.name for tag in self.get_tags())
+        return list(column.name for column in self.get_columns())
 
-    def get_tags(self):
+    def get_columns(self):
         """
-        Gives the list of tag table objects
-        :return: List of tag table objects
+        Gives the list of columns rows
+        :return: List of columns rows
         """
-        return self.tags.values()
+        return self.columns.values()
 
     """ VALUES """
 
-    def list_value_to_typed_value(self, value, tag_type):
+    def get_current_value(self, document, column):
         """
-        Converts the subvalue of a list into a typed value
-        :param value: List subvalue from the database
-        :param tag_type: Value type
-        :return: Typed subvalue
-        """
-
-        if tag_type == TAG_TYPE_LIST_INTEGER:
-            return int(value)
-        elif tag_type == TAG_TYPE_LIST_STRING:
-            return str(value)
-        elif tag_type == TAG_TYPE_LIST_FLOAT:
-            return float(value)
-        elif tag_type == TAG_TYPE_LIST_DATETIME:
-            return value
-        elif tag_type == TAG_TYPE_LIST_DATE:
-            return value
-        elif tag_type == TAG_TYPE_LIST_TIME:
-            return value
-
-    def get_current_value(self, path, tag):
-        """
-        Gives the current value of <path, tag>
-        :param path: path name (str)
-        :param tag: Tag name (str)
-        :return: The current value of <path, tag> if it exists, None otherwise
+        Gives the current value of <document, column>
+        :param document: Document name (str)
+        :param column: Column name (str)
+        :return: The current value of <document, column> if it exists, None otherwise
         """
 
-        tag_row = self.get_tag(tag)
-        if tag_row is None:
+        document_row = self.get_column(column)
+        if document_row is None:
             return None
-        path_row = self.get_path(path)
-        if path_row is None:
+        column_row = self.get_document(document)
+        if column_row is None:
             return None
 
-        return TagRow(self, path_row)[tag]
+        return ColumnRow(self, column_row)[column]
 
-    def get_initial_value(self, path, tag):
+    def get_initial_value(self, document, column):
         """
-        Gives the initial value of <path, tag>
-        :param path: path name
-        :param tag: Tag name
-        :return: The initial value of <path, tag> if it exists, None otherwise
+        Gives the initial value of <document, column>
+        :param document: Document name
+        :param column: Column name
+        :return: The initial value of <document, column> if it exists, None otherwise
         """
 
-        tag_row = self.get_tag(tag)
-        if tag_row is None:
+        column_row = self.get_column(column)
+        if column_row is None:
             return None
-        initial_path_row = self.get_initial_path(path)
-        if initial_path_row is None:
+        initial_row = self.get_initial_document(document)
+        if initial_row is None:
             return None
 
-        return TagRow(self, initial_path_row)[tag]
+        return ColumnRow(self, initial_row)[column]
 
-    def is_value_modified(self, path, tag):
+    def is_value_modified(self, document, column):
         """
-        To know if a value has been modified
-        :param path: path name
-        :param tag: tag name
-        :return: True if the value has been modified, False otherwise
+        To know if the value <document, column> has been modified
+        :param document: document name
+        :param column: column name
+        :return: True if the value <document, column> has been modified, False otherwise
         """
 
-        tag_row = self.get_tag(tag)
-        if tag_row is None:
+        column_row = self.get_column(column)
+        if column_row is None:
             return False
-        path_row = self.get_path(path)
-        if path_row is None:
+        document_row = self.get_document(document)
+        if document_row is None:
             return False
 
-        return (self.get_current_value(path, tag) !=
-                self.get_initial_value(path, tag))
+        return (self.get_current_value(document, column) !=
+                self.get_initial_value(document, column))
 
-    def set_current_value(self, path, tag, new_value):
+    def set_current_value(self, document, column, new_value):
         """
-        Sets the value associated to <path, tag>
-        :param path: path name
-        :param tag: tag name
-        :param new_value: New value
+        Sets the value associated to <document, column>
+        :param document: document name
+        :param column: column name
+        :param new_value: new value
         """
 
-        tag_row = self.get_tag(tag)
-        if tag_row is None:
-            raise ValueError("The tag with the name " +
-                             str(tag) + " does not exist")
-        path_row = self.get_path(path)
-        if path_row is None:
-            raise ValueError("The path with the name " +
-                             str(path) + " does not exist")
-        if not self.check_type_value(new_value, tag_row.type):
+        column_row = self.get_column(column)
+        if column_row is None:
+            raise ValueError("The column with the name " +
+                             str(column) + " does not exist")
+        document_row = self.get_document(document)
+        if document_row is None:
+            raise ValueError("The document with the name " +
+                             str(document) + " does not exist")
+        if not self.check_type_value(new_value, column_row.type):
             raise ValueError("The value " + str(new_value) + " is invalid")
 
-        new_value = self.python_to_column(tag_row.type, new_value)
+        new_value = self.python_to_column(column_row.type, new_value)
 
-        setattr(path_row.row, self.tag_name_to_column_name(tag), new_value)
+        setattr(document_row.row, self.column_name_to_sql_column_name(column), new_value)
 
         self.session.flush()
         self.unsaved_modifications = True
 
-    def reset_current_value(self, path, tag):
+    def reset_current_value(self, document, column):
         """
-        Resets the value associated to <path, tag>
-        :param path: path name
-        :param tag: tag name
+        Resets the value associated to <document, column>
+        :param document: document name
+        :param column: column name
         """
-        tag_row = self.get_tag(tag)
-        if tag_row is None:
-            raise ValueError("The tag with the name " +
-                             str(tag) + " does not exist")
-        path_row = self.get_path(path)
-        if path_row is None:
-            raise ValueError("The path with the name " +
-                             str(path) + " does not exist")
+        column_row = self.get_column(column)
+        if column_row is None:
+            raise ValueError("The column with the name " +
+                             str(column) + " does not exist")
+        document_row = self.get_document(document)
+        if document_row is None:
+            raise ValueError("The document with the name " +
+                             str(document) + " does not exist")
         if not self.initial_table:
             raise ValueError(
                 "Impossible to reset values if the initial values are not activated, you can activate the flag initial_table when creating the Database instance")
 
-        initial_value = self.get_initial_value(path, tag)
+        initial_value = self.get_initial_value(document, column)
 
-        if tag_row.type in LIST_TYPES:
+        if column_row.type in LIST_TYPES:
             initial_value = str(initial_value)
 
-        setattr(path_row.row, self.tag_name_to_column_name(tag), initial_value)
+        setattr(document_row.row, self.column_name_to_sql_column_name(column), initial_value)
 
         self.session.flush()
         self.unsaved_modifications = True
 
-    def remove_value(self, path, tag, flush=True):
+    def remove_value(self, document, column, flush=True):
         """
-        Removes the value associated to <path, tag>
-        :param path: path name
-        :param tag: tag name
+        Removes the value associated to <document, column>
+        :param document: document name
+        :param column: column name
         :param flush: To know if flush to do (put False in the middle of removing values)
         """
 
-        tag_row = self.get_tag(tag)
-        if tag_row is None:
-            raise ValueError("The tag with the name " +
-                             str(tag) + " does not exist")
-        path_row = self.get_path(path)
-        if path_row is None:
-            raise ValueError("The path with the name " +
-                             str(path) + " does not exist")
+        column_row = self.get_column(column)
+        if column_row is None:
+            raise ValueError("The column with the name " +
+                             str(column) + " does not exist")
+        document_row = self.get_document(document)
+        if document_row is None:
+            raise ValueError("The document with the name " +
+                             str(document) + " does not exist")
 
-        tag_column_name = self.tag_name_to_column_name(tag)
+        sql_column_name = self.column_name_to_sql_column_name(column)
 
-        setattr(path_row.row, tag_column_name, None)
+        setattr(document_row.row, sql_column_name, None)
 
         if self.initial_table:
-            initial_path_row = self.get_initial_path(path)
-            setattr(initial_path_row.row, tag_column_name, None)
+            initial_row = self.get_initial_document(document)
+            setattr(initial_row.row, sql_column_name, None)
 
         if flush:
             self.session.flush()
@@ -581,21 +560,21 @@ class Database:
             return False
         if value is None:
             return True
-        if valid_type == TAG_TYPE_INTEGER and value_type == int:
+        if valid_type == COLUMN_TYPE_INTEGER and value_type == int:
             return True
-        if valid_type == TAG_TYPE_FLOAT and value_type == int:
+        if valid_type == COLUMN_TYPE_FLOAT and value_type == int:
             return True
-        if valid_type == TAG_TYPE_FLOAT and value_type == float:
+        if valid_type == COLUMN_TYPE_FLOAT and value_type == float:
             return True
-        if valid_type == TAG_TYPE_BOOLEAN and value_type == bool:
+        if valid_type == COLUMN_TYPE_BOOLEAN and value_type == bool:
             return True
-        if valid_type == TAG_TYPE_STRING and value_type == str:
+        if valid_type == COLUMN_TYPE_STRING and value_type == str:
             return True
-        if valid_type == TAG_TYPE_DATETIME and value_type == datetime:
+        if valid_type == COLUMN_TYPE_DATETIME and value_type == datetime:
             return True
-        if valid_type == TAG_TYPE_TIME and value_type == time:
+        if valid_type == COLUMN_TYPE_TIME and value_type == time:
             return True
-        if valid_type == TAG_TYPE_DATE and value_type == date:
+        if valid_type == COLUMN_TYPE_DATE and value_type == date:
             return True
         if (valid_type in LIST_TYPES
                 and value_type == list):
@@ -605,43 +584,43 @@ class Database:
             return True
         return False
 
-    def new_value(self, path, tag, current_value, initial_value=None, checks=True):
+    def new_value(self, document, column, current_value, initial_value=None, checks=True):
         """
-        Adds a value for <path, tag> (as initial and current)
-        :param path: path name
-        :param tag: tag name
+        Adds a value for <document, column>
+        :param document: document name
+        :param column: column name
         :param current_value: current value
-        :param initial_value: initial value
-        :param checks: Bool to know if flush to do and value check (Put False in the middle of adding values, during import)
+        :param initial_value: initial value (initial values must be activated)
+        :param checks: bool to know if flush to do and value check (Put False in the middle of adding values, during import)
         """
 
-        tag_row = self.get_tag(tag)
-        path_row = self.get_path(path)
+        column_row = self.get_column(column)
+        document_row = self.get_document(document)
         if checks:
-            if tag_row is None:
-                raise ValueError("The tag with the name " +
-                                 str(tag) + " does not exist")
-            if path_row is None:
-                raise ValueError("The path with the name " +
-                                 str(path) + " does not exist")
-            if not self.check_type_value(current_value, tag_row.type):
+            if column_row is None:
+                raise ValueError("The column with the name " +
+                                 str(column) + " does not exist")
+            if document_row is None:
+                raise ValueError("The document with the name " +
+                                 str(document) + " does not exist")
+            if not self.check_type_value(current_value, column_row.type):
                 raise ValueError("The current value " +
                                  str(current_value) + " is invalid")
-            if not self.check_type_value(initial_value, tag_row.type):
+            if not self.check_type_value(initial_value, column_row.type):
                 raise ValueError("The initial value " +
                                  str(initial_value) + " is invalid")
             if not self.initial_table and not initial_value is None:
                 raise ValueError(
                     "Impossible to add an initial value if the initial values are not activated, you can activate the flag initial_table when creating the Database instance")
 
-        column_name = self.tag_name_to_column_name(tag)
+        column_name = self.column_name_to_sql_column_name(column)
         database_current_value = getattr(
-            path_row, column_name)
+            document_row, column_name)
 
         if self.initial_table:
-            path_initial_row = self.get_initial_path(path)
+            initial_row = self.get_initial_document(document)
             database_initial_value = getattr(
-                path_initial_row, column_name)
+                initial_row, column_name)
         else:
             database_initial_value = None
 
@@ -650,15 +629,15 @@ class Database:
                 database_initial_value is None):
             if initial_value is not None:
                 initial_value = self.python_to_column(
-                    tag_row.type, initial_value)
+                    column_row.type, initial_value)
                 setattr(
-                    path_initial_row.row, column_name,
+                    initial_row.row, column_name,
                     initial_value)
             if current_value is not None:
                 current_value = self.python_to_column(
-                    tag_row.type, current_value)
+                    column_row.type, current_value)
                 setattr(
-                    path_row.row, column_name,
+                    document_row.row, column_name,
                     current_value)
 
             if checks:
@@ -666,130 +645,131 @@ class Database:
             self.unsaved_modifications = True
 
         else:
-            raise ValueError("The tuple <" + str(tag) + ", " +
-                             str(path) + "> already has a value")
+            raise ValueError("The tuple <" + str(column) + ", " +
+                             str(document) + "> already has a value")
 
-    """ PATHS """
+    """ DOCUMENTS """
 
-    def get_path(self, path):
+    def get_document(self, document):
         """
-        Gives the path row of a path
-        :param path: path name
-        :return The path row if the path exists, None otherwise
+        Gives the document row of a document
+        :param document: document name
+        :return The document row if the document exists, None otherwise
         """
 
-        if self.paths_caches and path in self.paths:
-            return self.paths[path]
+        if self.documents_caches and document in self.documents:
+            return self.documents[document]
         else:
-            path_row = self.session.query(self.table_classes[PATH_TABLE]).filter(
-                self.table_classes[PATH_TABLE].name == path).first()
-            if path_row is not None:
-                path_row = TagRow(self, path_row)
-            if self.paths_caches:
-                self.paths[path] = path_row
-            return path_row
+            document_row = self.session.query(self.table_classes[DOCUMENT_TABLE]).filter(
+                getattr(self.table_classes[DOCUMENT_TABLE], DOCUMENT_PRIMARY_KEY) == document).first()
+            if document_row is not None:
+                document_row = ColumnRow(self, document_row)
+            if self.documents_caches:
+                self.documents[document] = document_row
+            return document_row
 
-    def get_initial_path(self, path):
+    def get_initial_document(self, document):
         """
-        Gives the initial path row of a path
-        :param path: path name
-        :return The initial path row if the path exists, None otherwise
+        Gives the initial row of a document (initial values must be activated)
+        :param document: document name
+        :return The initial row if the document exists, None otherwise
         """
 
         if not self.initial_table:
             raise ValueError(
                 "The initial values aren't activated, you can activate the flag initial_table when creating the Database instance")
-        if self.paths_caches and path in self.initial_paths:
-            return self.initial_paths[path]
+        if self.documents_caches and document in self.initial_documents:
+            return self.initial_documents[document]
         else:
-            path_row = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
-                self.table_classes[INITIAL_TABLE].name == path).first()
-            if path_row is not None:
-                path_row = TagRow(self, path_row)
-            if self.paths_caches:
-                self.initial_paths[path] = path_row
-            return path_row
+            document_row = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
+                getattr(self.table_classes[INITIAL_TABLE], DOCUMENT_PRIMARY_KEY) == document).first()
+            if document_row is not None:
+                document_row = ColumnRow(self, document_row)
+            if self.documents_caches:
+                self.initial_documents[document] = document_row
+            return document_row
 
-    def get_paths_names(self):
+    def get_documents_names(self):
         """
-        Gives the list of path names
-        :param path: List of path names
-        """
-
-        paths_list = []
-        paths = self.session.query(self.table_classes[PATH_TABLE]).all()
-        for path in paths:
-            paths_list.append(path.name)
-        return paths_list
-
-    def get_paths(self):
-        """
-        Gives the list of path table objects
-        :param path: List of path table objects
+        Gives the list of document names
+        :return: list of document names
         """
 
-        paths_list = []
-        paths = self.session.query(self.table_classes[PATH_TABLE]).all()
-        for path in paths:
-            paths_list.append(TagRow(self, path))
-        return paths_list
+        documents_list = []
+        documents = self.session.query(self.table_classes[DOCUMENT_TABLE]).all()
+        for document in documents:
+            documents_list.append(document.name)
+        return documents_list
 
-    def remove_path(self, path):
+    def get_documents(self):
         """
-        Removes a path
-        :param path: path name
+        Gives the list of document rows
+        :return: list of document rows
         """
 
-        path_row = self.get_path(path)
-        if path_row is None:
-            raise ValueError("The path with the name " +
-                             str(path) + " does not exist")
+        documents_list = []
+        documents = self.session.query(self.table_classes[DOCUMENT_TABLE]).all()
+        for document in documents:
+            documents_list.append(ColumnRow(self, document))
+        return documents_list
 
-        for table_class in self.table_classes:
-            if table_class != TAG_TABLE:
-                self.session.query(self.table_classes[table_class]).filter(
-                    self.table_classes[table_class].name == path).delete()
+    def remove_document(self, document):
+        """
+        Removes a document
+        :param document: document name
+        """
 
-        if self.paths_caches:
-            self.paths[path] = None
-            self.initial_paths[path] = None
+        document_row = self.get_document(document)
+        if document_row is None:
+            raise ValueError("The document with the name " +
+                             str(document) + " does not exist")
+
+        self.session.query(self.table_classes[DOCUMENT_TABLE]).filter(
+                getattr(self.table_classes[DOCUMENT_TABLE], DOCUMENT_PRIMARY_KEY) == document).delete()
+        if self.initial_table:
+            self.session.query(self.table_classes[INITIAL_TABLE]).filter(
+                getattr(self.table_classes[INITIAL_TABLE], DOCUMENT_PRIMARY_KEY) == document).delete()
+
+        if self.documents_caches:
+            self.documents[document] = None
+            self.initial_documents[document] = None
 
         self.session.flush()
         self.unsaved_modifications = True
 
-    def add_path(self, path, checks=True):
+    def add_document(self, document, checks=True):
         """
-        Adds a path
-        :param path: file path
-        :param checks: checks if the path already exists and flushes, put False in the middle of filling the table
+        Adds a document
+        :param document: document name
+        :param checks: checks if the document already exists and flushes, put False in the middle of filling the table
         """
 
         if checks:
-            path_row = self.get_path(path)
-            if path_row is not None:
-                raise ValueError("A path with the name " +
-                                 str(path) + " already exists")
-        if not isinstance(path, str):
+            document_row = self.get_document(document)
+            if document_row is not None:
+                raise ValueError("A document with the name " +
+                                 str(document) + " already exists")
+        if not isinstance(document, str):
             raise ValueError(
-                "The path name must be of type " + str(str) + ", but path name of type " + str(
-                    type(path)) + " given")
+                "The document name must be of type " + str(str) + ", but document name of type " + str(
+                    type(document)) + " given")
 
-        # Adding the index to path table
-        path_row = self.table_classes[PATH_TABLE](name=path)
-        self.session.add(path_row)
+        # Adding the index to document table
+        document_row = self.table_classes[DOCUMENT_TABLE](name=document)
+        self.session.add(document_row)
 
-        if self.paths_caches:
-            path_row = TagRow(self, path_row)
-            self.paths[path] = path_row
+        if self.documents_caches:
+            document_row = ColumnRow(self, document_row)
+            self.documents[document] = document_row
 
         # Adding the index to initial table if initial values are used
         if self.initial_table:
-            initial_path_row = self.table_classes[INITIAL_TABLE](name=path)
-            self.session.add(initial_path_row)
+            initial_row = self.table_classes[INITIAL_TABLE](name=document)
+            self.session.add(initial_row)
 
-            if self.paths_caches:
-                initial_path_row = TagRow(self, initial_path_row)
-                self.initial_paths[path] = initial_path_row
+            if self.documents_caches:
+                initial_row = ColumnRow(self, initial_row)
+                self.initial_documents[document] = initial_row
 
         if checks:
             self.session.flush()
@@ -798,58 +778,58 @@ class Database:
 
     """ UTILS """
 
-    def get_paths_matching_search(self, search, tags):
+    def get_documents_matching_search(self, search, columns):
         """
-        Returns the list of paths names matching the search
+        Returns the list of documents names matching the search
         :param search: search to match (str)
-        :param tags: List of tags taken into account
-        :return: List of path names matching the search
+        :param columns: list of columns taken into account
+        :return: List of document names matching the search
         """
 
-        if not isinstance(tags, list):
+        if not isinstance(columns, list):
             return []
         if not isinstance(search, str):
             return []
-        for tag in tags:
-            tag_row = self.get_tag(tag)
-            if tag_row is None:
+        for column in columns:
+            column_row = self.get_column(column)
+            if column_row is None:
                 return []
 
-        paths_matching = []
-        simple_tags_filters = []
+        documents_matching = []
+        simple_columns_filters = []
 
         # Iterating over all values and finding matches
 
-        values = self.session.query(self.table_classes[PATH_TABLE].name)
+        values = self.session.query(getattr(self.table_classes[DOCUMENT_TABLE], DOCUMENT_PRIMARY_KEY))
 
-        # Search for each tag
-        for tag in tags:
+        # Search for each column
+        for column in columns:
 
-            simple_tags_filters.append(getattr(
-                self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).like("%" + search + "%"))
+            simple_columns_filters.append(getattr(
+                self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)).like("%" + search + "%"))
 
-        values = values.filter(or_(*simple_tags_filters)).distinct().all()
+        values = values.filter(or_(*simple_columns_filters)).distinct().all()
         for value in values:
-            paths_matching.append(value.name)
+            documents_matching.append(getattr(value, DOCUMENT_PRIMARY_KEY))
 
-        return paths_matching
+        return documents_matching
 
-    def get_paths_matching_advanced_search(self, links, fields, conditions,
-                                           values, nots, paths_list):
+    def get_documents_matching_advanced_search(self, links, fields, conditions,
+                                               values, nots, documents_list):
         """
-        Gives the paths matching the advanced search
-        :param links: Links (AND/OR)
-        :param fields: Fields (List of tags)
-        :param conditions: Conditions (=, !=, <, >, <=, >=, BETWEEN,
+        Gives the document names matching the advanced search
+        :param links: links (AND/OR)
+        :param fields: fields (List of columns)
+        :param conditions: conditions (=, !=, <, >, <=, >=, BETWEEN,
                            CONTAINS, IN, HAS VALUE, HAS NO VALUE)
-        :param values: Values (Str value for =, !=, <, >, <=, >=, HAS VALUE, HAS NO VALUE, and
+        :param values: values (str value for =, !=, <, >, <=, >=, HAS VALUE, HAS NO VALUE, and
                        CONTAINS/list for BETWEEN and IN)
-        :param nots: Nots (Empty or NOT)
-        :param paths_list: List of paths to take into account
-        :return: List of path names matching all the constraints
+        :param nots: nots ("" or NOT)
+        :param documents_list: list of documents to take into account
+        :return: List of document names matching all the constraints
         """
 
-        if not isinstance(links, list) or not isinstance(fields, list) or not isinstance(conditions, list) or not isinstance(values, list) or not isinstance(nots, list) or not isinstance(paths_list, list):
+        if not isinstance(links, list) or not isinstance(fields, list) or not isinstance(conditions, list) or not isinstance(values, list) or not isinstance(nots, list) or not isinstance(documents_list, list):
             return []
         if (not len(links) == len(fields) - 1 == len(conditions) - 1 ==
                 len(values) - 1 == len(nots) - 1):
@@ -857,10 +837,10 @@ class Database:
         for link in links:
             if link not in ["AND", "OR"]:
                 return []
-        fields_list = self.get_tags_names()
+        fields_list = self.get_columns_names()
         for field in fields:
-            for tag in field:
-                if tag not in fields_list:
+            for column in field:
+                if column not in fields_list:
                     return []
         for condition in conditions:
             if condition not in ["=", "!=", "<", ">", "<=", ">=", "BETWEEN",
@@ -881,56 +861,56 @@ class Database:
             if not_choice not in ["", "NOT"]:
                 return []
 
-        query = self.session.query(self.table_classes[PATH_TABLE].name).filter(
-            self.table_classes[PATH_TABLE].name.in_(paths_list))
+        query = self.session.query(getattr(self.table_classes[DOCUMENT_TABLE], DOCUMENT_PRIMARY_KEY)).filter(
+            getattr(self.table_classes[DOCUMENT_TABLE], DOCUMENT_PRIMARY_KEY).in_(documents_list))
         row_filters = []
-        paths_matching = []
+        documents_matching = []
 
         # For each row of condition
         for i in range(0, len(conditions)):
 
             row_filter = []
 
-            # For each tag to check
-            for tag in fields[i]:
+            # For each column to check
+            for column in fields[i]:
 
                 if (conditions[i] == "="):
                     row_filter.append(
-                        and_(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) != None,
-                             getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) == values[i]))
+                        and_(getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) != None,
+                             getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) == values[i]))
                 elif (conditions[i] == "!="):
                     row_filter.append(
-                        or_(getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) == None,
-                            getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) != values[i]))
+                        or_(getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) == None,
+                            getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) != values[i]))
                 elif (conditions[i] == "<="):
                     row_filter.append(
-                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) <= values[i])
+                        getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) <= values[i])
                 elif (conditions[i] == "<"):
                     row_filter.append(
-                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) < values[i])
+                        getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) < values[i])
                 elif (conditions[i] == ">="):
                     row_filter.append(
-                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) >= values[i])
+                        getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) >= values[i])
                 elif (conditions[i] == ">"):
                     row_filter.append(
-                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)) > values[i])
+                        getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) > values[i])
                 elif (conditions[i] == "CONTAINS"):
                     row_filter.append(
-                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).like("%" + str(values[i]) + "%"))
+                        getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)).like("%" + str(values[i]) + "%"))
                 elif (conditions[i] == "BETWEEN"):
                     row_filter.append(
-                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).between(values[i][0], values[i][1]))
+                        getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)).between(values[i][0], values[i][1]))
                 elif (conditions[i] == "IN"):
                     row_filter.append(
-                        getattr(self.table_classes[PATH_TABLE], self.tag_name_to_column_name(tag)).in_(values[i]))
+                        getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)).in_(values[i]))
                 elif (conditions[i] == "HAS VALUE"):
                     row_filter.append(
-                        getattr(self.table_classes[PATH_TABLE],
-                                self.tag_name_to_column_name(tag)) != None)
+                        getattr(self.table_classes[DOCUMENT_TABLE],
+                                self.column_name_to_sql_column_name(column)) != None)
                 elif (conditions[i] == "HAS NO VALUE"):
                     row_filter.append(
-                        getattr(self.table_classes[PATH_TABLE],
-                                self.tag_name_to_column_name(tag)) == None)
+                        getattr(self.table_classes[DOCUMENT_TABLE],
+                                self.column_name_to_sql_column_name(column)) == None)
 
             # Putting OR condition between all row filters
             if len(row_filter) > 1:
@@ -956,62 +936,49 @@ class Database:
         query = query.filter(linked_filters).distinct().all()
 
         for result in query:
-            paths_matching.append(result.name)
+            documents_matching.append(getattr(result, DOCUMENT_PRIMARY_KEY))
 
-        return paths_matching
+        return documents_matching
 
-    def get_paths_matching_tag_value_couples(self, tag_value_couples):
+    def get_documents_matching_column_value_couples(self, column_value_couples):
         """
-        Checks if a path contains all the couples <tag, value> given in
+        Checks if a document contains all the couples <column, value> given in
         parameter
-        :param tag_value_couples: List of couple <tag(str), value(Typed)> to check
-        :return: List of paths matching all the <tag, value> couples
+        :param column_value_couples: list of couple <column(str), value(typed)> to check
+        :return: list of document names matching all the <column, value> couples
         """
 
-        if not isinstance(tag_value_couples, list) or not len(tag_value_couples) > 0:
+        if not isinstance(column_value_couples, list) or not len(column_value_couples) > 0:
             return []
 
         couple_results = []
-        for couple in tag_value_couples:
+        for couple in column_value_couples:
 
             if not isinstance(couple, list) or len(couple) != 2:
                 return []
 
-            tag = couple[0]
+            column = couple[0]
             value = couple[1]
 
-            tag_row = self.get_tag(tag)
-            if tag_row is None:
+            column_row = self.get_column(column)
+            if column_row is None:
                 return []
-            if not self.check_type_value(value, tag_row.type):
+            if not self.check_type_value(value, column_row.type):
                 return []
 
             couple_result = []
-            is_list = tag_row.type in LIST_TYPES
 
-            if is_list is False:
-                # The tag has a simple type, the tag column in the current
-                # table is used
-
-                couple_query_result = self.session.query(
-                    self.table_classes[PATH_TABLE].name).filter(
-                    getattr(self.table_classes[PATH_TABLE],
-                            self.tag_name_to_column_name(tag)) == value)
-                for query_result in couple_query_result:
-                    couple_result.append(query_result.name)
-
-            elif is_list is True:
-                # The tag has a list type, the tag current table is used
-
-                for path in self.get_paths_names():
-                    path_value = self.get_current_value(path, tag)
-                    if path_value == value:
-                        couple_result.append(path)
+            couple_query_result = self.session.query(
+                getattr(self.table_classes[DOCUMENT_TABLE], DOCUMENT_PRIMARY_KEY)).filter(
+                getattr(self.table_classes[DOCUMENT_TABLE],
+                        self.column_name_to_sql_column_name(column)) == value)
+            for query_result in couple_query_result:
+                couple_result.append(getattr(query_result, DOCUMENT_PRIMARY_KEY))
 
             couple_results.append(couple_result)
 
-        # All the path lists are put together, with intersections
-        # Only the paths with all <tag, value> are taken
+        # All the document names lists are put together, with intersections
+        # Only the documents names with all <column, value> are taken
         final_result = couple_results[0]
         for i in range(0, len(couple_results) - 1):
             final_result = list(set(final_result).intersection(
@@ -1067,17 +1034,17 @@ class Database:
     def filter_query(self, filter):
         """
         Given a filter string, return a query that can be used with
-        filter_paths() to select paths.
+        filter_documents() to select documents.
         """
 
         tree = filter_parser().parse(filter)
         query = FilterToQuery(self).transform(tree)
         return query
 
-    def filter_paths(self, filter_query):
+    def filter_documents(self, filter_query):
         """
-        Iterate over paths selected by filter_query. Each item yieled is a
-        row of the path table returned by sqlalchemy. filter_query can be
+        Iterate over documents selected by filter_query. Each item yieled is a
+        row of the column table returned by sqlalchemy. filter_query can be
         the result of self.filter_query() or a string containing a filter
         (in this case self.fliter_query() is called to get the actual query).
         """
@@ -1085,57 +1052,57 @@ class Database:
         if isinstance(filter_query, six.string_types):
             filter_query = self.filter_query(filter_query)
         if filter_query is None:
-            select = self.metadata.tables[PATH_TABLE].select()
+            select = self.metadata.tables[DOCUMENT_TABLE].select()
             python_filter = None
         elif isinstance(filter_query, types.FunctionType):
-            select = self.metadata.tables[PATH_TABLE].select()
+            select = self.metadata.tables[DOCUMENT_TABLE].select()
             python_filter = filter_query
         elif isinstance(filter_query, tuple):
             sql_condition, python_filter = filter_query
-            select = select = self.metadata.tables[PATH_TABLE].select(
+            select = select = self.metadata.tables[DOCUMENT_TABLE].select(
                 sql_condition)
         else:
-            select = select = self.metadata.tables[PATH_TABLE].select(
+            select = select = self.metadata.tables[DOCUMENT_TABLE].select(
                 filter_query)
             python_filter = None
         for row in self.session.execute(select):
-            row = TagRow(self, row)
+            row = ColumnRow(self, row)
             if python_filter is None or python_filter(row):
                 yield row
 
-    def python_to_column(self, tag_type, value):
+    def python_to_column(self, column_type, value):
         """
         Convert a python value into a suitable value to put in a
         database column.
         """
         if isinstance(value, list):
-            return self.list_to_column(tag_type, value)
+            return self.list_to_column(column_type, value)
         else:
             return value
 
-    def column_to_python(self, tag_type, value):
+    def column_to_python(self, column_type, value):
         """
         Convert a value of a database column into the corresponding
         Python value.
         """
-        if tag_type.startswith('list_'):
-            return self.column_to_list(tag_type, value)
+        if column_type.startswith('list_'):
+            return self.column_to_list(column_type, value)
         else:
             return value
 
-    def list_to_column(self, tag_type, value):
+    def list_to_column(self, column_type, value):
         """
         Convert a python list value into a suitable value to put in a
         database column.
         """
-        converter = self._list_item_to_string.get(tag_type)
+        converter = self._list_item_to_string.get(column_type)
         if converter is None:
             list_value = value
         else:
             list_value = [converter(i) for i in value]
         return repr(list_value)
 
-    def column_to_list(self, tag_type, value):
+    def column_to_list(self, column_type, value):
         """
         Convert a value of a database column into the corresponding
         Python list value.
@@ -1143,7 +1110,7 @@ class Database:
         if value is None:
             return None
         list_value = ast.literal_eval(value)
-        converter = self._string_to_list_item.get(tag_type)
+        converter = self._string_to_list_item.get(column_type)
         if converter is None:
             return list_value
         return [converter(i) for i in list_value]
@@ -1153,12 +1120,12 @@ class Undefined:
     pass
 
 
-class TagRow:
+class ColumnRow:
     '''
-    A TagRow is an object that makes it possible to access to attributes of
-    a database row returned by sqlalchemy using the tag name. If the
-    attribute with the tag name is not found, it is hashed and search in the
-    actual row. If found, it is stored in the TagRow instance.
+    A ColumnRow is an object that makes it possible to access to attributes of
+    a database row returned by sqlalchemy using the column name. If the
+    attribute with the column name is not found, it is hashed and search in the
+    actual row. If found, it is stored in the ColumnRow instance.
     '''
 
     def __init__(self, database, row):
@@ -1174,7 +1141,7 @@ class TagRow:
             if result is Undefined:
                 raise
             result = self.database.column_to_python(
-                self.database.tags[name].type, result)
+                self.database.columns[name].type, result)
             setattr(self, hashed_name, result)
             return result
 
