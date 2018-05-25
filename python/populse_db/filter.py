@@ -2,6 +2,7 @@ import six
 import operator
 import types
 import ast
+import datetime
 
 from lark import Lark, Transformer
 
@@ -10,7 +11,12 @@ import dateutil.parser
 import sqlalchemy
 from sqlalchemy.ext.automap import AutomapBase
 
-from populse_db.database_model import DOCUMENT_TABLE, DOCUMENT_PRIMARY_KEY
+from populse_db.database_model import (DOCUMENT_TABLE,
+                                       COLUMN_TYPE_INTEGER,
+                                       COLUMN_TYPE_FLOAT, COLUMN_TYPE_TIME,
+                                       COLUMN_TYPE_DATETIME, COLUMN_TYPE_DATE,
+                                       COLUMN_TYPE_STRING, COLUMN_TYPE_LIST_DATE,
+                                       COLUMN_TYPE_BOOLEAN, DOCUMENT_PRIMARY_KEY)
 
 # The grammar (in Lark format) used to parse filter strings
 filter_grammar = '''
@@ -33,10 +39,10 @@ BOOLEAN_OPERATOR : "AND"i
 
 CONDITION_OPERATOR : "=="i
                    | "!="i
-                   | "<"i
                    | "<="i
-                   | ">"i
                    | ">="i
+                   | ">"i
+                   | "<"i
                    | "IN"i
 
 condition : operand CONDITION_OPERATOR operand
@@ -129,6 +135,16 @@ class FilterToQuery(Transformer):
         'null': None,
     }
     
+    python_type_to_tag_type = {
+        type(''): COLUMN_TYPE_STRING,
+        type(u''): COLUMN_TYPE_STRING,
+        int: COLUMN_TYPE_INTEGER,
+        float: COLUMN_TYPE_FLOAT,
+        datetime.time: COLUMN_TYPE_TIME,
+        datetime.datetime: COLUMN_TYPE_DATETIME,
+        datetime.date: COLUMN_TYPE_DATE,
+        bool: COLUMN_TYPE_BOOLEAN,
+    }
     def __init__(self, database):
         super(FilterToQuery, self).__init__()
         self.database = database
@@ -190,14 +206,40 @@ class FilterToQuery(Transformer):
         return getattr(self.database.metadata.tables[DOCUMENT_TABLE].c,
                        self.database.column_name_to_sql_column_name(getattr(column, DOCUMENT_PRIMARY_KEY)))
     
+    def get_column_value(self, python_value):
+        tag_type = self.find_tag_type(python_value)
+        column_value = self.database.python_to_column(tag_type, python_value)
+        return column_value
+    
+    
+    def find_tag_type(self, value):
+        if isinstance(value, list):
+            if value:
+                item_type = self.find_tag_type(value[0])
+                return 'list_' + item_type
+            else:
+                return type(None)
+        else:
+            return self.python_type_to_tag_type[type(value)]
+    
     def condition(self, items):
         left_operand, operator, right_operand = items
         operator_str = str(operator).lower()
         if operator_str == 'in':
+
             if self.is_list_column(right_operand):
-                if not isinstance(left_operand, six.string_types + (float,)): #TODO date, datetime, bool, none
-                    raise ValueError('Left operand of IN <list column> must be a string or a number column but "%s" was used' % str(left_operand))
-                # Check if a single value is in a list column
+                if not isinstance(left_operand, six.string_types + (int, 
+                                                                    float,
+                                                                    bool,
+                                                                    None.__class__,
+                                                                    datetime.date,
+                                                                    datetime.time,
+                                                                    datetime.datetime)):
+                    raise ValueError('Left operand of IN <list column> must be a '
+                        'string, number, boolean, date, time or null but "%s" '
+                        'was used' % str(left_operand))
+                # Check if a single value is in a list tag
+
                 # Cannot be done in SQL with SQLite => return a Python function
                 return lambda x: left_operand in x[getattr(right_operand, DOCUMENT_PRIMARY_KEY)]
             elif isinstance(right_operand, list):
@@ -206,10 +248,13 @@ class FilterToQuery(Transformer):
                     # Can be done in SQL => return an SqlAlchemy expression
                     return self.get_column(left_operand).in_(right_operand)
                 else:
-                    raise ValueError('Left operand of IN <list> must be a simple column but "%s" was used' % str(left_operand))
+
+                    raise ValueError('Left operand of IN <list> must be a '
+                        'simple column but "%s" was used' % str(left_operand))
             else:
-                raise ValueError('Right operand of IN must be a list or a list column but "%s" was used' % str(right_operand))
-        
+                raise ValueError('Right operand of IN must be a list or a '
+                    'list column but "%s" was used' % str(right_operand))
+
         # Check if using an SQL expression is possible
         # This is always possible for operator == and != (using string
         # comparison for lists). Otherwise, it is only possible if no
@@ -220,10 +265,16 @@ class FilterToQuery(Transformer):
                    and not self.is_list_column(right_operand)))
         operator = self.python_operators[operator_str]
         if do_sql:
+
             if self.is_column(left_operand):
-                left_operand = self.get_column(left_operand) 
+                left_operand = self.get_column(left_operand)
+            else:
+                left_operand = self.get_column_value(left_operand)
             if self.is_column(right_operand):
+
                 right_operand = self.get_column(right_operand)
+            else:
+                right_operand = self.get_column_value(right_operand)
             # Return SqlAlchemy expression of the condition
             return operator(left_operand, right_operand)
         
