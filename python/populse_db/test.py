@@ -1175,7 +1175,8 @@ class TestDatabaseMethods(unittest.TestCase):
                                 '/bcd.nii',
                                 '/bcd.dcm',
                                 '/bcd.mgz'}
-             ),
+            ),
+            
             ('(format == "NIFTI" OR NOT format == "DICOM") AND ("a" IN strings OR NOT "b" IN strings)',
              {'/xyz.nii',
               '/abc.nii',
@@ -1183,6 +1184,17 @@ class TestDatabaseMethods(unittest.TestCase):
               '/xyz.mgz',
               '/def.mgz',
               '/def.nii'}
+            ),
+            
+            ('format > "DICOM" AND strings > ["b", "c", "d"]',
+             {'/def.nii',
+              '/xyz.nii',
+              '/def.mgz',
+              '/xyz.mgz'}
+            ),
+             
+            ('format <= "DICOM" AND strings == ["b", "c", "d"]',
+             {'/bcd.dcm'}
             ),
             ('format in [True, false, null]',set())):
             paths = set(path.name for path in database.filter_paths(filter))
