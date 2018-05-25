@@ -24,9 +24,8 @@ from populse_db.database_model import (create_database, TAG_TYPE_INTEGER,
                                        TAG_TYPE_LIST_INTEGER,
                                        TAG_TYPE_LIST_STRING,
                                        TAG_TYPE_LIST_TIME,
-                                       TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN,
                                        LIST_TYPES, TYPE_TO_COLUMN, TAG_TYPE_BOOLEAN,
-                                       ALL_TYPES, ALL_UNITS, PATH_TABLE, TAG_TABLE, INITIAL_TABLE)
+                                       ALL_TYPES, PATH_PRIMARY_KEY, PATH_TABLE, TAG_TABLE, INITIAL_TABLE)
 from populse_db.filter import filter_parser, FilterToQuery
 
 
@@ -169,7 +168,7 @@ class Database:
         self.names = {}
 
         # name is the only tag not hashed
-        self.names["name"] = "name"
+        self.names[PATH_PRIMARY_KEY] = PATH_PRIMARY_KEY
 
         if self.paths_caches:
             self.paths = {}
@@ -187,23 +186,19 @@ class Database:
         for tag in tags:
 
             # Adding each tag
-            self.add_tag(tag[0], tag[1], tag[2], tag[3], tag[4], tag[5], False)
+            self.add_tag(tag[0], tag[1], tag[2], False)
 
         # Updating the table classes
         self.session.flush()
         self.update_table_classes()
 
-    def add_tag(self, name, origin, tag_type, unit, default_value,
-                description, flush=True):
+    def add_tag(self, name, tag_type, description, flush=True):
         """
         Adds a tag to the database, if it does not already exist
         :param name: Tag name (str)
-        :param origin: Tag origin (Raw or user)
         :param type: Tag type (string, int, float, date, datetime,
                      time, list_string, list_int, list_float, list_date,
                      list_datetime, or list_time)
-        :param unit: Tag unit (ms, mm, degree, Hz/pixel, MHz, or None)
-        :param default_value: Tag default value (str or None)
         :param description: Tag description (str or None)
         :param flush: Bool to know if the base must be updated (put False if in the middle of filling tags)
         """
@@ -215,28 +210,16 @@ class Database:
         if tag_row != None:
             raise ValueError("A tag with the name " +
                              str(name) + " already exists")
-        if not origin in [TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN]:
-            raise ValueError("The tag origin must be in " + str(
-                [TAG_ORIGIN_USER, TAG_ORIGIN_BUILTIN]) + ", but " + str(origin) + " given")
         if not tag_type in ALL_TYPES:
             raise ValueError("The tag type must be in " + str(ALL_TYPES) + ", but " + str(
                 tag_type) + " given")
-        if not unit in ALL_UNITS and unit is not None:
-            raise ValueError("The tag unit must be in " + str(ALL_UNITS) + ", but " + str(
-                unit) + " given")
-        if not isinstance(default_value, str) and default_value is not None:
-            raise ValueError(
-                "The tag default value must be of type " + str(str) + " or None, but tag default value of type " + str(type(default_value)) + " given")
         if not isinstance(description, str) and description is not None:
             raise ValueError(
                 "The tag description must be of type " + str(str) + " or None, but tag description of type " + str(
                     type(description)) + " given")
 
         # Adding the tag in the tag table
-        tag = self.table_classes[TAG_TABLE](name=name, origin=origin,
-                                            type=tag_type, unit=unit,
-                                            default_value=default_value,
-                                            description=description)
+        tag = self.table_classes[TAG_TABLE](name=name, type=tag_type, description=description)
 
         self.session.add(tag)
         self.tags[name] = tag
