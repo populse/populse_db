@@ -280,7 +280,7 @@ class Database:
         if name in self.names:
             return self.names[name]
         else:
-            column_name = hashlib.md5(name.encode('ascii')).hexdigest()
+            column_name = hashlib.md5(name.encode('utf-8')).hexdigest()
             self.names[name] = column_name
             return column_name
 
@@ -814,132 +814,6 @@ class Database:
 
         return documents_matching
 
-    def get_documents_matching_advanced_search(self, links, fields, conditions,
-                                               values, nots, documents_list):
-        """
-        Gives the document names matching the advanced search
-        :param links: links (AND/OR)
-        :param fields: fields (List of columns)
-        :param conditions: conditions (=, !=, <, >, <=, >=, BETWEEN,
-                           CONTAINS, IN, HAS VALUE, HAS NO VALUE)
-        :param values: values (str value for =, !=, <, >, <=, >=, HAS VALUE, HAS NO VALUE, and
-                       CONTAINS/list for BETWEEN and IN)
-        :param nots: nots ("" or NOT)
-        :param documents_list: list of documents to take into account
-        :return: List of document names matching all the constraints
-        """
-
-        if not isinstance(links, list) or not isinstance(fields, list) or not isinstance(conditions, list) or not isinstance(values, list) or not isinstance(nots, list) or not isinstance(documents_list, list):
-            return []
-        if (not len(links) == len(fields) - 1 == len(conditions) - 1 ==
-                len(values) - 1 == len(nots) - 1):
-            return []
-        for link in links:
-            if link not in ["AND", "OR"]:
-                return []
-        fields_list = self.get_columns_names()
-        for field in fields:
-            for column in field:
-                if column not in fields_list:
-                    return []
-        for condition in conditions:
-            if condition not in ["=", "!=", "<", ">", "<=", ">=", "BETWEEN",
-                                 "IN", "CONTAINS", "HAS VALUE", "HAS NO VALUE"]:
-                return []
-        for i in range(0, len(values)):
-            value = values[i]
-            if conditions[i] == "BETWEEN":
-                if not isinstance(value, list) or len(value) != 2:
-                    return []
-            elif conditions[i] == "IN":
-                if not isinstance(value, list):
-                    return []
-            else:
-                if not isinstance(value, str):
-                    return []
-        for not_choice in nots:
-            if not_choice not in ["", "NOT"]:
-                return []
-
-        query = self.session.query(getattr(self.table_classes[DOCUMENT_TABLE], DOCUMENT_PRIMARY_KEY)).filter(
-            getattr(self.table_classes[DOCUMENT_TABLE], DOCUMENT_PRIMARY_KEY).in_(documents_list))
-        row_filters = []
-        documents_matching = []
-
-        # For each row of condition
-        for i in range(0, len(conditions)):
-
-            row_filter = []
-
-            # For each column to check
-            for column in fields[i]:
-
-                if (conditions[i] == "="):
-                    row_filter.append(
-                        and_(getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) != None,
-                             getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) == values[i]))
-                elif (conditions[i] == "!="):
-                    row_filter.append(
-                        or_(getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) == None,
-                            getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) != values[i]))
-                elif (conditions[i] == "<="):
-                    row_filter.append(
-                        getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) <= values[i])
-                elif (conditions[i] == "<"):
-                    row_filter.append(
-                        getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) < values[i])
-                elif (conditions[i] == ">="):
-                    row_filter.append(
-                        getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) >= values[i])
-                elif (conditions[i] == ">"):
-                    row_filter.append(
-                        getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)) > values[i])
-                elif (conditions[i] == "CONTAINS"):
-                    row_filter.append(
-                        getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)).like("%" + str(values[i]) + "%"))
-                elif (conditions[i] == "BETWEEN"):
-                    row_filter.append(
-                        getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)).between(values[i][0], values[i][1]))
-                elif (conditions[i] == "IN"):
-                    row_filter.append(
-                        getattr(self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)).in_(values[i]))
-                elif (conditions[i] == "HAS VALUE"):
-                    row_filter.append(
-                        getattr(self.table_classes[DOCUMENT_TABLE],
-                                self.column_name_to_sql_column_name(column)) != None)
-                elif (conditions[i] == "HAS NO VALUE"):
-                    row_filter.append(
-                        getattr(self.table_classes[DOCUMENT_TABLE],
-                                self.column_name_to_sql_column_name(column)) == None)
-
-            # Putting OR condition between all row filters
-            if len(row_filter) > 1:
-                final_row_filter = or_(*row_filter)
-            else:
-                final_row_filter = row_filter[0]
-
-            # Putting the negation if needed
-            if nots[i] == "NOT":
-                final_row_filter = not_(final_row_filter)
-
-            row_filters.append(final_row_filter)
-
-        # Row filters linked
-        linked_filters = row_filters[0]
-
-        for i in range(0, len(links)):
-            if links[i] == "OR":
-                linked_filters = or_(linked_filters, row_filters[i + 1])
-            else:
-                linked_filters = and_(linked_filters, row_filters[i + 1])
-
-        query = query.filter(linked_filters).distinct().all()
-
-        for result in query:
-            documents_matching.append(getattr(result, DOCUMENT_PRIMARY_KEY))
-
-        return documents_matching
-
     def get_documents_matching_column_value_couples(self, column_value_couples):
         """
         Checks if a document contains all the couples <column, value> given in
@@ -1043,7 +917,7 @@ class Database:
 
     def filter_documents(self, filter_query):
         """
-        Iterate over documents selected by filter_query. Each item yieled is a
+        Iterate over documents selected by filter_query. Each item yield is a
         row of the column table returned by sqlalchemy. filter_query can be
         the result of self.filter_query() or a string containing a filter
         (in this case self.fliter_query() is called to get the actual query).

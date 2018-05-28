@@ -15,8 +15,8 @@ from populse_db.database_model import (DOCUMENT_TABLE,
                                        COLUMN_TYPE_INTEGER,
                                        COLUMN_TYPE_FLOAT, COLUMN_TYPE_TIME,
                                        COLUMN_TYPE_DATETIME, COLUMN_TYPE_DATE,
-                                       COLUMN_TYPE_STRING, COLUMN_TYPE_LIST_DATE,
-                                       COLUMN_TYPE_BOOLEAN, DOCUMENT_PRIMARY_KEY)
+                                       COLUMN_TYPE_STRING, DOCUMENT_PRIMARY_KEY,
+                                       COLUMN_TYPE_BOOLEAN)
 
 # The grammar (in Lark format) used to parse filter strings
 filter_grammar = '''
