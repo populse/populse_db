@@ -775,42 +775,6 @@ class Database:
 
     """ UTILS """
 
-    def get_documents_matching_search(self, search, fields):
-        """
-        Returns the list of documents names matching the search
-        :param search: search to match (str)
-        :param fields: list of fields taken into account
-        :return: List of document names matching the search
-        """
-
-        if not isinstance(fields, list):
-            return []
-        if not isinstance(search, str):
-            return []
-        for field in fields:
-            field_row = self.get_field(field)
-            if field_row is None:
-                return []
-
-        documents_matching = []
-        simple_columns_filters = []
-
-        # Iterating over all values and finding matches
-
-        values = self.session.query(getattr(self.table_classes[DOCUMENT_TABLE], DOCUMENT_PRIMARY_KEY))
-
-        # Search for each field
-        for column in fields:
-
-            simple_columns_filters.append(getattr(
-                self.table_classes[DOCUMENT_TABLE], self.field_name_to_column_name(column)).like("%" + search + "%"))
-
-        values = values.filter(or_(*simple_columns_filters)).distinct().all()
-        for value in values:
-            documents_matching.append(getattr(value, DOCUMENT_PRIMARY_KEY))
-
-        return documents_matching
-
     def start_transaction(self):
         """
         Starts a new transaction

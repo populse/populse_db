@@ -10,6 +10,7 @@ import dateutil.parser
 
 import sqlalchemy
 from sqlalchemy.ext.automap import AutomapBase
+from sqlalchemy.sql.operators import ilike_op, like_op
 
 from populse_db.database_model import (DOCUMENT_TABLE,
                                        FIELD_TYPE_INTEGER,
@@ -44,6 +45,8 @@ CONDITION_OPERATOR : "=="i
                    | ">"i
                    | "<"i
                    | "IN"i
+                   | "ILIKE"i
+                   | "LIKE"i
 
 condition : operand CONDITION_OPERATOR operand
 
@@ -137,6 +140,8 @@ class FilterToQuery(Transformer):
         '>=': operator.ge,
         'and': operator.and_,
         'or': operator.or_,
+        'ilike': ilike_op,
+        'like': like_op,
     }
     
     keyword_literals = {

@@ -835,38 +835,6 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing the add of several documents
         database.add_document("document2")
 
-    def test_get_documents_matching_search(self):
-        """
-        Tests the method returning the list of document matching the search(str)
-        """
-
-        database = Database(self.string_engine, True)
-
-        # Testing with wrong parameters
-        return_list = database.get_documents_matching_search(1, [])
-        self.assertEqual(return_list, [])
-        return_list = database.get_documents_matching_search("search", 1)
-        self.assertEqual(return_list, [])
-        database.add_document("document1")
-        return_list = database.get_documents_matching_search(
-            "search", ["document_not_existing"])
-        self.assertEqual(return_list, [])
-
-        database.add_document("document2")
-        database.add_field("PatientName", FIELD_TYPE_STRING, None)
-        database.new_value("document1", "PatientName", "Guerbet1", "Guerbet")
-        database.new_value("document2", "PatientName", "Guerbet2", "Guerbet")
-        self.assertEqual(database.get_documents_matching_search(
-            "search", ["PatientName"]), [])
-        self.assertEqual(database.get_documents_matching_search(
-            "document", ["PatientName", DOCUMENT_PRIMARY_KEY]), ["document1", "document2"])
-        self.assertEqual(database.get_documents_matching_search(
-            "Guerbet", ["PatientName"]), ["document1", "document2"])
-        self.assertEqual(database.get_documents_matching_search(
-            "Guerbet1", ["PatientName"]), ["document1"])
-        self.assertEqual(database.get_documents_matching_search(
-            "Guerbet2", ["PatientName"]), ["document2"])
-
     def test_initial_table(self):
         """
         Tests the initial table good behavior
