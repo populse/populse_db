@@ -5,15 +5,15 @@ import tempfile
 import datetime
 
 from populse_db.database import Database
-from populse_db.database_model import (create_database, COLUMN_TYPE_BOOLEAN,
-                                       COLUMN_TYPE_STRING, COLUMN_TYPE_FLOAT,
-                                       COLUMN_TYPE_INTEGER, COLUMN_TYPE_LIST_BOOLEAN,
-                                       COLUMN_TYPE_TIME, COLUMN_TYPE_DATETIME,
-                                       COLUMN_TYPE_LIST_STRING,
-                                       COLUMN_TYPE_LIST_INTEGER,
-                                       COLUMN_TYPE_LIST_FLOAT, DOCUMENT_TABLE,
-                                       COLUMN_TYPE_LIST_DATE, COLUMN_TYPE_LIST_TIME,
-                                       COLUMN_TYPE_LIST_DATETIME, DOCUMENT_PRIMARY_KEY)
+from populse_db.database_model import (create_database, FIELD_TYPE_BOOLEAN,
+                                       FIELD_TYPE_STRING, FIELD_TYPE_FLOAT,
+                                       FIELD_TYPE_INTEGER, FIELD_TYPE_LIST_BOOLEAN,
+                                       FIELD_TYPE_TIME, FIELD_TYPE_DATETIME,
+                                       FIELD_TYPE_LIST_STRING,
+                                       FIELD_TYPE_LIST_INTEGER,
+                                       FIELD_TYPE_LIST_FLOAT, DOCUMENT_TABLE,
+                                       FIELD_TYPE_LIST_DATE, FIELD_TYPE_LIST_TIME,
+                                       FIELD_TYPE_LIST_DATETIME, DOCUMENT_PRIMARY_KEY)
 from populse_db.filter import literal_parser, FilterToQuery
 
 
@@ -64,82 +64,82 @@ class TestDatabaseMethods(unittest.TestCase):
         Database(self.string_engine)
         self.assertTrue(os.path.exists(self.path))
 
-    def test_add_column(self):
+    def test_add_field(self):
         """
-        Tests the method adding a column
+        Tests the method adding a field
         """
 
-        # Testing with a first column
+        # Testing with a first field
         database = Database(self.string_engine)
-        return_value = database.add_column("PatientName", COLUMN_TYPE_STRING, "Name of the patient")
+        return_value = database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
         self.assertIsNone(return_value)
 
-        # Checking the column properties
-        column = database.get_column("PatientName")
-        self.assertEqual(column.name, "PatientName")
-        self.assertEqual(column.type, COLUMN_TYPE_STRING)
-        self.assertEqual(column.description, "Name of the patient")
+        # Checking the field properties
+        field = database.get_field("PatientName")
+        self.assertEqual(field.name, "PatientName")
+        self.assertEqual(field.type, FIELD_TYPE_STRING)
+        self.assertEqual(field.description, "Name of the patient")
 
-        # Testing with a column that already exists
+        # Testing with a field that already exists
         try:
-            database.add_column("PatientName", COLUMN_TYPE_STRING, "Name of the patient")
+            database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
             self.fail()
         except ValueError:
             pass
 
-        # Testing with all column types
-        database.add_column("BandWidth", COLUMN_TYPE_FLOAT, None)
-        database.add_column("Bits per voxel", COLUMN_TYPE_INTEGER, "with space")
-        database.add_column("AcquisitionTime", COLUMN_TYPE_TIME, None)
-        database.add_column("AcquisitionDate", COLUMN_TYPE_DATETIME, None)
-        database.add_column("Dataset dimensions", COLUMN_TYPE_LIST_INTEGER, None)
+        # Testing with all field types
+        database.add_field("BandWidth", FIELD_TYPE_FLOAT, None)
+        database.add_field("Bits per voxel", FIELD_TYPE_INTEGER, "with space")
+        database.add_field("AcquisitionTime", FIELD_TYPE_TIME, None)
+        database.add_field("AcquisitionDate", FIELD_TYPE_DATETIME, None)
+        database.add_field("Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
 
-        database.add_column("Bitspervoxel", COLUMN_TYPE_INTEGER, "without space")
-        self.assertEqual(database.get_column(
+        database.add_field("Bitspervoxel", FIELD_TYPE_INTEGER, "without space")
+        self.assertEqual(database.get_field(
             "Bitspervoxel").description, "without space")
-        self.assertEqual(database.get_column(
+        self.assertEqual(database.get_field(
             "Bits per voxel").description, "with space")
-        database.add_column("Boolean", COLUMN_TYPE_BOOLEAN, None)
-        database.add_column("Boolean list", COLUMN_TYPE_LIST_BOOLEAN, None)
+        database.add_field("Boolean", FIELD_TYPE_BOOLEAN, None)
+        database.add_field("Boolean list", FIELD_TYPE_LIST_BOOLEAN, None)
 
         # Testing with wrong parameters
         try:
-            database.add_column(None, COLUMN_TYPE_LIST_INTEGER, None)
+            database.add_field(None, FIELD_TYPE_LIST_INTEGER, None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.add_column("Patient Name", None, None)
+            database.add_field("Patient Name", None, None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.add_column("Patient Name", COLUMN_TYPE_STRING, 1.5)
+            database.add_field("Patient Name", FIELD_TYPE_STRING, 1.5)
             self.fail()
         except ValueError:
             pass
 
-        # Testing that the column name is taken for the primary key name column
+        # Testing that the document primary key field is taken
         try:
-            database.add_column(DOCUMENT_PRIMARY_KEY, COLUMN_TYPE_STRING, None)
+            database.add_field(DOCUMENT_PRIMARY_KEY, FIELD_TYPE_STRING, None)
             self.fail()
         except ValueError:
             pass
 
         # TODO Testing column creation
 
-    def test_remove_column(self):
+    def test_remove_field(self):
         """
-        Tests the method removing a column
+        Tests the method removing a field
         """
 
         database = Database(self.string_engine, True)
 
-        # Adding columns
-        return_value = database.add_column("PatientName", COLUMN_TYPE_STRING, "Name of the patient")
+        # Adding fields
+        return_value = database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
         self.assertEqual(return_value, None)
-        database.add_column("SequenceName", COLUMN_TYPE_STRING, None)
-        database.add_column("Dataset dimensions", COLUMN_TYPE_LIST_INTEGER, None)
+        database.add_field("SequenceName", FIELD_TYPE_STRING, None)
+        database.add_field("Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
 
         # Adding documents
         database.add_document("document1")
@@ -150,16 +150,16 @@ class TestDatabaseMethods(unittest.TestCase):
         database.new_value("document1", "SequenceName", "RARE")
         database.new_value("document1", "Dataset dimensions", [1, 2])
 
-        # Removing column
+        # Removing fields
 
-        database.remove_column("PatientName")
-        database.remove_column("Dataset dimensions")
+        database.remove_field("PatientName")
+        database.remove_field("Dataset dimensions")
 
-        # Testing that the column does not exist anymore
-        self.assertIsNone(database.get_column("PatientName"))
-        self.assertIsNone(database.get_column("Dataset dimensions"))
+        # Testing that the field does not exist anymore
+        self.assertIsNone(database.get_field("PatientName"))
+        self.assertIsNone(database.get_field("Dataset dimensions"))
 
-        # Testing that the column values are removed
+        # Testing that the field values are removed
         self.assertIsNone(database.get_current_value("document1", "PatientName"))
         self.assertIsNone(database.get_initial_value("document1", "PatientName"))
         self.assertEqual(database.get_current_value(
@@ -167,51 +167,51 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertIsNone(database.get_current_value(
             "document1", "Dataset dimensions"))
 
-        # Testing with a column not existing
+        # Testing with a field not existing
         try:
-            database.remove_column("NotExisting")
+            database.remove_field("NotExisting")
             self.fail()
         except ValueError:
             pass
         try:
-            database.remove_column("Dataset dimension")
+            database.remove_field("Dataset dimension")
             self.fail()
         except ValueError:
             pass
 
         # Testing with wrong parameter
         try:
-            database.remove_column(1)
+            database.remove_field(1)
             self.fail()
         except ValueError:
             pass
         try:
-            database.remove_column(None)
+            database.remove_field(None)
             self.fail()
         except ValueError:
             pass
 
         # TODO Testing column removal
 
-    def test_get_column(self):
+    def test_get_field(self):
         """
-        Tests the method giving the column row of a column
+        Tests the method giving the field row given a field
         """
 
         database = Database(self.string_engine)
 
-        # Adding column
-        database.add_column("PatientName", COLUMN_TYPE_STRING, "Name of the patient")
+        # Adding field
+        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
 
-        # Testing that the column is returned if it exists
-        self.assertIsNotNone(database.get_column("PatientName"))
+        # Testing that the field is returned if it exists
+        self.assertIsNotNone(database.get_field("PatientName"))
 
-        # Testing that None is returned if the column does not exist
-        self.assertIsNone(database.get_column("Test"))
+        # Testing that None is returned if the field does not exist
+        self.assertIsNone(database.get_field("Test"))
 
     def test_get_current_value(self):
         """
-        Tests the method giving the current value, given a document and a column
+        Tests the method giving the current value, given a document and a field
         """
 
         database = Database(self.string_engine)
@@ -219,11 +219,11 @@ class TestDatabaseMethods(unittest.TestCase):
         # Adding documents
         database.add_document("document1")
 
-        # Adding columns
-        database.add_column("PatientName", COLUMN_TYPE_STRING, "Name of the patient")
-        database.add_column("Dataset dimensions", COLUMN_TYPE_LIST_INTEGER, None)
-        database.add_column("Bits per voxel", COLUMN_TYPE_INTEGER, None)
-        database.add_column("Grids spacing", COLUMN_TYPE_LIST_FLOAT, None)
+        # Adding fields
+        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
+        database.add_field("Bits per voxel", FIELD_TYPE_INTEGER, None)
+        database.add_field("Grids spacing", FIELD_TYPE_LIST_FLOAT, None)
 
         # Adding values
         database.new_value("document1", "PatientName", "test")
@@ -256,7 +256,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
     def test_get_initial_value(self):
         """
-        Tests the method giving the initial value, given a column and a document
+        Tests the method giving the initial value, given a field and a document
         """
 
         database = Database(self.string_engine, True)
@@ -264,11 +264,11 @@ class TestDatabaseMethods(unittest.TestCase):
         # Adding documents
         database.add_document("document1")
 
-        # Adding columns
-        database.add_column("PatientName", COLUMN_TYPE_STRING, "Name of the patient")
-        database.add_column("Bits per voxel", COLUMN_TYPE_INTEGER, None)
-        database.add_column("Dataset dimensions", COLUMN_TYPE_LIST_INTEGER, None)
-        database.add_column("Grids spacing", COLUMN_TYPE_LIST_FLOAT, None)
+        # Adding fields
+        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("Bits per voxel", FIELD_TYPE_INTEGER, None)
+        database.add_field("Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
+        database.add_field("Grids spacing", FIELD_TYPE_LIST_FLOAT, None)
 
         # Adding values
         database.new_value("document1", "PatientName", "test", "test")
@@ -308,8 +308,8 @@ class TestDatabaseMethods(unittest.TestCase):
         # Adding document
         database.add_document("document1")
 
-        # Adding column
-        database.add_column("PatientName", COLUMN_TYPE_STRING, "Name of the patient")
+        # Adding field
+        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
 
         # Adding a value
         database.new_value("document1", "PatientName", "test", "test")
@@ -345,14 +345,14 @@ class TestDatabaseMethods(unittest.TestCase):
         # Adding document
         database.add_document("document1")
 
-        # Adding columns
-        database.add_column("PatientName", COLUMN_TYPE_STRING, "Name of the patient")
-        database.add_column(
-            "Bits per voxel", COLUMN_TYPE_INTEGER, None)
-        database.add_column(
-            "AcquisitionDate", COLUMN_TYPE_DATETIME, None)
-        database.add_column(
-            "AcquisitionTime", COLUMN_TYPE_TIME, None)
+        # Adding fields
+        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field(
+            "Bits per voxel", FIELD_TYPE_INTEGER, None)
+        database.add_field(
+            "AcquisitionDate", FIELD_TYPE_DATETIME, None)
+        database.add_field(
+            "AcquisitionTime", FIELD_TYPE_TIME, None)
 
         # Adding values and changing it
         database.new_value("document1", "PatientName", "test", "test")
@@ -446,10 +446,10 @@ class TestDatabaseMethods(unittest.TestCase):
         # Adding document
         database.add_document("document1")
 
-        # Adding columns
-        database.add_column("PatientName", COLUMN_TYPE_STRING, "Name of the patient")
-        database.add_column("Bits per voxel", COLUMN_TYPE_INTEGER, None)
-        database.add_column("Dataset dimensions", COLUMN_TYPE_LIST_INTEGER, None)
+        # Adding fields
+        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("Bits per voxel", FIELD_TYPE_INTEGER, None)
+        database.add_field("Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
 
         # Adding values and changing it
         database.new_value("document1", "PatientName", "test", "test")
@@ -525,15 +525,15 @@ class TestDatabaseMethods(unittest.TestCase):
         # Adding document
         database.add_document("document1")
 
-        # Adding columns
-        database.add_column("PatientName", COLUMN_TYPE_STRING, "Name of the patient")
-        database.add_column("Bits per voxel", COLUMN_TYPE_INTEGER, None)
-        database.add_column("Dataset dimensions", COLUMN_TYPE_LIST_INTEGER, None)
+        # Adding fields
+        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("Bits per voxel", FIELD_TYPE_INTEGER, None)
+        database.add_field("Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
 
         # Adding values
         database.new_value("document1", "PatientName", "test")
         try:
-            database.new_value("document1", "Bits per voxel", "space_column")
+            database.new_value("document1", "Bits per voxel", "space_field")
             self.fail()
         except ValueError:
             pass
@@ -579,26 +579,26 @@ class TestDatabaseMethods(unittest.TestCase):
         """
 
         database = Database(self.string_engine)
-        is_valid = database.check_type_value("string", COLUMN_TYPE_STRING)
+        is_valid = database.check_type_value("string", FIELD_TYPE_STRING)
         self.assertTrue(is_valid)
-        is_valid = database.check_type_value(1, COLUMN_TYPE_STRING)
+        is_valid = database.check_type_value(1, FIELD_TYPE_STRING)
         self.assertFalse(is_valid)
-        is_valid = database.check_type_value(None, COLUMN_TYPE_STRING)
+        is_valid = database.check_type_value(None, FIELD_TYPE_STRING)
         self.assertTrue(is_valid)
-        is_valid = database.check_type_value(1, COLUMN_TYPE_INTEGER)
+        is_valid = database.check_type_value(1, FIELD_TYPE_INTEGER)
         self.assertTrue(is_valid)
-        is_valid = database.check_type_value(1, COLUMN_TYPE_FLOAT)
+        is_valid = database.check_type_value(1, FIELD_TYPE_FLOAT)
         self.assertTrue(is_valid)
-        is_valid = database.check_type_value(1.5, COLUMN_TYPE_FLOAT)
+        is_valid = database.check_type_value(1.5, FIELD_TYPE_FLOAT)
         self.assertTrue(is_valid)
         is_valid = database.check_type_value(None, None)
         self.assertFalse(is_valid)
-        is_valid = database.check_type_value([1.5], COLUMN_TYPE_LIST_FLOAT)
+        is_valid = database.check_type_value([1.5], FIELD_TYPE_LIST_FLOAT)
         self.assertTrue(is_valid)
-        is_valid = database.check_type_value(1.5, COLUMN_TYPE_LIST_FLOAT)
+        is_valid = database.check_type_value(1.5, FIELD_TYPE_LIST_FLOAT)
         self.assertFalse(is_valid)
         is_valid = database.check_type_value(
-            [1.5, "test"], COLUMN_TYPE_LIST_FLOAT)
+            [1.5, "test"], FIELD_TYPE_LIST_FLOAT)
         self.assertFalse(is_valid)
 
     def test_new_value(self):
@@ -612,17 +612,17 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_document("document1")
         database.add_document("document2")
 
-        # Adding columns
-        database.add_column("PatientName", COLUMN_TYPE_STRING, "Name of the patient")
-        database.add_column(
-            "Bits per voxel", COLUMN_TYPE_INTEGER, None)
-        database.add_column("BandWidth", COLUMN_TYPE_FLOAT, None)
-        database.add_column("AcquisitionTime", COLUMN_TYPE_TIME, None)
-        database.add_column("AcquisitionDate", COLUMN_TYPE_DATETIME, None)
-        database.add_column("Dataset dimensions", COLUMN_TYPE_LIST_INTEGER, None)
-        database.add_column("Grids spacing", COLUMN_TYPE_LIST_FLOAT, None)
-        database.add_column("Boolean", COLUMN_TYPE_BOOLEAN, None)
-        database.add_column("Boolean list", COLUMN_TYPE_LIST_BOOLEAN, None)
+        # Adding fields
+        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field(
+            "Bits per voxel", FIELD_TYPE_INTEGER, None)
+        database.add_field("BandWidth", FIELD_TYPE_FLOAT, None)
+        database.add_field("AcquisitionTime", FIELD_TYPE_TIME, None)
+        database.add_field("AcquisitionDate", FIELD_TYPE_DATETIME, None)
+        database.add_field("Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
+        database.add_field("Grids spacing", FIELD_TYPE_LIST_FLOAT, None)
+        database.add_field("Boolean", FIELD_TYPE_BOOLEAN, None)
+        database.add_field("Boolean list", FIELD_TYPE_LIST_BOOLEAN, None)
 
         # Adding values
         database.new_value("document1", "PatientName", "test", None)
@@ -688,7 +688,7 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing with wrong types
         try:
             database.new_value("document2", "Bits per voxel",
-                               "space_column", "space_column")
+                               "space_field", "space_field")
             self.fail()
         except ValueError:
             pass
@@ -739,7 +739,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
     def test_get_document(self):
         """
-        Tests the method giving the document row of a document
+        Tests the method giving the document row given a document
         """
 
         database = Database(self.string_engine)
@@ -768,8 +768,8 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_document("document1")
         database.add_document("document2")
 
-        # Adding column
-        database.add_column("PatientName", COLUMN_TYPE_STRING, "Name of the patient")
+        # Adding field
+        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
 
         # Adding value
         database.new_value("document1", "PatientName", "test")
@@ -853,7 +853,7 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(return_list, [])
 
         database.add_document("document2")
-        database.add_column("PatientName", COLUMN_TYPE_STRING, None)
+        database.add_field("PatientName", FIELD_TYPE_STRING, None)
         database.new_value("document1", "PatientName", "Guerbet1", "Guerbet")
         database.new_value("document2", "PatientName", "Guerbet2", "Guerbet")
         self.assertEqual(database.get_documents_matching_search(
@@ -867,7 +867,7 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(database.get_documents_matching_search(
             "Guerbet2", ["PatientName"]), ["document2"])
 
-    def test_get_documents_matching_column_value_couples(self):
+    def test_get_documents_matching_field_value_couples(self):
         """
         Tests the method giving the list of documents having all the values given
         """
@@ -875,23 +875,23 @@ class TestDatabaseMethods(unittest.TestCase):
         database = Database(self.string_engine)
 
         # Testing with wrong parameters
-        self.assertEqual(database.get_documents_matching_column_value_couples([]), [])
+        self.assertEqual(database.get_documents_matching_field_value_couples([]), [])
         self.assertEqual(
-            database.get_documents_matching_column_value_couples(False), [])
-        self.assertEqual(database.get_documents_matching_column_value_couples(
-            [["column_not_existing", "Guerbet"]]), [])
-        self.assertEqual(database.get_documents_matching_column_value_couples(
-            [["column_not_existing"]]), [])
-        self.assertEqual(database.get_documents_matching_column_value_couples(
-            [["column_not_existing", "Guerbet", "too_many"]]), [])
+            database.get_documents_matching_field_value_couples(False), [])
+        self.assertEqual(database.get_documents_matching_field_value_couples(
+            [["field_not_existing", "Guerbet"]]), [])
+        self.assertEqual(database.get_documents_matching_field_value_couples(
+            [["field_not_existing"]]), [])
+        self.assertEqual(database.get_documents_matching_field_value_couples(
+            [["field_not_existing", "Guerbet", "too_many"]]), [])
         self.assertEqual(
-            database.get_documents_matching_column_value_couples([1]), [])
+            database.get_documents_matching_field_value_couples([1]), [])
         self.assertEqual(
-            database.get_documents_matching_column_value_couples("test"), [])
+            database.get_documents_matching_field_value_couples("test"), [])
 
-        database.add_column("PatientName", COLUMN_TYPE_STRING, None)
-        database.add_column("SequenceName", COLUMN_TYPE_STRING, None)
-        database.add_column("BandWidth", COLUMN_TYPE_INTEGER, None)
+        database.add_field("PatientName", FIELD_TYPE_STRING, None)
+        database.add_field("SequenceName", FIELD_TYPE_STRING, None)
+        database.add_field("BandWidth", FIELD_TYPE_INTEGER, None)
         database.add_document("document1")
         database.add_document("document2")
         database.add_document("document3")
@@ -899,16 +899,16 @@ class TestDatabaseMethods(unittest.TestCase):
         database.new_value("document2", "SequenceName", "RARE")
         database.new_value("document2", "BandWidth", 50000)
 
-        self.assertEqual(database.get_documents_matching_column_value_couples(
+        self.assertEqual(database.get_documents_matching_field_value_couples(
             [["PatientName", "Guerbet"]]), ["document1"])
-        self.assertEqual(database.get_documents_matching_column_value_couples(
+        self.assertEqual(database.get_documents_matching_field_value_couples(
             [["PatientName", "Guerbet"], ["SequenceName", "RARE"]]), [])
         database.new_value("document2", "PatientName", "Guerbet")
-        self.assertEqual(database.get_documents_matching_column_value_couples(
+        self.assertEqual(database.get_documents_matching_field_value_couples(
             [["PatientName", "Guerbet"], ["SequenceName", "RARE"]]), ["document2"])
-        self.assertEqual(database.get_documents_matching_column_value_couples(
+        self.assertEqual(database.get_documents_matching_field_value_couples(
             [["PatientName", "Guerbet"], ["SequenceName", "RARE"], ["BandWidth", 50000]]), ["document2"])
-        self.assertEqual(database.get_documents_matching_column_value_couples(
+        self.assertEqual(database.get_documents_matching_field_value_couples(
             [["PatientName", "Guerbet"], ["SequenceName", "RARE"], ["BandWidth", "50000"]]), [])
 
     def test_initial_table(self):
@@ -918,7 +918,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine)
 
-        database.add_column("PatientName", COLUMN_TYPE_STRING, None)
+        database.add_field("PatientName", FIELD_TYPE_STRING, None)
 
         database.add_document("document1")
 
@@ -966,15 +966,15 @@ class TestDatabaseMethods(unittest.TestCase):
 
     def test_list_dates(self):
         """
-        Tests the storage and retrieval of columns of type list of time, date
+        Tests the storage and retrieval of fields of type list of time, date
         and datetime
         """
 
         database = Database(self.string_engine)
 
-        database.add_column("list_date", COLUMN_TYPE_LIST_DATE, None)
-        database.add_column("list_time", COLUMN_TYPE_LIST_TIME, None)
-        database.add_column("list_datetime", COLUMN_TYPE_LIST_DATETIME, None)
+        database.add_field("list_date", FIELD_TYPE_LIST_DATE, None)
+        database.add_field("list_time", FIELD_TYPE_LIST_TIME, None)
+        database.add_field("list_datetime", FIELD_TYPE_LIST_DATETIME, None)
 
         database.add_document("document1")
 
@@ -996,11 +996,11 @@ class TestDatabaseMethods(unittest.TestCase):
     def test_filters(self):
         database = Database(self.string_engine)
 
-        database.add_column('format', column_type='string', description=None)
-        database.add_column('strings', column_type=COLUMN_TYPE_LIST_STRING, description=None)
-        database.add_column('times', column_type=COLUMN_TYPE_LIST_TIME, description=None)
-        database.add_column('dates', column_type=COLUMN_TYPE_LIST_DATE, description=None)
-        database.add_column('datetimes', column_type=COLUMN_TYPE_LIST_DATETIME, description=None)
+        database.add_field('format', field_type='string', description=None)
+        database.add_field('strings', field_type=FIELD_TYPE_LIST_STRING, description=None)
+        database.add_field('times', field_type=FIELD_TYPE_LIST_TIME, description=None)
+        database.add_field('dates', field_type=FIELD_TYPE_LIST_DATE, description=None)
+        database.add_field('datetimes', field_type=FIELD_TYPE_LIST_DATETIME, description=None)
 
         database.save_modifications()
         files = ('abc', 'bcd', 'def', 'xyz')

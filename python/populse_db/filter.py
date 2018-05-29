@@ -12,11 +12,11 @@ import sqlalchemy
 from sqlalchemy.ext.automap import AutomapBase
 
 from populse_db.database_model import (DOCUMENT_TABLE,
-                                       COLUMN_TYPE_INTEGER,
-                                       COLUMN_TYPE_FLOAT, COLUMN_TYPE_TIME,
-                                       COLUMN_TYPE_DATETIME, COLUMN_TYPE_DATE,
-                                       COLUMN_TYPE_STRING, DOCUMENT_PRIMARY_KEY,
-                                       COLUMN_TYPE_BOOLEAN)
+                                       FIELD_TYPE_INTEGER,
+                                       FIELD_TYPE_FLOAT, FIELD_TYPE_TIME,
+                                       FIELD_TYPE_DATETIME, FIELD_TYPE_DATE,
+                                       FIELD_TYPE_STRING, DOCUMENT_PRIMARY_KEY,
+                                       FIELD_TYPE_BOOLEAN)
 
 # The grammar (in Lark format) used to parse filter strings
 filter_grammar = '''
@@ -47,9 +47,9 @@ CONDITION_OPERATOR : "=="i
 
 condition : operand CONDITION_OPERATOR operand
 ?operand : literal
-         | column_name
+         | field_name
 
-column_name : CNAME
+field_name : CNAME
 %import common.CNAME
          
 ?literal : ESCAPED_STRING   -> string
@@ -116,7 +116,7 @@ class FilterToQuery(Transformer):
     '''
     
     invalidCombinationMessage = ('Invalid combination of conditions on simple '
-                                 'columns and on list columns')
+                                 'fields and on list fields')
     
     python_operators = {
         '==': operator.eq,
@@ -136,27 +136,27 @@ class FilterToQuery(Transformer):
     }
     
     python_type_to_tag_type = {
-        type(''): COLUMN_TYPE_STRING,
-        type(u''): COLUMN_TYPE_STRING,
-        int: COLUMN_TYPE_INTEGER,
-        float: COLUMN_TYPE_FLOAT,
-        datetime.time: COLUMN_TYPE_TIME,
-        datetime.datetime: COLUMN_TYPE_DATETIME,
-        datetime.date: COLUMN_TYPE_DATE,
-        bool: COLUMN_TYPE_BOOLEAN,
+        type(''): FIELD_TYPE_STRING,
+        type(u''): FIELD_TYPE_STRING,
+        int: FIELD_TYPE_INTEGER,
+        float: FIELD_TYPE_FLOAT,
+        datetime.time: FIELD_TYPE_TIME,
+        datetime.datetime: FIELD_TYPE_DATETIME,
+        datetime.date: FIELD_TYPE_DATE,
+        bool: FIELD_TYPE_BOOLEAN,
     }
     def __init__(self, database):
         super(FilterToQuery, self).__init__()
         self.database = database
    
     @staticmethod
-    def is_column(object):
+    def is_field(object):
         return isinstance(object, AutomapBase)
     
     @staticmethod
-    def is_list_column(column):
-        return (isinstance(column, AutomapBase) and
-                column.type.startswith('list_'))
+    def is_list_field(field):
+        return (isinstance(field, AutomapBase) and
+                field.type.startswith('list_'))
     
     def all(self, items):
         return sqlalchemy.text('1')
@@ -186,8 +186,8 @@ class FilterToQuery(Transformer):
                     # result is a tuple with the SqlAlchemy expression and 
                     # the Python function condition.
                     if operator_str != 'and':
-                        raise ValueError('Combination of simple columns '
-                            'conditions with list columns conditions is only '
+                        raise ValueError('Combination of simple fields '
+                            'conditions with list fields conditions is only '
                             'allowed with AND but not with %s' % operator_str)
                     result = (result, right_operand)
                 elif isinstance(right_operand, tuple):
@@ -198,24 +198,24 @@ class FilterToQuery(Transformer):
                     result = operator(result, right_operand)
         return result
     
-    def get_column(self, column):
+    def get_field(self, column):
         '''
         Return the SqlAlchemy Column object corresponding to
-        a populse_db column object.
+        a populse_db field object.
         '''
         return getattr(self.database.metadata.tables[DOCUMENT_TABLE].c,
-                       self.database.column_name_to_sql_column_name(getattr(column, DOCUMENT_PRIMARY_KEY)))
+                       self.database.field_name_to_column_name(getattr(column, DOCUMENT_PRIMARY_KEY)))
     
-    def get_column_value(self, python_value):
-        tag_type = self.find_tag_type(python_value)
+    def get_field_value(self, python_value):
+        tag_type = self.find_field_type(python_value)
         column_value = self.database.python_to_column(tag_type, python_value)
         return column_value
     
     
-    def find_tag_type(self, value):
+    def find_field_type(self, value):
         if isinstance(value, list):
             if value:
-                item_type = self.find_tag_type(value[0])
+                item_type = self.find_field_type(value[0])
                 return 'list_' + item_type
             else:
                 return type(None)
@@ -227,7 +227,7 @@ class FilterToQuery(Transformer):
         operator_str = str(operator).lower()
         if operator_str == 'in':
 
-            if self.is_list_column(right_operand):
+            if self.is_list_field(right_operand):
                 if not isinstance(left_operand, six.string_types + (int, 
                                                                     float,
                                                                     bool,
@@ -235,7 +235,7 @@ class FilterToQuery(Transformer):
                                                                     datetime.date,
                                                                     datetime.time,
                                                                     datetime.datetime)):
-                    raise ValueError('Left operand of IN <list column> must be a '
+                    raise ValueError('Left operand of IN <list field> must be a '
                         'string, number, boolean, date, time or null but "%s" '
                         'was used' % str(left_operand))
                 # Check if a single value is in a list tag
@@ -243,17 +243,17 @@ class FilterToQuery(Transformer):
                 # Cannot be done in SQL with SQLite => return a Python function
                 return lambda x: left_operand in x[getattr(right_operand, DOCUMENT_PRIMARY_KEY)]
             elif isinstance(right_operand, list):
-                if self.is_column(left_operand):
-                    # Check if a simple column value is in a list of values
+                if self.is_field(left_operand):
+                    # Check if a simple field value is in a list of values
                     # Can be done in SQL => return an SqlAlchemy expression
-                    return self.get_column(left_operand).in_(right_operand)
+                    return self.get_field(left_operand).in_(right_operand)
                 else:
 
                     raise ValueError('Left operand of IN <list> must be a '
-                        'simple column but "%s" was used' % str(left_operand))
+                        'simple field but "%s" was used' % str(left_operand))
             else:
                 raise ValueError('Right operand of IN must be a list or a '
-                    'list column but "%s" was used' % str(right_operand))
+                    'list field but "%s" was used' % str(right_operand))
 
         # Check if using an SQL expression is possible
         # This is always possible for operator == and != (using string
@@ -261,39 +261,39 @@ class FilterToQuery(Transformer):
         # list column is involved in the expression.
         do_sql = (operator_str in ('==', '!=')
                   or
-                  (not self.is_list_column(left_operand)
-                   and not self.is_list_column(right_operand)))
+                  (not self.is_list_field(left_operand)
+                   and not self.is_list_field(right_operand)))
         operator = self.python_operators[operator_str]
         if do_sql:
 
-            if self.is_column(left_operand):
-                left_operand = self.get_column(left_operand)
+            if self.is_field(left_operand):
+                left_operand = self.get_field(left_operand)
             else:
-                left_operand = self.get_column_value(left_operand)
-            if self.is_column(right_operand):
+                left_operand = self.get_field_value(left_operand)
+            if self.is_field(right_operand):
 
-                right_operand = self.get_column(right_operand)
+                right_operand = self.get_field(right_operand)
             else:
-                right_operand = self.get_column_value(right_operand)
+                right_operand = self.get_field_value(right_operand)
             # Return SqlAlchemy expression of the condition
             return operator(left_operand, right_operand)
         
         # SQL is not possible : build and return a Python function for the
         # condition.
-        if self.is_column(left_operand):
-            if self.is_column(right_operand):
+        if self.is_field(left_operand):
+            if self.is_field(right_operand):
                 python = lambda x: operator(x[getattr(left_operand, DOCUMENT_PRIMARY_KEY)],
                                             x[getattr(right_operand, DOCUMENT_PRIMARY_KEY)])
             else:
                 python = lambda x: operator(x[getattr(left_operand, DOCUMENT_PRIMARY_KEY)],
                                             right_operand)
         else:
-            if self.is_column(right_operand):
+            if self.is_field(right_operand):
                 python = lambda x: operator(left_operand,
                                             x[getattr(right_operand, DOCUMENT_PRIMARY_KEY)])
             else:
                 raise ValueError('Either left or right operand of a condition'
-                                 ' must be a column name')
+                                 ' must be a field name')
         return python
     
     def negation(self, items):
@@ -328,9 +328,9 @@ class FilterToQuery(Transformer):
     def list(self, items):
         return items
 
-    def column_name(self, items):
-        column_name = items[0]
-        column = self.database.get_column(column_name)
+    def field_name(self, items):
+        field_name = items[0]
+        column = self.database.get_field(field_name)
         if column is None:
-            raise ValueError('No column named "%s"' % column_name)
+            raise ValueError('No field named "%s"' % field_name)
         return column

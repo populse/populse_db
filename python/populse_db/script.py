@@ -1,5 +1,5 @@
 from populse_db.database import Database
-from populse_db.database_model import COLUMN_TYPE_STRING, COLUMN_TYPE_FLOAT, COLUMN_TYPE_INTEGER, COLUMN_TYPE_LIST_FLOAT
+from populse_db.database_model import FIELD_TYPE_STRING, FIELD_TYPE_FLOAT, FIELD_TYPE_INTEGER, FIELD_TYPE_LIST_FLOAT
 import os
 import tempfile
 import shutil
@@ -20,18 +20,18 @@ if __name__ == '__main__':
 
     database = Database(string_engine, True, True)
 
-    columns = []
+    fields = []
 
     for i in range(0, 20):
-        columns.append(["column" + str(i), COLUMN_TYPE_FLOAT, None])
+        fields.append(["field" + str(i), FIELD_TYPE_FLOAT, None])
     for i in range(20, 40):
-        columns.append(["column" + str(i), COLUMN_TYPE_STRING, None])
+        fields.append(["field" + str(i), FIELD_TYPE_STRING, None])
     for i in range(40, 50):
-        columns.append(["column" + str(i), COLUMN_TYPE_INTEGER, None])
+        fields.append(["field" + str(i), FIELD_TYPE_INTEGER, None])
     for i in range(50, 75):
-        columns.append(["column" + str(i), COLUMN_TYPE_LIST_FLOAT, None])
+        fields.append(["field" + str(i), FIELD_TYPE_LIST_FLOAT, None])
 
-    database.add_columns(columns)
+    database.add_fields(fields)
 
     current_documents = database.get_documents_names()
 
@@ -45,38 +45,34 @@ if __name__ == '__main__':
         document_name = "document" + str(i)
         for j in range(0, 20):
             if document_name in current_documents:
-                database.remove_value(document_name, "column" + str(j), False)
-            database.new_value(document_name, "column" + str(j), 1.5, 1.5, False)
+                database.remove_value(document_name, "field" + str(j), False)
+            database.new_value(document_name, "field" + str(j), 1.5, 1.5, False)
         for j in range(20, 40):
             if document_name in current_documents:
-                database.remove_value(document_name, "column" + str(j), False)
-            database.new_value(document_name, "column" + str(j), "value", "value", False)
+                database.remove_value(document_name, "field" + str(j), False)
+            database.new_value(document_name, "field" + str(j), "value", "value", False)
         for j in range(40, 50):
             if document_name in current_documents:
-                database.remove_value(document_name, "column" + str(j), False)
-            database.new_value(document_name, "column" + str(j), 5, 5, False)
+                database.remove_value(document_name, "field" + str(j), False)
+            database.new_value(document_name, "field" + str(j), 5, 5, False)
         for j in range(50, 75):
             if document_name in current_documents:
-                database.remove_value(document_name, "column" + str(j), False)
-            database.new_value(document_name, "column" + str(j), [1, 2, 3], [1, 2, 3], False)
+                database.remove_value(document_name, "field" + str(j), False)
+            database.new_value(document_name, "field" + str(j), [1, 2, 3], [1, 2, 3], False)
     database.session.flush()
 
-    simple_search = database.get_documents_matching_search("1", ["column0", "column1", "column2", "column3", "column4", "column5", "column6", "column7", "column8", "column9"])
-    print(simple_search) # All paths
+    simple_search = database.get_documents_matching_search("1", ["field0", "field1", "field2", "field3", "field4", "field5", "field6", "field7", "field8", "field9"])
+    print(simple_search) # All documents
 
     simple_search = database.get_documents_matching_search("1.2",
-                                                       ["column0", "column1", "column2", "column3", "column4", "column5", "column6", "column7",
-                                                        "column8", "column9"])
+                                                       ["field0", "field1", "field2", "field3", "field4", "field5", "field6", "field7",
+                                                        "field8", "field9"])
     print(simple_search) # No document
 
     simple_search = database.get_documents_matching_search("1.5",
-                                                       ["column0", "column1", "column2", "column3", "column4", "column5", "column6", "column7",
-                                                        "column8", "column9"])
+                                                       ["field0", "field1", "field2", "field3", "field4", "field5", "field6", "field7",
+                                                        "field8", "field9"])
     print(simple_search) # All documents
-
-    advanced_search = database.get_documents_matching_advanced_search([], [["column1"]], ["="], ["1.5"], [""],
-                                                              ["document0", "document1", "document2", "document3", "document4", "document5", "document6", "document7", "document8", "document9"])
-    print(advanced_search) # 10 first columns
 
     shutil.rmtree(temp_folder)
 

@@ -9,23 +9,20 @@ from datetime import date, time, datetime
 import dateutil.parser
 import six
 from sqlalchemy import (create_engine, Column, String,
-                        MetaData, event, or_, and_, not_, Table, sql)
+                        MetaData, event, or_, Table, sql)
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.schema import CreateTable, DropTable
 
-from populse_db.database_model import (create_database, COLUMN_TYPE_INTEGER,
-                                       COLUMN_TYPE_FLOAT, COLUMN_TYPE_TIME,
-                                       COLUMN_TYPE_DATETIME, COLUMN_TYPE_DATE,
-                                       COLUMN_TYPE_STRING, COLUMN_TYPE_LIST_DATE,
-                                       COLUMN_TYPE_LIST_DATETIME,
-                                       COLUMN_TYPE_LIST_FLOAT,
-                                       COLUMN_TYPE_LIST_INTEGER,
-                                       COLUMN_TYPE_LIST_STRING,
-                                       COLUMN_TYPE_LIST_TIME,
-                                       LIST_TYPES, TYPE_TO_COLUMN, COLUMN_TYPE_BOOLEAN,
-                                       ALL_TYPES, DOCUMENT_PRIMARY_KEY, DOCUMENT_TABLE, COLUMN_TABLE, INITIAL_TABLE)
+from populse_db.database_model import (create_database, FIELD_TYPE_INTEGER,
+                                       FIELD_TYPE_FLOAT, FIELD_TYPE_TIME,
+                                       FIELD_TYPE_DATETIME, FIELD_TYPE_DATE,
+                                       FIELD_TYPE_STRING, FIELD_TYPE_LIST_DATE,
+                                       FIELD_TYPE_LIST_DATETIME,
+                                       FIELD_TYPE_LIST_TIME, INITIAL_TABLE,
+                                       LIST_TYPES, TYPE_TO_COLUMN, FIELD_TYPE_BOOLEAN,
+                                       ALL_TYPES, DOCUMENT_PRIMARY_KEY, DOCUMENT_TABLE, FIELD_TABLE)
 from populse_db.filter import filter_parser, FilterToQuery
 
 
@@ -54,33 +51,33 @@ class Database:
         - session_maker: session manager
         - unsaved_modifications: to know if there are unsaved
           modifications in the database
-        - documents: Document rows
-        - initial_documents: Initial document rows
-        - columns: Columns rows
-        - names: columns names
+        - documents: document rows
+        - initial_documents: initial document rows
+        - fields: fields rows
+        - names: fields column names
 
     methods:
-        - add_column: adds a column
-        - add_columns: adds a list of columns
-        - column_type_to_sql_column_type: gives the column type corresponding
-          to a column type
-        - column_name_to_sql_column_name: gives the sql column name corresponding
-          to the original column name
-        - remove_column: removes a column
-        - get_column: Gives the column row of a column
-        - get_columns_names: gives all column names
+        - add_field: adds a field
+        - add_fields: adds a list of fields
+        - field_type_to_column_type: gives the column type corresponding
+          to a field type
+        - field_name_to_sql_column_name: gives the column name corresponding
+          to the field name
+        - remove_field: removes a field
+        - get_field: Gives all fields rows
+        - get_fields_names: gives all fields names
         - get_documents: gives all document rows
         - get_documents_names: gives all document names
-        - get_current_value: gives the current value of <document, column>
-        - get_initial_value: gives the initial value of <document, column>
+        - get_current_value: gives the current value of <document, field>
+        - get_initial_value: gives the initial value of <document, field>
         - is_value_modified: to know if a value has been modified
-        - set_value: sets the value of <document, column>
-        - reset_value: resets the value of <document, column>
-        - remove_value: removes the value of <document, column>
+        - set_value: sets the value of <document, field>
+        - reset_value: resets the value of <document, field>
+        - remove_value: removes the value of <document, field>
         - check_type_value: checks the type of a value
-        - add_value: adds a value to <document, column>
-        - get_document: gives the document row of a document
-        - get_initial_document: gives the initial row of a document
+        - add_value: adds a value to <document, field>
+        - get_document: gives the document row given a document name
+        - get_initial_document: gives the initial row given a document name
         - get_documents: gives all document rows
         - get_documents_names: gives all document names
         - add_document: adds a document
@@ -91,8 +88,8 @@ class Database:
           search
         - get_documents_matching_advanced_search: gives the documents matching
           the advanced search
-        - get_documents_matching_column_value_couples: gives the documents
-          containing all <column, value> given in parameter
+        - get_documents_matching_field_value_couples: gives the documents
+          containing all <field, value> given in parameter
         - save_modifications: saves the pending modifications
         - unsave_modifications: unsaves the pending modifications
         - has_unsaved_modifications: to know if there are unsaved
@@ -108,15 +105,15 @@ class Database:
     # (in _list_item_to_string) and deserialize (in _string_to_list_item)
     # the list items.
     _list_item_to_string = {
-        COLUMN_TYPE_LIST_DATE: lambda x: x.isoformat(),
-        COLUMN_TYPE_LIST_DATETIME: lambda x: x.isoformat(),
-        COLUMN_TYPE_LIST_TIME: lambda x: x.isoformat()
+        FIELD_TYPE_LIST_DATE: lambda x: x.isoformat(),
+        FIELD_TYPE_LIST_DATETIME: lambda x: x.isoformat(),
+        FIELD_TYPE_LIST_TIME: lambda x: x.isoformat()
     }
 
     _string_to_list_item = {
-        COLUMN_TYPE_LIST_DATE: lambda x: dateutil.parser.parse(x).date(),
-        COLUMN_TYPE_LIST_DATETIME: lambda x: dateutil.parser.parse(x),
-        COLUMN_TYPE_LIST_TIME: lambda x: dateutil.parser.parse(x).time(),
+        FIELD_TYPE_LIST_DATE: lambda x: dateutil.parser.parse(x).date(),
+        FIELD_TYPE_LIST_DATETIME: lambda x: dateutil.parser.parse(x),
+        FIELD_TYPE_LIST_TIME: lambda x: dateutil.parser.parse(x).time(),
     }
 
     def __init__(self, string_engine, initial_table=False, document_caches=False):
@@ -149,7 +146,7 @@ class Database:
 
         # Database schema checked
         if (DOCUMENT_TABLE not in self.table_classes.keys() or
-                COLUMN_TABLE not in self.table_classes.keys()):
+                FIELD_TABLE not in self.table_classes.keys()):
             raise ValueError(
                 'The database schema is not coherent with the API')
         if self.initial_table and INITIAL_TABLE not in self.table_classes.keys():
@@ -161,8 +158,8 @@ class Database:
 
         self.unsaved_modifications = False
 
-        columns = self.session.query(self.table_classes[COLUMN_TABLE])
-        self.columns = dict((getattr(column, DOCUMENT_PRIMARY_KEY), column) for column in columns)
+        columns = self.session.query(self.table_classes[FIELD_TABLE])
+        self.fields = dict((getattr(column, DOCUMENT_PRIMARY_KEY), column) for column in columns)
 
         self.names = {}
 
@@ -174,62 +171,62 @@ class Database:
             if self.initial_table:
                 self.initial_documents = {}
 
-    """ COLUMNS """
+    """ FIELDS """
 
-    def add_columns(self, columns):
+    def add_fields(self, fields):
         """
-        Adds the list of columns
-        :param columns: list of columns (name, type, description)
+        Adds the list of fields
+        :param fields: list of fields (name, type, description)
         """
 
-        for column in columns:
+        for field in fields:
 
-            # Adding each column
-            self.add_column(column[0], column[1], column[2], False)
+            # Adding each field
+            self.add_field(field[0], field[1], field[2], False)
 
         # Updating the table classes
         self.session.flush()
         self.update_table_classes()
 
-    def add_column(self, name, column_type, description, flush=True):
+    def add_field(self, name, field_type, description, flush=True):
         """
-        Adds a column to the database, if it does not already exist
-        :param name: column name (str)
-        :param column_type: column type (string, int, float, boolean, date, datetime,
+        Adds a field to the database, if it does not already exist
+        :param name: field name (str)
+        :param field_type: field type (string, int, float, boolean, date, datetime,
                      time, list_string, list_int, list_float, list_boolean, list_date,
                      list_datetime, or list_time)
-        :param description: column description (str or None)
-        :param flush: bool to know if the table classes must be updated (put False if in the middle of filling columns)
+        :param description: field description (str or None)
+        :param flush: bool to know if the table classes must be updated (put False if in the middle of filling fields)
         """
 
         if not isinstance(name, str):
-            raise ValueError("The column name must be of type " + str(str) +
-                             ", but column name of type " + str(type(name)) + " given")
-        column_row = self.get_column(name)
-        if column_row != None:
-            raise ValueError("A column with the name " +
+            raise ValueError("The field name must be of type " + str(str) +
+                             ", but field name of type " + str(type(name)) + " given")
+        field_row = self.get_field(name)
+        if field_row != None:
+            raise ValueError("A field with the name " +
                              str(name) + " already exists")
-        if not column_type in ALL_TYPES:
-            raise ValueError("The column type must be in " + str(ALL_TYPES) + ", but " + str(
-                column_type) + " given")
+        if not field_type in ALL_TYPES:
+            raise ValueError("The field type must be in " + str(ALL_TYPES) + ", but " + str(
+                field_type) + " given")
         if not isinstance(description, str) and description is not None:
             raise ValueError(
-                "The column description must be of type " + str(str) + " or None, but column description of type " + str(
+                "The field description must be of type " + str(str) + " or None, but field description of type " + str(
                     type(description)) + " given")
 
-        # Adding the column in the column table
-        column_row = self.table_classes[COLUMN_TABLE](name=name, type=column_type, description=description)
+        # Adding the field in the field table
+        field_row = self.table_classes[FIELD_TABLE](name=name, type=field_type, description=description)
 
-        self.session.add(column_row)
-        self.columns[name] = column_row
+        self.session.add(field_row)
+        self.fields[name] = field_row
 
-        # Columns creation
-        if column_type in LIST_TYPES:
-            # String columns if it list type, as the str representation of the list will be stored
-            column_type = String
+        # Fields creation
+        if field_type in LIST_TYPES:
+            # String columns if it list type, as the str representation of the lists will be stored
+            field_type = String
         else:
-            column_type = self.column_type_to_sql_column_type(column_type)
-        column = Column(self.column_name_to_sql_column_name(name), column_type)
+            field_type = self.field_type_to_column_type(field_type)
+        column = Column(self.field_name_to_column_name(name), field_type)
         column_str_type = column.type.compile(self.engine.dialect)
         column_name = column.compile(dialect=self.engine.dialect)
 
@@ -242,7 +239,7 @@ class Database:
 
         if self.initial_table:
             column_initial = Column(
-                self.column_name_to_sql_column_name(name), column_type)
+                self.field_name_to_column_name(name), field_type)
             initial_query = str('ALTER TABLE %s ADD COLUMN %s %s' % (
                 INITIAL_TABLE, column_name, column_str_type))
             self.session.execute(initial_query)
@@ -261,56 +258,56 @@ class Database:
             self.session.flush()
             self.update_table_classes()
 
-    def column_type_to_sql_column_type(self, column_type):
+    def field_type_to_column_type(self, field_type):
         """
-        Gives the sqlalchemy column type corresponding to the column type
-        :param column_type: column type
-        :return: The sql column type given the column type
+        Gives the sqlalchemy column type corresponding to the field type
+        :param field_type: column type
+        :return: The sql column type given the field type
         """
 
-        return TYPE_TO_COLUMN[column_type]
+        return TYPE_TO_COLUMN[field_type]
 
-    def column_name_to_sql_column_name(self, name):
+    def field_name_to_column_name(self, name):
         """
-        Transforms the column name into a valid and unique sql column name, by hashing the column name
-        :param name: column name (str)
+        Transforms the field name into a valid and unique column name, by hashing it
+        :param name: field name (str)
         :return: Valid and unique (hashed) column name
         """
 
         if name in self.names:
             return self.names[name]
         else:
-            column_name = hashlib.md5(name.encode('utf-8')).hexdigest()
-            self.names[name] = column_name
-            return column_name
+            field_name = hashlib.md5(name.encode('utf-8')).hexdigest()
+            self.names[name] = field_name
+            return field_name
 
-    def remove_column(self, name):
+    def remove_field(self, name):
         """
-        Removes a column
-        :param name: column name (str)
+        Removes a field
+        :param name: field name (str)
         """
 
         if not isinstance(name, str):
             raise ValueError(
-                "The column name must be of type " + str(str) + ", but column name of type " + str(type(name)) + " given")
-        column_row = self.get_column(name)
-        if column_row is None:
-            raise ValueError("The column with the name " +
+                "The field name must be of type " + str(str) + ", but field name of type " + str(type(name)) + " given")
+        field_row = self.get_field(name)
+        if field_row is None:
+            raise ValueError("The field with the name " +
                              str(name) + " does not exist")
 
-        column_name = self.column_name_to_sql_column_name(name)
+        field_name = self.field_name_to_column_name(name)
 
-        # Column removed from document table
+        # Field removed from document table
         old_document_table = Table(DOCUMENT_TABLE, self.metadata)
         select = sql.select(
-            [c for c in old_document_table.c if column_name not in c.name])
+            [c for c in old_document_table.c if field_name not in c.name])
 
         remaining_columns = [copy.copy(c) for c in old_document_table.columns
-                             if column_name not in c.name]
+                             if field_name not in c.name]
 
         document_backup_table = Table(DOCUMENT_TABLE + "_backup", self.metadata)
         for column in old_document_table.columns:
-            if column_name not in str(column):
+            if field_name not in str(column):
                 document_backup_table.append_column(column.copy())
         self.session.execute(CreateTable(document_backup_table))
 
@@ -328,27 +325,27 @@ class Database:
         self.session.execute(CreateTable(new_document_table))
 
         select = sql.select(
-            [c for c in document_backup_table.c if column_name not in c.name])
+            [c for c in document_backup_table.c if field_name not in c.name])
         insert = sql.insert(new_document_table).from_select(
             [getattr(c, DOCUMENT_PRIMARY_KEY) for c in remaining_columns], select)
         self.session.execute(insert)
 
         self.session.execute(DropTable(document_backup_table))
 
-        # Column removed from initial table if initial values are used
+        # Field removed from initial table if initial values are used
         if self.initial_table:
             old_initial_table = Table(INITIAL_TABLE, self.metadata)
             select = sql.select(
-                [c for c in old_initial_table.c if column_name not in c.name])
+                [c for c in old_initial_table.c if field_name not in c.name])
 
             remaining_columns = [copy.copy(c) for c in old_initial_table.columns
-                                 if column_name not in c.name]
+                                 if field_name not in c.name]
 
             initial_backup_table = Table(
                 INITIAL_TABLE + "_backup", self.metadata)
 
             for column in old_initial_table.columns:
-                if column_name not in str(column):
+                if field_name not in str(column):
                     initial_backup_table.append_column(column.copy())
             self.session.execute(CreateTable(initial_backup_table))
 
@@ -366,7 +363,7 @@ class Database:
             self.session.execute(CreateTable(new_initial_table))
 
             select = sql.select(
-                [c for c in initial_backup_table.c if column_name not in c.name])
+                [c for c in initial_backup_table.c if field_name not in c.name])
             insert = sql.insert(new_initial_table).from_select(
                 [getattr(c, DOCUMENT_PRIMARY_KEY) for c in remaining_columns], select)
             self.session.execute(insert)
@@ -378,9 +375,9 @@ class Database:
             if self.initial_table:
                 self.initial_documents.clear()
 
-        self.columns.pop(name, None)
+        self.fields.pop(name, None)
 
-        self.session.delete(column_row)
+        self.session.delete(field_row)
 
         self.session.flush()
 
@@ -388,118 +385,118 @@ class Database:
 
         self.unsaved_modifications = True
 
-    def get_column(self, name):
+    def get_field(self, name):
         """
         Gives the column row given a column name
         :param name: column name
         :return: The column row if the column exists, None otherwise
         """
-        return self.columns.get(name)
+        return self.fields.get(name)
 
-    def get_columns_names(self):
+    def get_fields_names(self):
         """
-        Gives the list of columns
-        :return: List of columns names
+        Gives the list of fields
+        :return: List of fields names
         """
-        return list(column.name for column in self.get_columns())
+        return list(column.name for column in self.get_fields())
 
-    def get_columns(self):
+    def get_fields(self):
         """
-        Gives the list of columns rows
-        :return: List of columns rows
+        Gives the list of fields rows
+        :return: List of fields rows
         """
-        return self.columns.values()
+        return self.fields.values()
 
     """ VALUES """
 
-    def get_current_value(self, document, column):
+    def get_current_value(self, document, field):
         """
-        Gives the current value of <document, column>
+        Gives the current value of <document, field>
         :param document: Document name (str)
-        :param column: Column name (str)
-        :return: The current value of <document, column> if it exists, None otherwise
+        :param field: Field name (str)
+        :return: The current value of <document, field> if it exists, None otherwise
         """
 
-        document_row = self.get_column(column)
+        document_row = self.get_field(field)
         if document_row is None:
             return None
-        column_row = self.get_document(document)
-        if column_row is None:
+        field_row = self.get_document(document)
+        if field_row is None:
             return None
 
-        return ColumnRow(self, column_row)[column]
+        return FieldRow(self, field_row)[field]
 
-    def get_initial_value(self, document, column):
+    def get_initial_value(self, document, field):
         """
-        Gives the initial value of <document, column>
+        Gives the initial value of <document, field>
         :param document: Document name
-        :param column: Column name
-        :return: The initial value of <document, column> if it exists, None otherwise
+        :param field: Field name
+        :return: The initial value of <document, field> if it exists, None otherwise
         """
 
-        column_row = self.get_column(column)
-        if column_row is None:
+        field_row = self.get_field(field)
+        if field_row is None:
             return None
         initial_row = self.get_initial_document(document)
         if initial_row is None:
             return None
 
-        return ColumnRow(self, initial_row)[column]
+        return FieldRow(self, initial_row)[field]
 
-    def is_value_modified(self, document, column):
+    def is_value_modified(self, document, field):
         """
-        To know if the value <document, column> has been modified
+        To know if the value <document, field> has been modified
         :param document: document name
-        :param column: column name
-        :return: True if the value <document, column> has been modified, False otherwise
+        :param field: Field name
+        :return: True if the value <document, field> has been modified, False otherwise
         """
 
-        column_row = self.get_column(column)
-        if column_row is None:
+        field_row = self.get_field(field)
+        if field_row is None:
             return False
         document_row = self.get_document(document)
         if document_row is None:
             return False
 
-        return (self.get_current_value(document, column) !=
-                self.get_initial_value(document, column))
+        return (self.get_current_value(document, field) !=
+                self.get_initial_value(document, field))
 
-    def set_current_value(self, document, column, new_value):
+    def set_current_value(self, document, field, new_value):
         """
         Sets the value associated to <document, column>
         :param document: document name
-        :param column: column name
+        :param field: Field name
         :param new_value: new value
         """
 
-        column_row = self.get_column(column)
-        if column_row is None:
-            raise ValueError("The column with the name " +
-                             str(column) + " does not exist")
+        field_row = self.get_field(field)
+        if field_row is None:
+            raise ValueError("The field with the name " +
+                             str(field) + " does not exist")
         document_row = self.get_document(document)
         if document_row is None:
             raise ValueError("The document with the name " +
                              str(document) + " does not exist")
-        if not self.check_type_value(new_value, column_row.type):
+        if not self.check_type_value(new_value, field_row.type):
             raise ValueError("The value " + str(new_value) + " is invalid")
 
-        new_value = self.python_to_column(column_row.type, new_value)
+        new_value = self.python_to_column(field_row.type, new_value)
 
-        setattr(document_row.row, self.column_name_to_sql_column_name(column), new_value)
+        setattr(document_row.row, self.field_name_to_column_name(field), new_value)
 
         self.session.flush()
         self.unsaved_modifications = True
 
-    def reset_current_value(self, document, column):
+    def reset_current_value(self, document, field):
         """
-        Resets the value associated to <document, column>
+        Resets the value associated to <document, field>
         :param document: document name
-        :param column: column name
+        :param field: Field name
         """
-        column_row = self.get_column(column)
-        if column_row is None:
-            raise ValueError("The column with the name " +
-                             str(column) + " does not exist")
+        field_row = self.get_field(field)
+        if field_row is None:
+            raise ValueError("The field with the name " +
+                             str(field) + " does not exist")
         document_row = self.get_document(document)
         if document_row is None:
             raise ValueError("The document with the name " +
@@ -508,34 +505,34 @@ class Database:
             raise ValueError(
                 "Impossible to reset values if the initial values are not activated, you can activate the flag initial_table when creating the Database instance")
 
-        initial_value = self.get_initial_value(document, column)
+        initial_value = self.get_initial_value(document, field)
 
-        if column_row.type in LIST_TYPES:
+        if field_row.type in LIST_TYPES:
             initial_value = str(initial_value)
 
-        setattr(document_row.row, self.column_name_to_sql_column_name(column), initial_value)
+        setattr(document_row.row, self.field_name_to_column_name(field), initial_value)
 
         self.session.flush()
         self.unsaved_modifications = True
 
-    def remove_value(self, document, column, flush=True):
+    def remove_value(self, document, field, flush=True):
         """
-        Removes the value associated to <document, column>
+        Removes the value associated to <document, field>
         :param document: document name
-        :param column: column name
+        :param field: Field name
         :param flush: To know if flush to do (put False in the middle of removing values)
         """
 
-        column_row = self.get_column(column)
-        if column_row is None:
-            raise ValueError("The column with the name " +
-                             str(column) + " does not exist")
+        field_row = self.get_field(field)
+        if field_row is None:
+            raise ValueError("The field with the name " +
+                             str(field) + " does not exist")
         document_row = self.get_document(document)
         if document_row is None:
             raise ValueError("The document with the name " +
                              str(document) + " does not exist")
 
-        sql_column_name = self.column_name_to_sql_column_name(column)
+        sql_column_name = self.field_name_to_column_name(field)
 
         setattr(document_row.row, sql_column_name, None)
 
@@ -560,21 +557,21 @@ class Database:
             return False
         if value is None:
             return True
-        if valid_type == COLUMN_TYPE_INTEGER and value_type == int:
+        if valid_type == FIELD_TYPE_INTEGER and value_type == int:
             return True
-        if valid_type == COLUMN_TYPE_FLOAT and value_type == int:
+        if valid_type == FIELD_TYPE_FLOAT and value_type == int:
             return True
-        if valid_type == COLUMN_TYPE_FLOAT and value_type == float:
+        if valid_type == FIELD_TYPE_FLOAT and value_type == float:
             return True
-        if valid_type == COLUMN_TYPE_BOOLEAN and value_type == bool:
+        if valid_type == FIELD_TYPE_BOOLEAN and value_type == bool:
             return True
-        if valid_type == COLUMN_TYPE_STRING and value_type == str:
+        if valid_type == FIELD_TYPE_STRING and value_type == str:
             return True
-        if valid_type == COLUMN_TYPE_DATETIME and value_type == datetime:
+        if valid_type == FIELD_TYPE_DATETIME and value_type == datetime:
             return True
-        if valid_type == COLUMN_TYPE_TIME and value_type == time:
+        if valid_type == FIELD_TYPE_TIME and value_type == time:
             return True
-        if valid_type == COLUMN_TYPE_DATE and value_type == date:
+        if valid_type == FIELD_TYPE_DATE and value_type == date:
             return True
         if (valid_type in LIST_TYPES
                 and value_type == list):
@@ -584,43 +581,43 @@ class Database:
             return True
         return False
 
-    def new_value(self, document, column, current_value, initial_value=None, checks=True):
+    def new_value(self, document, field, current_value, initial_value=None, checks=True):
         """
-        Adds a value for <document, column>
+        Adds a value for <document, field>
         :param document: document name
-        :param column: column name
+        :param field: Field name
         :param current_value: current value
         :param initial_value: initial value (initial values must be activated)
         :param checks: bool to know if flush to do and value check (Put False in the middle of adding values, during import)
         """
 
-        column_row = self.get_column(column)
+        field_row = self.get_field(field)
         document_row = self.get_document(document)
         if checks:
-            if column_row is None:
-                raise ValueError("The column with the name " +
-                                 str(column) + " does not exist")
+            if field_row is None:
+                raise ValueError("The field with the name " +
+                                 str(field) + " does not exist")
             if document_row is None:
                 raise ValueError("The document with the name " +
                                  str(document) + " does not exist")
-            if not self.check_type_value(current_value, column_row.type):
+            if not self.check_type_value(current_value, field_row.type):
                 raise ValueError("The current value " +
                                  str(current_value) + " is invalid")
-            if not self.check_type_value(initial_value, column_row.type):
+            if not self.check_type_value(initial_value, field_row.type):
                 raise ValueError("The initial value " +
                                  str(initial_value) + " is invalid")
             if not self.initial_table and not initial_value is None:
                 raise ValueError(
                     "Impossible to add an initial value if the initial values are not activated, you can activate the flag initial_table when creating the Database instance")
 
-        column_name = self.column_name_to_sql_column_name(column)
+        field_name = self.field_name_to_column_name(field)
         database_current_value = getattr(
-            document_row, column_name)
+            document_row, field_name)
 
         if self.initial_table:
             initial_row = self.get_initial_document(document)
             database_initial_value = getattr(
-                initial_row, column_name)
+                initial_row, field_name)
         else:
             database_initial_value = None
 
@@ -629,15 +626,15 @@ class Database:
                 database_initial_value is None):
             if initial_value is not None:
                 initial_value = self.python_to_column(
-                    column_row.type, initial_value)
+                    field_row.type, initial_value)
                 setattr(
-                    initial_row.row, column_name,
+                    initial_row.row, field_name,
                     initial_value)
             if current_value is not None:
                 current_value = self.python_to_column(
-                    column_row.type, current_value)
+                    field_row.type, current_value)
                 setattr(
-                    document_row.row, column_name,
+                    document_row.row, field_name,
                     current_value)
 
             if checks:
@@ -645,7 +642,7 @@ class Database:
             self.unsaved_modifications = True
 
         else:
-            raise ValueError("The tuple <" + str(column) + ", " +
+            raise ValueError("The tuple <" + str(field) + ", " +
                              str(document) + "> already has a value")
 
     """ DOCUMENTS """
@@ -663,7 +660,7 @@ class Database:
             document_row = self.session.query(self.table_classes[DOCUMENT_TABLE]).filter(
                 getattr(self.table_classes[DOCUMENT_TABLE], DOCUMENT_PRIMARY_KEY) == document).first()
             if document_row is not None:
-                document_row = ColumnRow(self, document_row)
+                document_row = FieldRow(self, document_row)
             if self.documents_caches:
                 self.documents[document] = document_row
             return document_row
@@ -684,7 +681,7 @@ class Database:
             document_row = self.session.query(self.table_classes[INITIAL_TABLE]).filter(
                 getattr(self.table_classes[INITIAL_TABLE], DOCUMENT_PRIMARY_KEY) == document).first()
             if document_row is not None:
-                document_row = ColumnRow(self, document_row)
+                document_row = FieldRow(self, document_row)
             if self.documents_caches:
                 self.initial_documents[document] = document_row
             return document_row
@@ -710,7 +707,7 @@ class Database:
         documents_list = []
         documents = self.session.query(self.table_classes[DOCUMENT_TABLE]).all()
         for document in documents:
-            documents_list.append(ColumnRow(self, document))
+            documents_list.append(FieldRow(self, document))
         return documents_list
 
     def remove_document(self, document):
@@ -759,7 +756,7 @@ class Database:
         self.session.add(document_row)
 
         if self.documents_caches:
-            document_row = ColumnRow(self, document_row)
+            document_row = FieldRow(self, document_row)
             self.documents[document] = document_row
 
         # Adding the index to initial table if initial values are used
@@ -768,7 +765,7 @@ class Database:
             self.session.add(initial_row)
 
             if self.documents_caches:
-                initial_row = ColumnRow(self, initial_row)
+                initial_row = FieldRow(self, initial_row)
                 self.initial_documents[document] = initial_row
 
         if checks:
@@ -778,21 +775,21 @@ class Database:
 
     """ UTILS """
 
-    def get_documents_matching_search(self, search, columns):
+    def get_documents_matching_search(self, search, fields):
         """
         Returns the list of documents names matching the search
         :param search: search to match (str)
-        :param columns: list of columns taken into account
+        :param fields: list of fields taken into account
         :return: List of document names matching the search
         """
 
-        if not isinstance(columns, list):
+        if not isinstance(fields, list):
             return []
         if not isinstance(search, str):
             return []
-        for column in columns:
-            column_row = self.get_column(column)
-            if column_row is None:
+        for field in fields:
+            field_row = self.get_field(field)
+            if field_row is None:
                 return []
 
         documents_matching = []
@@ -802,11 +799,11 @@ class Database:
 
         values = self.session.query(getattr(self.table_classes[DOCUMENT_TABLE], DOCUMENT_PRIMARY_KEY))
 
-        # Search for each column
-        for column in columns:
+        # Search for each field
+        for column in fields:
 
             simple_columns_filters.append(getattr(
-                self.table_classes[DOCUMENT_TABLE], self.column_name_to_sql_column_name(column)).like("%" + search + "%"))
+                self.table_classes[DOCUMENT_TABLE], self.field_name_to_column_name(column)).like("%" + search + "%"))
 
         values = values.filter(or_(*simple_columns_filters)).distinct().all()
         for value in values:
@@ -814,19 +811,19 @@ class Database:
 
         return documents_matching
 
-    def get_documents_matching_column_value_couples(self, column_value_couples):
+    def get_documents_matching_field_value_couples(self, field_value_couples):
         """
-        Checks if a document contains all the couples <column, value> given in
+        Checks if a document contains all the couples <field, value> given in
         parameter
-        :param column_value_couples: list of couple <column(str), value(typed)> to check
-        :return: list of document names matching all the <column, value> couples
+        :param field_value_couples: list of couple <field(str), value(typed)> to check
+        :return: list of document names matching all the <field, value> couples
         """
 
-        if not isinstance(column_value_couples, list) or not len(column_value_couples) > 0:
+        if not isinstance(field_value_couples, list) or not len(field_value_couples) > 0:
             return []
 
         couple_results = []
-        for couple in column_value_couples:
+        for couple in field_value_couples:
 
             if not isinstance(couple, list) or len(couple) != 2:
                 return []
@@ -834,10 +831,10 @@ class Database:
             column = couple[0]
             value = couple[1]
 
-            column_row = self.get_column(column)
-            if column_row is None:
+            field_row = self.get_field(column)
+            if field_row is None:
                 return []
-            if not self.check_type_value(value, column_row.type):
+            if not self.check_type_value(value, field_row.type):
                 return []
 
             couple_result = []
@@ -845,14 +842,14 @@ class Database:
             couple_query_result = self.session.query(
                 getattr(self.table_classes[DOCUMENT_TABLE], DOCUMENT_PRIMARY_KEY)).filter(
                 getattr(self.table_classes[DOCUMENT_TABLE],
-                        self.column_name_to_sql_column_name(column)) == value)
+                        self.field_name_to_column_name(column)) == value)
             for query_result in couple_query_result:
                 couple_result.append(getattr(query_result, DOCUMENT_PRIMARY_KEY))
 
             couple_results.append(couple_result)
 
         # All the document names lists are put together, with intersections
-        # Only the documents names with all <column, value> are taken
+        # Only the documents names with all <field, value> are taken
         final_result = couple_results[0]
         for i in range(0, len(couple_results) - 1):
             final_result = list(set(final_result).intersection(
@@ -940,7 +937,7 @@ class Database:
                 filter_query)
             python_filter = None
         for row in self.session.execute(select):
-            row = ColumnRow(self, row)
+            row = FieldRow(self, row)
             if python_filter is None or python_filter(row):
                 yield row
 
@@ -994,12 +991,12 @@ class Undefined:
     pass
 
 
-class ColumnRow:
+class FieldRow:
     '''
-    A ColumnRow is an object that makes it possible to access to attributes of
+    A FieldRow is an object that makes it possible to access to attributes of
     a database row returned by sqlalchemy using the column name. If the
-    attribute with the column name is not found, it is hashed and search in the
-    actual row. If found, it is stored in the ColumnRow instance.
+    attribute with the field name is not found, it is hashed and search in the
+    actual row. If found, it is stored in the FieldRow instance.
     '''
 
     def __init__(self, database, row):
@@ -1015,7 +1012,7 @@ class ColumnRow:
             if result is Undefined:
                 raise
             result = self.database.column_to_python(
-                self.database.columns[name].type, result)
+                self.database.fields[name].type, result)
             setattr(self, hashed_name, result)
             return result
 
