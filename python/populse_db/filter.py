@@ -46,11 +46,16 @@ CONDITION_OPERATOR : "=="i
                    | "IN"i
 
 condition : operand CONDITION_OPERATOR operand
+
 ?operand : literal
          | field_name
 
-field_name.1 : CNAME
-%import common.CNAME
+field_name.1 : FIELD_NAME
+             | quoted_field_name
+
+quoted_field_name.1 : QUOTED_FIELD_NAME
+
+
          
 ?literal.2 : KEYWORD_LITERAL -> keyword_literal
          | ESCAPED_STRING   -> string
@@ -65,15 +70,20 @@ DATE : INT "-" INT "-" INT
 TIME : INT ":" INT (":" INT ("." INT)?)?
 DATETIME : DATE "T" TIME
 
-KEYWORD_LITERAL : "NULL"i
+KEYWORD_LITERAL.2 : "NULL"i
                   | "TRUE"i
                   | "FALSE"i
+                  
+FIELD_NAME.1 : ("_"|LETTER) ("_"|LETTER|DIGIT)*
+QUOTED_FIELD_NAME.1 : "{" /[^}]/* "}"
 
 list : "[" [literal ("," literal)*] "]"
 
 %import common.INT
 %import common.ESCAPED_STRING
 %import common.SIGNED_NUMBER
+%import common.LETTER
+%import common.DIGIT
 
 %import common.WS
 %ignore WS
@@ -342,8 +352,15 @@ class FilterToQuery(Transformer):
         return items
 
     def field_name(self, items):
-        field_name = items[0]
-        column = self.database.get_field(field_name)
+        field = items[0]
+        # Check for literal due to a bug in Lark
+        literal = self.keyword_literals.get(field.lower(), self)
+        if literal is not self:
+            return literal
+        column = self.database.get_field(field)
         if column is None:
-            raise ValueError('No field named "%s"' % field_name)
+            raise ValueError('No field named "%s"' % field)
         return column
+
+    def quoted_field_name(self, items):
+        return items[0][1:-1]
