@@ -1012,6 +1012,8 @@ class TestDatabaseMethods(unittest.TestCase):
                 database.add_document(document)
                 database.new_value(document, 'format', format)
                 database.new_value(document, 'strings', list(file))
+            document = '/%s.none' % file
+            database.add_document(document)
 
         for filter, expected in (
             ('format == "NIFTI"', set('/%s.nii' % i for i in files)),
@@ -1042,7 +1044,71 @@ class TestDatabaseMethods(unittest.TestCase):
             ('format <= "DICOM" AND strings == ["b", "c", "d"]',
              {'/bcd.dcm'}
             ),
-            ('format in [True, false, null]',set())):
+            ('format in [True, false, null]',
+             {'/xyz.none',
+              '/abc.none',
+              '/bcd.none',
+              '/def.none',
+             }),
+            ('format == null',
+             {'/xyz.none',
+              '/abc.none',
+              '/bcd.none',
+              '/def.none',
+             }),
+            ('strings == null',
+             {'/xyz.none',
+              '/abc.none',
+              '/bcd.none',
+              '/def.none',
+             }),
+            ('strings != NULL',
+             {'/xyz.nii',
+              '/abc.nii',
+              '/abc.mgz',
+              '/xyz.mgz',
+              '/def.mgz',
+              '/def.nii',
+              '/abc.dcm',
+              '/bcd.nii',
+              '/def.dcm',
+              '/bcd.dcm',
+              '/xyz.dcm',
+              '/bcd.mgz',
+             }),
+            ('format != NULL',
+             {'/xyz.nii',
+              '/abc.nii',
+              '/abc.mgz',
+              '/xyz.mgz',
+              '/def.mgz',
+              '/def.nii',
+              '/abc.dcm',
+              '/bcd.nii',
+              '/def.dcm',
+              '/bcd.dcm',
+              '/xyz.dcm',
+              '/bcd.mgz',
+             }),
+            ('all',
+             {'/xyz.nii',
+              '/abc.nii',
+              '/abc.mgz',
+              '/xyz.mgz',
+              '/def.mgz',
+              '/def.nii',
+              '/xyz.none',
+              '/def.none',
+              '/abc.none',
+              '/abc.dcm',
+              '/bcd.nii',
+              '/def.dcm',
+              '/bcd.none',
+              '/bcd.dcm',
+              '/xyz.dcm',
+              '/bcd.mgz',
+             }
+            )):
             documents = set(getattr(document, DOCUMENT_PRIMARY_KEY) for document in database.filter_documents(filter))
             self.assertEqual(documents, expected)
 

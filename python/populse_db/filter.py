@@ -15,7 +15,7 @@ from populse_db.database_model import (DOCUMENT_TABLE,
                                        FIELD_TYPE_INTEGER,
                                        FIELD_TYPE_FLOAT, FIELD_TYPE_TIME,
                                        FIELD_TYPE_DATETIME, FIELD_TYPE_DATE,
-                                       FIELD_TYPE_STRING, DOCUMENT_PRIMARY_KEY,
+                                       FIELD_TYPE_STRING,
                                        FIELD_TYPE_BOOLEAN)
 
 # The grammar (in Lark format) used to parse filter strings
@@ -52,9 +52,9 @@ condition : operand CONDITION_OPERATOR operand
 field_name : CNAME
 %import common.CNAME
          
-?literal : ESCAPED_STRING   -> string
+?literal.2 : KEYWORD_LITERAL -> keyword_literal
+         | ESCAPED_STRING   -> string
          | SIGNED_NUMBER    -> number
-         | KEYWORD_LITERAL -> keyword_literal
          | DATE             -> date
          | TIME             -> time
          | DATETIME         -> datetime
@@ -65,9 +65,9 @@ DATE : INT "-" INT "-" INT
 TIME : INT ":" INT (":" INT ("." INT)?)?
 DATETIME : DATE "T" TIME
 
-KEYWORD_LITERAL : "TRUE"i
-                 | "FALSE"i
-                 | "NULL"i
+KEYWORD_LITERAL : "NULL"i
+                  | "TRUE"i
+                  | "FALSE"i
 
 list : "[" [literal ("," literal)*] "]"
 
@@ -136,6 +136,7 @@ class FilterToQuery(Transformer):
     }
     
     python_type_to_tag_type = {
+        type(None): None, 
         type(''): FIELD_TYPE_STRING,
         type(u''): FIELD_TYPE_STRING,
         int: FIELD_TYPE_INTEGER,
@@ -150,7 +151,10 @@ class FilterToQuery(Transformer):
         self.database = database
    
     @staticmethod
-    def is_field(object):
+    def is_column(object):
+        '''
+        Check if an object is an SqlAlchemy column object
+        '''
         return isinstance(object, AutomapBase)
     
     @staticmethod
@@ -198,15 +202,18 @@ class FilterToQuery(Transformer):
                     result = operator(result, right_operand)
         return result
     
-    def get_field(self, column):
+    def get_column(self, column):
         '''
         Return the SqlAlchemy Column object corresponding to
         a populse_db field object.
         '''
         return getattr(self.database.metadata.tables[DOCUMENT_TABLE].c,
-                       self.database.field_name_to_column_name(getattr(column, DOCUMENT_PRIMARY_KEY)))
+                       self.database.field_name_to_column_name(column.name))
     
-    def get_field_value(self, python_value):
+    def get_column_value(self, python_value):
+        '''
+        Convert a Python value to a value suitable to put in a database column
+        '''
         tag_type = self.find_field_type(python_value)
         column_value = self.database.python_to_column(tag_type, python_value)
         return column_value
@@ -241,12 +248,18 @@ class FilterToQuery(Transformer):
                 # Check if a single value is in a list tag
 
                 # Cannot be done in SQL with SQLite => return a Python function
-                return lambda x: left_operand in x[getattr(right_operand, DOCUMENT_PRIMARY_KEY)]
+                return lambda x: x[right_operand.name] is not None and left_operand in x[right_operand.name]
             elif isinstance(right_operand, list):
-                if self.is_field(left_operand):
+                if self.is_column(left_operand):
                     # Check if a simple field value is in a list of values
                     # Can be done in SQL => return an SqlAlchemy expression
-                    return self.get_field(left_operand).in_(right_operand)
+                    column = self.get_column(left_operand)
+                    if None in right_operand:
+                        right_operand.remove(None)
+                        result = (column == None) | column.in_(right_operand)  
+                    else:
+                        result = column.in_(right_operand)
+                    return result
                 else:
 
                     raise ValueError('Left operand of IN <list> must be a '
@@ -266,31 +279,31 @@ class FilterToQuery(Transformer):
         operator = self.python_operators[operator_str]
         if do_sql:
 
-            if self.is_field(left_operand):
-                left_operand = self.get_field(left_operand)
+            if self.is_column(left_operand):
+                left_operand = self.get_column(left_operand)
             else:
-                left_operand = self.get_field_value(left_operand)
-            if self.is_field(right_operand):
+                left_operand = self.get_column_value(left_operand)
+            if self.is_column(right_operand):
 
-                right_operand = self.get_field(right_operand)
+                right_operand = self.get_column(right_operand)
             else:
-                right_operand = self.get_field_value(right_operand)
+                right_operand = self.get_column_value(right_operand)
             # Return SqlAlchemy expression of the condition
             return operator(left_operand, right_operand)
         
         # SQL is not possible : build and return a Python function for the
         # condition.
-        if self.is_field(left_operand):
-            if self.is_field(right_operand):
-                python = lambda x: operator(x[getattr(left_operand, DOCUMENT_PRIMARY_KEY)],
-                                            x[getattr(right_operand, DOCUMENT_PRIMARY_KEY)])
+        if self.is_column(left_operand):
+            if self.is_column(right_operand):
+                python = lambda x: operator(x[left_operand.name],
+                                            x[right_operand.name])
             else:
-                python = lambda x: operator(x[getattr(left_operand, DOCUMENT_PRIMARY_KEY)],
+                python = lambda x: operator(x[left_operand.name],
                                             right_operand)
         else:
-            if self.is_field(right_operand):
+            if self.is_column(right_operand):
                 python = lambda x: operator(left_operand,
-                                            x[getattr(right_operand, DOCUMENT_PRIMARY_KEY)])
+                                            x[right_operand.name])
             else:
                 raise ValueError('Either left or right operand of a condition'
                                  ' must be a field name')
