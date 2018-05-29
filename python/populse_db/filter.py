@@ -49,7 +49,8 @@ condition : operand CONDITION_OPERATOR operand
 ?operand : literal
          | field_name
 
-field_name : CNAME
+field_name : "{"literal"}"
+             | CNAME
 %import common.CNAME
          
 ?literal.2 : KEYWORD_LITERAL -> keyword_literal
