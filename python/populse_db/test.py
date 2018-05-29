@@ -867,50 +867,6 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertEqual(database.get_documents_matching_search(
             "Guerbet2", ["PatientName"]), ["document2"])
 
-    def test_get_documents_matching_field_value_couples(self):
-        """
-        Tests the method giving the list of documents having all the values given
-        """
-
-        database = Database(self.string_engine)
-
-        # Testing with wrong parameters
-        self.assertEqual(database.get_documents_matching_field_value_couples([]), [])
-        self.assertEqual(
-            database.get_documents_matching_field_value_couples(False), [])
-        self.assertEqual(database.get_documents_matching_field_value_couples(
-            [["field_not_existing", "Guerbet"]]), [])
-        self.assertEqual(database.get_documents_matching_field_value_couples(
-            [["field_not_existing"]]), [])
-        self.assertEqual(database.get_documents_matching_field_value_couples(
-            [["field_not_existing", "Guerbet", "too_many"]]), [])
-        self.assertEqual(
-            database.get_documents_matching_field_value_couples([1]), [])
-        self.assertEqual(
-            database.get_documents_matching_field_value_couples("test"), [])
-
-        database.add_field("PatientName", FIELD_TYPE_STRING, None)
-        database.add_field("SequenceName", FIELD_TYPE_STRING, None)
-        database.add_field("BandWidth", FIELD_TYPE_INTEGER, None)
-        database.add_document("document1")
-        database.add_document("document2")
-        database.add_document("document3")
-        database.new_value("document1", "PatientName", "Guerbet")
-        database.new_value("document2", "SequenceName", "RARE")
-        database.new_value("document2", "BandWidth", 50000)
-
-        self.assertEqual(database.get_documents_matching_field_value_couples(
-            [["PatientName", "Guerbet"]]), ["document1"])
-        self.assertEqual(database.get_documents_matching_field_value_couples(
-            [["PatientName", "Guerbet"], ["SequenceName", "RARE"]]), [])
-        database.new_value("document2", "PatientName", "Guerbet")
-        self.assertEqual(database.get_documents_matching_field_value_couples(
-            [["PatientName", "Guerbet"], ["SequenceName", "RARE"]]), ["document2"])
-        self.assertEqual(database.get_documents_matching_field_value_couples(
-            [["PatientName", "Guerbet"], ["SequenceName", "RARE"], ["BandWidth", 50000]]), ["document2"])
-        self.assertEqual(database.get_documents_matching_field_value_couples(
-            [["PatientName", "Guerbet"], ["SequenceName", "RARE"], ["BandWidth", "50000"]]), [])
-
     def test_initial_table(self):
         """
         Tests the initial table good behavior

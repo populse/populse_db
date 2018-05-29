@@ -811,51 +811,6 @@ class Database:
 
         return documents_matching
 
-    def get_documents_matching_field_value_couples(self, field_value_couples):
-        """
-        Checks if a document contains all the couples <field, value> given in
-        parameter
-        :param field_value_couples: list of couple <field(str), value(typed)> to check
-        :return: list of document names matching all the <field, value> couples
-        """
-
-        if not isinstance(field_value_couples, list) or not len(field_value_couples) > 0:
-            return []
-
-        couple_results = []
-        for couple in field_value_couples:
-
-            if not isinstance(couple, list) or len(couple) != 2:
-                return []
-
-            column = couple[0]
-            value = couple[1]
-
-            field_row = self.get_field(column)
-            if field_row is None:
-                return []
-            if not self.check_type_value(value, field_row.type):
-                return []
-
-            couple_result = []
-
-            couple_query_result = self.session.query(
-                getattr(self.table_classes[DOCUMENT_TABLE], DOCUMENT_PRIMARY_KEY)).filter(
-                getattr(self.table_classes[DOCUMENT_TABLE],
-                        self.field_name_to_column_name(column)) == value)
-            for query_result in couple_query_result:
-                couple_result.append(getattr(query_result, DOCUMENT_PRIMARY_KEY))
-
-            couple_results.append(couple_result)
-
-        # All the document names lists are put together, with intersections
-        # Only the documents names with all <field, value> are taken
-        final_result = couple_results[0]
-        for i in range(0, len(couple_results) - 1):
-            final_result = list(set(final_result).intersection(
-                set(couple_results[i + 1])))
-        return final_result
-
     def start_transaction(self):
         """
         Starts a new transaction
