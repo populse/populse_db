@@ -11,9 +11,9 @@ from populse_db.database_model import (create_database, FIELD_TYPE_BOOLEAN,
                                        FIELD_TYPE_TIME, FIELD_TYPE_DATETIME,
                                        FIELD_TYPE_LIST_STRING,
                                        FIELD_TYPE_LIST_INTEGER,
-                                       FIELD_TYPE_LIST_FLOAT, DOCUMENT_TABLE,
+                                       FIELD_TYPE_LIST_FLOAT,
                                        FIELD_TYPE_LIST_DATE, FIELD_TYPE_LIST_TIME,
-                                       FIELD_TYPE_LIST_DATETIME, DOCUMENT_PRIMARY_KEY)
+                                       FIELD_TYPE_LIST_DATETIME)
 from populse_db.filter import literal_parser, FilterToQuery
 
 
@@ -69,59 +69,63 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method adding a field
         """
 
-        # Testing with a first field
         database = Database(self.string_engine)
-        return_value = database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
-        self.assertIsNone(return_value)
+
+        # Adding collection
+        database.add_collection("collection1", "name")
+
+        # Testing with a first field
+        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
 
         # Checking the field properties
-        field = database.get_field("PatientName")
+        field = database.get_field("collection1", "PatientName")
         self.assertEqual(field.name, "PatientName")
         self.assertEqual(field.type, FIELD_TYPE_STRING)
         self.assertEqual(field.description, "Name of the patient")
+        self.assertEqual(field.collection, "collection1")
 
         # Testing with a field that already exists
         try:
-            database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
+            database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
             self.fail()
         except ValueError:
             pass
 
         # Testing with all field types
-        database.add_field("BandWidth", FIELD_TYPE_FLOAT, None)
-        database.add_field("Bits per voxel", FIELD_TYPE_INTEGER, "with space")
-        database.add_field("AcquisitionTime", FIELD_TYPE_TIME, None)
-        database.add_field("AcquisitionDate", FIELD_TYPE_DATETIME, None)
-        database.add_field("Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
+        database.add_field("collection1", "BandWidth", FIELD_TYPE_FLOAT, None)
+        database.add_field("collection1", "Bits per voxel", FIELD_TYPE_INTEGER, "with space")
+        database.add_field("collection1", "AcquisitionTime", FIELD_TYPE_TIME, None)
+        database.add_field("collection1", "AcquisitionDate", FIELD_TYPE_DATETIME, None)
+        database.add_field("collection1", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
 
-        database.add_field("Bitspervoxel", FIELD_TYPE_INTEGER, "without space")
+        database.add_field("collection1", "Bitspervoxel", FIELD_TYPE_INTEGER, "without space")
         self.assertEqual(database.get_field(
-            "Bitspervoxel").description, "without space")
+            "collection1", "Bitspervoxel").description, "without space")
         self.assertEqual(database.get_field(
-            "Bits per voxel").description, "with space")
-        database.add_field("Boolean", FIELD_TYPE_BOOLEAN, None)
-        database.add_field("Boolean list", FIELD_TYPE_LIST_BOOLEAN, None)
+            "collection1", "Bits per voxel").description, "with space")
+        database.add_field("collection1", "Boolean", FIELD_TYPE_BOOLEAN, None)
+        database.add_field("collection1", "Boolean list", FIELD_TYPE_LIST_BOOLEAN, None)
 
         # Testing with wrong parameters
         try:
-            database.add_field(None, FIELD_TYPE_LIST_INTEGER, None)
+            database.add_field("collection1", None, FIELD_TYPE_LIST_INTEGER, None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.add_field("Patient Name", None, None)
+            database.add_field("collection1", "Patient Name", None, None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.add_field("Patient Name", FIELD_TYPE_STRING, 1.5)
+            database.add_field("collection1", "Patient Name", FIELD_TYPE_STRING, 1.5)
             self.fail()
         except ValueError:
             pass
 
         # Testing that the document primary key field is taken
         try:
-            database.add_field(DOCUMENT_PRIMARY_KEY, FIELD_TYPE_STRING, None)
+            database.add_field("collection1", "name", FIELD_TYPE_STRING, None)
             self.fail()
         except ValueError:
             pass
@@ -135,58 +139,62 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine, True)
 
+        database.add_collection("current", "name")
+
         # Adding fields
-        return_value = database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
-        self.assertEqual(return_value, None)
-        database.add_field("SequenceName", FIELD_TYPE_STRING, None)
-        database.add_field("Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
+        database.add_field("current", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("current", "SequenceName", FIELD_TYPE_STRING, None)
+        database.add_field("current", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
 
         # Adding documents
-        database.add_document("document1")
-        database.add_document("document2")
+        document = {}
+        document["name"] = "document1"
+        database.add_document("current", document)
+        document = {}
+        document["name"] = "document2"
+        database.add_document("current", document)
 
         # Adding values
-        database.new_value("document1", "PatientName", "Guerbet", "Guerbet_init")
-        database.new_value("document1", "SequenceName", "RARE")
-        database.new_value("document1", "Dataset dimensions", [1, 2])
+        database.new_value("current", "document1", "PatientName", "Guerbet")
+        database.new_value("current", "document1", "SequenceName", "RARE")
+        database.new_value("current", "document1", "Dataset dimensions", [1, 2])
 
         # Removing fields
 
-        database.remove_field("PatientName")
-        database.remove_field("Dataset dimensions")
+        database.remove_field("current", "PatientName")
+        database.remove_field("current", "Dataset dimensions")
 
         # Testing that the field does not exist anymore
-        self.assertIsNone(database.get_field("PatientName"))
-        self.assertIsNone(database.get_field("Dataset dimensions"))
+        self.assertIsNone(database.get_field("current", "PatientName"))
+        self.assertIsNone(database.get_field("current", "Dataset dimensions"))
 
         # Testing that the field values are removed
-        self.assertIsNone(database.get_current_value("document1", "PatientName"))
-        self.assertIsNone(database.get_initial_value("document1", "PatientName"))
-        self.assertEqual(database.get_current_value(
-            "document1", "SequenceName"), "RARE")
-        self.assertIsNone(database.get_current_value(
-            "document1", "Dataset dimensions"))
+        self.assertIsNone(database.get_value("current", "document1", "PatientName"))
+        self.assertEqual(database.get_value(
+            "current", "document1", "SequenceName"), "RARE")
+        self.assertIsNone(database.get_value(
+            "current", "document1", "Dataset dimensions"))
 
         # Testing with a field not existing
         try:
-            database.remove_field("NotExisting")
+            database.remove_field("current", "NotExisting")
             self.fail()
         except ValueError:
             pass
         try:
-            database.remove_field("Dataset dimension")
+            database.remove_field("current", "Dataset dimension")
             self.fail()
         except ValueError:
             pass
 
         # Testing with wrong parameter
         try:
-            database.remove_field(1)
+            database.remove_field("current", 1)
             self.fail()
         except ValueError:
             pass
         try:
-            database.remove_field(None)
+            database.remove_field("current", None)
             self.fail()
         except ValueError:
             pass
@@ -200,140 +208,67 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine)
 
+        # Adding collection
+        database.add_collection("collection1", "name")
+
         # Adding field
-        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
 
         # Testing that the field is returned if it exists
-        self.assertIsNotNone(database.get_field("PatientName"))
+        self.assertIsNotNone(database.get_field("collection1", "PatientName"))
 
         # Testing that None is returned if the field does not exist
-        self.assertIsNone(database.get_field("Test"))
+        self.assertIsNone(database.get_field("collection1", "Test"))
 
-    def test_get_current_value(self):
+    def test_get_value(self):
         """
         Tests the method giving the current value, given a document and a field
         """
 
         database = Database(self.string_engine)
 
+        # Adding collection
+        database.add_collection("collection1", "name")
+
         # Adding documents
-        database.add_document("document1")
+        document = {}
+        document["name"] = "document1"
+        database.add_document("collection1", document)
 
         # Adding fields
-        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
-        database.add_field("Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
-        database.add_field("Bits per voxel", FIELD_TYPE_INTEGER, None)
-        database.add_field("Grids spacing", FIELD_TYPE_LIST_FLOAT, None)
+        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
+        database.add_field("collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
+        database.add_field("collection1", "Grids spacing", FIELD_TYPE_LIST_FLOAT, None)
 
         # Adding values
-        database.new_value("document1", "PatientName", "test")
-        database.new_value("document1", "Bits per voxel", 10)
+        database.new_value("collection1", "document1", "PatientName", "test")
+        database.new_value("collection1", "document1", "Bits per voxel", 10)
         database.new_value(
-            "document1", "Dataset dimensions", [3, 28, 28, 3])
-        database.new_value("document1", "Grids spacing", [
+            "collection1", "document1", "Dataset dimensions", [3, 28, 28, 3])
+        database.new_value("collection1", "document1", "Grids spacing", [
                            0.234375, 0.234375, 0.4])
 
         # Testing that the value is returned if it exists
-        self.assertEqual(database.get_current_value(
-            "document1", "PatientName"), "test")
-        self.assertEqual(database.get_current_value(
-            "document1", "Bits per voxel"), 10)
-        self.assertEqual(database.get_current_value(
-            "document1", "Dataset dimensions"), [3, 28, 28, 3])
-        self.assertEqual(database.get_current_value(
-            "document1", "Grids spacing"), [0.234375, 0.234375, 0.4])
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "PatientName"), "test")
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "Bits per voxel"), 10)
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "Dataset dimensions"), [3, 28, 28, 3])
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "Grids spacing"), [0.234375, 0.234375, 0.4])
 
         # Testing when not existing
-        self.assertIsNone(database.get_current_value("document3", "PatientName"))
-        self.assertIsNone(database.get_current_value("document1", "NotExisting"))
-        self.assertIsNone(database.get_current_value("document3", "NotExisting"))
-        self.assertIsNone(database.get_current_value("document2", "Grids spacing"))
+        self.assertIsNone(database.get_value("collection1", "document3", "PatientName"))
+        self.assertIsNone(database.get_value("collection1", "document1", "NotExisting"))
+        self.assertIsNone(database.get_value("collection1", "document3", "NotExisting"))
+        self.assertIsNone(database.get_value("collection1", "document2", "Grids spacing"))
 
         # Testing with wrong parameters
-        self.assertIsNone(database.get_current_value(1, "Grids spacing"))
-        self.assertIsNone(database.get_current_value("document1", None))
-        self.assertIsNone(database.get_current_value(3.5, None))
-
-    def test_get_initial_value(self):
-        """
-        Tests the method giving the initial value, given a field and a document
-        """
-
-        database = Database(self.string_engine, True)
-
-        # Adding documents
-        database.add_document("document1")
-
-        # Adding fields
-        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
-        database.add_field("Bits per voxel", FIELD_TYPE_INTEGER, None)
-        database.add_field("Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
-        database.add_field("Grids spacing", FIELD_TYPE_LIST_FLOAT, None)
-
-        # Adding values
-        database.new_value("document1", "PatientName", "test", "test")
-        database.new_value("document1", "Bits per voxel", 50, 50)
-        database.new_value(
-            "document1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
-        database.new_value("document1", "Grids spacing", [
-                           0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
-
-        # Testing that the value is returned if it exists
-        value = database.get_initial_value("document1", "PatientName")
-        self.assertEqual(value, "test")
-        value = database.get_initial_value("document1", "Bits per voxel")
-        self.assertEqual(value, 50)
-        value = database.get_initial_value("document1", "Dataset dimensions")
-        self.assertEqual(value, [3, 28, 28, 3])
-        value = database.get_initial_value("document1", "Grids spacing")
-        self.assertEqual(value, [0.234375, 0.234375, 0.4])
-
-        # Testing when not existing
-        self.assertIsNone(database.get_initial_value("document3", "PatientName"))
-        self.assertIsNone(database.get_initial_value("document1", "NotExisting"))
-        self.assertIsNone(database.get_initial_value("document3", "NotExisting"))
-
-        # Testing with wrong parameters
-        self.assertIsNone(database.get_initial_value(1, "Grids spacing"))
-        self.assertIsNone(database.get_initial_value("document1", None))
-        self.assertIsNone(database.get_initial_value(3.5, None))
-
-    def test_is_value_modified(self):
-        """
-        Tests the method telling if the value has been modified or not
-        """
-
-        database = Database(self.string_engine, True)
-
-        # Adding document
-        database.add_document("document1")
-
-        # Adding field
-        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
-
-        # Adding a value
-        database.new_value("document1", "PatientName", "test", "test")
-
-        # Testing that the value has not been modified
-        is_modified = database.is_value_modified("document1", "PatientName")
-        self.assertFalse(is_modified)
-
-        # Value modified
-        database.set_current_value("document1", "PatientName", "test2")
-
-        # Testing that the value has been modified
-        is_modified = database.is_value_modified("document1", "PatientName")
-        self.assertTrue(is_modified)
-
-        # Testing with values not existing
-        self.assertFalse(database.is_value_modified("document2", "PatientName"))
-        self.assertFalse(database.is_value_modified("document1", "NotExisting"))
-        self.assertFalse(database.is_value_modified("document2", "NotExisting"))
-
-        # Testing with wrong parameters
-        self.assertFalse(database.is_value_modified(1, "Grids spacing"))
-        self.assertFalse(database.is_value_modified("document1", None))
-        self.assertFalse(database.is_value_modified(3.5, None))
+        self.assertIsNone(database.get_value("collection1", 1, "Grids spacing"))
+        self.assertIsNone(database.get_value("collection1", "document1", None))
+        self.assertIsNone(database.get_value("collection1", 3.5, None))
 
     def test_set_value(self):
         """
@@ -342,175 +277,101 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine, True)
 
+        # Adding collection
+        database.add_collection("collection1", "name")
+
         # Adding document
-        database.add_document("document1")
+        document = {}
+        document["name"] = "document1"
+        database.add_document("collection1", document)
 
         # Adding fields
-        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
         database.add_field(
-            "Bits per voxel", FIELD_TYPE_INTEGER, None)
+            "collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
         database.add_field(
-            "AcquisitionDate", FIELD_TYPE_DATETIME, None)
+            "collection1", "AcquisitionDate", FIELD_TYPE_DATETIME, None)
         database.add_field(
-            "AcquisitionTime", FIELD_TYPE_TIME, None)
+            "collection1", "AcquisitionTime", FIELD_TYPE_TIME, None)
 
         # Adding values and changing it
-        database.new_value("document1", "PatientName", "test", "test")
-        database.set_current_value("document1", "PatientName", "test2")
+        database.new_value("collection1", "document1", "PatientName", "test", "test")
+        database.set_value("collection1", "document1", "PatientName", "test2")
 
-        database.new_value("document1", "Bits per voxel", 1, 1)
-        database.set_current_value("document1", "Bits per voxel", 2)
+        database.new_value("collection1", "document1", "Bits per voxel", 1, 1)
+        database.set_value("collection1", "document1", "Bits per voxel", 2)
 
         date = datetime.datetime(2014, 2, 11, 8, 5, 7)
-        database.new_value("document1", "AcquisitionDate", date, date)
-        self.assertEqual(database.get_current_value("document1", "AcquisitionDate"), date)
+        database.new_value("collection1", "document1", "AcquisitionDate", date, date)
+        self.assertEqual(database.get_value("collection1", "document1", "AcquisitionDate"), date)
         date = datetime.datetime(2015, 2, 11, 8, 5, 7)
-        database.set_current_value("document1", "AcquisitionDate", date)
+        database.set_value("collection1", "document1", "AcquisitionDate", date)
 
         time = datetime.datetime(2014, 2, 11, 0, 2, 20).time()
-        database.new_value("document1", "AcquisitionTime", time, time)
-        self.assertEqual(database.get_current_value(
-            "document1", "AcquisitionTime"), time)
+        database.new_value("collection1", "document1", "AcquisitionTime", time, time)
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "AcquisitionTime"), time)
         time = datetime.datetime(2014, 2, 11, 15, 24, 20).time()
-        database.set_current_value("document1", "AcquisitionTime", time)
+        database.set_value("collection1", "document1", "AcquisitionTime", time)
 
         # Testing that the values are actually set
-        self.assertEqual(database.get_current_value(
-            "document1", "PatientName"), "test2")
-        self.assertEqual(database.get_current_value(
-            "document1", "Bits per voxel"), 2)
-        self.assertEqual(database.get_current_value(
-            "document1", "AcquisitionDate"), date)
-        self.assertEqual(database.get_current_value(
-            "document1", "AcquisitionTime"), time)
-        database.set_current_value("document1", "PatientName", None)
-        self.assertIsNone(database.get_current_value("document1", "PatientName"))
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "PatientName"), "test2")
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "Bits per voxel"), 2)
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "AcquisitionDate"), date)
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "AcquisitionTime"), time)
+        database.set_value("collection1", "document1", "PatientName", None)
+        self.assertIsNone(database.get_value("collection1", "document1", "PatientName"))
 
         # Testing when not existing
         try:
-            database.set_current_value("document3", "PatientName", None)
+            database.set_value("collection1", "document3", "PatientName", None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.set_current_value("document1", "NotExisting", None)
+            database.set_value("collection1", "document1", "NotExisting", None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.set_current_value("document3", "NotExisting", None)
+            database.set_value("collection1", "document3", "NotExisting", None)
             self.fail()
         except ValueError:
             pass
 
         # Testing with wrong types
         try:
-            database.set_current_value("document1", "Bits per voxel", "test")
+            database.set_value("collection1", "document1", "Bits per voxel", "test")
             self.fail()
         except ValueError:
             pass
-        self.assertEqual(database.get_current_value(
+        self.assertEqual(database.get_value("collection1",
             "document1", "Bits per voxel"), 2)
         try:
-            database.set_current_value("document1", "Bits per voxel", 35.8)
+            database.set_value("collection1", "document1", "Bits per voxel", 35.8)
             self.fail()
         except ValueError:
             pass
-        self.assertEqual(database.get_current_value(
-            "document1", "Bits per voxel"), 2)
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "Bits per voxel"), 2)
 
         # Testing with wrong parameters
         try:
-            database.set_current_value(1, "Bits per voxel", "2")
+            database.set_value("collection1", 1, "Bits per voxel", "2")
             self.fail()
         except ValueError:
             pass
         try:
-            database.set_current_value("document1", None, "1")
+            database.set_value("collection1", "document1", None, "1")
             self.fail()
         except ValueError:
             pass
         try:
-            database.set_current_value(1, None, True)
-            self.fail()
-        except ValueError:
-            pass
-
-    def test_reset_value(self):
-        """
-        Tests the method resetting a value
-        """
-
-        database = Database(self.string_engine, True)
-
-        # Adding document
-        database.add_document("document1")
-
-        # Adding fields
-        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
-        database.add_field("Bits per voxel", FIELD_TYPE_INTEGER, None)
-        database.add_field("Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
-
-        # Adding values and changing it
-        database.new_value("document1", "PatientName", "test", "test")
-        database.set_current_value("document1", "PatientName", "test2")
-
-        database.new_value("document1", "Bits per voxel", 5, 5)
-        database.set_current_value("document1", "Bits per voxel", 15)
-        self.assertEqual(database.get_current_value(
-            "document1", "Bits per voxel"), 15)
-
-        database.new_value(
-            "document1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
-        self.assertEqual(database.get_current_value(
-            "document1", "Dataset dimensions"), [3, 28, 28, 3])
-        database.set_current_value("document1", "Dataset dimensions", [1, 2, 3, 4])
-        self.assertEqual(database.get_current_value(
-            "document1", "Dataset dimensions"), [1, 2, 3, 4])
-
-        # Reset of the values
-        database.reset_current_value("document1", "PatientName")
-        database.reset_current_value("document1", "Bits per voxel")
-        database.reset_current_value("document1", "Dataset dimensions")
-
-        # Testing when not existing
-        try:
-            database.reset_current_value("document3", "PatientName")
-            self.fail()
-        except ValueError:
-            pass
-        try:
-            database.reset_current_value("document1", "NotExisting")
-            self.fail()
-        except ValueError:
-            pass
-        try:
-            database.reset_current_value("document3", "NotExisting")
-            self.fail()
-        except ValueError:
-            pass
-
-        # Testing that the values are actually reset
-        self.assertEqual(database.get_current_value(
-            "document1", "PatientName"), "test")
-        self.assertEqual(database.get_current_value(
-            "document1", "Bits per voxel"), 5)
-        self.assertEqual(database.get_current_value(
-            "document1", "Dataset dimensions"), [3, 28, 28, 3])
-
-        # Testing with wrong parameters
-        try:
-            database.reset_current_value(1, "Bits per voxel")
-            self.fail()
-        except ValueError:
-            pass
-        try:
-            database.reset_current_value("document1", None)
-            self.fail()
-        except ValueError:
-            pass
-        try:
-            database.reset_current_value(3.5, None)
+            database.set_value("collection1", 1, None, True)
             self.fail()
         except ValueError:
             pass
@@ -522,56 +383,56 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine, True)
 
+        database.add_collection("collection1", "name")
+
         # Adding document
-        database.add_document("document1")
+        database.add_document("collection1", "document1")
 
         # Adding fields
-        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
-        database.add_field("Bits per voxel", FIELD_TYPE_INTEGER, None)
-        database.add_field("Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
+        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
+        database.add_field("collection1", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
 
         # Adding values
-        database.new_value("document1", "PatientName", "test")
+        database.new_value("collection1", "document1", "PatientName", "test")
         try:
-            database.new_value("document1", "Bits per voxel", "space_field")
+            database.new_value("collection1", "document1", "Bits per voxel", "space_field")
             self.fail()
         except ValueError:
             pass
         database.new_value(
-            "document1", "Dataset dimensions", [3, 28, 28, 3])
-        value = database.get_current_value("document1", "Dataset dimensions")
+            "collection1", "document1", "Dataset dimensions", [3, 28, 28, 3])
+        value = database.get_value("collection1", "document1", "Dataset dimensions")
         self.assertEqual(value, [3, 28, 28, 3])
 
         # Removing values
-        database.remove_value("document1", "PatientName")
-        database.remove_value("document1", "Bits per voxel")
-        database.remove_value("document1", "Dataset dimensions")
+        database.remove_value("collection1", "document1", "PatientName")
+        database.remove_value("collection1", "document1", "Bits per voxel")
+        database.remove_value("collection1", "document1", "Dataset dimensions")
 
         # Testing when not existing
         try:
-            database.remove_value("document3", "PatientName")
+            database.remove_value("collection1", "document3", "PatientName")
             self.fail()
         except ValueError:
             pass
         try:
-            database.remove_value("document1", "NotExisting")
+            database.remove_value("collection1", "document1", "NotExisting")
             self.fail()
         except ValueError:
             pass
         try:
-            database.remove_value("document3", "NotExisting")
+            database.remove_value("collection1", "document3", "NotExisting")
             self.fail()
         except ValueError:
             pass
 
         # Testing that the values are actually removed
-        self.assertIsNone(database.get_current_value("document1", "PatientName"))
-        self.assertIsNone(database.get_current_value(
-            "document1", "Bits per voxel"))
-        self.assertIsNone(database.get_current_value(
-            "document1", "Dataset dimensions"))
-        self.assertIsNone(database.get_initial_value(
-            "document1", "Dataset dimensions"))
+        self.assertIsNone(database.get_value("collection1", "document1", "PatientName"))
+        self.assertIsNone(database.get_value(
+            "collection1", "document1", "Bits per voxel"))
+        self.assertIsNone(database.get_value(
+            "collection1", "document1", "Dataset dimensions"))
 
     def test_check_type_value(self):
         """
@@ -608,131 +469,136 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine, True)
 
+        database.add_collection("collection1", "name")
+
         # Adding documents
-        database.add_document("document1")
-        database.add_document("document2")
+        document = {}
+        document["name"] = "document1"
+        database.add_document("collection1", document)
+        document = {}
+        document["name"] = "document2"
+        database.add_document("collection1", document)
 
         # Adding fields
-        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
         database.add_field(
-            "Bits per voxel", FIELD_TYPE_INTEGER, None)
-        database.add_field("BandWidth", FIELD_TYPE_FLOAT, None)
-        database.add_field("AcquisitionTime", FIELD_TYPE_TIME, None)
-        database.add_field("AcquisitionDate", FIELD_TYPE_DATETIME, None)
-        database.add_field("Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
-        database.add_field("Grids spacing", FIELD_TYPE_LIST_FLOAT, None)
-        database.add_field("Boolean", FIELD_TYPE_BOOLEAN, None)
-        database.add_field("Boolean list", FIELD_TYPE_LIST_BOOLEAN, None)
+            "collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
+        database.add_field("collection1", "BandWidth", FIELD_TYPE_FLOAT, None)
+        database.add_field("collection1", "AcquisitionTime", FIELD_TYPE_TIME, None)
+        database.add_field("collection1", "AcquisitionDate", FIELD_TYPE_DATETIME, None)
+        database.add_field("collection1", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
+        database.add_field("collection1", "Grids spacing", FIELD_TYPE_LIST_FLOAT, None)
+        database.add_field("collection1", "Boolean", FIELD_TYPE_BOOLEAN, None)
+        database.add_field("collection1", "Boolean list", FIELD_TYPE_LIST_BOOLEAN, None)
 
         # Adding values
-        database.new_value("document1", "PatientName", "test", None)
-        database.new_value("document2", "BandWidth", 35.5, 35.5)
-        database.new_value("document1", "Bits per voxel", 1, 1)
+        database.new_value("collection1", "document1", "PatientName", "test")
+        database.new_value("collection1", "document2", "BandWidth", 35.5)
+        database.new_value("collection1", "document1", "Bits per voxel", 1)
         database.new_value(
-            "document1", "Dataset dimensions", [3, 28, 28, 3], [3, 28, 28, 3])
-        database.new_value("document2", "Grids spacing", [
-                           0.234375, 0.234375, 0.4], [0.234375, 0.234375, 0.4])
-        database.new_value("document1", "Boolean", True)
+            "collection1", "document1", "Dataset dimensions", [3, 28, 28, 3])
+        database.new_value("collection1", "document2", "Grids spacing", [
+                           0.234375, 0.234375, 0.4])
+        database.new_value("collection1", "document1", "Boolean", True)
 
         # Testing when not existing
         try:
-            database.new_value("document1", "NotExisting", "none", "none")
+            database.new_value("collection1", "document1", "NotExisting", "none")
             self.fail()
         except ValueError:
             pass
         try:
-            database.new_value("document3", "SequenceName", "none", "none")
+            database.new_value("collection1", "document3", "SequenceName", "none")
             self.fail()
         except ValueError:
             pass
         try:
-            database.new_value("document3", "NotExisting", "none", "none")
+            database.new_value("collection1", "document3", "NotExisting", "none")
             self.fail()
         except ValueError:
             pass
-        self.assertIsNone(database.new_value("document1", "BandWidth", 45, 45))
+        self.assertIsNone(database.new_value("collection1", "document1", "BandWidth", 45))
 
         date = datetime.datetime(2014, 2, 11, 8, 5, 7)
-        database.new_value("document1", "AcquisitionDate", date, date)
+        database.new_value("collection1", "document1", "AcquisitionDate", date)
         time = datetime.datetime(2014, 2, 11, 0, 2, 2).time()
-        database.new_value("document1", "AcquisitionTime", time, time)
+        database.new_value("collection1", "document1", "AcquisitionTime", time)
 
         # Testing that the values are actually added
-        self.assertEqual(database.get_current_value(
-            "document1", "PatientName"), "test")
-        self.assertIsNone(database.get_initial_value("document1", "PatientName"))
-        self.assertEqual(database.get_current_value(
-            "document2", "BandWidth"), 35.5)
-        self.assertEqual(database.get_current_value(
-            "document1", "Bits per voxel"), 1)
-        self.assertEqual(database.get_current_value("document1", "BandWidth"), 45)
-        self.assertEqual(database.get_current_value(
-            "document1", "AcquisitionDate"), date)
-        self.assertEqual(database.get_current_value(
-            "document1", "AcquisitionTime"), time)
-        self.assertEqual(database.get_current_value(
-            "document1", "Dataset dimensions"), [3, 28, 28, 3])
-        self.assertEqual(database.get_current_value(
-            "document2", "Grids spacing"), [0.234375, 0.234375, 0.4])
-        self.assertEqual(database.get_current_value("document1", "Boolean"), True)
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "PatientName"), "test")
+        self.assertEqual(database.get_value(
+            "collection1", "document2", "BandWidth"), 35.5)
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "Bits per voxel"), 1)
+        self.assertEqual(database.get_value("collection1", "document1", "BandWidth"), 45)
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "AcquisitionDate"), date)
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "AcquisitionTime"), time)
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "Dataset dimensions"), [3, 28, 28, 3])
+        self.assertEqual(database.get_value(
+            "collection1", "document2", "Grids spacing"), [0.234375, 0.234375, 0.4])
+        self.assertEqual(database.get_value("collection1", "document1", "Boolean"), True)
 
         # Test value override
         try:
-            database.new_value("document1", "PatientName", "test2", "test2")
+            database.new_value("collection1", "document1", "PatientName", "test2", "test2")
             self.fail()
         except ValueError:
             pass
-        value = database.get_current_value("document1", "PatientName")
+        value = database.get_value("collection1", "document1", "PatientName")
         self.assertEqual(value, "test")
 
         # Testing with wrong types
         try:
-            database.new_value("document2", "Bits per voxel",
+            database.new_value("collection1", "document2", "Bits per voxel",
                                "space_field", "space_field")
             self.fail()
         except ValueError:
             pass
-        self.assertIsNone(database.get_current_value(
-            "document2", "Bits per voxel"))
+        self.assertIsNone(database.get_value(
+            "collection1", "document2", "Bits per voxel"))
         try:
-            database.new_value("document2", "Bits per voxel", 35, 35.5)
+            database.new_value("collection1", "document2", "Bits per voxel", 35.5)
             self.fail()
         except ValueError:
             pass
-        self.assertIsNone(database.get_current_value(
-            "document2", "Bits per voxel"))
+        self.assertIsNone(database.get_value(
+            "collection1", "document2", "Bits per voxel"))
         try:
-            database.new_value("document1", "BandWidth", "test", "test")
+            database.new_value("collection1", "document1", "BandWidth", "test", "test")
             self.fail()
         except ValueError:
             pass
-        self.assertEqual(database.get_current_value("document1", "BandWidth"), 45)
+        self.assertEqual(database.get_value("collection1", "document1", "BandWidth"), 45)
 
         # Testing with wrong parameters
         try:
-            database.new_value(1, "Grids spacing", "2", "2")
+            database.new_value("collection1", 1, "Grids spacing", "2", "2")
             self.fail()
         except ValueError:
             pass
         try:
-            database.new_value("document1", None, "1", "1")
+            database.new_value("collection1", "document1", None, "1", "1")
             self.fail()
         except ValueError:
             pass
         try:
-            database.new_value("document1", "PatientName", None, None)
+            database.new_value("collection1", "document1", "PatientName", None, None)
             self.fail()
         except ValueError:
             pass
-        self.assertEqual(database.get_current_value(
-            "document1", "PatientName"), "test")
+        self.assertEqual(database.get_value(
+            "collection1", "document1", "PatientName"), "test")
         try:
-            database.new_value(1, None, True, False)
+            database.new_value("collection1", 1, None, True)
             self.fail()
         except ValueError:
             pass
         try:
-            database.new_value("document2", "Boolean", "boolean")
+            database.new_value("collection1", "document2", "Boolean", "boolean")
             self.fail()
         except ValueError:
             pass
@@ -744,19 +610,24 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine)
 
+        # Adding collection
+        database.add_collection("collection1", "name")
+
         # Adding document
-        database.add_document("document1")
+        document = {}
+        document["name"] = "document1"
+        database.add_document("collection1", document)
 
         # Testing that a document is returned if it exists
         self.assertIsInstance(database.get_document(
-            "document1").row, database.table_classes[DOCUMENT_TABLE])
+            "collection1", "document1").row, database.table_classes["collection1"])
 
         # Testing that None is returned if the document does not exist
-        self.assertIsNone(database.get_document("document3"))
+        self.assertIsNone(database.get_document("collection1", "document3"))
 
         # Testing with wrong parameter
-        self.assertIsNone(database.get_document(None))
-        self.assertIsNone(database.get_document(1))
+        self.assertIsNone(database.get_document("collection1", None))
+        self.assertIsNone(database.get_document("collection1", 1))
 
     def test_remove_document(self):
         """
@@ -764,41 +635,48 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         database = Database(self.string_engine)
 
+        # Adding collection
+        database.add_collection("collection1", "name")
+
         # Adding documents
-        database.add_document("document1")
-        database.add_document("document2")
+        document = {}
+        document["name"] = "document1"
+        database.add_document("collection1", document)
+        document = {}
+        document["name"] = "document2"
+        database.add_document("collection1", document)
 
         # Adding field
-        database.add_field("PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
 
         # Adding value
-        database.new_value("document1", "PatientName", "test")
+        database.new_value("collection1", "document1", "PatientName", "test")
 
         # Removing document
-        database.remove_document("document1")
+        database.remove_document("collection1", "document1")
 
         # Testing that the document is removed from all tables
-        self.assertIsNone(database.get_document("document1"))
+        self.assertIsNone(database.get_document("collection1", "document1"))
 
         # Testing that the values associated are removed
-        self.assertIsNone(database.get_current_value("document1", "PatientName"))
+        self.assertIsNone(database.get_value("collection1", "document1", "PatientName"))
 
         # Testing with a document not existing
         try:
-            database.remove_document("NotExisting")
+            database.remove_document("collection1", "NotExisting")
             self.fail()
         except ValueError:
             pass
 
         # Removing document
-        database.remove_document("document2")
+        database.remove_document("collection1", "document2")
 
         # Testing that the document is removed from document (and initial) tables
-        self.assertIsNone(database.get_document("document2"))
+        self.assertIsNone(database.get_document("collection1", "document2"))
 
         # Removing document a second time
         try:
-            database.remove_document("document1")
+            database.remove_document("collection1", "document1")
             self.fail()
         except ValueError:
             pass
@@ -810,80 +688,79 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine)
 
+        # Adding collection
+        database.add_collection("collection1", "name")
+
         # Adding document
-        database.add_document("document1")
+        document = {}
+        document["name"] = "document1"
+        database.add_document("collection1", document)
 
         # Testing that the document has been added
-        document = database.get_document("document1")
-        self.assertIsInstance(document.row, database.table_classes[DOCUMENT_TABLE])
-        self.assertEqual(getattr(document, DOCUMENT_PRIMARY_KEY), "document1")
+        document = database.get_document("collection1", "document1")
+        self.assertIsInstance(document.row, database.table_classes["collection1"])
+        self.assertEqual(document.name, "document1")
 
         # Testing when trying to add a document that already exists
         try:
-            database.add_document("document1")
+            document = {}
+            document["name"] = "document1"
+            database.add_document("collection1", document)
             self.fail()
         except ValueError:
             pass
 
         # Testing with invalid parameters
         try:
-            database.add_document(True)
+            database.add_document("collection1", True)
             self.fail()
         except ValueError:
             pass
 
         # Testing the add of several documents
-        database.add_document("document2")
+        document = {}
+        document["name"] = "document2"
+        database.add_document("collection1", document)
 
-    def test_initial_table(self):
+    def test_add_collection(self):
         """
-        Tests the initial table good behavior
+        Tests the method adding a collection
         """
 
         database = Database(self.string_engine)
 
-        database.add_field("PatientName", FIELD_TYPE_STRING, None)
+        # Adding a first collection
+        database.add_collection("collection1")
 
-        database.add_document("document1")
+        # Checking values
+        collection = database.get_collection("collection1")
+        self.assertEqual(collection.name, "collection1")
+        self.assertEqual(collection.primary_key, "name")
 
-        database.new_value("document1", "PatientName", "Guerbet")
+        # Adding a second collection
+        database.add_collection("collection2", "id")
 
-        # Testing that the value can be set
-        self.assertEqual(database.get_current_value(
-            "document1", "PatientName"), "Guerbet")
-        database.set_current_value("document1", "PatientName", "Guerbet2")
-        self.assertEqual(database.get_current_value(
-            "document1", "PatientName"), "Guerbet2")
+        # Checking values
+        collection = database.get_collection("collection2")
+        self.assertEqual(collection.name, "collection2")
+        self.assertEqual(collection.primary_key, "id")
 
-        # Testing that the values cannot be reset
+        # Trying with a collection already existing
         try:
-            database.reset_current_value("document1", "PatientName")
+            database.add_collection("collection1")
             self.fail()
         except ValueError:
             pass
 
-        database.remove_value("document1", "PatientName")
-
-        # Testing that initial cannot be added if the flag initial_table is put to False
+        # Trying with table names already taken
         try:
-            database.new_value("document1", "PatientName",
-                               "Guerbet_current", "Guerbet_initial")
+            database.add_collection("field")
             self.fail()
         except ValueError:
             pass
 
-        # Testing that initial documents do not exist
         try:
-            database.get_initial_document("document1")
-            self.fail()
-        except ValueError:
-            pass
-
-        database.save_modifications()
-
-        # Testing that the flag cannot be True if the database already exists without the initial table
-        try:
-            database = Database(self.string_engine, True)
+            database.add_collection("collection")
             self.fail()
         except ValueError:
             pass
@@ -896,35 +773,43 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine)
 
-        database.add_field("list_date", FIELD_TYPE_LIST_DATE, None)
-        database.add_field("list_time", FIELD_TYPE_LIST_TIME, None)
-        database.add_field("list_datetime", FIELD_TYPE_LIST_DATETIME, None)
+        # Adding collection
+        database.add_collection("collection1", "name")
 
-        database.add_document("document1")
+        # Adding fields
+        database.add_field("collection1", "list_date", FIELD_TYPE_LIST_DATE, None)
+        database.add_field("collection1", "list_time", FIELD_TYPE_LIST_TIME, None)
+        database.add_field("collection1", "list_datetime", FIELD_TYPE_LIST_DATETIME, None)
+
+        document = {}
+        document["name"] = "document1"
+        database.add_document("collection1", document)
 
         list_date = [datetime.date(2018, 5, 23), datetime.date(1899, 12, 31)]
         list_time = [datetime.time(12, 41, 33, 540), datetime.time(1, 2, 3)]
         list_datetime = [datetime.datetime(2018, 5, 23, 12, 41, 33, 540),
                          datetime.datetime(1899, 12, 31, 1, 2, 3)]
 
-        database.new_value("document1", "list_date", list_date)
+        database.new_value("collection1", "document1", "list_date", list_date)
         self.assertEqual(
-            list_date, database.get_current_value("document1", "list_date"))
-        database.new_value("document1", "list_time", list_time)
+            list_date, database.get_value("collection1", "document1", "list_date"))
+        database.new_value("collection1", "document1", "list_time", list_time)
         self.assertEqual(
-            list_time, database.get_current_value("document1", "list_time"))
-        database.new_value("document1", "list_datetime", list_datetime)
-        self.assertEqual(list_datetime, database.get_current_value(
-            "document1", "list_datetime"))
+            list_time, database.get_value("collection1", "document1", "list_time"))
+        database.new_value("collection1", "document1", "list_datetime", list_datetime)
+        self.assertEqual(list_datetime, database.get_value(
+            "collection1", "document1", "list_datetime"))
 
     def test_filters(self):
         database = Database(self.string_engine)
 
-        database.add_field('format', field_type='string', description=None)
-        database.add_field('strings', field_type=FIELD_TYPE_LIST_STRING, description=None)
-        database.add_field('times', field_type=FIELD_TYPE_LIST_TIME, description=None)
-        database.add_field('dates', field_type=FIELD_TYPE_LIST_DATE, description=None)
-        database.add_field('datetimes', field_type=FIELD_TYPE_LIST_DATETIME, description=None)
+        database.add_collection("collection1", "name")
+
+        database.add_field("collection1", 'format', field_type='string', description=None)
+        database.add_field("collection1", 'strings', field_type=FIELD_TYPE_LIST_STRING, description=None)
+        database.add_field("collection1", 'times', field_type=FIELD_TYPE_LIST_TIME, description=None)
+        database.add_field("collection1", 'dates', field_type=FIELD_TYPE_LIST_DATE, description=None)
+        database.add_field("collection1", 'datetimes', field_type=FIELD_TYPE_LIST_DATETIME, description=None)
 
         database.save_modifications()
         files = ('abc', 'bcd', 'def', 'xyz')
@@ -933,11 +818,11 @@ class TestDatabaseMethods(unittest.TestCase):
                                 ('DICOM', 'dcm'),
                                 ('Freesurfer', 'mgz')):
                 document = '/%s.%s' % (file, ext)
-                database.add_document(document)
-                database.new_value(document, 'format', format)
-                database.new_value(document, 'strings', list(file))
+                database.add_document("collection1", document)
+                database.new_value("collection1", document, 'format', format)
+                database.new_value("collection1", document, 'strings', list(file))
             document = '/%s.none' % file
-            database.add_document(document)
+            database.add_document("collection1", document)
 
         for filter, expected in (
             ('format == "NIFTI"', set('/%s.nii' % i for i in files)),
@@ -1033,7 +918,7 @@ class TestDatabaseMethods(unittest.TestCase):
               '/bcd.mgz',
              }
             )):
-            documents = set(getattr(document, DOCUMENT_PRIMARY_KEY) for document in database.filter_documents(filter))
+            documents = set(getattr(document, "name") for document in database.filter_documents(filter, "collection1"))
             self.assertEqual(documents, expected)
 
     def test_filter_literals(self):
@@ -1079,7 +964,7 @@ class TestDatabaseMethods(unittest.TestCase):
         parser = literal_parser()
         for literal, expected_value in literals.items():
             tree = parser.parse(literal)
-            value = FilterToQuery(None).transform(tree)
+            value = FilterToQuery(None, None).transform(tree)
             self.assertEqual(value, expected_value)
 
 if __name__ == '__main__':

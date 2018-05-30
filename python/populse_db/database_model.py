@@ -41,38 +41,28 @@ TYPE_TO_COLUMN[FIELD_TYPE_STRING] = String
 TYPE_TO_COLUMN[FIELD_TYPE_LIST_STRING] = String
 
 # Tables names
-DOCUMENT_TABLE = "document"
-INITIAL_TABLE = "initial"
 FIELD_TABLE = "field"
+COLLECTION_TABLE = "collection"
 
-DOCUMENT_PRIMARY_KEY = "name"
-
-def create_database(string_engine, initial_table=False):
+def create_database(string_engine):
     """
     Creates the database file with an empty schema
     :param string_engine: Path of the new database file
-    :param initial_table: To know if the initial table must be created
     """
 
     engine = create_engine(string_engine)
     metadata = MetaData(bind=engine)
-    fill_tables(metadata, initial_table)
+    fill_tables(metadata)
     metadata.create_all(engine)
 
-    # Document primary key name added to the list of columns
-    field_table = metadata.tables[FIELD_TABLE]
-    insert = field_table.insert().values(name=DOCUMENT_PRIMARY_KEY, type=FIELD_TYPE_STRING, description="Name of the document")
-    engine.execute(insert)
-
-
-def fill_tables(metadata, initial_table):
+def fill_tables(metadata):
     """
     Fills the metadata with an empty schema
     :param metadata: Metadata filled
-    :param initial_table: To know if the initial table must be created
     """
     Table(FIELD_TABLE, metadata,
           Column("name", String, primary_key=True),
+          Column("collection", String, primary_key=True),
           Column(
               "type", Enum(FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT, FIELD_TYPE_BOOLEAN,
                            FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME,
@@ -82,8 +72,8 @@ def fill_tables(metadata, initial_table):
               nullable=False),
           Column("description", String, nullable=True))
 
-    Table(DOCUMENT_TABLE, metadata, Column(DOCUMENT_PRIMARY_KEY, String, primary_key=True))
+    Table(COLLECTION_TABLE, metadata,
+          Column("name", String, primary_key=True),
+          Column("primary_key", String, nullable=False))
 
-    if initial_table:
-        Table(INITIAL_TABLE, metadata, Column(
-            DOCUMENT_PRIMARY_KEY, String, primary_key=True))
+    # Put collection foreign key in field table

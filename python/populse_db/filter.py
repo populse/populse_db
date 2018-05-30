@@ -12,8 +12,7 @@ import sqlalchemy
 from sqlalchemy.ext.automap import AutomapBase
 from sqlalchemy.sql.operators import ilike_op, like_op
 
-from populse_db.database_model import (DOCUMENT_TABLE,
-                                       FIELD_TYPE_INTEGER,
+from populse_db.database_model import (FIELD_TYPE_INTEGER,
                                        FIELD_TYPE_FLOAT, FIELD_TYPE_TIME,
                                        FIELD_TYPE_DATETIME, FIELD_TYPE_DATE,
                                        FIELD_TYPE_STRING,
@@ -161,9 +160,10 @@ class FilterToQuery(Transformer):
         datetime.date: FIELD_TYPE_DATE,
         bool: FIELD_TYPE_BOOLEAN,
     }
-    def __init__(self, database):
+    def __init__(self, database, collection):
         super(FilterToQuery, self).__init__()
         self.database = database
+        self.collection = collection
    
     @staticmethod
     def is_column(object):
@@ -222,8 +222,8 @@ class FilterToQuery(Transformer):
         Return the SqlAlchemy Column object corresponding to
         a populse_db field object.
         '''
-        return getattr(self.database.metadata.tables[DOCUMENT_TABLE].c,
-                       self.database.field_name_to_column_name(column.name))
+        return getattr(self.database.metadata.tables[self.collection].c,
+                       self.database.field_name_to_column_name(self.collection, column.name))
     
     def get_column_value(self, python_value):
         '''
@@ -362,7 +362,7 @@ class FilterToQuery(Transformer):
         literal = self.keyword_literals.get(field.lower(), self)
         if literal is not self:
             return literal
-        column = self.database.get_field(field)
+        column = self.database.get_field(self.collection, field)
         if column is None:
             raise ValueError('No field named "%s"' % field)
         return column
