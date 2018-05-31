@@ -395,7 +395,7 @@ class Database:
         self.session.execute(CreateTable(document_backup_table))
 
         insert = sql.insert(document_backup_table).from_select(
-            [getattr(c, primary_key) for c in remaining_columns], select)
+            [c.name for c in remaining_columns], select)
         self.session.execute(insert)
 
         self.metadata.remove(old_document_table)
@@ -410,7 +410,7 @@ class Database:
         select = sql.select(
             [c for c in document_backup_table.c if field_name not in c.name])
         insert = sql.insert(new_document_table).from_select(
-            [getattr(c, primary_key) for c in remaining_columns], select)
+            [c.name for c in remaining_columns], select)
         self.session.execute(insert)
 
         self.session.execute(DropTable(document_backup_table))
