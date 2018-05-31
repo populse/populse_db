@@ -108,6 +108,16 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing with wrong parameters
         try:
+            database.add_field("collection_not_existing", "Field", FIELD_TYPE_LIST_INTEGER, None)
+            self.fail()
+        except ValueError:
+            pass
+        try:
+            database.add_field(True, "Field", FIELD_TYPE_LIST_INTEGER, None)
+            self.fail()
+        except ValueError:
+            pass
+        try:
             database.add_field("collection1", None, FIELD_TYPE_LIST_INTEGER, None)
             self.fail()
         except ValueError:
@@ -177,6 +187,16 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing with a field not existing
         try:
+            database.remove_field("not_existing", "document1")
+            self.fail()
+        except ValueError:
+            pass
+        try:
+            database.remove_field(1, "NotExisting")
+            self.fail()
+        except ValueError:
+            pass
+        try:
             database.remove_field("current", "NotExisting")
             self.fail()
         except ValueError:
@@ -220,6 +240,80 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing that None is returned if the field does not exist
         self.assertIsNone(database.get_field("collection1", "Test"))
 
+        # Testing that None is returned if the collection does not exist
+        self.assertIsNone(database.get_field("collection_not_existing", "PatientName"))
+
+        # Testing that None is returned if both collection and field do not exist
+        self.assertIsNone(database.get_field("collection_not_existing", "Test"))
+
+    def test_get_fields(self):
+        """
+        Tests the method giving the fields rows, given a collection
+        """
+
+        database = Database(self.string_engine)
+
+        # Adding collection
+        database.add_collection("collection1", "name")
+
+        # Adding field
+        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
+
+        fields = database.get_fields("collection1")
+        self.assertEqual(len(fields), 2)
+
+        database.add_field("collection1", "SequenceName", FIELD_TYPE_STRING, "Name of the patient")
+
+        fields = database.get_fields("collection1")
+        self.assertEqual(len(fields), 3)
+
+        # Adding second collection
+        database.add_collection("collection2", "id")
+
+        fields = database.get_fields("collection1")
+        self.assertEqual(len(fields), 3)
+
+        # Testing with a collection not existing
+        self.assertEqual(database.get_fields("collection_not_existing"), [])
+
+    def test_get_fields_names(self):
+        """
+        Tests the method giving the fields names, given a collection
+        """
+
+        database = Database(self.string_engine)
+
+        # Adding collection
+        database.add_collection("collection1", "name")
+
+        # Adding field
+        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
+
+        fields = database.get_fields_names("collection1")
+        self.assertEqual(len(fields), 2)
+        self.assertTrue("name" in fields)
+        self.assertTrue("PatientName" in fields)
+
+        database.add_field("collection1", "SequenceName", FIELD_TYPE_STRING, "Name of the patient")
+
+        fields = database.get_fields_names("collection1")
+        self.assertEqual(len(fields), 3)
+        self.assertTrue("name" in fields)
+        self.assertTrue("PatientName" in fields)
+        self.assertTrue("SequenceName" in fields)
+
+        # Adding second collection
+        database.add_collection("collection2", "id")
+
+        fields = database.get_fields_names("collection1")
+        self.assertEqual(len(fields), 3)
+        self.assertTrue("name" in fields)
+        self.assertTrue("PatientName" in fields)
+        self.assertTrue("SequenceName" in fields)
+
+        # Testing with a collection not existing
+        self.assertEqual(database.get_fields_names("collection_not_existing"), [])
+
     def test_get_value(self):
         """
         Tests the method giving the current value, given a document and a field
@@ -260,12 +354,14 @@ class TestDatabaseMethods(unittest.TestCase):
             "collection1", "document1", "Grids spacing"), [0.234375, 0.234375, 0.4])
 
         # Testing when not existing
+        self.assertIsNone(database.get_value("collection_not_existing", "document1", "PatientName"))
         self.assertIsNone(database.get_value("collection1", "document3", "PatientName"))
         self.assertIsNone(database.get_value("collection1", "document1", "NotExisting"))
         self.assertIsNone(database.get_value("collection1", "document3", "NotExisting"))
         self.assertIsNone(database.get_value("collection1", "document2", "Grids spacing"))
 
         # Testing with wrong parameters
+        self.assertIsNone(database.get_value(3, "document1", "Grids spacing"))
         self.assertIsNone(database.get_value("collection1", 1, "Grids spacing"))
         self.assertIsNone(database.get_value("collection1", "document1", None))
         self.assertIsNone(database.get_value("collection1", 3.5, None))
@@ -328,6 +424,11 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing when not existing
         try:
+            database.set_value("collection_not_existing", "document3", "PatientName", None)
+            self.fail()
+        except ValueError:
+            pass
+        try:
             database.set_value("collection1", "document3", "PatientName", None)
             self.fail()
         except ValueError:
@@ -360,6 +461,11 @@ class TestDatabaseMethods(unittest.TestCase):
             "collection1", "document1", "Bits per voxel"), 2)
 
         # Testing with wrong parameters
+        try:
+            database.set_value(False, "document1", "Bits per voxel", 35)
+            self.fail()
+        except ValueError:
+            pass
         try:
             database.set_value("collection1", 1, "Bits per voxel", "2")
             self.fail()
@@ -411,6 +517,11 @@ class TestDatabaseMethods(unittest.TestCase):
         database.remove_value("collection1", "document1", "Dataset dimensions")
 
         # Testing when not existing
+        try:
+            database.remove_value("collection_not_existing", "document1", "PatientName")
+            self.fail()
+        except ValueError:
+            pass
         try:
             database.remove_value("collection1", "document3", "PatientName")
             self.fail()
@@ -503,6 +614,11 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing when not existing
         try:
+            database.new_value("collection_not_existing", "document1", "PatientName", "test")
+            self.fail()
+        except ValueError:
+            pass
+        try:
             database.new_value("collection1", "document1", "NotExisting", "none")
             self.fail()
         except ValueError:
@@ -576,6 +692,11 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing with wrong parameters
         try:
+            database.new_value(5, "document1", "Grids spacing", "2", "2")
+            self.fail()
+        except ValueError:
+            pass
+        try:
             database.new_value("collection1", 1, "Grids spacing", "2", "2")
             self.fail()
         except ValueError:
@@ -625,7 +746,11 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing that None is returned if the document does not exist
         self.assertIsNone(database.get_document("collection1", "document3"))
 
+        # Testing that None is returned if the collection does not exist
+        self.assertIsNone(database.get_document("collection_not_existing", "document1"))
+
         # Testing with wrong parameter
+        self.assertIsNone(database.get_document(False, "document1"))
         self.assertIsNone(database.get_document("collection1", None))
         self.assertIsNone(database.get_document("collection1", 1))
 
@@ -660,6 +785,13 @@ class TestDatabaseMethods(unittest.TestCase):
 
         # Testing that the values associated are removed
         self.assertIsNone(database.get_value("collection1", "document1", "PatientName"))
+
+        # Testing with a collection not existing
+        try:
+            database.remove_document("collection_not_existing", "document1")
+            self.fail()
+        except ValueError:
+            pass
 
         # Testing with a document not existing
         try:
@@ -711,6 +843,16 @@ class TestDatabaseMethods(unittest.TestCase):
             pass
 
         # Testing with invalid parameters
+        try:
+            database.add_document(15, "document1")
+            self.fail()
+        except ValueError:
+            pass
+        try:
+            database.add_document("collection_not_existing", "document1")
+            self.fail()
+        except ValueError:
+            pass
         try:
             database.add_document("collection1", True)
             self.fail()
@@ -764,6 +906,94 @@ class TestDatabaseMethods(unittest.TestCase):
             self.fail()
         except ValueError:
             pass
+
+    def test_get_collection(self):
+        """
+        Tests the method giving the collection row
+        """
+
+        database = Database(self.string_engine)
+
+        # Adding a first collection
+        database.add_collection("collection1")
+
+        # Checking values
+        collection = database.get_collection("collection1")
+        self.assertEqual(collection.name, "collection1")
+        self.assertEqual(collection.primary_key, "name")
+
+        # Adding a second collection
+        database.add_collection("collection2", "id")
+
+        # Checking values
+        collection = database.get_collection("collection2")
+        self.assertEqual(collection.name, "collection2")
+        self.assertEqual(collection.primary_key, "id")
+
+        # Trying with a collection not existing
+        self.assertIsNone(database.get_collection("collection3"))
+
+        # Trying with a table name already existing
+        self.assertIsNone(database.get_collection("collection"))
+        self.assertIsNone(database.get_collection("field"))
+
+    def test_get_documents(self):
+        """
+        Tests the method returning the list of document rows, given a collection
+        """
+
+        database = Database(self.string_engine)
+
+        # Adding collections
+        database.add_collection("collection1", "name")
+        database.add_collection("collection2", "id")
+
+        database.add_document("collection1", "document1")
+        database.add_document("collection1", "document2")
+        database.add_document("collection2", "document1")
+        database.add_document("collection2", "document2")
+
+        documents1 = database.get_documents("collection1")
+        self.assertEqual(len(documents1), 2)
+
+        documents2 = database.get_documents("collection2")
+        self.assertEqual(len(documents2), 2)
+
+        # Testing with collection not existing
+        self.assertEqual(database.get_documents("collection_not_existing"), [])
+        self.assertEqual(database.get_documents("collection"), [])
+        self.assertEqual(database.get_documents(None), [])
+
+    def test_get_documents_names(self):
+        """
+        Tests the method returning the list of document names, given a collection
+        """
+
+        database = Database(self.string_engine)
+
+        # Adding collections
+        database.add_collection("collection1", "name")
+        database.add_collection("collection2", "id")
+
+        database.add_document("collection1", "document1")
+        database.add_document("collection1", "document2")
+        database.add_document("collection2", "document3")
+        database.add_document("collection2", "document4")
+
+        documents1 = database.get_documents_names("collection1")
+        self.assertEqual(len(documents1), 2)
+        self.assertTrue("document1" in documents1)
+        self.assertTrue("document2" in documents1)
+
+        documents2 = database.get_documents_names("collection2")
+        self.assertEqual(len(documents2), 2)
+        self.assertTrue("document3" in documents2)
+        self.assertTrue("document4" in documents2)
+
+        # Testing with collection not existing
+        self.assertEqual(database.get_documents_names("collection_not_existing"), [])
+        self.assertEqual(database.get_documents_names("collection"), [])
+        self.assertEqual(database.get_documents_names(None), [])
 
     def test_list_dates(self):
         """

@@ -44,13 +44,13 @@ class Database:
     Database API
 
     attributes:
-        - enigne: string engine of the database
-        - classes: list of table classes, generated automatically
+        - string_engine: string engine of the database
+        - table_classes: list of table classes, generated automatically
         - base: database base
         - engine: database engine
         - metadata: database metadata
         - session_maker: session manager
-        - unsaved_modifications: to know if there are unsaved
+        - unsaved_modifications: bool to know if there are unsaved
           modifications in the database
         - documents: document rows
         - fields: fields rows
@@ -64,7 +64,7 @@ class Database:
         - add_fields: adds a list of fields
         - field_type_to_column_type: gives the column type corresponding
           to a field type
-        - field_name_to_sql_column_name: gives the column name corresponding
+        - field_name_to_column_name: gives the column name corresponding
           to the field name
         - remove_field: removes a field
         - get_field: Gives all fields rows
@@ -173,21 +173,25 @@ class Database:
             raise ValueError("A collection/table with the name " +
                              str(name) + " already exists")
 
+        # Adding the collection row
         collection_row = self.table_classes[COLLECTION_TABLE](name=name, primary_key=primary_key)
         self.session.add(collection_row)
 
+        # Creating the collection document table
         collection_table = Table(name, self.metadata, Column(primary_key, String, primary_key=True))
         collection_query = CreateTable(collection_table)
         self.session.execute(collection_query)
 
+        # Creating the class associated
         collection_dict = {'__tablename__': name, '__table__': collection_table}
         collection_class = type(name, (self.base,), collection_dict)
         mapper(collection_class, collection_table)
         self.table_classes[name] = collection_class
 
+        # Adding the primary_key of the collection as field
         field_table = self.metadata.tables[FIELD_TABLE]
         insert = field_table.insert().values(name=primary_key, collection=name,
-                                             type=FIELD_TYPE_STRING, description="Primary_key of the document")
+                                             type=FIELD_TYPE_STRING, description="Primary_key of the document collection " + name)
         self.session.execute(insert)
 
         if self.caches:
@@ -202,7 +206,7 @@ class Database:
         """
         Returns the collection row of the collection
         :param name: collection name
-        :return: The collection row
+        :return: The collection row if it exists, None otherwise
         """
 
         if self.caches:
@@ -222,7 +226,7 @@ class Database:
     def add_fields(self, fields):
         """
         Adds the list of fields
-        :param fields: list of fields (name, collection, type, description)
+        :param fields: list of fields (collection, name, type, description)
         """
 
         for field in fields:
@@ -251,7 +255,11 @@ class Database:
                              ", but field name of type " + str(type(name)) + " given")
         if not isinstance(collection, str):
             raise ValueError("The collection name must be of type " + str(str) +
-                             ", but collection name of type " + str(type(name)) + " given")
+                             ", but collection name of type " + str(type(collection)) + " given")
+        collection_row = self.get_collection(collection)
+        if collection_row is None:
+            raise ValueError("The collection " +
+                             str(collection) + " does not exist")
         field_row = self.get_field(collection, name)
         if field_row is not None:
             raise ValueError("A field with the name " +
@@ -344,6 +352,13 @@ class Database:
         if not isinstance(field, str):
             raise ValueError(
                 "The field name must be of type " + str(str) + ", but field name of type " + str(type(field)) + " given")
+        if not isinstance(collection, str):
+            raise ValueError(
+                "The collection must be of type " + str(str) + ", but collection of type " + str(type(collection)) + " given")
+        collection_row = self.get_collection(collection)
+        if collection_row is None:
+            raise ValueError("The collection " +
+                             str(collection) + " does not exist")
         field_row = self.get_field(collection, field)
         if field_row is None:
             raise ValueError("The field with the name " +
@@ -417,7 +432,10 @@ class Database:
                 field_row = self.session.query(self.table_classes[FIELD_TABLE]).filter(
                     self.table_classes[FIELD_TABLE].name == name).filter(
                     self.table_classes[FIELD_TABLE].collection == collection).first()
-                self.fields[collection][name] = field_row
+                try:
+                    self.fields[collection][name] = field_row
+                except KeyError:
+                    return None
                 return field_row
         else:
             field_row = self.session.query(self.table_classes[FIELD_TABLE]).filter(self.table_classes[FIELD_TABLE].name == name).filter(self.table_classes[FIELD_TABLE].collection == collection).first()
@@ -426,28 +444,44 @@ class Database:
     def get_fields_names(self, collection):
         """
         Gives the list of fields, given a collection
-        :return: List of fields names
+        :param collection: fields collection
+        :return: List of fields names of the collection
         """
-        return list(column.name for column in self.get_fields())
 
-    def get_fields(self):
+        fields = self.session.query(self.table_classes[FIELD_TABLE].name).filter(
+            self.table_classes[FIELD_TABLE].collection == collection).all()
+
+        fields_names = []
+        for field in fields:
+            fields_names.append(field.name)
+
+        return fields_names
+
+    def get_fields(self, collection):
         """
-        Gives the list of fields rows
-        :return: List of fields rows
+        Gives the list of fields rows, given a collection
+        :param collection: fields collection
+        :return: List of fields rows of the colletion
         """
-        return self.fields.values()
+
+        fields = self.session.query(self.table_classes[FIELD_TABLE]).filter(
+            self.table_classes[FIELD_TABLE].collection == collection).all()
+        return fields
 
     """ VALUES """
 
     def get_value(self, collection, document, field):
         """
         Gives the current value of <document, field> in the collection
-        :param collection: Document collection
+        :param collection: Document collection (str)
         :param document: Document name (str)
         :param field: Field name (str)
         :return: The current value of <document, field> in the collection if it exists, None otherwise
         """
 
+        collection_row = self.get_collection(collection)
+        if collection_row is None:
+            return None
         document_row = self.get_field(collection, field)
         if document_row is None:
             return None
@@ -460,12 +494,15 @@ class Database:
     def set_value(self, collection, document, field, new_value):
         """
         Sets the value associated to <document, column>
-        :param collection: document collection
-        :param document: document name
-        :param field: Field name
+        :param collection: document collection (str)
+        :param document: document name (str)
+        :param field: Field name (str)
         :param new_value: new value
         """
 
+        collection_row = self.get_collection(collection)
+        if collection_row is None:
+            raise ValueError("The collection " + str(collection) + " does not exist")
         field_row = self.get_field(collection, field)
         if field_row is None:
             raise ValueError("The field with the name " +
@@ -487,12 +524,15 @@ class Database:
     def remove_value(self, collection, document, field, flush=True):
         """
         Removes the value associated to <document, field> in the collection
-        :param collection: document collection
-        :param document: document name
-        :param field: Field name
+        :param collection: document collection (str)
+        :param document: document name (str)
+        :param field: Field name (str)
         :param flush: To know if flush to do (put False in the middle of removing values)
         """
 
+        collection_row = self.get_collection(collection)
+        if collection_row is None:
+            raise ValueError("The collection " + str(collection) + " does not exist")
         field_row = self.get_field(collection, field)
         if field_row is None:
             raise ValueError("The field with the name " +
@@ -558,9 +598,12 @@ class Database:
         :param checks: bool to know if flush to do and value check (Put False in the middle of adding values, during import)
         """
 
+        collection_row = self.get_collection(collection)
         field_row = self.get_field(collection, field)
         document_row = self.get_document(collection, document)
         if checks:
+            if collection_row is None:
+                raise ValueError("The collection " + str(collection) + " does not exist")
             if field_row is None:
                 raise ValueError("The field with the name " +
                                  str(field) + " does not exist in the collection " + collection)
@@ -606,20 +649,28 @@ class Database:
             try:
                 return self.documents[collection][document]
             except KeyError:
-                primary_key = self.get_collection(collection).primary_key
+                collection_row = self.get_collection(collection)
+                if collection_row is None:
+                    return None
+                else:
+                    primary_key = collection_row.primary_key
+                    document_row = self.session.query(self.table_classes[collection]).filter(
+                        getattr(self.table_classes[collection], primary_key) == document).first()
+                    if document_row is not None:
+                        document_row = FieldRow(self, collection, document_row)
+                    self.documents[collection][document] = document_row
+                    return document_row
+        else:
+            collection_row = self.get_collection(collection)
+            if collection_row is None:
+                return None
+            else:
+                primary_key = collection_row.primary_key
                 document_row = self.session.query(self.table_classes[collection]).filter(
                     getattr(self.table_classes[collection], primary_key) == document).first()
                 if document_row is not None:
                     document_row = FieldRow(self, collection, document_row)
-                self.documents[collection][document] = document_row
                 return document_row
-        else:
-            primary_key = self.get_collection(collection).primary_key
-            document_row = self.session.query(self.table_classes[collection]).filter(
-                getattr(self.table_classes[collection], primary_key) == document).first()
-            if document_row is not None:
-                document_row = FieldRow(self, collection, document_row)
-            return document_row
 
     def get_documents_names(self, collection):
         """
@@ -628,43 +679,48 @@ class Database:
         :return: list of document names of the collection
         """
 
-        primary_key = self.get_collection(collection).primary_key
-        if self.caches:
+        collection_row = self.get_collection(collection)
+        if collection_row is None:
+            return []
+        else:
             documents_list = []
-            for document_row in self.documents[collection]:
-                documents_list.append(getattr(document_row, primary_key))
+            documents = self.session.query(getattr(self.table_classes[collection], collection_row.primary_key)).all()
+            for document in documents:
+                documents_list.append(getattr(document, collection_row.primary_key))
             return documents_list
+
+    def get_documents(self, collection):
+        """
+        Gives the list of document rows, given a collection
+        :param collection: documents collection
+        :return: list of document rows of the collection
+        """
+
+        collection_row = self.get_collection(collection)
+        if collection_row is None:
+            return []
         else:
             documents_list = []
             documents = self.session.query(self.table_classes[collection]).all()
             for document in documents:
-                documents_list.append(getattr(document, primary_key))
+                documents_list.append(FieldRow(self, collection, document))
             return documents_list
-
-    def get_documents(self):
-        """
-        Gives the list of document rows
-        :return: list of document rows
-        """
-
-        documents_list = []
-        documents = self.session.query(self.table_classes[DOCUMENT_TABLE]).all()
-        for document in documents:
-            documents_list.append(FieldRow(self, document))
-        return documents_list
 
     def remove_document(self, collection, document):
         """
         Removes a document in the collection
-        :param collection: document collection
-        :param document: document name
+        :param collection: document collection (str)
+        :param document: document name (str)
         """
 
+        collection_row = self.get_collection(collection)
+        if collection_row is None:
+            raise ValueError("The collection " + str(collection) + " does not exist")
         document_row = self.get_document(collection, document)
         if document_row is None:
             raise ValueError("The document with the name " +
                              str(document) + " does not exist in the collection " + collection)
-        primary_key = self.get_collection(collection).primary_key
+        primary_key = collection_row.primary_key
 
         self.session.query(self.table_classes[collection]).filter(
                 getattr(self.table_classes[collection], primary_key) == document).delete()
@@ -678,7 +734,7 @@ class Database:
     def add_document(self, collection, document, checks=True):
         """
         Adds a document to a collection
-        :param collection: document collection
+        :param collection: document collection (str)
         :param document: dictionary of document values, or document name (str)
         :param checks: checks if the document already exists and flushes, put False in the middle of filling the table
         """
@@ -690,7 +746,7 @@ class Database:
                         type(collection)) + " given")
             collection_row = self.get_collection(collection)
             if collection_row is None:
-                raise ValueError("Collection " +
+                raise ValueError("The collection " +
                                  str(collection) + " does not exist")
             primary_key = self.get_collection(collection).primary_key
             if not isinstance(document, dict) and not isinstance(document, str):
