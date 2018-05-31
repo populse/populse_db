@@ -149,6 +149,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine, True)
 
+        # Adding collection
         database.add_collection("current", "name")
 
         # Adding fields
@@ -489,6 +490,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine, True)
 
+        # Adding collection
         database.add_collection("collection1", "name")
 
         # Adding document
@@ -580,6 +582,7 @@ class TestDatabaseMethods(unittest.TestCase):
 
         database = Database(self.string_engine, True)
 
+        # Adding collection
         database.add_collection("collection1", "name")
 
         # Adding documents

@@ -323,24 +323,37 @@ class Database:
         :return: Valid and unique (hashed) column name
         """
 
-        primary_key = self.get_collection(collection).primary_key
-        if self.caches:
-            try:
-                return self.names[collection][field]
-            except KeyError:
+        collection_row = self.get_collection(collection)
+        if collection_row is None:
+            return None
+        else:
+            primary_key = collection_row.primary_key
+            if self.caches:
+                try:
+                    return self.names[collection][field]
+                except KeyError:
+                    if field == primary_key:
+                        try:
+                            self.names[collection][field] = field
+                            return field
+                        except KeyError:
+                            self.names[collection] = {}
+                            self.names[collection][field] = field
+                            return field
+                    else:
+                        new_name = hashlib.md5(field.encode('utf-8')).hexdigest()
+                        try:
+                            self.names[collection][field] = new_name
+                        except KeyError:
+                            self.names[collection] = {}
+                            self.names[collection][field] = new_name
+                        return new_name
+            else:
                 if field == primary_key:
-                    self.names[collection][field] = field
                     return field
                 else:
-                    new_name = hashlib.md5(field.encode('utf-8')).hexdigest()
-                    self.names[collection][field] = new_name
-                    return new_name
-        else:
-            if field == primary_key:
-                return field
-            else:
-                field_name = hashlib.md5(field.encode('utf-8')).hexdigest()
-                return field_name
+                    field_name = hashlib.md5(field.encode('utf-8')).hexdigest()
+                    return field_name
 
     def remove_field(self, collection, field):
         """
@@ -432,11 +445,16 @@ class Database:
                 field_row = self.session.query(self.table_classes[FIELD_TABLE]).filter(
                     self.table_classes[FIELD_TABLE].name == name).filter(
                     self.table_classes[FIELD_TABLE].collection == collection).first()
-                try:
-                    self.fields[collection][name] = field_row
-                except KeyError:
+                collection_row = self.get_collection(collection)
+                if collection_row is not None:
+                    try:
+                        self.fields[collection][name] = field_row
+                    except KeyError:
+                        self.fields[collection] = {}
+                        self.fields[collection][name] = field_row
+                    return field_row
+                else:
                     return None
-                return field_row
         else:
             field_row = self.session.query(self.table_classes[FIELD_TABLE]).filter(self.table_classes[FIELD_TABLE].name == name).filter(self.table_classes[FIELD_TABLE].collection == collection).first()
             return field_row
@@ -482,22 +500,23 @@ class Database:
         collection_row = self.get_collection(collection)
         if collection_row is None:
             return None
-        document_row = self.get_field(collection, field)
-        if document_row is None:
-            return None
-        field_row = self.get_document(collection, document)
+        field_row = self.get_field(collection, field)
         if field_row is None:
             return None
+        document_row = self.get_document(collection, document)
+        if document_row is None:
+            return None
 
-        return FieldRow(self, collection, field_row)[field]
+        return FieldRow(self, collection, document_row)[field]
 
-    def set_value(self, collection, document, field, new_value):
+    def set_value(self, collection, document, field, new_value, flush=False):
         """
         Sets the value associated to <document, column>
         :param collection: document collection (str)
         :param document: document name (str)
         :param field: Field name (str)
         :param new_value: new value
+        :param flush: bool to know if flush to do
         """
 
         collection_row = self.get_collection(collection)
@@ -518,7 +537,9 @@ class Database:
 
         setattr(document_row.row, self.field_name_to_column_name(collection, field), new_value)
 
-        self.session.flush()
+        if flush:
+            self.session.flush()
+
         self.unsaved_modifications = True
 
     def remove_value(self, collection, document, field, flush=True):
@@ -601,6 +622,7 @@ class Database:
         collection_row = self.get_collection(collection)
         field_row = self.get_field(collection, field)
         document_row = self.get_document(collection, document)
+
         if checks:
             if collection_row is None:
                 raise ValueError("The collection " + str(collection) + " does not exist")
@@ -658,6 +680,8 @@ class Database:
                         getattr(self.table_classes[collection], primary_key) == document).first()
                     if document_row is not None:
                         document_row = FieldRow(self, collection, document_row)
+                    if not collection in self.documents:
+                        self.documents[collection] = {}
                     self.documents[collection][document] = document_row
                     return document_row
         else:
@@ -767,7 +791,10 @@ class Database:
         if isinstance(document, dict):
             new_dict = {}
             for value in document:
-                new_dict[self.field_name_to_column_name(collection, value)] = document[value]
+                new_column = self.field_name_to_column_name(collection, value)
+                new_dict[new_column] = document[value]
+                field_row = self.get_field(collection, value)
+                new_dict[new_column] = self.python_to_column(field_row.type, new_dict[new_column])
             document = new_dict
 
         # Adding the index to document table
