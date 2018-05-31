@@ -1151,7 +1151,7 @@ class TestDatabaseMethods(unittest.TestCase):
               '/bcd.mgz',
              }
             )):
-            documents = set(getattr(document, "name") for document in database.filter_documents(filter, "collection1"))
+            documents = set(getattr(document, "name") for document in database.filter_documents("collection1", filter))
             self.assertEqual(documents, expected)
 
     def test_filter_literals(self):

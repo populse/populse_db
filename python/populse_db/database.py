@@ -876,7 +876,7 @@ class Database:
         query = FilterToQuery(self, collection).transform(tree)
         return query
 
-    def filter_documents(self, filter_query, collection):
+    def filter_documents(self, collection, filter_query):
         """
         Iterate over documents selected by filter_query. Each item yield is a
         row of the column table returned by sqlalchemy. filter_query can be
