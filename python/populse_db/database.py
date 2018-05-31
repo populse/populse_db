@@ -58,6 +58,7 @@ class Database:
         - collections: collections rows
 
     methods:
+        - fill_caches: fill the caches at database opening
         - add_collection: adds a collection
         - get_collection: gives the collection row
         - add_field: adds a field
@@ -153,10 +154,57 @@ class Database:
         self.unsaved_modifications = False
 
         if self.caches:
-            self.documents = {}
-            self.fields = {}
-            self.names = {}
-            self.collections = {}
+            self.fill_caches()
+
+    def fill_caches(self):
+        """
+        Fills the caches at database opening
+        """
+
+        self.documents = {}
+        self.fields = {}
+        self.names = {}
+        self.collections = {}
+
+        # Collections
+        collections_rows = self.session.query(self.table_classes[COLLECTION_TABLE]).all()
+        for collection_row in collections_rows:
+            self.collections[collection_row.name] = collection_row
+
+        # Fields
+        for collection in self.collections:
+            fields_rows = self.session.query(self.table_classes[FIELD_TABLE]).filter(self.table_classes[FIELD_TABLE].collection == collection).all()
+            self.fields[collection] = {}
+            for field_row in fields_rows:
+                self.fields[collection][field_row.name] = field_row
+
+        # Documents
+        for collection in self.collections:
+            documents_rows = self.session.query(self.table_classes[collection]).all()
+            self.documents[collection] = {}
+            for document_row in documents_rows:
+                self.documents[collection][getattr(document_row, self.collections[collection].primary_key)] = FieldRow(self, collection, document_row)
+
+        # Names
+        for collection in self.collections:
+            self.names[collection] = {}
+            for field in self.fields[collection]:
+                if field == self.collections[collection].primary_key:
+                    self.names[collection][field] = field
+                else:
+                    self.names[collection][field] = hashlib.md5(field.encode('utf-8')).hexdigest()
+
+    def refresh_cache_documents(self, collection):
+        """
+        Refreshes the document cache after field added/removed
+        :param collection: collection to refresh
+        """
+
+        self.documents[collection].clear()
+        documents_rows = self.session.query(self.table_classes[collection]).all()
+        self.documents[collection] = {}
+        for document_row in documents_rows:
+            self.documents[collection][getattr(document_row, self.collections[collection].primary_key)] = FieldRow(self, collection, document_row)
 
     """ COLLECTIONS """
 
@@ -189,15 +237,16 @@ class Database:
         self.table_classes[name] = collection_class
 
         # Adding the primary_key of the collection as field
-        field_table = self.metadata.tables[FIELD_TABLE]
-        insert = field_table.insert().values(name=primary_key, collection=name,
+        primary_key_field = self.table_classes[FIELD_TABLE](name=primary_key, collection=name,
                                              type=FIELD_TYPE_STRING, description="Primary_key of the document collection " + name)
-        self.session.execute(insert)
+        self.session.add(primary_key_field)
 
         if self.caches:
             self.documents[name] = {}
             self.fields[name] = {}
+            self.fields[name][primary_key] = primary_key_field
             self.names[name] = {}
+            self.names[name][primary_key] = primary_key
             self.collections[name] = collection_row
 
         self.session.flush()
@@ -213,10 +262,7 @@ class Database:
             try:
                 return self.collections[name]
             except KeyError:
-                collection_row = self.session.query(self.table_classes[COLLECTION_TABLE]).filter(
-                    self.table_classes[COLLECTION_TABLE].name == name).first()
-                self.collections[name] = collection_row
-                return collection_row
+                return None
         else:
             collection_row = self.session.query(self.table_classes[COLLECTION_TABLE]).filter(self.table_classes[COLLECTION_TABLE].name == name).first()
             return collection_row
@@ -274,8 +320,11 @@ class Database:
 
         # Adding the field in the field table
         field_row = self.table_classes[FIELD_TABLE](name=name, collection=collection, type=field_type, description=description)
+
         if self.caches:
             self.fields[collection][name] = field_row
+            self.names[collection][name] = hashlib.md5(name.encode('utf-8')).hexdigest()
+
         self.session.add(field_row)
 
         # Fields creation
@@ -284,6 +333,7 @@ class Database:
             field_type = String
         else:
             field_type = self.field_type_to_column_type(field_type)
+
         column = Column(self.field_name_to_column_name(collection, name), field_type)
         column_str_type = column.type.compile(self.engine.dialect)
         column_name = column.compile(dialect=self.engine.dialect)
@@ -295,16 +345,15 @@ class Database:
         self.session.execute(document_query)
         self.table_classes[collection].__table__.append_column(column)
 
-        if self.caches:
-            for collection in self.documents:
-                self.documents[collection] = {}
-
-        self.unsaved_modifications = True
-
         # Redefinition of the table classes
         if flush:
             self.session.flush()
             self.update_table_classes()
+
+        if self.caches:
+            self.refresh_cache_documents(collection)
+
+        self.unsaved_modifications = True
 
     def field_type_to_column_type(self, field_type):
         """
@@ -323,37 +372,15 @@ class Database:
         :return: Valid and unique (hashed) column name
         """
 
-        collection_row = self.get_collection(collection)
-        if collection_row is None:
-            return None
+        primary_key = self.get_collection(collection).primary_key
+        if self.caches:
+            return self.names[collection][field]
         else:
-            primary_key = collection_row.primary_key
-            if self.caches:
-                try:
-                    return self.names[collection][field]
-                except KeyError:
-                    if field == primary_key:
-                        try:
-                            self.names[collection][field] = field
-                            return field
-                        except KeyError:
-                            self.names[collection] = {}
-                            self.names[collection][field] = field
-                            return field
-                    else:
-                        new_name = hashlib.md5(field.encode('utf-8')).hexdigest()
-                        try:
-                            self.names[collection][field] = new_name
-                        except KeyError:
-                            self.names[collection] = {}
-                            self.names[collection][field] = new_name
-                        return new_name
+            if field == primary_key:
+                return field
             else:
-                if field == primary_key:
-                    return field
-                else:
-                    field_name = hashlib.md5(field.encode('utf-8')).hexdigest()
-                    return field_name
+                field_name = hashlib.md5(field.encode('utf-8')).hexdigest()
+                return field_name
 
     def remove_field(self, collection, field):
         """
@@ -378,7 +405,6 @@ class Database:
                              str(field) + " does not exist in the collection " + collection)
 
         field_name = self.field_name_to_column_name(collection, field)
-        primary_key = self.get_collection(collection).primary_key
 
         # Field removed from document table
         old_document_table = Table(collection, self.metadata)
@@ -415,17 +441,15 @@ class Database:
 
         self.session.execute(DropTable(document_backup_table))
 
-        if self.caches:
-            for collection_name in self.documents:
-                self.documents[collection_name] = {}
-
-            self.fields[collection].pop(field, None)
-
         self.session.delete(field_row)
 
         self.session.flush()
-
         self.update_table_classes()
+
+        if self.caches:
+            self.refresh_cache_documents(collection)
+            self.fields[collection].pop(field, None)
+            self.names[collection].pop(field, None)
 
         self.unsaved_modifications = True
 
@@ -439,22 +463,9 @@ class Database:
 
         if self.caches:
             try:
-                field_row = self.fields[collection][name]
-                return field_row
+                return self.fields[collection][name]
             except KeyError:
-                field_row = self.session.query(self.table_classes[FIELD_TABLE]).filter(
-                    self.table_classes[FIELD_TABLE].name == name).filter(
-                    self.table_classes[FIELD_TABLE].collection == collection).first()
-                collection_row = self.get_collection(collection)
-                if collection_row is not None:
-                    try:
-                        self.fields[collection][name] = field_row
-                    except KeyError:
-                        self.fields[collection] = {}
-                        self.fields[collection][name] = field_row
-                    return field_row
-                else:
-                    return None
+                return None
         else:
             field_row = self.session.query(self.table_classes[FIELD_TABLE]).filter(self.table_classes[FIELD_TABLE].name == name).filter(self.table_classes[FIELD_TABLE].collection == collection).first()
             return field_row
@@ -667,34 +678,21 @@ class Database:
         :return The document row if the document exists, None otherwise
         """
 
+        collection_row = self.get_collection(collection)
+        if collection_row is None:
+            return None
         if self.caches:
             try:
                 return self.documents[collection][document]
             except KeyError:
-                collection_row = self.get_collection(collection)
-                if collection_row is None:
-                    return None
-                else:
-                    primary_key = collection_row.primary_key
-                    document_row = self.session.query(self.table_classes[collection]).filter(
-                        getattr(self.table_classes[collection], primary_key) == document).first()
-                    if document_row is not None:
-                        document_row = FieldRow(self, collection, document_row)
-                    if not collection in self.documents:
-                        self.documents[collection] = {}
-                    self.documents[collection][document] = document_row
-                    return document_row
-        else:
-            collection_row = self.get_collection(collection)
-            if collection_row is None:
                 return None
-            else:
-                primary_key = collection_row.primary_key
-                document_row = self.session.query(self.table_classes[collection]).filter(
-                    getattr(self.table_classes[collection], primary_key) == document).first()
-                if document_row is not None:
-                    document_row = FieldRow(self, collection, document_row)
-                return document_row
+        else:
+            primary_key = collection_row.primary_key
+            document_row = self.session.query(self.table_classes[collection]).filter(
+                getattr(self.table_classes[collection], primary_key) == document).first()
+            if document_row is not None:
+                document_row = FieldRow(self, collection, document_row)
+            return document_row
 
     def get_documents_names(self, collection):
         """
