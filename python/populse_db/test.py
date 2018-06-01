@@ -867,6 +867,15 @@ class TestDatabaseMethods(unittest.TestCase):
         document["name"] = "document2"
         database.add_document("collection1", document)
 
+        # Adding document with dictionary without primary key
+        try:
+            document = {}
+            document["no_primary_key"] = "document1"
+            database.add_document("collection1", document)
+            self.fail()
+        except ValueError:
+            pass
+
     def test_add_collection(self):
         """
         Tests the method adding a collection

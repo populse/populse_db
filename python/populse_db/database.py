@@ -219,11 +219,15 @@ class Database:
         :param primary_key: New collection primary_key column
         """
 
-        # Checks that the collection does not already exist
+        # Checks
         collection_row = self.get_collection(name)
         if collection_row is not None or name in self.table_classes:
             raise ValueError("A collection/table with the name " +
                              str(name) + " already exists")
+        if not isinstance(name, str):
+            raise ValueError("The collection name must be of type " + str(str) + ", but collection name of type " + str(type(name)) + " given")
+        if not isinstance(primary_key, str):
+            raise ValueError("The collection primary_key must be of type " + str(str) + ", but collection primary_key of type " + str(type(primary_key)) + " given")
 
         # Adding the collection row
         collection_row = self.table_classes[COLLECTION_TABLE](name=name, primary_key=primary_key)
@@ -335,6 +339,7 @@ class Database:
         :param flush: bool to know if the table classes must be updated (put False if in the middle of filling fields) => True by default
         """
 
+        # Checks
         collection_row = self.get_collection(collection)
         if collection_row is None:
             raise ValueError("The collection " +
@@ -393,7 +398,8 @@ class Database:
 
         self.unsaved_modifications = True
 
-    def field_type_to_column_type(self, field_type):
+    @staticmethod
+    def field_type_to_column_type(field_type):
         """
         Gives the sqlalchemy column type corresponding to the field type
         :param field_type: column type
@@ -434,7 +440,7 @@ class Database:
         field_row = self.get_field(collection, field)
         if field_row is None:
             raise ValueError("The field with the name " +
-                             str(field) + " does not exist in the collection " + collection)
+                             str(field) + " does not exist in the collection " + str(collection))
 
         field_name = self.field_name_to_column_name(collection, field)
 
@@ -514,9 +520,7 @@ class Database:
         fields = self.__session.query(self.table_classes[FIELD_TABLE].name).filter(
             self.table_classes[FIELD_TABLE].collection == collection).all()
 
-        fields_names = []
-        for field in fields:
-            fields_names.append(field.name)
+        fields_names = [field.name for field in fields]
 
         return fields_names
 
@@ -570,13 +574,13 @@ class Database:
         field_row = self.get_field(collection, field)
         if field_row is None:
             raise ValueError("The field with the name " +
-                             str(field) + " does not exist for the collection " + collection)
+                             str(field) + " does not exist in the collection " + str(collection))
         document_row = self.get_document(collection, document)
         if document_row is None:
             raise ValueError("The document with the name " +
-                             str(document) + " does not exist")
+                             str(document) + " does not exist in the collection " + str(collection))
         if not self.check_type_value(new_value, field_row.type):
-            raise ValueError("The value " + str(new_value) + " is invalid")
+            raise ValueError("The value " + str(new_value) + " is invalid for the type " + field_row.type)
 
         new_value = self.python_to_column(field_row.type, new_value)
 
@@ -593,7 +597,7 @@ class Database:
         :param collection: document collection (str)
         :param document: document name (str)
         :param field: Field name (str)
-        :param flush: To know if flush to do (put False in the middle of removing values)
+        :param flush: To know if flush to do (put False in the middle of removing values) => True by default
         """
 
         collection_row = self.get_collection(collection)
@@ -602,11 +606,11 @@ class Database:
         field_row = self.get_field(collection, field)
         if field_row is None:
             raise ValueError("The field with the name " +
-                             str(field) + " does not exist in the collection " + collection)
+                             str(field) + " does not exist in the collection " + str(collection))
         document_row = self.get_document(collection, document)
         if document_row is None:
             raise ValueError("The document with the name " +
-                             str(document) + " does not exist in the collection " + collection)
+                             str(document) + " does not exist in the collection " + str(collection))
 
         sql_column_name = self.field_name_to_column_name(collection, field)
 
@@ -673,13 +677,13 @@ class Database:
                 raise ValueError("The collection " + str(collection) + " does not exist")
             if field_row is None:
                 raise ValueError("The field with the name " +
-                                 str(field) + " does not exist in the collection " + collection)
+                                 str(field) + " does not exist in the collection " + str(collection))
             if document_row is None:
                 raise ValueError("The document with the name " +
-                                 str(document) + " does not exist in the collection " + collection)
+                                 str(document) + " does not exist in the collection " + str(collection))
             if not self.check_type_value(value, field_row.type):
                 raise ValueError("The value " +
-                                 str(value) + " is invalid")
+                                 str(value) + " is invalid for the type " + field_row.type)
 
         field_name = self.field_name_to_column_name(collection, field)
         database_value = getattr(
@@ -700,7 +704,7 @@ class Database:
 
         else:
             raise ValueError("The tuple <" + str(field) + ", " +
-                             str(document) + "> already has a value for the collection " + collection)
+                             str(document) + "> already has a value in the collection " + str(collection))
 
     """ DOCUMENTS """
 
@@ -739,10 +743,8 @@ class Database:
         if collection_row is None:
             return []
         else:
-            documents_list = []
             documents = self.__session.query(getattr(self.table_classes[collection], collection_row.primary_key)).all()
-            for document in documents:
-                documents_list.append(getattr(document, collection_row.primary_key))
+            documents_list = [getattr(document, collection_row.primary_key) for document in documents]
             return documents_list
 
     def get_documents(self, collection):
@@ -756,10 +758,8 @@ class Database:
         if collection_row is None:
             return []
         else:
-            documents_list = []
             documents = self.__session.query(self.table_classes[collection]).all()
-            for document in documents:
-                documents_list.append(FieldRow(self, collection, document))
+            documents_list = [FieldRow(self, collection, document) for document in documents]
             return documents_list
 
     def remove_document(self, collection, document):
@@ -775,7 +775,7 @@ class Database:
         document_row = self.get_document(collection, document)
         if document_row is None:
             raise ValueError("The document with the name " +
-                             str(document) + " does not exist in the collection " + collection)
+                             str(document) + " does not exist in the collection " + str(collection))
         primary_key = collection_row.primary_key
 
         self.__session.query(self.table_classes[collection]).filter(
@@ -791,8 +791,8 @@ class Database:
         """
         Adds a document to a collection
         :param collection: document collection (str)
-        :param document: dictionary of document values, or document name (str)
-        :param checks: checks if the document already exists and flushes, put False in the middle of filling the table
+        :param document: dictionary of document values (dict), or document primary_key (str)
+        :param checks: checks if the document already exists and flushes, put False in the middle of filling the table => True by default
         """
 
         if checks:
@@ -805,13 +805,15 @@ class Database:
                 raise ValueError(
                     "The document must be of type " + str(dict) + " or " + str(str) + ", but document of type " + str(
                         type(document)) + " given")
+            if isinstance(document, dict) and primary_key not in document:
+                raise ValueError("The primary_key " + primary_key + " of the collection " + str(collection) + " is missing from the document dictionary")
             if isinstance(document, dict):
                 document_row = self.get_document(collection, document[primary_key])
             else:
                 document_row = self.get_document(collection, document)
             if document_row is not None:
                 raise ValueError("A document with the name " +
-                                 str(document) + " already exists")
+                                 str(document) + " already exists in the collection " + str(collection))
         else:
             primary_key = self.get_collection(collection).primary_key
 
