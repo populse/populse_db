@@ -59,7 +59,9 @@ class Database:
 
     methods:
         - fill_caches: fill the caches at database opening
+        - refresh_cache_documents: refreshes the cache of documents after adding/removing fields
         - add_collection: adds a collection
+        - remove_collection: removes a collection
         - get_collection: gives the collection row
         - add_field: adds a field
         - add_fields: adds a list of fields
@@ -123,24 +125,24 @@ class Database:
         :param caches: to know if the caches must be used, False by default
         """
 
-        self.string_engine = string_engine
+        self.__string_engine = string_engine
 
-        self.caches = caches
+        self.__caches = caches
 
         # SQLite database: we create it if it does not exist
         if string_engine.startswith('sqlite'):
-            self.db_file = re.sub("sqlite.*:///", "", string_engine)
-            if not os.path.exists(self.db_file):
-                parent_dir = os.path.dirname(self.db_file)
+            self.__db_file = re.sub("sqlite.*:///", "", string_engine)
+            if not os.path.exists(self.__db_file):
+                parent_dir = os.path.dirname(self.__db_file)
                 if not os.path.exists(parent_dir):
-                    os.makedirs(os.path.dirname(self.db_file))
+                    os.makedirs(os.path.dirname(self.__db_file))
                 create_database(string_engine)
 
         # Database opened
-        self.engine = create_engine(self.string_engine)
+        self.__engine = create_engine(self.__string_engine)
         self.metadata = MetaData()
-        self.metadata.reflect(self.engine)
-        self.update_table_classes()
+        self.metadata.reflect(self.__engine)
+        self.__update_table_classes()
 
         # Database schema checked
         if (COLLECTION_TABLE not in self.table_classes.keys() or
@@ -148,70 +150,72 @@ class Database:
             raise ValueError(
                 'The database schema is not coherent with the API')
 
-        self.session = scoped_session(sessionmaker(
-            bind=self.engine, autocommit=False, autoflush=False))
+        self.__session = scoped_session(sessionmaker(
+            bind=self.__engine, autocommit=False, autoflush=False))
 
         self.unsaved_modifications = False
 
-        if self.caches:
-            self.fill_caches()
+        if self.__caches:
+            self.__fill_caches()
 
-    def fill_caches(self):
+    """ CACHES """
+
+    def __fill_caches(self):
         """
         Fills the caches at database opening
         """
 
-        self.documents = {}
-        self.fields = {}
-        self.names = {}
-        self.collections = {}
+        self.__documents = {}
+        self.__fields = {}
+        self.__names = {}
+        self.__collections = {}
 
         # Collections
-        collections_rows = self.session.query(self.table_classes[COLLECTION_TABLE]).all()
+        collections_rows = self.__session.query(self.table_classes[COLLECTION_TABLE]).all()
         for collection_row in collections_rows:
-            self.collections[collection_row.name] = collection_row
+            self.__collections[collection_row.name] = collection_row
 
         # Fields
-        for collection in self.collections:
-            fields_rows = self.session.query(self.table_classes[FIELD_TABLE]).filter(self.table_classes[FIELD_TABLE].collection == collection).all()
-            self.fields[collection] = {}
+        for collection in self.__collections:
+            fields_rows = self.__session.query(self.table_classes[FIELD_TABLE]).filter(self.table_classes[FIELD_TABLE].collection == collection).all()
+            self.__fields[collection] = {}
             for field_row in fields_rows:
-                self.fields[collection][field_row.name] = field_row
+                self.__fields[collection][field_row.name] = field_row
 
         # Documents
-        for collection in self.collections:
-            documents_rows = self.session.query(self.table_classes[collection]).all()
-            self.documents[collection] = {}
+        for collection in self.__collections:
+            documents_rows = self.__session.query(self.table_classes[collection]).all()
+            self.__documents[collection] = {}
             for document_row in documents_rows:
-                self.documents[collection][getattr(document_row, self.collections[collection].primary_key)] = FieldRow(self, collection, document_row)
+                self.__documents[collection][getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(self, collection, document_row)
 
         # Names
-        for collection in self.collections:
-            self.names[collection] = {}
-            for field in self.fields[collection]:
-                if field == self.collections[collection].primary_key:
-                    self.names[collection][field] = field
+        for collection in self.__collections:
+            self.__names[collection] = {}
+            for field in self.__fields[collection]:
+                if field == self.__collections[collection].primary_key:
+                    self.__names[collection][field] = field
                 else:
-                    self.names[collection][field] = hashlib.md5(field.encode('utf-8')).hexdigest()
+                    self.__names[collection][field] = hashlib.md5(field.encode('utf-8')).hexdigest()
 
-    def refresh_cache_documents(self, collection):
+    def __refresh_cache_documents(self, collection):
         """
         Refreshes the document cache after field added/removed
         :param collection: collection to refresh
         """
 
-        self.documents[collection].clear()
-        documents_rows = self.session.query(self.table_classes[collection]).all()
-        self.documents[collection] = {}
+        self.__documents[collection].clear()
+        documents_rows = self.__session.query(self.table_classes[collection]).all()
+        self.__documents[collection] = {}
         for document_row in documents_rows:
-            self.documents[collection][getattr(document_row, self.collections[collection].primary_key)] = FieldRow(self, collection, document_row)
+            self.__documents[collection][getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(self, collection, document_row)
 
     """ COLLECTIONS """
 
     def add_collection(self, name, primary_key="name"):
         """
         Adds a collection
-        :param name: New collection name
+        :param name: New collection name => "name" by default
         :param primary_key: New collection primary_key column
         """
 
@@ -223,12 +227,12 @@ class Database:
 
         # Adding the collection row
         collection_row = self.table_classes[COLLECTION_TABLE](name=name, primary_key=primary_key)
-        self.session.add(collection_row)
+        self.__session.add(collection_row)
 
         # Creating the collection document table
         collection_table = Table(name, self.metadata, Column(primary_key, String, primary_key=True))
         collection_query = CreateTable(collection_table)
-        self.session.execute(collection_query)
+        self.__session.execute(collection_query)
 
         # Creating the class associated
         collection_dict = {'__tablename__': name, '__table__': collection_table}
@@ -239,17 +243,50 @@ class Database:
         # Adding the primary_key of the collection as field
         primary_key_field = self.table_classes[FIELD_TABLE](name=primary_key, collection=name,
                                              type=FIELD_TYPE_STRING, description="Primary_key of the document collection " + name)
-        self.session.add(primary_key_field)
+        self.__session.add(primary_key_field)
 
-        if self.caches:
-            self.documents[name] = {}
-            self.fields[name] = {}
-            self.fields[name][primary_key] = primary_key_field
-            self.names[name] = {}
-            self.names[name][primary_key] = primary_key
-            self.collections[name] = collection_row
+        if self.__caches:
+            self.__documents[name] = {}
+            self.__fields[name] = {}
+            self.__fields[name][primary_key] = primary_key_field
+            self.__names[name] = {}
+            self.__names[name][primary_key] = primary_key
+            self.__collections[name] = collection_row
 
-        self.session.flush()
+        self.__session.flush()
+
+    def remove_collection(self, name):
+        """
+        Removes a collection
+        :param name: collection to remove
+        """
+
+        collection_row = self.get_collection(name)
+        if collection_row is None:
+            raise ValueError("The collection " + str(name) + " does not exist")
+
+        # Removing the collection row
+        self.__session.query(self.table_classes[COLLECTION_TABLE]).filter(self.table_classes[COLLECTION_TABLE].name == name).delete()
+        self.__session.query(self.table_classes[FIELD_TABLE]).filter(self.table_classes[FIELD_TABLE].collection == name).delete()
+
+        # Removing the collection document table + metadata associated
+        collection_query = DropTable(self.table_classes[name].__table__)
+        self.__session.execute(collection_query)
+        self.metadata.remove(self.table_classes[name].__table__)
+
+        # Removing the class associated
+        self.table_classes.pop(name, None)
+
+        if self.__caches:
+            self.__documents.pop(name, None)
+            self.__fields.pop(name, None)
+            self.__names.pop(name, None)
+            self.__collections.pop(name, None)
+
+        self.__session.flush()
+
+        # Base updated to remove the document table of the collection
+        self.__update_table_classes()
 
     def get_collection(self, name):
         """
@@ -258,13 +295,13 @@ class Database:
         :return: The collection row if it exists, None otherwise
         """
 
-        if self.caches:
+        if self.__caches:
             try:
-                return self.collections[name]
+                return self.__collections[name]
             except KeyError:
                 return None
         else:
-            collection_row = self.session.query(self.table_classes[COLLECTION_TABLE]).filter(self.table_classes[COLLECTION_TABLE].name == name).first()
+            collection_row = self.__session.query(self.table_classes[COLLECTION_TABLE]).filter(self.table_classes[COLLECTION_TABLE].name == name).first()
             return collection_row
 
     """ FIELDS """
@@ -281,10 +318,12 @@ class Database:
             self.add_field(field[0], field[1], field[2], field[3], False)
 
         # Updating the table classes
-        self.session.flush()
-        self.update_table_classes()
+        self.__session.flush()
 
-    def add_field(self, collection, name, field_type, description, flush=True):
+        # Classes reloaded in order to add the new column attribute
+        self.__update_table_classes()
+
+    def add_field(self, collection, name, field_type, description=None, flush=True):
         """
         Adds a field to the database, if it does not already exist
         :param collection: field collection (str)
@@ -292,16 +331,10 @@ class Database:
         :param field_type: field type (string, int, float, boolean, date, datetime,
                      time, list_string, list_int, list_float, list_boolean, list_date,
                      list_datetime, or list_time)
-        :param description: field description (str or None)
-        :param flush: bool to know if the table classes must be updated (put False if in the middle of filling fields)
+        :param description: field description (str or None) => None by default
+        :param flush: bool to know if the table classes must be updated (put False if in the middle of filling fields) => True by default
         """
 
-        if not isinstance(name, str):
-            raise ValueError("The field name must be of type " + str(str) +
-                             ", but field name of type " + str(type(name)) + " given")
-        if not isinstance(collection, str):
-            raise ValueError("The collection name must be of type " + str(str) +
-                             ", but collection name of type " + str(type(collection)) + " given")
         collection_row = self.get_collection(collection)
         if collection_row is None:
             raise ValueError("The collection " +
@@ -310,6 +343,9 @@ class Database:
         if field_row is not None:
             raise ValueError("A field with the name " +
                              str(name) + " already exists in the collection " + collection)
+        if not isinstance(name, str):
+            raise ValueError("The field name must be of type " + str(str) +
+                             ", but field name of type " + str(type(name)) + " given")
         if not field_type in ALL_TYPES:
             raise ValueError("The field type must be in " + str(ALL_TYPES) + ", but " + str(
                 field_type) + " given")
@@ -321,11 +357,11 @@ class Database:
         # Adding the field in the field table
         field_row = self.table_classes[FIELD_TABLE](name=name, collection=collection, type=field_type, description=description)
 
-        if self.caches:
-            self.fields[collection][name] = field_row
-            self.names[collection][name] = hashlib.md5(name.encode('utf-8')).hexdigest()
+        if self.__caches:
+            self.__fields[collection][name] = field_row
+            self.__names[collection][name] = hashlib.md5(name.encode('utf-8')).hexdigest()
 
-        self.session.add(field_row)
+        self.__session.add(field_row)
 
         # Fields creation
         if field_type in LIST_TYPES:
@@ -335,23 +371,25 @@ class Database:
             field_type = self.field_type_to_column_type(field_type)
 
         column = Column(self.field_name_to_column_name(collection, name), field_type)
-        column_str_type = column.type.compile(self.engine.dialect)
-        column_name = column.compile(dialect=self.engine.dialect)
+        column_str_type = column.type.compile(self.__engine.dialect)
+        column_name = column.compile(dialect=self.__engine.dialect)
 
         # Column created in document table, and in initial table if initial values are used
 
         document_query = str('ALTER TABLE %s ADD COLUMN %s %s' %
                          (collection, column_name, column_str_type))
-        self.session.execute(document_query)
+        self.__session.execute(document_query)
         self.table_classes[collection].__table__.append_column(column)
 
         # Redefinition of the table classes
         if flush:
-            self.session.flush()
-            self.update_table_classes()
+            self.__session.flush()
 
-        if self.caches:
-            self.refresh_cache_documents(collection)
+            # Classes reloaded in order to add the new column attribute
+            self.__update_table_classes()
+
+        if self.__caches:
+            self.__refresh_cache_documents(collection)
 
         self.unsaved_modifications = True
 
@@ -373,8 +411,8 @@ class Database:
         """
 
         primary_key = self.get_collection(collection).primary_key
-        if self.caches:
-            return self.names[collection][field]
+        if self.__caches:
+            return self.__names[collection][field]
         else:
             if field == primary_key:
                 return field
@@ -389,12 +427,6 @@ class Database:
         :param field: field name (str)
         """
 
-        if not isinstance(field, str):
-            raise ValueError(
-                "The field name must be of type " + str(str) + ", but field name of type " + str(type(field)) + " given")
-        if not isinstance(collection, str):
-            raise ValueError(
-                "The collection must be of type " + str(str) + ", but collection of type " + str(type(collection)) + " given")
         collection_row = self.get_collection(collection)
         if collection_row is None:
             raise ValueError("The collection " +
@@ -418,38 +450,40 @@ class Database:
         for column in old_document_table.columns:
             if field_name not in str(column):
                 document_backup_table.append_column(column.copy())
-        self.session.execute(CreateTable(document_backup_table))
+        self.__session.execute(CreateTable(document_backup_table))
 
         insert = sql.insert(document_backup_table).from_select(
             [c.name for c in remaining_columns], select)
-        self.session.execute(insert)
+        self.__session.execute(insert)
 
         self.metadata.remove(old_document_table)
-        self.session.execute(DropTable(old_document_table))
+        self.__session.execute(DropTable(old_document_table))
 
         new_document_table = Table(collection, self.metadata)
         for column in document_backup_table.columns:
             new_document_table.append_column(column.copy())
 
-        self.session.execute(CreateTable(new_document_table))
+        self.__session.execute(CreateTable(new_document_table))
 
         select = sql.select(
             [c for c in document_backup_table.c if field_name not in c.name])
         insert = sql.insert(new_document_table).from_select(
             [c.name for c in remaining_columns], select)
-        self.session.execute(insert)
+        self.__session.execute(insert)
 
-        self.session.execute(DropTable(document_backup_table))
+        self.__session.execute(DropTable(document_backup_table))
 
-        self.session.delete(field_row)
+        self.__session.delete(field_row)
 
-        self.session.flush()
-        self.update_table_classes()
+        self.__session.flush()
 
-        if self.caches:
-            self.refresh_cache_documents(collection)
-            self.fields[collection].pop(field, None)
-            self.names[collection].pop(field, None)
+        # Classes reloaded in order to remove the columns attributes
+        self.__update_table_classes()
+
+        if self.__caches:
+            self.__refresh_cache_documents(collection)
+            self.__fields[collection].pop(field, None)
+            self.__names[collection].pop(field, None)
 
         self.unsaved_modifications = True
 
@@ -461,13 +495,13 @@ class Database:
         :return: The column row if the column exists, None otherwise
         """
 
-        if self.caches:
+        if self.__caches:
             try:
-                return self.fields[collection][name]
+                return self.__fields[collection][name]
             except KeyError:
                 return None
         else:
-            field_row = self.session.query(self.table_classes[FIELD_TABLE]).filter(self.table_classes[FIELD_TABLE].name == name).filter(self.table_classes[FIELD_TABLE].collection == collection).first()
+            field_row = self.__session.query(self.table_classes[FIELD_TABLE]).filter(self.table_classes[FIELD_TABLE].name == name).filter(self.table_classes[FIELD_TABLE].collection == collection).first()
             return field_row
 
     def get_fields_names(self, collection):
@@ -477,7 +511,7 @@ class Database:
         :return: List of fields names of the collection
         """
 
-        fields = self.session.query(self.table_classes[FIELD_TABLE].name).filter(
+        fields = self.__session.query(self.table_classes[FIELD_TABLE].name).filter(
             self.table_classes[FIELD_TABLE].collection == collection).all()
 
         fields_names = []
@@ -493,7 +527,7 @@ class Database:
         :return: List of fields rows of the colletion
         """
 
-        fields = self.session.query(self.table_classes[FIELD_TABLE]).filter(
+        fields = self.__session.query(self.table_classes[FIELD_TABLE]).filter(
             self.table_classes[FIELD_TABLE].collection == collection).all()
         return fields
 
@@ -549,7 +583,7 @@ class Database:
         setattr(document_row.row, self.field_name_to_column_name(collection, field), new_value)
 
         if flush:
-            self.session.flush()
+            self.__session.flush()
 
         self.unsaved_modifications = True
 
@@ -579,7 +613,7 @@ class Database:
         setattr(document_row.row, sql_column_name, None)
 
         if flush:
-            self.session.flush()
+            self.__session.flush()
         self.unsaved_modifications = True
 
     def check_type_value(self, value, valid_type):
@@ -645,7 +679,7 @@ class Database:
                                  str(document) + " does not exist in the collection " + collection)
             if not self.check_type_value(value, field_row.type):
                 raise ValueError("The value " +
-                                 str(value) + " is invalget_cuid")
+                                 str(value) + " is invalid")
 
         field_name = self.field_name_to_column_name(collection, field)
         database_value = getattr(
@@ -661,7 +695,7 @@ class Database:
                     current_value)
 
             if checks:
-                self.session.flush()
+                self.__session.flush()
             self.unsaved_modifications = True
 
         else:
@@ -681,14 +715,14 @@ class Database:
         collection_row = self.get_collection(collection)
         if collection_row is None:
             return None
-        if self.caches:
+        if self.__caches:
             try:
-                return self.documents[collection][document]
+                return self.__documents[collection][document]
             except KeyError:
                 return None
         else:
             primary_key = collection_row.primary_key
-            document_row = self.session.query(self.table_classes[collection]).filter(
+            document_row = self.__session.query(self.table_classes[collection]).filter(
                 getattr(self.table_classes[collection], primary_key) == document).first()
             if document_row is not None:
                 document_row = FieldRow(self, collection, document_row)
@@ -706,7 +740,7 @@ class Database:
             return []
         else:
             documents_list = []
-            documents = self.session.query(getattr(self.table_classes[collection], collection_row.primary_key)).all()
+            documents = self.__session.query(getattr(self.table_classes[collection], collection_row.primary_key)).all()
             for document in documents:
                 documents_list.append(getattr(document, collection_row.primary_key))
             return documents_list
@@ -723,7 +757,7 @@ class Database:
             return []
         else:
             documents_list = []
-            documents = self.session.query(self.table_classes[collection]).all()
+            documents = self.__session.query(self.table_classes[collection]).all()
             for document in documents:
                 documents_list.append(FieldRow(self, collection, document))
             return documents_list
@@ -744,13 +778,13 @@ class Database:
                              str(document) + " does not exist in the collection " + collection)
         primary_key = collection_row.primary_key
 
-        self.session.query(self.table_classes[collection]).filter(
+        self.__session.query(self.table_classes[collection]).filter(
                 getattr(self.table_classes[collection], primary_key) == document).delete()
 
-        if self.caches:
-            self.documents[collection][document] = None
+        if self.__caches:
+            self.__documents[collection].pop(document, None)
 
-        self.session.flush()
+        self.__session.flush()
         self.unsaved_modifications = True
 
     def add_document(self, collection, document, checks=True):
@@ -762,10 +796,6 @@ class Database:
         """
 
         if checks:
-            if not isinstance(collection, str):
-                raise ValueError(
-                    "The collection must be of type " + str(str) + ", but collection of type " + str(
-                        type(collection)) + " given")
             collection_row = self.get_collection(collection)
             if collection_row is None:
                 raise ValueError("The collection " +
@@ -802,17 +832,17 @@ class Database:
             args = {}
             args[primary_key] = document
             document_row = self.table_classes[collection](**args)
-        self.session.add(document_row)
+        self.__session.add(document_row)
 
-        if self.caches:
+        if self.__caches:
             document_row = FieldRow(self, collection, document_row)
             if isinstance(document, str):
-                self.documents[collection][document] = document_row
+                self.__documents[collection][document] = document_row
             else:
-                self.documents[collection][document[primary_key]] = document_row
+                self.__documents[collection][document[primary_key]] = document_row
 
         if checks:
-            self.session.flush()
+            self.__session.flush()
 
         self.unsaved_modifications = True
 
@@ -823,14 +853,14 @@ class Database:
         Starts a new transaction
         """
 
-        self.session.begin_nested()
+        self.__session.begin_nested()
 
     def save_modifications(self):
         """
         Saves the modifications by committing the session
         """
 
-        self.session.commit()
+        self.__session.commit()
         self.unsaved_modifications = False
 
     def unsave_modifications(self):
@@ -838,7 +868,7 @@ class Database:
         Unsaves the modifications by rolling back the session
         """
 
-        self.session.rollback()
+        self.__session.rollback()
         self.unsaved_modifications = False
 
     def has_unsaved_modifications(self):
@@ -851,14 +881,14 @@ class Database:
 
         return self.unsaved_modifications
 
-    def update_table_classes(self):
+    def __update_table_classes(self):
         """
         Redefines the model after an update of the schema
         """
 
         self.table_classes = {}
         self.base = automap_base(metadata=self.metadata)
-        self.base.prepare(engine=self.engine)
+        self.base.prepare(engine=self.__engine)
 
         for table in self.metadata.tables.values():
             self.table_classes[table.name] = getattr(
@@ -898,7 +928,7 @@ class Database:
             select = select = self.metadata.tables[collection].select(
                 filter_query)
             python_filter = None
-        for row in self.session.execute(select):
+        for row in self.__session.execute(select):
             row = FieldRow(self, collection, row)
             if python_filter is None or python_filter(row):
                 yield row

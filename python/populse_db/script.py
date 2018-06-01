@@ -50,7 +50,7 @@ if __name__ == '__main__':
         if not document_name in current_documents:
             database.add_document(current, document_name, False)
             database.add_document(initial, document_name, False)
-    database.session.flush()
+    database.__session.flush()
 
     for i in range(0, 1000):
         document_name = "document" + str(i)
@@ -74,7 +74,7 @@ if __name__ == '__main__':
                 database.remove_value(document_name, "field" + str(j), False)
             database.new_value(current, document_name, "field" + str(j), [1, 2, 3], False)
             database.new_value(initial, document_name, "field" + str(j), [1, 2, 3], False)
-    database.session.flush()
+    database.__session.flush()
 
     print("--- %s seconds ---" % (time.time() - start_time))
 

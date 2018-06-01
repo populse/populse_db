@@ -910,6 +910,78 @@ class TestDatabaseMethods(unittest.TestCase):
         except ValueError:
             pass
 
+    def test_remove_collection(self):
+        """
+        Tests the method removing a collection
+        """
+
+        database = Database(self.string_engine, True)
+
+        # Adding a first collection
+        database.add_collection("collection1")
+
+        # Checking values
+        collection = database.get_collection("collection1")
+        self.assertEqual(collection.name, "collection1")
+        self.assertEqual(collection.primary_key, "name")
+
+        # Removing collection
+        database.remove_collection("collection1")
+
+        # Testing that it does not exist anymore
+        self.assertIsNone(database.get_collection("collection1"))
+
+        # Adding new collections
+        database.add_collection("collection1")
+        database.add_collection("collection2")
+
+        # Checking values
+        collection = database.get_collection("collection1")
+        self.assertEqual(collection.name, "collection1")
+        self.assertEqual(collection.primary_key, "name")
+        collection = database.get_collection("collection2")
+        self.assertEqual(collection.name, "collection2")
+        self.assertEqual(collection.primary_key, "name")
+
+        # Removing one collection and testing that the other is unchanged
+        database.remove_collection("collection2")
+        collection = database.get_collection("collection1")
+        self.assertEqual(collection.name, "collection1")
+        self.assertEqual(collection.primary_key, "name")
+        self.assertIsNone(database.get_collection("collection2"))
+
+        # Adding field
+        database.add_field("collection1", "Field", FIELD_TYPE_STRING)
+        field = database.get_field("collection1", "Field")
+        self.assertEqual(field.name, "Field")
+        self.assertEqual(field.collection, "collection1")
+        self.assertIsNone(field.description)
+        self.assertEqual(field.type, FIELD_TYPE_STRING)
+
+        # Adding document
+        database.add_document("collection1", "document")
+        document = database.get_document("collection1", "document")
+        self.assertEqual(document.name, "document")
+
+        # Removing the collection containing the field and the document and testing that everything is None
+        database.remove_collection("collection1")
+        self.assertIsNone(database.get_collection("collection1"))
+        self.assertIsNone(database.get_field("collection1", "name"))
+        self.assertIsNone(database.get_field("collection1", "Field"))
+        self.assertIsNone(database.get_document("collection1", "document"))
+
+        # Testing with a collection not existing
+        try:
+            database.remove_collection("collection_not_existing")
+            self.fail()
+        except ValueError:
+            pass
+        try:
+            database.remove_collection(True)
+            self.fail()
+        except ValueError:
+            pass
+
     def test_get_collection(self):
         """
         Tests the method giving the collection row
