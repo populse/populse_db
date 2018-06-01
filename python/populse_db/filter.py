@@ -12,13 +12,10 @@ import sqlalchemy
 from sqlalchemy.ext.automap import AutomapBase
 from sqlalchemy.sql.operators import ilike_op, like_op
 
-from populse_db.database_model import (FIELD_TYPE_INTEGER,
-                                       FIELD_TYPE_FLOAT, FIELD_TYPE_TIME,
-                                       FIELD_TYPE_DATETIME, FIELD_TYPE_DATE,
-                                       FIELD_TYPE_STRING,
-                                       FIELD_TYPE_BOOLEAN)
+import populse_db
 
 # The grammar (in Lark format) used to parse filter strings
+
 filter_grammar = '''
 ?start : filter
 
@@ -150,15 +147,15 @@ class FilterToQuery(Transformer):
     }
     
     python_type_to_tag_type = {
-        type(None): None, 
-        type(''): FIELD_TYPE_STRING,
-        type(u''): FIELD_TYPE_STRING,
-        int: FIELD_TYPE_INTEGER,
-        float: FIELD_TYPE_FLOAT,
-        datetime.time: FIELD_TYPE_TIME,
-        datetime.datetime: FIELD_TYPE_DATETIME,
-        datetime.date: FIELD_TYPE_DATE,
-        bool: FIELD_TYPE_BOOLEAN,
+        type(None): None,
+        type(''): populse_db.database.FIELD_TYPE_STRING,
+        type(u''): populse_db.database.FIELD_TYPE_STRING,
+        int: populse_db.database.FIELD_TYPE_INTEGER,
+        float: populse_db.database.FIELD_TYPE_FLOAT,
+        datetime.time: populse_db.database.FIELD_TYPE_TIME,
+        datetime.datetime: populse_db.database.FIELD_TYPE_DATETIME,
+        datetime.date: populse_db.database.FIELD_TYPE_DATE,
+        bool: populse_db.database.FIELD_TYPE_BOOLEAN,
     }
     def __init__(self, database, collection):
         super(FilterToQuery, self).__init__()

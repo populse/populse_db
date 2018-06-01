@@ -4,18 +4,8 @@ import unittest
 import tempfile
 import datetime
 
-from populse_db.database import Database
-from populse_db.database_model import (create_database, FIELD_TYPE_BOOLEAN,
-                                       FIELD_TYPE_STRING, FIELD_TYPE_FLOAT,
-                                       FIELD_TYPE_INTEGER, FIELD_TYPE_LIST_BOOLEAN,
-                                       FIELD_TYPE_TIME, FIELD_TYPE_DATETIME,
-                                       FIELD_TYPE_LIST_STRING,
-                                       FIELD_TYPE_LIST_INTEGER,
-                                       FIELD_TYPE_LIST_FLOAT,
-                                       FIELD_TYPE_LIST_DATE, FIELD_TYPE_LIST_TIME,
-                                       FIELD_TYPE_LIST_DATETIME)
-from populse_db.filter import literal_parser, FilterToQuery
-
+import populse_db
+import populse_db
 
 class TestDatabaseMethods(unittest.TestCase):
     """
@@ -40,85 +30,61 @@ class TestDatabaseMethods(unittest.TestCase):
 
         shutil.rmtree(self.temp_folder)
 
-    def test_database_creation(self):
-        """
-        Tests the database creation
-        """
-
-        # Testing the creation of the database file
-        create_database(self.string_engine)
-        self.assertTrue(os.path.exists(self.path))
-
-    def test_database_constructor(self):
-        """
-        Tests the database constructor
-        """
-
-        # Testing without the database file existing
-        Database(self.string_engine)
-        self.assertTrue(os.path.exists(self.path))
-
-        # Testing with the database file existing
-        os.remove(self.path)
-        create_database(self.string_engine)
-        Database(self.string_engine)
-        self.assertTrue(os.path.exists(self.path))
-
     def test_add_field(self):
         """
         Tests the method adding a field
         """
 
-        database = Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collection
         database.add_collection("collection1", "name")
 
         # Testing with a first field
-        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
 
         # Checking the field properties
         field = database.get_field("collection1", "PatientName")
         self.assertEqual(field.name, "PatientName")
-        self.assertEqual(field.type, FIELD_TYPE_STRING)
+        self.assertEqual(field.type, populse_db.database.FIELD_TYPE_STRING)
         self.assertEqual(field.description, "Name of the patient")
         self.assertEqual(field.collection, "collection1")
 
         # Testing with a field that already exists
         try:
-            database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
+            database.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
             self.fail()
         except ValueError:
             pass
 
         # Testing with all field types
-        database.add_field("collection1", "BandWidth", FIELD_TYPE_FLOAT, None)
-        database.add_field("collection1", "Bits per voxel", FIELD_TYPE_INTEGER, "with space")
-        database.add_field("collection1", "AcquisitionTime", FIELD_TYPE_TIME, None)
-        database.add_field("collection1", "AcquisitionDate", FIELD_TYPE_DATETIME, None)
-        database.add_field("collection1", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
+        database.add_field("collection1", "BandWidth", populse_db.database.FIELD_TYPE_FLOAT, None)
+        database.add_field("collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, "with space")
+        database.add_field("collection1", "AcquisitionTime", populse_db.database.FIELD_TYPE_TIME, None)
+        database.add_field("collection1", "AcquisitionDate", populse_db.database.FIELD_TYPE_DATETIME, None)
+        database.add_field("collection1", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
 
-        database.add_field("collection1", "Bitspervoxel", FIELD_TYPE_INTEGER, "without space")
+        database.add_field("collection1", "Bitspervoxel", populse_db.database.FIELD_TYPE_INTEGER, "without space")
         self.assertEqual(database.get_field(
             "collection1", "Bitspervoxel").description, "without space")
         self.assertEqual(database.get_field(
             "collection1", "Bits per voxel").description, "with space")
-        database.add_field("collection1", "Boolean", FIELD_TYPE_BOOLEAN, None)
-        database.add_field("collection1", "Boolean list", FIELD_TYPE_LIST_BOOLEAN, None)
+        database.add_field("collection1", "Boolean", populse_db.database.FIELD_TYPE_BOOLEAN, None)
+        database.add_field("collection1", "Boolean list", populse_db.database.FIELD_TYPE_LIST_BOOLEAN, None)
 
         # Testing with wrong parameters
         try:
-            database.add_field("collection_not_existing", "Field", FIELD_TYPE_LIST_INTEGER, None)
+            database.add_field("collection_not_existing", "Field", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.add_field(True, "Field", FIELD_TYPE_LIST_INTEGER, None)
+            database.add_field(True, "Field", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
             self.fail()
         except ValueError:
             pass
         try:
-            database.add_field("collection1", None, FIELD_TYPE_LIST_INTEGER, None)
+            database.add_field("collection1", None, populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
             self.fail()
         except ValueError:
             pass
@@ -128,14 +94,14 @@ class TestDatabaseMethods(unittest.TestCase):
         except ValueError:
             pass
         try:
-            database.add_field("collection1", "Patient Name", FIELD_TYPE_STRING, 1.5)
+            database.add_field("collection1", "Patient Name", populse_db.database.FIELD_TYPE_STRING, 1.5)
             self.fail()
         except ValueError:
             pass
 
         # Testing that the document primary key field is taken
         try:
-            database.add_field("collection1", "name", FIELD_TYPE_STRING, None)
+            database.add_field("collection1", "name", populse_db.database.FIELD_TYPE_STRING, None)
             self.fail()
         except ValueError:
             pass
@@ -147,15 +113,15 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method removing a field
         """
 
-        database = Database(self.string_engine, True)
+        database = populse_db.database.Database(self.string_engine, True)
 
         # Adding collection
         database.add_collection("current", "name")
 
         # Adding fields
-        database.add_field("current", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
-        database.add_field("current", "SequenceName", FIELD_TYPE_STRING, None)
-        database.add_field("current", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
+        database.add_field("current", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("current", "SequenceName", populse_db.database.FIELD_TYPE_STRING, None)
+        database.add_field("current", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
 
         # Adding documents
         document = {}
@@ -227,13 +193,13 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method giving the field row given a field
         """
 
-        database = Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collection
         database.add_collection("collection1", "name")
 
         # Adding field
-        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
 
         # Testing that the field is returned if it exists
         self.assertIsNotNone(database.get_field("collection1", "PatientName"))
@@ -252,18 +218,18 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method giving the fields rows, given a collection
         """
 
-        database = Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collection
         database.add_collection("collection1", "name")
 
         # Adding field
-        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
 
         fields = database.get_fields("collection1")
         self.assertEqual(len(fields), 2)
 
-        database.add_field("collection1", "SequenceName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "SequenceName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
 
         fields = database.get_fields("collection1")
         self.assertEqual(len(fields), 3)
@@ -282,20 +248,20 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method giving the fields names, given a collection
         """
 
-        database = Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collection
         database.add_collection("collection1", "name")
 
         # Adding field
-        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
 
         fields = database.get_fields_names("collection1")
         self.assertEqual(len(fields), 2)
         self.assertTrue("name" in fields)
         self.assertTrue("PatientName" in fields)
 
-        database.add_field("collection1", "SequenceName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "SequenceName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
 
         fields = database.get_fields_names("collection1")
         self.assertEqual(len(fields), 3)
@@ -320,7 +286,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method giving the current value, given a document and a field
         """
 
-        database = Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collection
         database.add_collection("collection1", "name")
@@ -331,10 +297,10 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_document("collection1", document)
 
         # Adding fields
-        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
-        database.add_field("collection1", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
-        database.add_field("collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
-        database.add_field("collection1", "Grids spacing", FIELD_TYPE_LIST_FLOAT, None)
+        database.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
+        database.add_field("collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, None)
+        database.add_field("collection1", "Grids spacing", populse_db.database.FIELD_TYPE_LIST_FLOAT, None)
 
         # Adding values
         database.new_value("collection1", "document1", "PatientName", "test")
@@ -372,7 +338,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method setting a value
         """
 
-        database = Database(self.string_engine, True)
+        database = populse_db.database.Database(self.string_engine, True)
 
         # Adding collection
         database.add_collection("collection1", "name")
@@ -383,13 +349,13 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_document("collection1", document)
 
         # Adding fields
-        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
         database.add_field(
-            "collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
+            "collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, None)
         database.add_field(
-            "collection1", "AcquisitionDate", FIELD_TYPE_DATETIME, None)
+            "collection1", "AcquisitionDate", populse_db.database.FIELD_TYPE_DATETIME, None)
         database.add_field(
-            "collection1", "AcquisitionTime", FIELD_TYPE_TIME, None)
+            "collection1", "AcquisitionTime", populse_db.database.FIELD_TYPE_TIME, None)
 
         # Adding values and changing it
         database.new_value("collection1", "document1", "PatientName", "test", "test")
@@ -488,7 +454,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method removing a value
         """
 
-        database = Database(self.string_engine, True)
+        database = populse_db.database.Database(self.string_engine, True)
 
         # Adding collection
         database.add_collection("collection1", "name")
@@ -497,9 +463,9 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_document("collection1", "document1")
 
         # Adding fields
-        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
-        database.add_field("collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
-        database.add_field("collection1", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
+        database.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, None)
+        database.add_field("collection1", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
 
         # Adding values
         database.new_value("collection1", "document1", "PatientName", "test")
@@ -552,27 +518,27 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method checking the validity of incoming values
         """
 
-        database = Database(self.string_engine)
-        is_valid = database.check_type_value("string", FIELD_TYPE_STRING)
+        database = populse_db.database.Database(self.string_engine)
+        is_valid = database.check_type_value("string", populse_db.database.FIELD_TYPE_STRING)
         self.assertTrue(is_valid)
-        is_valid = database.check_type_value(1, FIELD_TYPE_STRING)
+        is_valid = database.check_type_value(1, populse_db.database.FIELD_TYPE_STRING)
         self.assertFalse(is_valid)
-        is_valid = database.check_type_value(None, FIELD_TYPE_STRING)
+        is_valid = database.check_type_value(None, populse_db.database.FIELD_TYPE_STRING)
         self.assertTrue(is_valid)
-        is_valid = database.check_type_value(1, FIELD_TYPE_INTEGER)
+        is_valid = database.check_type_value(1, populse_db.database.FIELD_TYPE_INTEGER)
         self.assertTrue(is_valid)
-        is_valid = database.check_type_value(1, FIELD_TYPE_FLOAT)
+        is_valid = database.check_type_value(1, populse_db.database.FIELD_TYPE_FLOAT)
         self.assertTrue(is_valid)
-        is_valid = database.check_type_value(1.5, FIELD_TYPE_FLOAT)
+        is_valid = database.check_type_value(1.5, populse_db.database.FIELD_TYPE_FLOAT)
         self.assertTrue(is_valid)
         is_valid = database.check_type_value(None, None)
         self.assertFalse(is_valid)
-        is_valid = database.check_type_value([1.5], FIELD_TYPE_LIST_FLOAT)
+        is_valid = database.check_type_value([1.5], populse_db.database.FIELD_TYPE_LIST_FLOAT)
         self.assertTrue(is_valid)
-        is_valid = database.check_type_value(1.5, FIELD_TYPE_LIST_FLOAT)
+        is_valid = database.check_type_value(1.5, populse_db.database.FIELD_TYPE_LIST_FLOAT)
         self.assertFalse(is_valid)
         is_valid = database.check_type_value(
-            [1.5, "test"], FIELD_TYPE_LIST_FLOAT)
+            [1.5, "test"], populse_db.database.FIELD_TYPE_LIST_FLOAT)
         self.assertFalse(is_valid)
 
     def test_new_value(self):
@@ -580,7 +546,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method adding a value
         """
 
-        database = Database(self.string_engine, True)
+        database = populse_db.database.Database(self.string_engine, True)
 
         # Adding collection
         database.add_collection("collection1", "name")
@@ -594,16 +560,16 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_document("collection1", document)
 
         # Adding fields
-        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
         database.add_field(
-            "collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
-        database.add_field("collection1", "BandWidth", FIELD_TYPE_FLOAT, None)
-        database.add_field("collection1", "AcquisitionTime", FIELD_TYPE_TIME, None)
-        database.add_field("collection1", "AcquisitionDate", FIELD_TYPE_DATETIME, None)
-        database.add_field("collection1", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
-        database.add_field("collection1", "Grids spacing", FIELD_TYPE_LIST_FLOAT, None)
-        database.add_field("collection1", "Boolean", FIELD_TYPE_BOOLEAN, None)
-        database.add_field("collection1", "Boolean list", FIELD_TYPE_LIST_BOOLEAN, None)
+            "collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, None)
+        database.add_field("collection1", "BandWidth", populse_db.database.FIELD_TYPE_FLOAT, None)
+        database.add_field("collection1", "AcquisitionTime", populse_db.database.FIELD_TYPE_TIME, None)
+        database.add_field("collection1", "AcquisitionDate", populse_db.database.FIELD_TYPE_DATETIME, None)
+        database.add_field("collection1", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
+        database.add_field("collection1", "Grids spacing", populse_db.database.FIELD_TYPE_LIST_FLOAT, None)
+        database.add_field("collection1", "Boolean", populse_db.database.FIELD_TYPE_BOOLEAN, None)
+        database.add_field("collection1", "Boolean list", populse_db.database.FIELD_TYPE_LIST_BOOLEAN, None)
 
         # Adding values
         database.new_value("collection1", "document1", "PatientName", "test")
@@ -732,7 +698,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method giving the document row given a document
         """
 
-        database = Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collection
         database.add_collection("collection1", "name")
@@ -761,7 +727,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
         Tests the method removing a document
         """
-        database = Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collection
         database.add_collection("collection1", "name")
@@ -775,7 +741,7 @@ class TestDatabaseMethods(unittest.TestCase):
         database.add_document("collection1", document)
 
         # Adding field
-        database.add_field("collection1", "PatientName", FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
 
         # Adding value
         database.new_value("collection1", "document1", "PatientName", "test")
@@ -821,7 +787,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method adding a document
         """
 
-        database = Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collection
         database.add_collection("collection1", "name")
@@ -881,7 +847,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method adding a collection
         """
 
-        database = Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding a first collection
         database.add_collection("collection1")
@@ -924,7 +890,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method removing a collection
         """
 
-        database = Database(self.string_engine, True)
+        database = populse_db.database.Database(self.string_engine, True)
 
         # Adding a first collection
         database.add_collection("collection1")
@@ -960,12 +926,12 @@ class TestDatabaseMethods(unittest.TestCase):
         self.assertIsNone(database.get_collection("collection2"))
 
         # Adding field
-        database.add_field("collection1", "Field", FIELD_TYPE_STRING)
+        database.add_field("collection1", "Field", populse_db.database.FIELD_TYPE_STRING)
         field = database.get_field("collection1", "Field")
         self.assertEqual(field.name, "Field")
         self.assertEqual(field.collection, "collection1")
         self.assertIsNone(field.description)
-        self.assertEqual(field.type, FIELD_TYPE_STRING)
+        self.assertEqual(field.type, populse_db.database.FIELD_TYPE_STRING)
 
         # Adding document
         database.add_document("collection1", "document")
@@ -996,7 +962,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method giving the collection row
         """
 
-        database = Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding a first collection
         database.add_collection("collection1")
@@ -1026,7 +992,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method returning the list of document rows, given a collection
         """
 
-        database = Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collections
         database.add_collection("collection1", "name")
@@ -1053,7 +1019,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method returning the list of document names, given a collection
         """
 
-        database = Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collections
         database.add_collection("collection1", "name")
@@ -1085,15 +1051,15 @@ class TestDatabaseMethods(unittest.TestCase):
         and datetime
         """
 
-        database = Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collection
         database.add_collection("collection1", "name")
 
         # Adding fields
-        database.add_field("collection1", "list_date", FIELD_TYPE_LIST_DATE, None)
-        database.add_field("collection1", "list_time", FIELD_TYPE_LIST_TIME, None)
-        database.add_field("collection1", "list_datetime", FIELD_TYPE_LIST_DATETIME, None)
+        database.add_field("collection1", "list_date", populse_db.database.FIELD_TYPE_LIST_DATE, None)
+        database.add_field("collection1", "list_time", populse_db.database.FIELD_TYPE_LIST_TIME, None)
+        database.add_field("collection1", "list_datetime", populse_db.database.FIELD_TYPE_LIST_DATETIME, None)
 
         document = {}
         document["name"] = "document1"
@@ -1115,15 +1081,15 @@ class TestDatabaseMethods(unittest.TestCase):
             "collection1", "document1", "list_datetime"))
 
     def test_filters(self):
-        database = Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine)
 
         database.add_collection("collection1", "name")
 
         database.add_field("collection1", 'format', field_type='string', description=None)
-        database.add_field("collection1", 'strings', field_type=FIELD_TYPE_LIST_STRING, description=None)
-        database.add_field("collection1", 'times', field_type=FIELD_TYPE_LIST_TIME, description=None)
-        database.add_field("collection1", 'dates', field_type=FIELD_TYPE_LIST_DATE, description=None)
-        database.add_field("collection1", 'datetimes', field_type=FIELD_TYPE_LIST_DATETIME, description=None)
+        database.add_field("collection1", 'strings', field_type=populse_db.database.FIELD_TYPE_LIST_STRING, description=None)
+        database.add_field("collection1", 'times', field_type=populse_db.database.FIELD_TYPE_LIST_TIME, description=None)
+        database.add_field("collection1", 'dates', field_type=populse_db.database.FIELD_TYPE_LIST_DATE, description=None)
+        database.add_field("collection1", 'datetimes', field_type=populse_db.database.FIELD_TYPE_LIST_DATETIME, description=None)
 
         database.save_modifications()
         files = ('abc', 'bcd', 'def', 'xyz')
@@ -1275,10 +1241,10 @@ class TestDatabaseMethods(unittest.TestCase):
         # Adds the literal for a list of all elements in the dictionary
         literals['[%s]' % ','.join(literals.keys())] = list(literals.values())
         
-        parser = literal_parser()
+        parser = populse_db.filter.literal_parser()
         for literal, expected_value in literals.items():
             tree = parser.parse(literal)
-            value = FilterToQuery(None, None).transform(tree)
+            value = populse_db.filter.FilterToQuery(None, None).transform(tree)
             self.assertEqual(value, expected_value)
 
 if __name__ == '__main__':
