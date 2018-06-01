@@ -14,6 +14,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session, mapper
 from sqlalchemy.schema import CreateTable, DropTable
+from sqlalchemy import text as sql_text
 
 import populse_db
 
@@ -151,17 +152,18 @@ class Database:
         FIELD_TYPE_LIST_TIME: lambda x: dateutil.parser.parse(x).time(),
     }
 
-    def __init__(self, string_engine, caches=False):
+    def __init__(self, string_engine, caches=False, list_tables=True):
         """
         Creates an API of the database instance
         :param string_engine: string engine of the database file, can be already existing, or not
         :param caches: to know if the caches must be used, False by default
+        :param list_tables: to know if tables must be used for list types
         """
 
         self.__string_engine = string_engine
-
         self.__caches = caches
-
+        self.list_tables = list_tables
+        
         # SQLite database: we create it if it does not exist
         if string_engine.startswith('sqlite'):
             self.__db_file = re.sub("sqlite.*:///", "", string_engine)
@@ -431,6 +433,12 @@ class Database:
 
         # Fields creation
         if field_type in LIST_TYPES:
+            if self.list_tables:
+                table = '_list_%s_%s' % (collection, self.field_name_to_column_name(collection, name))
+                sql = sql_text('CREATE TABLE %s (document_id VARCHAR, value %s)' % (table, str(self.field_type_to_column_type(field_type[5:])())))
+                self.session.execute(sql)
+                sql = sql_text('CREATE INDEX {0}_index ON {0} (document_id)'.format(table))
+                self.session.execute(sql)
             # String columns if it list type, as the str representation of the lists will be stored
             field_type = String
         else:
@@ -539,6 +547,17 @@ class Database:
         self.session.execute(insert)
 
         self.session.execute(DropTable(document_backup_table))
+
+        if self.list_tables and self.get_field(collection, field).type.startswith('list_'):
+            table = '_list_%s_%s' % (collection, field_name)
+            self.session.commit()
+            self.session.execute(sql_text('DROP TABLE %s' % table))
+
+        if self.__caches:
+            for collection_name in self.__documents:
+                self.__documents[collection_name] = {}
+
+            self.__fields[collection].pop(field, None)
 
         self.session.delete(field_row)
 
@@ -878,31 +897,37 @@ class Database:
         else:
             primary_key = self.get_collection(collection).primary_key
 
-        # Putting valid columns names in the dictionary
-        if isinstance(document, dict):
-            new_dict = {}
-            for value in document:
-                new_column = self.field_name_to_column_name(collection, value)
-                new_dict[new_column] = document[value]
-                field_row = self.get_field(collection, value)
-                new_dict[new_column] = self.python_to_column(field_row.type, new_dict[new_column])
-            document = new_dict
+        if not isinstance(document, dict):
+            document = {primary_key: document}
+            
+        document_id = document[primary_key]
+        primary_key_column = primary_key
+        column_values = {primary_key_column: document_id}
+        lists = []
+        for k, v in document.items():
+            column_name = self.field_name_to_column_name(collection, k)
+            field_type = self.get_field(collection, k).type
+            column_value = self.python_to_column(field_type, v)
+            column_values[column_name] = column_value
+            if self.list_tables and isinstance(v, list):
+                table = '_list_%s_%s' % (collection, column_name)
+                sql = sql_text('INSERT INTO %s (document_id, value) VALUES (:document_id, :value)' % table)
+                sql_params = []
+                cvalues = self.list_to_column(field_type, v)
+                for i in cvalues:
+                    sql_params.append({'document_id': document_id, 'value': i})
+                lists.append((sql, sql_params))
+        document_row = self.table_classes[collection](**column_values)
+        self.session.add(document_row)
+        for sql, sql_params in lists:
+            if sql_params:
+                self.session.execute(sql, params=sql_params)
 
-        # Adding the index to document table
-        if isinstance(document, dict):
-            document_row = self.table_classes[collection](**document)
-        else:
-            args = {}
-            args[primary_key] = document
-            document_row = self.table_classes[collection](**args)
         self.session.add(document_row)
 
         if self.__caches:
             document_row = FieldRow(self, collection, document_row)
-            if isinstance(document, str):
-                self.__documents[collection][document] = document_row
-            else:
-                self.__documents[collection][document[primary_key]] = document_row
+            self.__documents[collection][document_id] = document_row
 
         if checks:
             self.session.flush()
