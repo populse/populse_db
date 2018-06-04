@@ -434,11 +434,21 @@ class Database:
         # Fields creation
         if field_type in LIST_TYPES:
             if self.list_tables:
-                table = '_list_%s_%s' % (collection, self.field_name_to_column_name(collection, name))
-                sql = sql_text('CREATE TABLE %s (document_id VARCHAR, value %s)' % (table, str(self.field_type_to_column_type(field_type[5:])())))
-                self.session.execute(sql)
-                sql = sql_text('CREATE INDEX {0}_index ON {0} (document_id)'.format(table))
-                self.session.execute(sql)
+                table = 'list_%s_%s' % (collection, self.field_name_to_column_name(collection, name))
+                list_table = Table(table, self.metadata, Column('document_id', String, primary_key=True), Column('i', Integer, primary_key=True), Column('value', TYPE_TO_COLUMN[field_type[5:]]))
+                list_query = CreateTable(list_table)
+                self.session.execute(list_query)
+
+                # Creating the class associated
+                collection_dict = {'__tablename__': table, '__table__': list_table}
+                collection_class = type(table, (self.base,), collection_dict)
+                mapper(collection_class, list_table)
+                self.table_classes[table] = collection_class
+
+                #sql = sql_text('CREATE TABLE %s (document_id VARCHAR, value %s)' % (table, str(self.field_type_to_column_type(field_type[5:])())))
+                #self.session.execute(sql)
+                #sql = sql_text('CREATE INDEX {0}_index ON {0} (document_id)'.format(table))
+                #self.session.execute(sql)
             # String columns if it list type, as the str representation of the lists will be stored
             field_type = String
         else:
@@ -549,7 +559,7 @@ class Database:
         self.session.execute(DropTable(document_backup_table))
 
         if self.list_tables and self.get_field(collection, field).type.startswith('list_'):
-            table = '_list_%s_%s' % (collection, field_name)
+            table = 'list_%s_%s' % (collection, field_name)
             self.session.commit()
             self.session.execute(sql_text('DROP TABLE %s' % table))
 
@@ -910,12 +920,15 @@ class Database:
             column_value = self.python_to_column(field_type, v)
             column_values[column_name] = column_value
             if self.list_tables and isinstance(v, list):
-                table = '_list_%s_%s' % (collection, column_name)
-                sql = sql_text('INSERT INTO %s (document_id, value) VALUES (:document_id, :value)' % table)
+                table = 'list_%s_%s' % (collection, column_name)
+                #sql = sql_text('INSERT INTO %s (document_id, i, value) VALUES (:document_id, :i, :value)' % table)
+                sql = self.metadata.tables[table].insert()
                 sql_params = []
-                cvalues = self.list_to_column(field_type, v)
+                cvalues = [self.python_to_column(field_type[5:], i) for i in v]
+                index = 0
                 for i in cvalues:
-                    sql_params.append({'document_id': document_id, 'value': i})
+                    sql_params.append({'document_id': document_id, 'i': index, 'value': i})
+                    index += 1
                 lists.append((sql, sql_params))
         document_row = self.table_classes[collection](**column_values)
         self.session.add(document_row)
@@ -947,7 +960,6 @@ class Database:
         """
         Saves the modifications by committing the session
         """
-
         self.session.commit()
         self.unsaved_modifications = False
 
@@ -973,14 +985,12 @@ class Database:
         """
         Redefines the model after an update of the schema
         """
-
         self.table_classes = {}
         self.base = automap_base(metadata=self.metadata)
         self.base.prepare(engine=self.__engine)
-
-        for table in self.metadata.tables.values():
-            self.table_classes[table.name] = getattr(
-                self.base.classes, table.name)
+        for table in self.metadata.tables.keys():
+            self.table_classes[table] = getattr(
+                self.base.classes, table)
 
     def filter_query(self, filter, collection):
         """
