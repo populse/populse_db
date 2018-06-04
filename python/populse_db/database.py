@@ -379,16 +379,24 @@ class Database:
         :param fields: list of fields (collection, name, type, description)
         """
 
+        collections = []
+
         for field in fields:
 
             # Adding each field
             self.add_field(field[0], field[1], field[2], field[3], False)
+            if field[0] not in collections:
+                collections.append(field[0])
 
         # Updating the table classes
         self.session.flush()
 
         # Classes reloaded in order to add the new column attribute
         self.__update_table_classes()
+
+        if self.__caches:
+            for collection in collections:
+                self.__refresh_cache_documents(collection)
 
     def add_field(self, collection, name, field_type, description=None, flush=True):
         """
@@ -472,8 +480,8 @@ class Database:
             # Classes reloaded in order to add the new column attribute
             self.__update_table_classes()
 
-        if self.__caches:
-            self.__refresh_cache_documents(collection)
+            if self.__caches:
+                self.__refresh_cache_documents(collection)
 
         self.unsaved_modifications = True
 
@@ -495,10 +503,10 @@ class Database:
         :return: Valid and unique (hashed) column name
         """
 
-        primary_key = self.get_collection(collection).primary_key
         if self.__caches:
             return self.__names[collection][field]
         else:
+            primary_key = self.get_collection(collection).primary_key
             if field == primary_key:
                 return field
             else:
