@@ -5,7 +5,6 @@ import tempfile
 import datetime
 
 import populse_db
-import populse_db
 
 class TestDatabaseMethods(unittest.TestCase):
     """

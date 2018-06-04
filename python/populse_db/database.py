@@ -553,12 +553,6 @@ class Database:
             self.session.commit()
             self.session.execute(sql_text('DROP TABLE %s' % table))
 
-        if self.__caches:
-            for collection_name in self.__documents:
-                self.__documents[collection_name] = {}
-
-            self.__fields[collection].pop(field, None)
-
         self.session.delete(field_row)
 
         self.session.flush()
