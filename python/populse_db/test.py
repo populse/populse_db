@@ -1102,6 +1102,7 @@ class TestDatabaseMethods(unittest.TestCase):
                 database.new_value("collection1", document, 'strings', list(file))
             document = '/%s.none' % file
             database.add_document("collection1", document)
+        database.save_modifications()
 
         for filter, expected in (
             ('format == "NIFTI"', set('/%s.nii' % i for i in files)),
@@ -1198,7 +1199,13 @@ class TestDatabaseMethods(unittest.TestCase):
              }
             )):
             documents = set(getattr(document, "name") for document in database.filter_documents("collection1", filter))
-            self.assertEqual(documents, expected)
+            try:
+                self.assertEqual(documents, expected)
+            except Exception as e:
+                e.message = 'While testing filter : %s\n%s' % (str(filter), e.message)
+                e.args = (e.message,)
+                #print('!!!', repr(filter), e)
+                raise
 
     def test_filter_literals(self):
         """
