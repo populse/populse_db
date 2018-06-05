@@ -14,7 +14,6 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session, mapper
 from sqlalchemy.schema import CreateTable, DropTable
-from sqlalchemy import text as sql_text
 
 import populse_db
 
@@ -707,7 +706,10 @@ class Database:
 
         new_value = self.python_to_column(field_row.type, new_value)
 
-        setattr(document_row.row, self.field_name_to_column_name(collection, field), new_value)
+        if field != collection_row.primary_key:
+            setattr(document_row.row, self.field_name_to_column_name(collection, field), new_value)
+        else:
+            raise ValueError("Impossible to set the primary_key value of a document")
 
         if flush:
             self.session.flush()
@@ -942,10 +944,9 @@ class Database:
 
         if not isinstance(document, dict):
             document = {primary_key: document}
-            
+
         document_id = document[primary_key]
-        primary_key_column = primary_key
-        column_values = {primary_key_column: document_id}
+        column_values = {primary_key: document_id}
         lists = []
         for k, v in document.items():
             column_name = self.field_name_to_column_name(collection, k)
@@ -963,12 +964,13 @@ class Database:
                     sql_params.append({'document_id': document_id, 'i': index, 'value': i})
                     index += 1
                 lists.append((sql, sql_params))
-        document_row = self.table_classes[collection](**column_values)
-        self.session.add(document_row)
-        for sql, sql_params in lists:
-            if sql_params:
-                self.session.execute(sql, params=sql_params)
 
+        if self.list_tables:
+            for sql, sql_params in lists:
+                if sql_params:
+                    self.session.execute(sql, params=sql_params)
+
+        document_row = self.table_classes[collection](**column_values)
         self.session.add(document_row)
 
         if self.__caches:
@@ -1108,16 +1110,6 @@ class Database:
         if converter is None:
             return list_value
         return [converter(i) for i in list_value]
-
-class Field:
-    """
-    Class representing a collection field
-    """
-
-    def __init__(self, name, type, description=None):
-        self.name = name
-        self.type = type
-        self.description = description
 
 class Undefined:
     pass

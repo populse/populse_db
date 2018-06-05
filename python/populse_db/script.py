@@ -16,7 +16,7 @@ if __name__ == '__main__':
     path = os.path.join(temp_folder, "test.db")
     string_engine = 'sqlite:///' + path
 
-    database = populse_db.database.Database(string_engine, True, True)
+    database = populse_db.database.Database(string_engine, caches=True, list_tables=False)
 
     fields = []
 

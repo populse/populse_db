@@ -461,6 +461,13 @@ class TestDatabaseMethods(unittest.TestCase):
         except ValueError:
             pass
 
+        # Testing primary key set impossible
+        try:
+            database.set_value("collection1", "document1", "name", None)
+            self.fail()
+        except ValueError:
+            pass
+
     def test_remove_value(self):
         """
         Tests the method removing a value
@@ -799,14 +806,20 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method adding a document
         """
 
-        database = populse_db.database.Database(self.string_engine)
+        database = populse_db.database.Database(self.string_engine, list_tables=True)
 
         # Adding collection
         database.add_collection("collection1", "name")
 
+        # Adding field
+        database.add_field("collection1", "List", populse_db.database.FIELD_TYPE_LIST_INTEGER)
+        database.add_field("collection1", "Int", populse_db.database.FIELD_TYPE_INTEGER)
+
         # Adding document
         document = {}
         document["name"] = "document1"
+        document["List"] = [1, 2, 3]
+        document["Int"] = 5
         database.add_document("collection1", document)
 
         # Testing that the document has been added
