@@ -517,32 +517,46 @@ class Database:
         """
         Removes a field in the collection
         :param collection: field collection
-        :param field: field name (str)
+        :param field: field name (str), or list of fields (str)
         """
 
         collection_row = self.get_collection(collection)
         if collection_row is None:
             raise ValueError("The collection " +
                              str(collection) + " does not exist")
-        field_row = self.get_field(collection, field)
-        if field_row is None:
-            raise ValueError("The field with the name " +
-                             str(field) + " does not exist in the collection " + str(collection))
+        if isinstance(field, list):
+            for field_elem in field:
+                field_row = self.get_field(collection, field_elem)
+                if field_row is None:
+                    raise ValueError("The field with the name " +
+                                     str(field_elem) + " does not exist in the collection " + str(collection))
+        else:
+            field_row = self.get_field(collection, field)
+            if field_row is None:
+                raise ValueError("The field with the name " +
+                                 str(field) + " does not exist in the collection " + str(collection))
 
-        field_name = self.field_name_to_column_name(collection, field)
+        field_names = []
+        if isinstance(field, list):
+            for field_elem in field:
+                field_names.append(self.field_name_to_column_name(collection, field_elem))
+        else:
+            field_names.append(self.field_name_to_column_name(collection, field))
 
         # Field removed from document table
         old_document_table = Table(collection, self.metadata)
         select = sql.select(
-            [c for c in old_document_table.c if field_name not in c.name])
+            [c for c in old_document_table.c if c.name not in str(field_names)])
 
         remaining_columns = [copy.copy(c) for c in old_document_table.columns
-                             if field_name not in c.name]
+                             if c.name not in str(field_names)]
 
         document_backup_table = Table(collection + "_backup", self.metadata)
+
         for column in old_document_table.columns:
-            if field_name not in str(column):
+            if column.name not in str(field_names):
                 document_backup_table.append_column(column.copy())
+
         self.session.execute(CreateTable(document_backup_table))
 
         insert = sql.insert(document_backup_table).from_select(
@@ -559,17 +573,29 @@ class Database:
         self.session.execute(CreateTable(new_document_table))
 
         select = sql.select(
-            [c for c in document_backup_table.c if field_name not in c.name])
+            [c for c in document_backup_table.c if c.name not in str(field_names)])
         insert = sql.insert(new_document_table).from_select(
             [c.name for c in remaining_columns], select)
         self.session.execute(insert)
 
+        self.metadata.remove(document_backup_table)
         self.session.execute(DropTable(document_backup_table))
 
-        if self.list_tables and self.get_field(collection, field).type.startswith('list_'):
-            table = 'list_%s_%s' % (collection, field_name)
-            self.session.commit()
-            self.session.execute(sql_text('DROP TABLE %s' % table))
+        if self.list_tables:
+            if isinstance(field, list):
+                for field_elem in field:
+                    if self.get_field(collection, field_elem).type in LIST_TYPES:
+                        table = 'list_%s_%s' % (collection, self.field_name_to_column_name(collection, field_elem))
+                        collection_query = DropTable(self.table_classes[table].__table__)
+                        self.session.execute(collection_query)
+                        self.metadata.remove(self.table_classes[table].__table__)
+
+            else:
+                if self.get_field(collection, field).type in LIST_TYPES:
+                    table = 'list_%s_%s' % (collection, self.field_name_to_column_name(collection, field))
+                    collection_query = DropTable(self.table_classes[table].__table__)
+                    self.session.execute(collection_query)
+                    self.metadata.remove(self.table_classes[table].__table__)
 
         self.session.delete(field_row)
 
@@ -580,8 +606,13 @@ class Database:
 
         if self.__caches:
             self.__refresh_cache_documents(collection)
-            self.__fields[collection].pop(field, None)
-            self.__names[collection].pop(field, None)
+            if isinstance(field, list):
+                for field_elem in field:
+                    self.__fields[collection].pop(field_elem, None)
+                    self.__names[collection].pop(field_elem, None)
+            else:
+                self.__fields[collection].pop(field, None)
+                self.__names[collection].pop(field, None)
 
         self.unsaved_modifications = True
 

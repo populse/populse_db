@@ -136,7 +136,6 @@ class TestDatabaseMethods(unittest.TestCase):
         database.new_value("current", "document1", "Dataset dimensions", [1, 2])
 
         # Removing fields
-
         database.remove_field("current", "PatientName")
         database.remove_field("current", "Dataset dimensions")
 
@@ -150,6 +149,20 @@ class TestDatabaseMethods(unittest.TestCase):
             "current", "document1", "SequenceName"), "RARE")
         self.assertIsNone(database.get_value(
             "current", "document1", "Dataset dimensions"))
+
+        # Testing with list of fields
+        database.remove_field("current", ["SequenceName"])
+        self.assertIsNone(database.get_field("current", "SequenceName"))
+
+        # Adding fields again
+        database.add_field("current", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+        database.add_field("current", "SequenceName", populse_db.database.FIELD_TYPE_STRING, None)
+        database.add_field("current", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
+
+        # Testing with list of fields
+        database.remove_field("current", ["SequenceName", "PatientName"])
+        self.assertIsNone(database.get_field("current", "SequenceName"))
+        self.assertIsNone(database.get_field("current", "PatientName"))
 
         # Testing with a field not existing
         try:
