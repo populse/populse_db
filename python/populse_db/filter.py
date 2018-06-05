@@ -258,9 +258,17 @@ class FilterToQuery(Transformer):
                         'string, number, boolean, date, time or null but "%s" '
                         'was used' % str(left_operand))
                 # Check if a single value is in a list tag
+                
+                ## Cannot be done in SQL with SQLite => return a Python function
+                #return lambda x: x[right_operand.name] is not None and left_operand in x[right_operand.name]
 
-                # Cannot be done in SQL with SQLite => return a Python function
-                return lambda x: x[right_operand.name] is not None and left_operand in x[right_operand.name]
+                collection_table = self.database.metadata.tables[self.collection]
+                primary_key = list(collection_table.primary_key.columns.values())[0]
+                list_column = self.get_column(right_operand)
+                list_table = self.database.metadata.tables['list_%s_%s' % (self.collection, list_column.name)]
+                subquery = sqlalchemy.select([list_table.c.value], list_table.c.document_id == primary_key).correlate(collection_table)
+                sql = sqlalchemy.literal(left_operand).in_(subquery)
+                return sql
             elif isinstance(right_operand, list):
                 if self.is_column(left_operand):
                     # Check if a simple field value is in a list of values

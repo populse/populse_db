@@ -1211,15 +1211,41 @@ class TestDatabaseMethods(unittest.TestCase):
               '/bcd.mgz',
              }
             )):
-            documents = set(getattr(document, "name") for document in database.filter_documents("collection1", filter))
+            documents = set(document.name for document in database.filter_documents("collection1", filter))
             try:
                 self.assertEqual(documents, expected)
             except Exception as e:
+                query = database.filter_query(filter, 'collection1')
+                print('!!!', str(query))
                 e.message = 'While testing filter : %s\n%s' % (str(filter), e.message)
                 e.args = (e.message,)
-                #print('!!!', repr(filter), e)
                 raise
 
+    def test_modify_list_field(self):
+        database = populse_db.database.Database(self.string_engine)
+
+        database.add_collection("collection1", "name")
+
+        database.add_field("collection1", 'strings', field_type=populse_db.database.FIELD_TYPE_LIST_STRING, description=None)
+        database.add_document("collection1", 'test')
+        database.new_value("collection1", 'test', 'strings', ['a', 'b', 'c'])
+        database.save_modifications()
+        names = list(document.name for document in database.filter_documents("collection1", '"b" IN strings'))
+        self.assertEqual(names, ['test'])
+        
+        database.set_value("collection1", 'test', 'strings', ['x', 'y', 'z'])
+        database.save_modifications()
+        names = list(document.name for document in database.filter_documents("collection1", '"b" IN strings'))
+        self.assertEqual(names, [])
+        names = list(document.name for document in database.filter_documents("collection1", '"z" IN strings'))
+        self.assertEqual(names, ['test'])
+
+        database.remove_value("collection1", 'test', 'strings')
+        database.save_modifications()
+        names = list(document.name for document in database.filter_documents("collection1", '"y" IN strings'))
+        self.assertEqual(names, [])
+        
+        
     def test_filter_literals(self):
         """
         Test the Python values returned (internaly) for literals by the

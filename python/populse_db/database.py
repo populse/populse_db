@@ -705,10 +705,29 @@ class Database:
         if not self.check_type_value(new_value, field_row.type):
             raise ValueError("The value " + str(new_value) + " is invalid for the type " + field_row.type)
 
-        new_value = self.python_to_column(field_row.type, new_value)
-
-        setattr(document_row.row, self.field_name_to_column_name(collection, field), new_value)
-
+        column_name = self.field_name_to_column_name(collection, field)
+        new_column = self.python_to_column(field_row.type, new_value)
+        setattr(document_row.row, column_name, new_column)
+        
+        if self.list_tables and isinstance(new_value, list):
+            primary_key = self.get_collection(collection).primary_key
+            document_id = document_row[primary_key]            
+            table_name = 'list_%s_%s' % (collection, column_name)
+            
+            table = self.metadata.tables[table_name]
+            sql = table.delete(table.c.document_id == document_id)
+            self.session.execute(sql)
+            
+            sql = table.insert()
+            sql_params = []
+            cvalues = [self.python_to_column(field_row.type[5:], i) for i in new_value]
+            index = 0
+            for i in cvalues:
+                sql_params.append({'document_id': document_id, 'i': index, 'value': i})
+                index += 1
+            if sql_params:
+                self.session.execute(sql, params=sql_params)
+    
         if flush:
             self.session.flush()
 
@@ -736,8 +755,16 @@ class Database:
                              str(document) + " does not exist in the collection " + str(collection))
 
         sql_column_name = self.field_name_to_column_name(collection, field)
-
+        old_value = getattr(document_row.row, sql_column_name)
         setattr(document_row.row, sql_column_name, None)
+        
+        if self.list_tables and field_row.type.startswith('list_'):
+            primary_key = self.get_collection(collection).primary_key
+            document_id = document_row[primary_key]
+            table_name = 'list_%s_%s' % (collection, sql_column_name)
+            table = self.metadata.tables[table_name]
+            sql = table.delete(table.c.document_id == document_id)
+            self.session.execute(sql)
 
         if flush:
             self.session.flush()
@@ -820,6 +847,19 @@ class Database:
                 setattr(
                     document_row.row, field_name,
                     current_value)
+                if self.list_tables and isinstance(value, list):
+                    primary_key = self.get_collection(collection).primary_key
+                    document_id = document_row[primary_key]
+                    table = 'list_%s_%s' % (collection, field_name)
+                    sql = self.metadata.tables[table].insert()
+                    sql_params = []
+                    cvalues = [self.python_to_column(field_row.type[5:], i) for i in value]
+                    index = 0
+                    for i in cvalues:
+                        sql_params.append({'document_id': document_id, 'i': index, 'value': i})
+                        index += 1
+                    if sql_params:
+                        self.session.execute(sql, params=sql_params)
 
             if checks:
                 self.session.flush()
@@ -1134,6 +1174,8 @@ class FieldRow:
         self.database = database
         self.collection = collection
         self.row = row
+        primary_key = list(self.database.metadata.tables[collection].primary_key.columns.values())[0].name
+        setattr(self, primary_key, getattr(self.row, primary_key))
 
     def __getattr__(self, name):
         try:
