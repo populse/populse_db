@@ -151,18 +151,21 @@ class Database:
         FIELD_TYPE_LIST_DATETIME: lambda x: dateutil.parser.parse(x),
         FIELD_TYPE_LIST_TIME: lambda x: dateutil.parser.parse(x).time(),
     }
-
-    def __init__(self, string_engine, caches=False, list_tables=True):
+    
+    def __init__(self, string_engine, caches=False, list_tables=False,
+                 query_type='mixed'):
         """
         Creates an API of the database instance
         :param string_engine: string engine of the database file, can be already existing, or not
         :param caches: to know if the caches must be used, False by default
         :param list_tables: to know if tables must be used for list types
+        :param query_type: default value for filtering query type
         """
 
         self.__string_engine = string_engine
         self.__caches = caches
         self.list_tables = list_tables
+        self.query_type = query_type
         
         # SQLite database: we create it if it does not exist
         if string_engine.startswith('sqlite'):
@@ -1065,14 +1068,20 @@ class Database:
             self.table_classes[table] = getattr(
                 self.base.classes, table)
 
-    def filter_query(self, filter, collection):
+    def filter_query(self, filter, collection, query_type=None):
         """
         Given a filter string, return a query that can be used with
         filter_documents() to select documents.
+        :param query_type: type of query to build. Can be 'mixed', 
+            'sql', 'python' or 'guess'. If None, self.query_type
+            is used.
         """
 
+        if query_type is None:
+            query_type = self.query_type
+        filter_to_query_class = populse_db.filter._filter_to_query_classes[query_type]
         tree = populse_db.filter.filter_parser().parse(filter)
-        query = populse_db.filter.FilterToQuery(self, collection).transform(tree)
+        query = filter_to_query_class(self, collection).transform(tree)
         return query
 
     def filter_documents(self, collection, filter_query):
