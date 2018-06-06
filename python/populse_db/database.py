@@ -151,7 +151,7 @@ class Database:
         FIELD_TYPE_LIST_TIME: lambda x: dateutil.parser.parse(x).time(),
     }
     
-    def __init__(self, string_engine, caches=False, list_tables=False,
+    def __init__(self, string_engine, caches=False, list_tables=True,
                  query_type='mixed'):
         """
         Creates an API of the database instance
@@ -160,7 +160,6 @@ class Database:
         :param list_tables: to know if tables must be used for list types
         :param query_type: default value for filtering query type
         """
-
         self.__string_engine = string_engine
         self.__caches = caches
         self.list_tables = list_tables

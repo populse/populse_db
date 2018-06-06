@@ -495,7 +495,7 @@ class FilterToMixedQuery(FilterToSqlQuery, FilterToPythonQuery):
 class FilterToGuessedQuery(FilterToMixedQuery):
     def transform(self, *args, **kwargs):
         try:
-            return super(FilterToGuessedQuery).transform(*args, **kwargs)
+            return super(FilterToGuessedQuery, self).transform(*args, **kwargs)
         except FilterImplementationLimit:
             transformer = FilterToPythonQuery(self.database, self.collection)
             return transformer.transform(*args, **kwargs)
