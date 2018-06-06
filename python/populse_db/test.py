@@ -1637,6 +1637,40 @@ def create_test_case(**database_creation_parameters):
                 }
                 ),
 
+                ('name like "%.nii"',
+                {
+                '/xyz_1899.nii',
+                '/xyz_2018.nii',
+                '/abc_2018.nii',
+                '/bcd_1899.nii',
+                '/bcd_2018.nii',
+                '/def_1899.nii',
+                '/abc_1981.nii',
+                '/def_2018.nii',
+                '/def_1981.nii',
+                '/bcd_1981.nii',
+                '/abc_1899.nii',
+                '/xyz_1981.nii'
+                }
+                ),
+
+                ('name ilike "%A%"',
+                {
+                '/abc_1899.none',
+                '/abc_1899.nii',
+                '/abc_2018.nii',
+                '/abc_1899.mgz',
+                '/abc_1899.dcm',
+                '/abc_1981.dcm',
+                '/abc_1981.nii',
+                '/abc_1981.mgz',
+                '/abc_2018.mgz',
+                '/abc_2018.dcm',
+                '/abc_2018.none',
+                '/abc_1981.none'
+                }
+                ),
+
                 ('all',
                 {
                 '/xyz_1899.nii',

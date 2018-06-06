@@ -382,6 +382,20 @@ class FilterToSqlQuery(FilterToQuery):
 
 
 class FilterToPythonQuery(FilterToQuery):
+    @staticmethod
+    def like_to_re(like_pattern):
+        return  '^%s$' % re.escape(like_pattern).replace('%', '.*').replace('_', '.')
+    
+    @staticmethod
+    def like(value, like_pattern):
+        re_pattern = like_to_re(like_pattern)
+        return bool(re.match(pattern, value))
+
+    @staticmethod
+    def ilike(value, like_pattern):
+        re_pattern = like_to_re(like_pattern)
+        return bool(re.match(pattern, value), flags=re.IGNORECASE)
+    
     python_operators = {
         '==': operator.eq,
         '!=': operator.ne,
@@ -391,6 +405,8 @@ class FilterToPythonQuery(FilterToQuery):
         '>=': operator.ge,
         'and': operator.and_,
         'or': operator.or_,
+        'like': like,
+        'ilike': ilike,
     }
     def build_condition_all(self):
         return lambda x: True
