@@ -109,6 +109,7 @@ class Database:
         - get_documents_names: gives all document names
         - get_value: gives the value of <document, field>
         - set_value: sets the value of <document, field>
+        - set_values: sets several values of a collection document
         - remove_value: removes the value of <document, field>
         - check_type_value: checks the type of a value
         - add_value: adds a value to <document, field>
@@ -782,6 +783,29 @@ class Database:
         for column in database_values:
             setattr(document_row.row, column, database_values[column])
 
+        # Updating list tables values
+        for field in values:
+            field_row = self.get_field(collection, field)
+            database_value = self.python_to_column(field_row.type, values[field])
+            if self.list_tables and isinstance(database_value, list):
+                primary_key = self.get_collection(collection).primary_key
+                document_id = getattr(document_row.row, primary_key)
+                table_name = 'list_%s_%s' % (collection, column)
+
+                table = self.metadata.tables[table_name]
+                sql = table.delete(table.c.document_id == document_id)
+                self.session.execute(sql)
+
+                sql = table.insert()
+                sql_params = []
+                cvalues = [self.python_to_column(field_row.type[5:], i) for i in database_value]
+                index = 0
+                for i in cvalues:
+                    sql_params.append({'document_id': document_id, 'i': index, 'value': i})
+                    index += 1
+                if sql_params:
+                    self.session.execute(sql, params=sql_params)
+
         # TODO set list tables values
 
         if flush:
@@ -999,6 +1023,13 @@ class Database:
 
         self.session.query(self.table_classes[collection]).filter(
                 getattr(self.table_classes[collection], primary_key) == document).delete()
+
+        # Removing document from list tables
+        if self.list_tables:
+            for table in self.table_classes:
+                if "list" in table:
+                    self.session.query(self.table_classes[table]).filter(
+                        self.table_classes[table].document_id == document).delete()
 
         if self.__caches:
             self.__documents[collection].pop(document, None)
