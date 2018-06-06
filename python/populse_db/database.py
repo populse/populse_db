@@ -526,17 +526,22 @@ class Database:
         if collection_row is None:
             raise ValueError("The collection " +
                              str(collection) + " does not exist")
+        field_rows = []
         if isinstance(field, list):
             for field_elem in field:
                 field_row = self.get_field(collection, field_elem)
                 if field_row is None:
                     raise ValueError("The field with the name " +
                                      str(field_elem) + " does not exist in the collection " + str(collection))
+                else:
+                    field_rows.append(field_row)
         else:
             field_row = self.get_field(collection, field)
             if field_row is None:
                 raise ValueError("The field with the name " +
                                  str(field) + " does not exist in the collection " + str(collection))
+            else:
+                field_rows.append(field_row)
 
         field_names = []
         if isinstance(field, list):
@@ -599,7 +604,9 @@ class Database:
                     self.session.execute(collection_query)
                     self.metadata.remove(self.table_classes[table].__table__)
 
-        self.session.delete(field_row)
+        # Removing field rows from field table
+        for field_row in field_rows:
+            self.session.delete(field_row)
 
         self.session.flush()
 

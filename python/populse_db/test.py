@@ -112,7 +112,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method removing a field
         """
 
-        database = populse_db.database.Database(self.string_engine, True)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collection
         database.add_collection("current", "name")
@@ -255,7 +255,7 @@ class TestDatabaseMethods(unittest.TestCase):
         # Testing with a collection not existing
         self.assertEqual(database.get_fields("collection_not_existing"), [])
 
-    def test_get_fields_names(self):
+    def test_get_fields_names(self, caches=True, list_tables=True):
         """
         Tests the method giving the fields names, given a collection
         """
@@ -350,7 +350,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method setting a value
         """
 
-        database = populse_db.database.Database(self.string_engine, True)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collection
         database.add_collection("collection1", "name")
@@ -473,7 +473,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method removing a value
         """
 
-        database = populse_db.database.Database(self.string_engine, True)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collection
         database.add_collection("collection1", "name")
@@ -538,6 +538,7 @@ class TestDatabaseMethods(unittest.TestCase):
         """
 
         database = populse_db.database.Database(self.string_engine)
+
         is_valid = database.check_type_value("string", populse_db.database.FIELD_TYPE_STRING)
         self.assertTrue(is_valid)
         is_valid = database.check_type_value(1, populse_db.database.FIELD_TYPE_STRING)
@@ -565,7 +566,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method adding a value
         """
 
-        database = populse_db.database.Database(self.string_engine, True)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collection
         database.add_collection("collection1", "name")
@@ -806,7 +807,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method adding a document
         """
 
-        database = populse_db.database.Database(self.string_engine, list_tables=True)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding collection
         database.add_collection("collection1", "name")
@@ -915,7 +916,7 @@ class TestDatabaseMethods(unittest.TestCase):
         Tests the method removing a collection
         """
 
-        database = populse_db.database.Database(self.string_engine, True)
+        database = populse_db.database.Database(self.string_engine)
 
         # Adding a first collection
         database.add_collection("collection1")
