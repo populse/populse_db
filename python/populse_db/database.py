@@ -150,18 +150,21 @@ class Database:
         FIELD_TYPE_LIST_DATETIME: lambda x: dateutil.parser.parse(x),
         FIELD_TYPE_LIST_TIME: lambda x: dateutil.parser.parse(x).time(),
     }
-
-    def __init__(self, string_engine, caches=False, list_tables=True):
+    
+    def __init__(self, string_engine, caches=False, list_tables=False,
+                 query_type='mixed'):
         """
         Creates an API of the database instance
         :param string_engine: string engine of the database file, can be already existing, or not
         :param caches: to know if the caches must be used, False by default
         :param list_tables: to know if tables must be used for list types
+        :param query_type: default value for filtering query type
         """
 
         self.__string_engine = string_engine
         self.__caches = caches
         self.list_tables = list_tables
+        self.query_type = query_type
         
         # SQLite database: we create it if it does not exist
         if string_engine.startswith('sqlite'):
@@ -704,13 +707,33 @@ class Database:
         if not self.check_type_value(new_value, field_row.type):
             raise ValueError("The value " + str(new_value) + " is invalid for the type " + field_row.type)
 
-        new_value = self.python_to_column(field_row.type, new_value)
+        column_name = self.field_name_to_column_name(collection, field)
+        new_column = self.python_to_column(field_row.type, new_value)
 
         if field != collection_row.primary_key:
-            setattr(document_row.row, self.field_name_to_column_name(collection, field), new_value)
+            setattr(document_row.row, column_name, new_column)
         else:
             raise ValueError("Impossible to set the primary_key value of a document")
-
+        
+        if self.list_tables and isinstance(new_value, list):
+            primary_key = self.get_collection(collection).primary_key
+            document_id = document_row[primary_key]            
+            table_name = 'list_%s_%s' % (collection, column_name)
+            
+            table = self.metadata.tables[table_name]
+            sql = table.delete(table.c.document_id == document_id)
+            self.session.execute(sql)
+            
+            sql = table.insert()
+            sql_params = []
+            cvalues = [self.python_to_column(field_row.type[5:], i) for i in new_value]
+            index = 0
+            for i in cvalues:
+                sql_params.append({'document_id': document_id, 'i': index, 'value': i})
+                index += 1
+            if sql_params:
+                self.session.execute(sql, params=sql_params)
+    
         if flush:
             self.session.flush()
 
@@ -738,8 +761,16 @@ class Database:
                              str(document) + " does not exist in the collection " + str(collection))
 
         sql_column_name = self.field_name_to_column_name(collection, field)
-
+        old_value = getattr(document_row.row, sql_column_name)
         setattr(document_row.row, sql_column_name, None)
+        
+        if self.list_tables and field_row.type.startswith('list_'):
+            primary_key = self.get_collection(collection).primary_key
+            document_id = document_row[primary_key]
+            table_name = 'list_%s_%s' % (collection, sql_column_name)
+            table = self.metadata.tables[table_name]
+            sql = table.delete(table.c.document_id == document_id)
+            self.session.execute(sql)
 
         if flush:
             self.session.flush()
@@ -822,6 +853,19 @@ class Database:
                 setattr(
                     document_row.row, field_name,
                     current_value)
+                if self.list_tables and isinstance(value, list):
+                    primary_key = self.get_collection(collection).primary_key
+                    document_id = document_row[primary_key]
+                    table = 'list_%s_%s' % (collection, field_name)
+                    sql = self.metadata.tables[table].insert()
+                    sql_params = []
+                    cvalues = [self.python_to_column(field_row.type[5:], i) for i in value]
+                    index = 0
+                    for i in cvalues:
+                        sql_params.append({'document_id': document_id, 'i': index, 'value': i})
+                        index += 1
+                    if sql_params:
+                        self.session.execute(sql, params=sql_params)
 
             if checks:
                 self.session.flush()
@@ -1027,14 +1071,20 @@ class Database:
             self.table_classes[table] = getattr(
                 self.base.classes, table)
 
-    def filter_query(self, filter, collection):
+    def filter_query(self, filter, collection, query_type=None):
         """
         Given a filter string, return a query that can be used with
         filter_documents() to select documents.
+        :param query_type: type of query to build. Can be 'mixed', 
+            'sql', 'python' or 'guess'. If None, self.query_type
+            is used.
         """
 
+        if query_type is None:
+            query_type = self.query_type
+        filter_to_query_class = populse_db.filter._filter_to_query_classes[query_type]
         tree = populse_db.filter.filter_parser().parse(filter)
-        query = populse_db.filter.FilterToQuery(self, collection).transform(tree)
+        query = filter_to_query_class(self, collection).transform(tree)
         return query
 
     def filter_documents(self, collection, filter_query):
@@ -1126,6 +1176,8 @@ class FieldRow:
         self.database = database
         self.collection = collection
         self.row = row
+        primary_key = list(self.database.metadata.tables[collection].primary_key.columns.values())[0].name
+        setattr(self, primary_key, getattr(self.row, primary_key))
 
     def __getattr__(self, name):
         try:
