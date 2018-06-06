@@ -690,9 +690,9 @@ class Database:
 
         return FieldRow(self, collection, document_row)[field]
 
-    def set_value(self, collection, document, field, new_value, flush=False):
+    def set_value(self, collection, document, field, new_value, flush=True):
         """
-        Sets the value associated to <document, column>
+        Sets the value associated to <document, field>
         :param collection: document collection (str)
         :param document: document name (str)
         :param field: Field name (str)
@@ -741,6 +741,50 @@ class Database:
             if sql_params:
                 self.session.execute(sql, params=sql_params)
     
+        if flush:
+            self.session.flush()
+
+        self.unsaved_modifications = True
+
+    def set_values(self, collection, document, values, flush=True):
+        """
+        Sets the values of a collection document
+        :param collection: document collection (str)
+        :param document: document name (str)
+        :param values: Dictionary of values (key=field, value=value)
+        :param flush: bool to know if flush to do
+        """
+
+        collection_row = self.get_collection(collection)
+        if collection_row is None:
+            raise ValueError("The collection " + str(collection) + " does not exist")
+        document_row = self.get_document(collection, document)
+        if document_row is None:
+            raise ValueError("The document with the name " +
+                             str(document) + " does not exist in the collection " + str(collection))
+        for field in values:
+            field_row = self.get_field(collection, field)
+            if field_row is None:
+                raise ValueError("The field with the name " +
+                                 str(field) + " does not exist in the collection " + str(collection))
+            if not self.check_type_value(values[field], field_row.type):
+                raise ValueError("The value " + str(values[field]) + " is invalid for the type " + field_row.type)
+
+        database_values = {}
+        for field in values:
+            column_name = self.field_name_to_column_name(collection, field)
+            field_row = self.get_field(collection, field)
+            new_column = self.python_to_column(field_row.type, values[field])
+            database_values[column_name] = new_column
+            if collection_row.primary_key == field:
+                raise ValueError("Impossible to set the primary_key value of a document")
+
+        # Updating all values
+        for column in database_values:
+            setattr(document_row.row, column, database_values[column])
+
+        # TODO set list tables values
+
         if flush:
             self.session.flush()
 
@@ -963,35 +1007,32 @@ class Database:
         self.session.flush()
         self.unsaved_modifications = True
 
-    def add_document(self, collection, document, checks=True):
+    def add_document(self, collection, document, flush=True):
         """
         Adds a document to a collection
         :param collection: document collection (str)
         :param document: dictionary of document values (dict), or document primary_key (str)
-        :param checks: checks if the document already exists and flushes, put False in the middle of filling the table => True by default
+        :param flush: Bool to know if flush to do, put False in the middle of filling the table => True by default
         """
 
-        if checks:
-            collection_row = self.get_collection(collection)
-            if collection_row is None:
-                raise ValueError("The collection " +
-                                 str(collection) + " does not exist")
-            primary_key = self.get_collection(collection).primary_key
-            if not isinstance(document, dict) and not isinstance(document, str):
-                raise ValueError(
-                    "The document must be of type " + str(dict) + " or " + str(str) + ", but document of type " + str(
-                        type(document)) + " given")
-            if isinstance(document, dict) and primary_key not in document:
-                raise ValueError("The primary_key " + primary_key + " of the collection " + str(collection) + " is missing from the document dictionary")
-            if isinstance(document, dict):
-                document_row = self.get_document(collection, document[primary_key])
-            else:
-                document_row = self.get_document(collection, document)
-            if document_row is not None:
-                raise ValueError("A document with the name " +
-                                 str(document) + " already exists in the collection " + str(collection))
+        collection_row = self.get_collection(collection)
+        if collection_row is None:
+            raise ValueError("The collection " +
+                             str(collection) + " does not exist")
+        primary_key = self.get_collection(collection).primary_key
+        if not isinstance(document, dict) and not isinstance(document, str):
+            raise ValueError(
+                "The document must be of type " + str(dict) + " or " + str(str) + ", but document of type " + str(
+                    type(document)) + " given")
+        if isinstance(document, dict) and primary_key not in document:
+            raise ValueError("The primary_key " + primary_key + " of the collection " + str(collection) + " is missing from the document dictionary")
+        if isinstance(document, dict):
+            document_row = self.get_document(collection, document[primary_key])
         else:
-            primary_key = self.get_collection(collection).primary_key
+            document_row = self.get_document(collection, document)
+        if document_row is not None:
+            raise ValueError("A document with the name " +
+                             str(document) + " already exists in the collection " + str(collection))
 
         if not isinstance(document, dict):
             document = {primary_key: document}
@@ -1028,7 +1069,7 @@ class Database:
             document_row = FieldRow(self, collection, document_row)
             self.__documents[collection][document_id] = document_row
 
-        if checks:
+        if flush:
             self.session.flush()
 
         self.unsaved_modifications = True

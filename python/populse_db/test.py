@@ -468,6 +468,72 @@ class TestDatabaseMethods(unittest.TestCase):
         except ValueError:
             pass
 
+    def test_set_values(self):
+        """
+        Tests the method setting several values of a document
+        """
+
+        database = populse_db.database.Database(self.string_engine)
+
+        # Adding collection
+        database.add_collection("collection1")
+
+        # Adding fields
+        database.add_field("collection1", "SequenceName", populse_db.database.FIELD_TYPE_STRING)
+        database.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING)
+        database.add_field("collection1", "BandWidth", populse_db.database.FIELD_TYPE_FLOAT)
+
+        # Adding documents
+        database.add_document("collection1", "document1")
+        database.add_document("collection1", "document2")
+
+        # Adding values
+        database.new_value("collection1", "document1", "SequenceName", "Flash")
+        database.new_value("collection1", "document1", "PatientName", "Guerbet")
+        database.new_value("collection1", "document1", "BandWidth", 50000)
+        self.assertEqual(database.get_value("collection1", "document1", "SequenceName"), "Flash")
+        self.assertEqual(database.get_value("collection1", "document1", "PatientName"), "Guerbet")
+        self.assertEqual(database.get_value("collection1", "document1", "BandWidth"), 50000)
+
+        # Setting all values
+        values = {}
+        values["PatientName"] = "Patient"
+        values["BandWidth"] = 25000
+        database.set_values("collection1", "document1", values)
+        self.assertEqual(database.get_value("collection1", "document1", "PatientName"), "Patient")
+        self.assertEqual(database.get_value("collection1", "document1", "BandWidth"), 25000)
+
+        # Testing that the primary_key cannot be set
+        values = {}
+        values["name"] = "document3"
+        values["BandWidth"] = 25000
+        try:
+            database.set_values("collection1", "document1", values)
+            self.fail()
+        except ValueError:
+            pass
+
+        # Trying with field not existing
+        values = {}
+        values["PatientName"] = "Patient"
+        values["BandWidth"] = 25000
+        values["Field_not_existing"] = "value"
+        try:
+            database.set_values("collection1", "document1", values)
+            self.fail()
+        except ValueError:
+            pass
+
+        # Trying with invalid values
+        values = {}
+        values["PatientName"] = 50
+        values["BandWidth"] = 25000
+        try:
+            database.set_values("collection1", "document1", values)
+            self.fail()
+        except ValueError:
+            pass
+
     def test_remove_value(self):
         """
         Tests the method removing a value
