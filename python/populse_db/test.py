@@ -1382,6 +1382,35 @@ def create_test_case(**database_creation_parameters):
                 }
                 ),
                 
+                ('format IN ["DICOM", "NIFTI"]',
+                {
+                '/xyz_1899.nii',
+                '/xyz_2018.dcm',
+                '/bcd_1899.nii',
+                '/def_1899.nii',
+                '/abc_1981.nii',
+                '/abc_1899.nii',
+                '/bcd_2018.nii',
+                '/abc_2018.dcm',
+                '/bcd_1899.dcm',
+                '/def_1981.dcm',
+                '/abc_2018.nii',
+                '/abc_1981.dcm',
+                '/bcd_2018.dcm',
+                '/def_2018.nii',
+                '/def_2018.dcm',
+                '/xyz_1899.dcm',
+                '/abc_1899.dcm',
+                '/def_1899.dcm',
+                '/bcd_1981.nii',
+                '/xyz_1981.nii',
+                '/xyz_2018.nii',
+                '/xyz_1981.dcm',
+                '/def_1981.nii',
+                '/bcd_1981.dcm',
+                }
+                ),
+
                 ('(format == "NIFTI" OR NOT format == "DICOM") AND ("a" IN strings OR NOT "b" IN strings)',
                 {
                 '/abc_1899.none',
@@ -1728,7 +1757,6 @@ def create_test_case(**database_creation_parameters):
                     self.assertEqual(documents, expected)
                 except Exception as e:
                     query = database.filter_query(filter, 'collection1')
-                    print('!!!', str(query))
                     e.message = 'While testing filter : %s\n%s' % (str(filter), e.message)
                     e.args = (e.message,)
                     raise

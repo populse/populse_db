@@ -351,7 +351,7 @@ class FilterToSqlQuery(FilterToQuery):
         constant list value
         '''
         column = self.get_column(field)
-        in_query = column.in_(self.get_column_value(list_value))
+        in_query = column.in_([self.get_column_value(i) for i in list_value])
         if None in list_value:
             list_value.remove(None)
             return column.is_(None) | in_query
