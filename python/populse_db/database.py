@@ -96,6 +96,8 @@ class Database:
         - add_collection: adds a collection
         - remove_collection: removes a collection
         - get_collection: gives the collection row
+        - get_collections: gives all collection rows
+        - get_collections_names: gives all collection names
         - add_field: adds a field
         - add_fields: adds a list of fields
         - field_type_to_column_type: gives the column type corresponding
@@ -372,6 +374,24 @@ class Database:
         else:
             collection_row = self.session.query(self.table_classes[COLLECTION_TABLE]).filter(self.table_classes[COLLECTION_TABLE].name == name).first()
             return collection_row
+
+    def get_collections_names(self):
+        """
+        Gives the list of collection names
+        :return: list of document names of the collection
+        """
+
+        collections = self.session.query(self.table_classes[COLLECTION_TABLE].name).all()
+        collections_list = [collection.name for collection in collections]
+        return collections_list
+
+    def get_collections(self):
+        """
+        Gives the list of collection rows
+        :return: list of document rows of the collection
+        """
+
+        return self.session.query(self.table_classes[COLLECTION_TABLE]).all()
 
     """ FIELDS """
 

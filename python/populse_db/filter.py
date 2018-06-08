@@ -189,7 +189,8 @@ class FilterToQuery(Transformer):
         if operator_str == 'in':
 
             if self.is_list_field(right_operand):
-                if isinstance(left_operand, six.string_types + (int, 
+
+                if isinstance(left_operand, six.string_types + (int,
                                                                 float,
                                                                 bool,
                                                                 None.__class__,
@@ -392,6 +393,7 @@ class FilterToPythonQuery(FilterToQuery):
         'and': operator.and_,
         'or': operator.or_,
     }
+
     def build_condition_all(self):
         return lambda x: True
     

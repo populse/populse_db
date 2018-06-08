@@ -1016,6 +1016,60 @@ def create_test_case(**database_creation_parameters):
             self.assertIsNone(database.get_collection("collection"))
             self.assertIsNone(database.get_collection("field"))
 
+        def test_get_collections(self):
+            """
+            Tests the method giving the list of collections rows
+            """
+
+            database = self.create_database()
+
+            # Testing that there is no collection at first
+            self.assertEqual(database.get_collections(), [])
+
+            # Adding collection
+            database.add_collection("collection1")
+
+            collections = database.get_collections()
+            self.assertEqual(len(collections), 1)
+            self.assertEqual(collections[0].name, "collection1")
+
+            database.add_collection("collection2")
+
+            collections = database.get_collections()
+            self.assertEqual(len(collections), 2)
+
+            database.remove_collection("collection2")
+
+            collections = database.get_collections()
+            self.assertEqual(len(collections), 1)
+            self.assertEqual(collections[0].name, "collection1")
+
+        def test_get_collections_names(self):
+            """
+            Tests the method giving the collections names
+            """
+
+            database = self.create_database()
+
+            # Testing that there is no collection at first
+            self.assertEqual(database.get_collections_names(), [])
+
+            # Adding collection
+            database.add_collection("collection1")
+
+            self.assertEqual(database.get_collections_names(), ["collection1"])
+
+            database.add_collection("collection2")
+
+            collections = database.get_collections_names()
+            self.assertEqual(len(collections), 2)
+            self.assertTrue("collection1" in collections)
+            self.assertTrue("collection2" in collections)
+
+            database.remove_collection("collection2")
+
+            self.assertEqual(database.get_collections_names(), ["collection1"])
+
         def test_get_documents(self):
             """
             Tests the method returning the list of document rows, given a collection
@@ -1186,7 +1240,7 @@ def create_test_case(**database_creation_parameters):
 
             database.add_collection("collection1", "name")
 
-            database.add_field("collection1", 'format', field_type='string', description=None)
+            database.add_field("collection1", 'format', field_type=populse_db.database.FIELD_TYPE_STRING, description=None)
             database.add_field("collection1", 'strings', field_type=populse_db.database.FIELD_TYPE_LIST_STRING, description=None)
             database.add_field("collection1", 'datetime', field_type=populse_db.database.FIELD_TYPE_DATETIME, description=None)
 
