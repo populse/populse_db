@@ -352,7 +352,7 @@ class FilterToSqlQuery(FilterToQuery):
         constant list value
         '''
         column = self.get_column(field)
-        in_query = column.in_(self.get_column_value(list_value))
+        in_query = column.in_([self.get_column_value(i) for i in list_value])
         if None in list_value:
             list_value.remove(None)
             return column.is_(None) | in_query
@@ -383,6 +383,20 @@ class FilterToSqlQuery(FilterToQuery):
 
 
 class FilterToPythonQuery(FilterToQuery):
+    @staticmethod
+    def like_to_re(like_pattern):
+        return  '^%s$' % re.escape(like_pattern).replace('%', '.*').replace('_', '.')
+    
+    @staticmethod
+    def like(value, like_pattern):
+        re_pattern = like_to_re(like_pattern)
+        return bool(re.match(pattern, value))
+
+    @staticmethod
+    def ilike(value, like_pattern):
+        re_pattern = like_to_re(like_pattern)
+        return bool(re.match(pattern, value), flags=re.IGNORECASE)
+    
     python_operators = {
         '==': operator.eq,
         '!=': operator.ne,
@@ -392,6 +406,8 @@ class FilterToPythonQuery(FilterToQuery):
         '>=': operator.ge,
         'and': operator.and_,
         'or': operator.or_,
+        'like': like,
+        'ilike': ilike,
     }
 
     def build_condition_all(self):
