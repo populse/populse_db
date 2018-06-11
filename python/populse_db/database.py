@@ -72,17 +72,145 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 
 
 class Database:
-
     """
     Database API
 
     attributes:
         - string_engine: string engine of the database
+        - caches: True if caches are used
+        - list_tables: True if tables are created to store values of
+                       list fields and have a pure SQL version of IN
+                       operator in filters
+        - query_type: default query implementation for filter_query()
+                      and filter_documents()
+        - engine: SqlAlchemy engine
+    
+    methods:
+        - create_empty_schemas: initialize database schema
+        - __enter__: create or get a DatabaseSession instance
+        - __exit__: release the latest created DatabaseSession
+
+    """
+    
+    def __init__(self, string_engine, caches=False, list_tables=True,
+                 query_type='mixed'):
+        self.string_engine = string_engine
+        self.caches = caches
+        self.list_tables = list_tables
+        self.query_type = query_type
+            
+        # SQLite database: we create it if it does not exist
+        if string_engine.startswith('sqlite'):
+            self.__db_file = re.sub("sqlite.*:///", "", string_engine)
+            if not os.path.exists(self.__db_file):
+                parent_dir = os.path.dirname(self.__db_file)
+                if not os.path.exists(parent_dir):
+                    os.makedirs(os.path.dirname(self.__db_file))
+                self.create_empty_schema(self.string_engine)
+        self.engine = create_engine(self.string_engine)
+        self.__scoped_session = scoped_session(sessionmaker(
+            bind=self.engine, autocommit=False, autoflush=False))
+        
+    def create_empty_schema(self, string_engine):
+        """
+        Creates the database file with an empty schema
+        :param string_engine: Path of the new database file
+        """
+
+        engine = create_engine(string_engine)
+        metadata = MetaData()
+
+        Table(FIELD_TABLE, metadata,
+              Column("name", String, primary_key=True),
+              Column("collection", String, primary_key=True),
+              Column(
+                  "type", Enum(FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT, FIELD_TYPE_BOOLEAN,
+                               FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME,
+                               FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER,
+                               FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_LIST_DATE,
+                               FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_TIME),
+                  nullable=False),
+              Column("description", String, nullable=True))
+
+        Table(COLLECTION_TABLE, metadata,
+              Column("name", String, primary_key=True),
+              Column("primary_key", String, nullable=False))
+
+        metadata.create_all(engine)
+        
+    def __enter__(self):
+        '''
+        Return a DatabaseSession instance for using the database. This is
+        supossed to be called using a "with" statement:
+        
+        with database as session:
+           session.add_document(...)
+           
+        Therefore __exit__ must be called to get rid of the session.
+        When called recursively, the underlying database session returned
+        is the same. The commit/rollback of the session is done only by the
+        outermost __enter__/__exit__ pair (i.e. by the outermost with
+        statement).
+        '''
+        # Create the session object
+        new_session = self.__scoped_session()
+        # Check if it is a brain new session object or if __enter__ already
+        # added a DatabaseSession instance to it (meaning recursive call)
+        db_session = getattr(new_session, '_populse_db_session', None)
+        if db_session is None:
+            # No recursive call. Create a new DatabaseSession
+            # and attach it to the session. Doing this way allow
+            # to be thread safe because scoped_session automatically
+            # creates a new session per thread. Therefore we also
+            # create a new DatabaseSession per thread.
+            db_session = DatabaseSession(self, new_session)
+            new_session._populse_db_session = db_session
+            # Attache a counter to the session object to count
+            # the recursion depth of __enter__ calls
+            new_session._populse_db_counter = 1
+        else:
+            # __enter__ is called recursively. Simply increment
+            # the recusive depth counter previoult attached to
+            # the session object
+            new_session._populse_db_counter += 1
+        return db_session
+        
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        '''
+        Release a DatabaseSession previously created by __enter__.
+        If no recursive call of __enter__ was done, the session
+        is commited if no error is reported (e.g. exc_type is None)
+        otherwise it is rolled back. Nothing is done 
+        '''
+        # Get the current session. SqlAlchemy scoped_session returns
+        # the same object (per thread) on each call until remove()
+        # is called.
+        current_session = self.__scoped_session()
+        # Decrement recursive depth counter
+        current_session._populse_db_counter -= 1
+        if current_session._populse_db_counter == 0:
+            # If there is no recursive call, commit or rollback
+            # the session according to the presence of an exception
+            if exc_type is None:
+                current_session.commit()
+            else:
+                current_session.rollback()
+            # Delete the database session
+            del current_session._populse_db_session
+            del current_session._populse_db_counter
+            self.__scoped_session.remove()
+    
+
+
+
+class DatabaseSession:
+    """
+    DatabaseSession API
+
+    attributes:
         - table_classes: list of table classes, generated automatically
         - base: database base
-        - engine: database engine
         - metadata: database metadata
-        - session_maker: session manager
         - unsaved_modifications: bool to know if there are unsaved
           modifications in the database
         - documents: document rows
@@ -154,8 +282,7 @@ class Database:
         FIELD_TYPE_LIST_TIME: lambda x: dateutil.parser.parse(x).time(),
     }
     
-    def __init__(self, string_engine, caches=False, list_tables=True,
-                 query_type='mixed'):
+    def __init__(self, database, session):
         """
         Creates an API of the database instance
         :param string_engine: string engine of the database file, can be already existing, or not
@@ -163,25 +290,15 @@ class Database:
         :param list_tables: to know if tables must be used for list types
         :param query_type: default value for filtering query type
         """
-        self.__string_engine = string_engine
-        self.__caches = caches
-        self.list_tables = list_tables
-        self.query_type = query_type
-        
-        # SQLite database: we create it if it does not exist
-        if string_engine.startswith('sqlite'):
-            self.__db_file = re.sub("sqlite.*:///", "", string_engine)
-            if not os.path.exists(self.__db_file):
-                parent_dir = os.path.dirname(self.__db_file)
-                if not os.path.exists(parent_dir):
-                    os.makedirs(os.path.dirname(self.__db_file))
-                self.create_empty_schema(self.__string_engine)
+        self.database = database
+        self.session = session
 
         # Database opened
-        self.__engine = create_engine(self.__string_engine)
         self.metadata = MetaData()
-        self.metadata.reflect(self.__engine)
-
+        self.metadata.reflect(self.database.engine)
+        
+        self.unsaved_modifications = False
+        
         self.__update_table_classes()
 
         # Database schema checked
@@ -189,41 +306,39 @@ class Database:
                 FIELD_TABLE not in self.table_classes.keys()):
             raise ValueError(
                 'The database schema is not coherent with the API')
-
-        self.session = scoped_session(sessionmaker(
-            bind=self.__engine, autocommit=False, autoflush=False))
-
-        self.unsaved_modifications = False
-
+        
         if self.__caches:
             self.__fill_caches()
+        
+    
+    # Shortcuts to access Database attributes
+    
+    @property
+    def __caches(self):
+        return self.database.caches
+    
+    
+    @property
+    def list_tables(self):
+        return self.database.list_tables
 
-    def create_empty_schema(self, string_engine):
+
+    @property
+    def query_type(self):
+        return self.database.query_type
+
+
+
+    def __update_table_classes(self):
         """
-        Creates the database file with an empty schema
-        :param string_engine: Path of the new database file
+        Redefines the model after an update of the schema
         """
-
-        engine = create_engine(string_engine)
-        metadata = MetaData()
-
-        Table(FIELD_TABLE, metadata,
-              Column("name", String, primary_key=True),
-              Column("collection", String, primary_key=True),
-              Column(
-                  "type", Enum(FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT, FIELD_TYPE_BOOLEAN,
-                               FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME,
-                               FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER,
-                               FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_LIST_DATE,
-                               FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_TIME),
-                  nullable=False),
-              Column("description", String, nullable=True))
-
-        Table(COLLECTION_TABLE, metadata,
-              Column("name", String, primary_key=True),
-              Column("primary_key", String, nullable=False))
-
-        metadata.create_all(engine)
+        self.table_classes = {}
+        self.base = automap_base(metadata=self.metadata)
+        self.base.prepare(engine=self.database.engine)
+        for table in self.metadata.tables.keys():
+            self.table_classes[table] = getattr(
+                self.base.classes, table)
 
     """ CACHES """
 
@@ -236,7 +351,7 @@ class Database:
         self.__fields = {}
         self.__names = {}
         self.__collections = {}
-
+        
         # Collections
         collections_rows = self.session.query(self.table_classes[COLLECTION_TABLE]).all()
         for collection_row in collections_rows:
@@ -249,12 +364,12 @@ class Database:
             for field_row in fields_rows:
                 self.__fields[collection][field_row.name] = field_row
 
-        # Documents
-        for collection in self.__collections:
-            documents_rows = self.session.query(self.table_classes[collection]).all()
-            self.__documents[collection] = {}
-            for document_row in documents_rows:
-                self.__documents[collection][getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(self, collection, document_row)
+            # Documents
+            for collection in self.__collections:
+                documents_rows = self.session.query(self.table_classes[collection]).all()
+                self.__documents[collection] = {}
+                for document_row in documents_rows:
+                    self.__documents[collection][getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(self, collection, document_row)
 
         # Names
         for collection in self.__collections:
@@ -264,6 +379,7 @@ class Database:
                     self.__names[collection][field] = field
                 else:
                     self.__names[collection][field] = hashlib.md5(field.encode('utf-8')).hexdigest()
+
 
     def __refresh_cache_documents(self, collection):
         """
@@ -276,7 +392,7 @@ class Database:
         self.__documents[collection] = {}
         for document_row in documents_rows:
             self.__documents[collection][getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(self, collection, document_row)
-
+    
     """ COLLECTIONS """
 
     def add_collection(self, name, primary_key="name"):
@@ -485,8 +601,8 @@ class Database:
             field_type = self.field_type_to_column_type(field_type)
 
         column = Column(self.field_name_to_column_name(collection, name), field_type)
-        column_str_type = column.type.compile(self.__engine.dialect)
-        column_name = column.compile(dialect=self.__engine.dialect)
+        column_str_type = column.type.compile(self.database.engine.dialect)
+        column_name = column.compile(dialect=self.database.engine.dialect)
 
         # Column created in document table, and in initial table if initial values are used
 
@@ -1158,16 +1274,6 @@ class Database:
 
         return self.unsaved_modifications
 
-    def __update_table_classes(self):
-        """
-        Redefines the model after an update of the schema
-        """
-        self.table_classes = {}
-        self.base = automap_base(metadata=self.metadata)
-        self.base.prepare(engine=self.__engine)
-        for table in self.metadata.tables.keys():
-            self.table_classes[table] = getattr(
-                self.base.classes, table)
 
     def filter_query(self, filter, collection, query_type=None):
         """
