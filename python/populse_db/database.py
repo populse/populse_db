@@ -9,7 +9,8 @@ from datetime import date, time, datetime
 import dateutil.parser
 import six
 from sqlalchemy import (create_engine, Column, MetaData, event, Table, sql,
-                        String, Integer, Float, Boolean, Date, DateTime, Time, Enum)
+                        String, Integer, Float, Boolean, Date, DateTime,
+                        Time, Enum, event)
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session, mapper
@@ -108,6 +109,18 @@ class Database:
                     os.makedirs(os.path.dirname(self.__db_file))
                 self.create_empty_schema(self.string_engine)
         self.engine = create_engine(self.string_engine)
+        
+        @event.listens_for(self.engine, "connect")
+        def do_connect(dbapi_connection, connection_record):
+            # disable pysqlite's emitting of the BEGIN statement entirely.
+            # also stops it from emitting COMMIT before any DDL.
+            dbapi_connection.isolation_level = None
+
+        @event.listens_for(self.engine, "begin")
+        def do_begin(conn):
+            # emit our own BEGIN
+            conn.execute("BEGIN")
+            
         self.__scoped_session = scoped_session(sessionmaker(
             bind=self.engine, autocommit=False, autoflush=False))
         
