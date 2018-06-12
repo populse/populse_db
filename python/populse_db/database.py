@@ -170,7 +170,7 @@ class Database:
             new_session._populse_db_counter = 1
         else:
             # __enter__ is called recursively. Simply increment
-            # the recusive depth counter previoult attached to
+            # the recusive depth counter previously attached to
             # the session object
             new_session._populse_db_counter += 1
         return db_session
@@ -199,9 +199,6 @@ class Database:
             del current_session._populse_db_session
             del current_session._populse_db_counter
             self.__scoped_session.remove()
-    
-
-
 
 class DatabaseSession:
     """
