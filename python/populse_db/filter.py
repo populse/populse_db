@@ -278,7 +278,22 @@ class FilterToQuery(Transformer):
 
 
 def sql_equal(a, b):
-    r = sql_operators.is_(a, b) # | (sql_operators.eq(a, None) & sql_operators.eq(b, None))
+    if FilterToQuery.is_field(a):
+        if FilterToQuery.is_field(b):
+            r = ((a == b) | (sql_operators.is_(a, None) & sql_operators.is_(b, None)))
+        else:
+            if b is not None:
+                r = ((a == b) | sql_operators.eq(a, None))
+            else:
+                r = sql_operators.eq(a, None)
+    else:
+        if FilterToQuery.is_field(b):
+            if a is not None:
+                r = ((a == b) | sql_operators.eq(b, None))
+            else:
+                sql_operators.eq(b, None)
+        else:
+            r = (a == b)
     return r
 
 def sql_differ(a, b):
@@ -316,7 +331,7 @@ class FilterToSqlQuery(FilterToQuery):
         return column_value
 
     def build_condition_all(self):
-        return sqlalchemy.text('1')
+        return sqlalchemy.literal(True)
     
     def build_condition_literal_in_list_field(self, value, list_field):
         '''
@@ -373,8 +388,11 @@ class FilterToSqlQuery(FilterToQuery):
     def build_condition_negation(self, condition):
         # Workaround what seems to be a bug in SqlAlchemy,
         # an "is" condition is not inverted by "not"
-        if isinstance(condition, BinaryExpression) and condition.operator is sql_operators.is_:
-            return condition.left.isnot(condition.right)
+        if isinstance(condition, BinaryExpression):
+            if condition.operator is sql_operators.is_:
+                return condition.left.isnot(condition.right)
+            elif condition.operator is sql_operators.eq:
+                return sql_differ(condition.left, condition.right)
         return ~ condition
 
     def build_condition_combine_conditions(self, left_condition, operator_str, right_condition):

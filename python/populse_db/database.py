@@ -61,15 +61,6 @@ TYPE_TO_COLUMN[FIELD_TYPE_LIST_STRING] = String
 FIELD_TABLE = "field"
 COLLECTION_TABLE = "collection"
 
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    """
-    Manages the pragmas during the database opening
-    :param dbapi_connection:
-    :param connection_record:
-    """
-    dbapi_connection.execute('pragma case_sensitive_like=ON')
-    dbapi_connection.execute('pragma foreign_keys=ON')
 
 
 class Database:
@@ -107,24 +98,37 @@ class Database:
                 parent_dir = os.path.dirname(self.__db_file)
                 if not os.path.exists(parent_dir):
                     os.makedirs(os.path.dirname(self.__db_file))
-                self.create_empty_schema(self.string_engine)
+        
+        self.create_empty_schema(self.string_engine)
         self.engine = create_engine(self.string_engine)
         
-        @event.listens_for(self.engine, "connect")
-        def do_connect(dbapi_connection, connection_record):
-            # disable pysqlite's emitting of the BEGIN statement entirely.
-            # also stops it from emitting COMMIT before any DDL.
-            dbapi_connection.isolation_level = None
+        if string_engine.startswith('sqlite'):
+            @event.listens_for(self.engine, "connect")
+            def do_connect(dbapi_connection, connection_record):
+                # disable pysqlite's emitting of the BEGIN statement entirely.
+                # also stops it from emitting COMMIT before any DDL.
+                dbapi_connection.isolation_level = None
+            
+            @event.listens_for(self.engine, "connect")
+            def set_sqlite_pragma(dbapi_connection, connection_record):
+                """
+                Manages the pragmas during the database opening
+                :param dbapi_connection:
+                :param connection_record:
+                """
+                dbapi_connection.execute('pragma case_sensitive_like=ON')
+                dbapi_connection.execute('pragma foreign_keys=ON')
 
-        @event.listens_for(self.engine, "begin")
-        def do_begin(conn):
-            # emit our own BEGIN
-            conn.execute("BEGIN")
+            @event.listens_for(self.engine, "begin")
+            def do_begin(conn):
+                # emit our own BEGIN
+                conn.execute("BEGIN")
             
         self.__scoped_session = scoped_session(sessionmaker(
             bind=self.engine, autocommit=False, autoflush=False))
-        
-    def create_empty_schema(self, string_engine):
+    
+    @staticmethod
+    def create_empty_schema(string_engine):
         """
         Creates the database file with an empty schema
         :param string_engine: Path of the new database file
@@ -132,24 +136,28 @@ class Database:
 
         engine = create_engine(string_engine)
         metadata = MetaData()
+        metadata.reflect(bind=engine)
+        if FIELD_TABLE in metadata.tables:
+            return False
+        else:
+            Table(FIELD_TABLE, metadata,
+                Column("name", String, primary_key=True),
+                Column("collection", String, primary_key=True),
+                Column(
+                    "type", Enum(FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT, FIELD_TYPE_BOOLEAN,
+                                FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME,
+                                FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER,
+                                FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_LIST_DATE,
+                                FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_TIME, name='field_type'),
+                    nullable=False),
+                Column("description", String, nullable=True))
 
-        Table(FIELD_TABLE, metadata,
-              Column("name", String, primary_key=True),
-              Column("collection", String, primary_key=True),
-              Column(
-                  "type", Enum(FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT, FIELD_TYPE_BOOLEAN,
-                               FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME,
-                               FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER,
-                               FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_LIST_DATE,
-                               FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_TIME),
-                  nullable=False),
-              Column("description", String, nullable=True))
+            Table(COLLECTION_TABLE, metadata,
+                Column("name", String, primary_key=True),
+                Column("primary_key", String, nullable=False))
 
-        Table(COLLECTION_TABLE, metadata,
-              Column("name", String, primary_key=True),
-              Column("primary_key", String, nullable=False))
-
-        metadata.create_all(engine)
+            metadata.create_all(engine)
+            return True
         
     def __enter__(self):
         '''
@@ -212,6 +220,23 @@ class Database:
             del current_session._populse_db_session
             del current_session._populse_db_counter
             self.__scoped_session.remove()
+    
+    def clear(self):
+        """
+        Remove all documents and collections in the database
+        """
+
+        metadata = MetaData()
+        metadata.reflect(bind=self.engine)
+        if FIELD_TABLE in metadata.tables:
+            for table in reversed(metadata.sorted_tables):
+                if table.name in (FIELD_TABLE, COLLECTION_TABLE):
+                    self.engine.execute(table.delete())
+                else:
+                    self.engine.execute(DropTable(table))
+            return True
+        else:
+            return False
 
 class DatabaseSession:
     """
@@ -498,6 +523,8 @@ class DatabaseSession:
             except KeyError:
                 return None
         else:
+            if not isinstance(name, six.string_types):
+                return None
             collection_row = self.session.query(self.table_classes[COLLECTION_TABLE]).filter(self.table_classes[COLLECTION_TABLE].name == name).first()
             return collection_row
 
@@ -785,6 +812,8 @@ class DatabaseSession:
             except KeyError:
                 return None
         else:
+            if not isinstance(collection, six.string_types) or not isinstance(name, six.string_types):
+                return None
             field_row = self.session.query(self.table_classes[FIELD_TABLE]).filter(self.table_classes[FIELD_TABLE].name == name).filter(self.table_classes[FIELD_TABLE].collection == collection).first()
             return field_row
 
@@ -1115,8 +1144,11 @@ class DatabaseSession:
                 return None
         else:
             primary_key = collection_row.primary_key
-            document_row = self.session.query(self.table_classes[collection]).filter(
-                getattr(self.table_classes[collection], primary_key) == document).first()
+            column = getattr(self.table_classes[collection], primary_key)
+            value = column.type.python_type(document)
+            query = self.session.query(self.table_classes[collection]).filter(
+                    column == value)
+            document_row = query.first()
             if document_row is not None:
                 document_row = FieldRow(self, collection, document_row)
             return document_row
@@ -1322,7 +1354,7 @@ class DatabaseSession:
             select = select = self.metadata.tables[collection].select(
                 sql_condition)
         else:
-            select = select = self.metadata.tables[collection].select(
+            select = self.metadata.tables[collection].select(
                 filter_query)
             python_filter = None
         for row in self.session.execute(select):

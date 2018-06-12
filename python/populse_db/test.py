@@ -4,9 +4,11 @@ import unittest
 import tempfile
 import datetime
 
+from sqlalchemy.exc import OperationalError
+
 import populse_db
 
-def create_test_case(**database_creation_parameters):
+def create_test_case(**database_creation_parameters):        
     class TestDatabaseMethods(unittest.TestCase):
         """
         Class executing the unit tests of populse_db
@@ -20,7 +22,9 @@ def create_test_case(**database_creation_parameters):
 
             self.temp_folder = tempfile.mkdtemp()
             self.path = os.path.join(self.temp_folder, "test.db")
-            self.string_engine = 'sqlite:///' + self.path
+            if 'string_engine' not in database_creation_parameters:
+                database_creation_parameters['string_engine'] = 'sqlite:///' + self.path
+            self.string_engine = database_creation_parameters['string_engine']
 
         def tearDown(self):
             """
@@ -30,8 +34,16 @@ def create_test_case(**database_creation_parameters):
 
             shutil.rmtree(self.temp_folder)
 
-        def create_database(self):
-            return populse_db.database.Database(self.string_engine, **database_creation_parameters)
+        def create_database(self, clear=True):
+            try:
+                db = populse_db.database.Database(**database_creation_parameters)
+            except OperationalError as e:
+                if database_creation_parameters['string_engine'].startswith('postgresql'):
+                    raise unittest.SkipTest(str(e))
+                raise
+            if clear:
+                db.clear()
+            return db
 
         def test_add_field(self):
             """
@@ -262,7 +274,7 @@ def create_test_case(**database_creation_parameters):
 
         def test_set_value(self):
 
-            database = populse_db.database.Database(self.string_engine)
+            database = self.create_database()
             with database as session:
                 # Adding collection
                 session.add_collection("collection1", "name")
@@ -385,7 +397,7 @@ def create_test_case(**database_creation_parameters):
             Tests the method setting several values of a document
             """
 
-            database = populse_db.database.Database(self.string_engine)
+            database = self.create_database()
             with database as session:
                 # Adding collection
                 session.add_collection("collection1")
@@ -1244,8 +1256,9 @@ def create_test_case(**database_creation_parameters):
                 session.add_field("collection1", 'format', field_type=populse_db.database.FIELD_TYPE_STRING, description=None)
                 session.add_field("collection1", 'strings', field_type=populse_db.database.FIELD_TYPE_LIST_STRING, description=None)
                 session.add_field("collection1", 'datetime', field_type=populse_db.database.FIELD_TYPE_DATETIME, description=None)
+                session.add_field("collection1", 'has_format', field_type=populse_db.database.FIELD_TYPE_BOOLEAN, description=None)
 
-                #session.save_modifications()
+                session.save_modifications()
                 files = ('abc', 'bcd', 'def', 'xyz')
                 for file in files:
                     for date in list_datetime:
@@ -1257,6 +1270,7 @@ def create_test_case(**database_creation_parameters):
                                 format=format,
                                 strings=list(file),
                                 datetime=date,
+                                has_format=True,
                             )
                             session.add_document("collection1", document)
                         document = '/%s_%d.none' % (file, date.year)
@@ -1590,7 +1604,7 @@ def create_test_case(**database_creation_parameters):
                     }
                     ),
                     
-                    ('format in [True, false, null]',
+                    ('has_format in [false, null]',
                     {
                     '/def_1899.none',
                     '/abc_1899.none',
@@ -1807,10 +1821,11 @@ def create_test_case(**database_creation_parameters):
                     '/xyz_2018.mgz'
                     }
                     )):
-                    documents = set(document.name for document in session.filter_documents("collection1", filter))
                     try:
+                        documents = set(document.name for document in session.filter_documents("collection1", filter))
                         self.assertEqual(documents, expected)
                     except Exception as e:
+                        session.unsave_modifications()
                         query = session.filter_query('collection1', filter)
                         e.message = 'While testing filter : %s\n%s' % (str(filter), e.message)
                         e.args = (e.message,)
@@ -1901,7 +1916,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", {"name": "titi"})
             
             # Reopen the database to check that "titi" was commited
-            database = self.create_database()
+            database = self.create_database(clear=False)
             with database as session:
                 names = [i.name for i in session.filter_documents("collection1", "all")]
                 self.assertEqual(names, ['titi'])
@@ -1922,6 +1937,7 @@ def create_test_case(**database_creation_parameters):
 
 def load_tests(loader, standard_tests, pattern):
     suite = unittest.TestSuite()
+
     for params in (dict(caches=False, list_tables=True, query_type='mixed'),
                    dict(caches=True, list_tables=True, query_type='mixed'),
                    dict(caches=False, list_tables=False, query_type='mixed'),
@@ -1932,6 +1948,16 @@ def load_tests(loader, standard_tests, pattern):
                    dict(caches=True, list_tables=False, query_type='guess')):
         tests = loader.loadTestsFromTestCase(create_test_case(**params))
         suite.addTests(tests)
+    
+    # Tests with postgresql. All the tests will be skiped if
+    # it is not possible to connect to populse_db_tests database.
+    tests = loader.loadTestsFromTestCase(create_test_case(
+        string_engine='postgresql:///populse_db_tests', 
+        caches=False, 
+        list_tables=True, 
+        query_type='mixed'))
+    suite.addTests(tests)
+                   
     return suite
 
 if __name__ == '__main__':
