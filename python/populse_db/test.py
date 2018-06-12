@@ -1888,15 +1888,16 @@ def create_test_case(**database_creation_parameters):
 
         def test_with(self):
             database = self.create_database()
-            with database as session:
-                session.add_collection("collection1", "name")
             try:
                 with database as session:
+                    session.add_collection("collection1", "name")
                     session.add_document("collection1", {"name": "toto"})
                     boom # Raises an exception, modifications are rolled back
             except NameError:
                 pass
+            
             with database as session:
+                session.add_collection("collection1", "name")
                 session.add_document("collection1", {"name": "titi"})
             
             # Reopen the database to check that "titi" was commited
