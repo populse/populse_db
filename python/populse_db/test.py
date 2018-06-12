@@ -1811,7 +1811,7 @@ def create_test_case(**database_creation_parameters):
                     try:
                         self.assertEqual(documents, expected)
                     except Exception as e:
-                        query = session.filter_query(filter, 'collection1')
+                        query = session.filter_query('collection1', filter)
                         e.message = 'While testing filter : %s\n%s' % (str(filter), e.message)
                         e.args = (e.message,)
                         raise
