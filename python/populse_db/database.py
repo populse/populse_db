@@ -1285,7 +1285,7 @@ class DatabaseSession:
         return self.unsaved_modifications
 
 
-    def filter_query(self, filter, collection, query_type=None):
+    def filter_query(self, collection, filter, query_type=None):
         """
         Given a filter string, return a query that can be used with
         filter_documents() to select documents.
@@ -1310,7 +1310,7 @@ class DatabaseSession:
         """
 
         if isinstance(filter_query, six.string_types):
-            filter_query = self.filter_query(filter_query, collection)
+            filter_query = self.filter_query(collection, filter_query)
         if filter_query is None:
             select = self.metadata.tables[collection].select()
             python_filter = None
