@@ -12,6 +12,6 @@ before_script:
   - psql -c 'create database populse_db_tests;' -U postgres  
 
 install:
-  - python setup.py install .[postgres]
+  - python setup.py install -e .[postgres]
 
 script: python -m populse_db.test
