@@ -1253,7 +1253,7 @@ def create_test_case(**database_creation_parameters):
             with database as session:
                 session.add_collection("collection1", "name")
 
-                session.add_field("collection1", 'format', field_type=populse_db.database.FIELD_TYPE_STRING, description=None)
+                session.add_field("collection1", 'format', field_type=populse_db.database.FIELD_TYPE_STRING, description=None, index=True)
                 session.add_field("collection1", 'strings', field_type=populse_db.database.FIELD_TYPE_LIST_STRING, description=None)
                 session.add_field("collection1", 'datetime', field_type=populse_db.database.FIELD_TYPE_DATETIME, description=None)
                 session.add_field("collection1", 'has_format', field_type=populse_db.database.FIELD_TYPE_BOOLEAN, description=None)
