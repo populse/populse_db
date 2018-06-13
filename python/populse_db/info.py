@@ -53,7 +53,7 @@ EXTRA_REQUIRES = {
         'sphinx>=1.0',
     ],
     'postgres': [
-        'psycopg2',
+        'psycopg2-binary',
     ],
 }
 
