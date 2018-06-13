@@ -573,7 +573,8 @@ class DatabaseSession:
             for collection in collections:
                 self.__refresh_cache_documents(collection)
 
-    def add_field(self, collection, name, field_type, description=None, flush=True):
+    def add_field(self, collection, name, field_type, description=None, 
+                  index=False, flush=True):
         """
         Adds a field to the database, if it does not already exist
         :param collection: field collection (str)
@@ -627,17 +628,12 @@ class DatabaseSession:
                 collection_class = type(table, (self.base,), collection_dict)
                 mapper(collection_class, list_table)
                 self.table_classes[table] = collection_class
-
-                #sql = sql_text('CREATE TABLE %s (document_id VARCHAR, value %s)' % (table, str(self.field_type_to_column_type(field_type[5:])())))
-                #self.session.execute(sql)
-                #sql = sql_text('CREATE INDEX {0}_index ON {0} (document_id)'.format(table))
-                #self.session.execute(sql)
             # String columns if it list type, as the str representation of the lists will be stored
             field_type = String
         else:
             field_type = self.field_type_to_column_type(field_type)
 
-        column = Column(self.field_name_to_column_name(collection, name), field_type)
+        column = Column(self.field_name_to_column_name(collection, name), field_type, index=index)
         column_str_type = column.type.compile(self.database.engine.dialect)
         column_name = column.compile(dialect=self.database.engine.dialect)
 
