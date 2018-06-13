@@ -1284,13 +1284,6 @@ class DatabaseSession:
 
     """ UTILS """
 
-    def start_transaction(self):
-        """
-        Starts a new transaction
-        """
-
-        self.session.begin_nested()
-
     def save_modifications(self):
         """
         Saves the modifications by committing the session
