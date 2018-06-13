@@ -15,8 +15,10 @@ CLASSIFIERS = ['Development Status :: 5 - Production/Stable',
                'Environment :: Console',
                'Operating System :: OS Independent',
                'Programming Language :: Python',
-               'Topic :: Scientific/Engineering',
-               'Topic :: Utilities']
+               'Programming Language :: SQL',
+               'Natural Language :: English',
+               'Topic :: Database',
+              ]
 
 # Project descriptions
 NAME = 'populse_db'
@@ -49,6 +51,9 @@ REQUIRES = [
 EXTRA_REQUIRES = {
     'doc': [
         'sphinx>=1.0',
+    ],
+    'postgres': [
+        'psycopg2',
     ],
 }
 
