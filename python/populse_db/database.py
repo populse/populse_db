@@ -1046,6 +1046,8 @@ class DatabaseSession:
             return True
         if valid_type == FIELD_TYPE_STRING and value_type == str:
             return True
+        if valid_type == FIELD_TYPE_JSON and value_type == dict:
+            return True
         if valid_type == FIELD_TYPE_DATETIME and value_type == datetime:
             return True
         if valid_type == FIELD_TYPE_TIME and value_type == time:
@@ -1360,6 +1362,8 @@ class DatabaseSession:
         """
         if isinstance(value, list):
             return self.list_to_column(column_type, value)
+        elif isinstance(value, dict):
+            return str(value)
         else:
             return value
 
@@ -1370,6 +1374,8 @@ class DatabaseSession:
         """
         if column_type.startswith('list_'):
             return self.column_to_list(column_type, value)
+        elif column_type == FIELD_TYPE_JSON:
+            return str(value)
         else:
             return value
 
