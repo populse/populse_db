@@ -1375,7 +1375,7 @@ class DatabaseSession:
         if column_type.startswith('list_'):
             return self.column_to_list(column_type, value)
         elif column_type == FIELD_TYPE_JSON:
-            return str(value)
+            return ast.literal_eval(value)
         else:
             return value
 
