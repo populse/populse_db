@@ -1298,6 +1298,7 @@ class DatabaseSession:
 
         self.session.rollback()
         self.unsaved_modifications = False
+        self.__fill_caches()
 
     def has_unsaved_modifications(self):
         """
