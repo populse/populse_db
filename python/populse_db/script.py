@@ -18,13 +18,15 @@ if __name__ == '__main__':
 
     database = populse_db.database.Database(string_engine, caches=True, list_tables=False)
 
+    session = database.__enter__()
+
     fields = []
 
     current = "current"
     initial = "initial"
 
-    database.add_collection(current, "FileName")
-    database.add_collection(initial, "FileName")
+    session.add_collection(current, "FileName")
+    session.add_collection(initial, "FileName")
 
     for i in range(0, 20):
         fields.append([current, "field" + str(i), populse_db.database.FIELD_TYPE_FLOAT, None])
@@ -39,40 +41,40 @@ if __name__ == '__main__':
         fields.append([current, "field" + str(i), populse_db.database.FIELD_TYPE_LIST_FLOAT, None])
         fields.append([initial, "field" + str(i), populse_db.database.FIELD_TYPE_LIST_FLOAT, None])
 
-    database.add_fields(fields)
+    session.add_fields(fields)
 
-    current_documents = database.get_documents_names(current)
+    current_documents = session.get_documents_names(current)
 
     for i in range(0, 1000):
         document_name = "document" + str(i)
         if not document_name in current_documents:
-            database.add_document(current, document_name, False)
-            database.add_document(initial, document_name, False)
-    database.session.flush()
+            session.add_document(current, document_name, False)
+            session.add_document(initial, document_name, False)
+    session.session.flush()
 
     for i in range(0, 1000):
         document_name = "document" + str(i)
         for j in range(0, 20):
             if document_name in current_documents:
-                database.remove_value(document_name, "field" + str(j), False)
-            database.new_value(current, document_name, "field" + str(j), 1.5, False)
-            database.new_value(initial, document_name, "field" + str(j), 1.5, False)
+                session.remove_value(document_name, "field" + str(j), False)
+            session.new_value(current, document_name, "field" + str(j), 1.5, False)
+            session.new_value(initial, document_name, "field" + str(j), 1.5, False)
         for j in range(20, 40):
             if document_name in current_documents:
-                database.remove_value(document_name, "field" + str(j), False)
-            database.new_value(current, document_name, "field" + str(j), "value", False)
-            database.new_value(initial, document_name, "field" + str(j), "value", False)
+                session.remove_value(document_name, "field" + str(j), False)
+            session.new_value(current, document_name, "field" + str(j), "value", False)
+            session.new_value(initial, document_name, "field" + str(j), "value", False)
         for j in range(40, 50):
             if document_name in current_documents:
-                database.remove_value(document_name, "field" + str(j), False)
-            database.new_value(current, document_name, "field" + str(j), [1, 2, 3], False)
-            database.new_value(initial, document_name, "field" + str(j), [1, 2, 3], False)
+                session.remove_value(document_name, "field" + str(j), False)
+            session.new_value(current, document_name, "field" + str(j), [1, 2, 3], False)
+            session.new_value(initial, document_name, "field" + str(j), [1, 2, 3], False)
         for j in range(50, 75):
             if document_name in current_documents:
-                database.remove_value(document_name, "field" + str(j), False)
-            database.new_value(current, document_name, "field" + str(j), [1, 2, 3], False)
-            database.new_value(initial, document_name, "field" + str(j), [1, 2, 3], False)
-    database.session.flush()
+                session.remove_value(document_name, "field" + str(j), False)
+            session.new_value(current, document_name, "field" + str(j), [1, 2, 3], False)
+            session.new_value(initial, document_name, "field" + str(j), [1, 2, 3], False)
+    session.session.flush()
 
     print("--- %s seconds ---" % (time.time() - start_time))
 
