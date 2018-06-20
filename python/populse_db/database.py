@@ -346,8 +346,7 @@ class DatabaseSession:
         
         if self.__caches:
             self.__fill_caches()
-        
-    
+
     # Shortcuts to access Database attributes
     
     @property
@@ -363,8 +362,6 @@ class DatabaseSession:
     @property
     def query_type(self):
         return self.database.query_type
-
-
 
     def __update_table_classes(self):
         """
@@ -416,7 +413,6 @@ class DatabaseSession:
                     self.__names[collection][field] = field
                 else:
                     self.__names[collection][field] = hashlib.md5(field.encode('utf-8')).hexdigest()
-
 
     def __refresh_cache_documents(self, collection):
         """
@@ -1298,6 +1294,9 @@ class DatabaseSession:
 
         self.session.rollback()
         self.unsaved_modifications = False
+        self.metadata = MetaData()
+        self.metadata.reflect(self.database.engine)
+        self.__update_table_classes()
         self.__fill_caches()
 
     def has_unsaved_modifications(self):
