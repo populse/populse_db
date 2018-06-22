@@ -13,6 +13,7 @@ before_script:
 
 install:
   - pip install -e .[postgres]
+  - pip install --user codecov
 
 script: 
   - python -m populse_db.test
