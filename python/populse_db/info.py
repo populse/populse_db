@@ -1,6 +1,6 @@
 import sys
 
-# Capsul current version
+# populse_db current version
 version_major = 0
 version_minor = 0
 version_micro = 1
@@ -30,14 +30,14 @@ populse_db
 
 The meta-data storage and query system for Populse.
 '''
-# BrainVISA project
+# Populse project
 PROJECT = 'populse'
 brainvisa_build_model = 'pure_python'
 
 # Other values used in setup.py
 ORGANISATION = 'populse'
-AUTHOR = ''
-AUTHOR_EMAIL = ''
+AUTHOR = 'Populse'
+AUTHOR_EMAIL = 'https://github.com/populse/populse_db'
 URL = 'http://populse.github.io'
 LICENSE = 'CeCILL-B'
 VERSION = __version__
