@@ -8,10 +8,9 @@ from datetime import date, time, datetime
 
 import dateutil.parser
 import six
-from sqlalchemy import (create_engine, Column, MetaData, event, Table, sql,
+from sqlalchemy import (create_engine, Column, MetaData, Table, sql,
                         String, Integer, Float, Boolean, Date, DateTime,
                         Time, Enum, event)
-from sqlalchemy.engine import Engine
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session, mapper
 from sqlalchemy.schema import CreateTable, DropTable
@@ -37,11 +36,14 @@ FIELD_TYPE_LIST_TIME = "list_time"
 FIELD_TYPE_LIST_JSON = "list_json"
 
 LIST_TYPES = [FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FLOAT,
-              FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_LIST_DATE, FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON]
+              FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_LIST_DATE, FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_TIME,
+              FIELD_TYPE_LIST_JSON]
 SIMPLE_TYPES = [FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT,
                 FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON]
-ALL_TYPES = [FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_LIST_DATE, FIELD_TYPE_LIST_DATETIME,
-             FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON, FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT, FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON]
+ALL_TYPES = [FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN,
+             FIELD_TYPE_LIST_DATE, FIELD_TYPE_LIST_DATETIME,
+             FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON, FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT,
+             FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON]
 
 TYPE_TO_COLUMN = {}
 TYPE_TO_COLUMN[FIELD_TYPE_INTEGER] = Integer
@@ -61,7 +63,7 @@ TYPE_TO_COLUMN[FIELD_TYPE_LIST_STRING] = String
 TYPE_TO_COLUMN[FIELD_TYPE_JSON] = String
 TYPE_TO_COLUMN[FIELD_TYPE_LIST_JSON] = String
 
-# Tables names
+# Table names
 FIELD_TABLE = "field"
 COLLECTION_TABLE = "collection"
 
@@ -71,28 +73,38 @@ class Database:
 
     attributes:
         - string_engine: string engine of the database
-        - caches: True if caches are used
-        - list_tables: True if tables are created to store values of
-                       list fields and have a pure SQL version of IN
-                       operator in filters
+        - caches: Boolean to know if the caches must be used
+        - list_tables: Boolean to know if list tables must be used
+                        True if tables are created to store values of
+                        list fields and have a pure SQL version of IN
+                        operator in filters
         - query_type: default query implementation for filter_query()
                       and filter_documents()
-        - engine: SqlAlchemy engine
-    
+                      Can be 'sql', 'python', 'mixed', or 'guess'
+        - engine: SQLAlchemy database engine
+
     methods:
-        - create_empty_schemas: initialize database schema
+        - create_empty_schemas: initializes empty database schema
         - __enter__: create or get a DatabaseSession instance
         - __exit__: release the latest created DatabaseSession
+        - clear: clears the database
 
     """
-    
+
     def __init__(self, string_engine, caches=False, list_tables=True,
                  query_type='mixed'):
         self.string_engine = string_engine
+        if not isinstance(caches, bool):
+            raise ValueError("Wrong caches, it must be of type {0}, but caches of type {1} given".format(bool, type(caches)))
         self.caches = caches
+        if not isinstance(list_tables, bool):
+            raise ValueError("Wrong list_tables, it must be of type {0}, but list_tables of type {1} given".format(bool, type(list_tables)))
         self.list_tables = list_tables
+        query_list = [populse_db.filter.QUERY_MIXED, populse_db.filter.QUERY_GUESS, populse_db.filter.QUERY_PYTHON, populse_db.filter.QUERY_SQL]
+        if query_type not in query_list:
+            raise ValueError("Wrong query_type, it must be in {0}, but {1} given".format(query_list, query_type))
         self.query_type = query_type
-            
+
         # SQLite database: we create it if it does not exist
         if string_engine.startswith('sqlite'):
             self.__db_file = re.sub("sqlite.*:///", "", string_engine)
@@ -100,17 +112,17 @@ class Database:
                 parent_dir = os.path.dirname(self.__db_file)
                 if not os.path.exists(parent_dir):
                     os.makedirs(os.path.dirname(self.__db_file))
-        
+
         self.create_empty_schema(self.string_engine)
         self.engine = create_engine(self.string_engine)
-        
+
         if string_engine.startswith('sqlite'):
             @event.listens_for(self.engine, "connect")
             def do_connect(dbapi_connection, connection_record):
                 # disable pysqlite's emitting of the BEGIN statement entirely.
                 # also stops it from emitting COMMIT before any DDL.
                 dbapi_connection.isolation_level = None
-            
+
             @event.listens_for(self.engine, "connect")
             def set_sqlite_pragma(dbapi_connection, connection_record):
                 """
@@ -125,10 +137,10 @@ class Database:
             def do_begin(conn):
                 # emit our own BEGIN
                 conn.execute("BEGIN")
-            
+
         self.__scoped_session = scoped_session(sessionmaker(
             bind=self.engine, autocommit=False, autoflush=False))
-    
+
     @staticmethod
     def create_empty_schema(string_engine):
         """
@@ -143,24 +155,25 @@ class Database:
             return False
         else:
             Table(FIELD_TABLE, metadata,
-                Column("name", String, primary_key=True),
-                Column("collection", String, primary_key=True),
-                Column(
-                    "type", Enum(FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT, FIELD_TYPE_BOOLEAN,
-                                FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON,
-                                FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER,
-                                FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_LIST_DATE,
-                                FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON, name='field_type'),
-                    nullable=False),
-                Column("description", String, nullable=True))
+                  Column("name", String, primary_key=True),
+                  Column("collection", String, primary_key=True),
+                  Column(
+                      "type", Enum(FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT, FIELD_TYPE_BOOLEAN,
+                                   FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON,
+                                   FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER,
+                                   FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_LIST_DATE,
+                                   FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON,
+                                   name='field_type'),
+                      nullable=False),
+                  Column("description", String, nullable=True))
 
             Table(COLLECTION_TABLE, metadata,
-                Column("name", String, primary_key=True),
-                Column("primary_key", String, nullable=False))
+                  Column("name", String, primary_key=True),
+                  Column("primary_key", String, nullable=False))
 
             metadata.create_all(engine)
             return True
-        
+
     def __enter__(self):
         '''
         Return a DatabaseSession instance for using the database. This is
@@ -197,7 +210,7 @@ class Database:
             # the session object
             new_session._populse_db_counter += 1
         return db_session
-        
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         '''
         Release a DatabaseSession previously created by __enter__.
@@ -222,7 +235,7 @@ class Database:
             del current_session._populse_db_session
             del current_session._populse_db_counter
             self.__scoped_session.remove()
-    
+
     def clear(self):
         """
         Remove all documents and collections in the database
@@ -318,7 +331,7 @@ class DatabaseSession:
         FIELD_TYPE_LIST_DATETIME: lambda x: dateutil.parser.parse(x),
         FIELD_TYPE_LIST_TIME: lambda x: dateutil.parser.parse(x).time(),
     }
-    
+
     def __init__(self, database, session):
         """
         Creates an API of the database instance
@@ -333,9 +346,9 @@ class DatabaseSession:
         # Database opened
         self.metadata = MetaData()
         self.metadata.reflect(self.database.engine)
-        
+
         self.unsaved_modifications = False
-        
+
         self.__update_table_classes()
 
         # Database schema checked
@@ -343,21 +356,19 @@ class DatabaseSession:
                 FIELD_TABLE not in self.table_classes.keys()):
             raise ValueError(
                 'The database schema is not coherent with the API')
-        
+
         if self.__caches:
             self.__fill_caches()
 
     # Shortcuts to access Database attributes
-    
+
     @property
     def __caches(self):
         return self.database.caches
-    
-    
+
     @property
     def list_tables(self):
         return self.database.list_tables
-
 
     @property
     def query_type(self):
@@ -385,7 +396,7 @@ class DatabaseSession:
         self.__fields = {}
         self.__names = {}
         self.__collections = {}
-        
+
         # Collections
         collections_rows = self.session.query(self.table_classes[COLLECTION_TABLE]).all()
         for collection_row in collections_rows:
@@ -393,7 +404,8 @@ class DatabaseSession:
 
         # Fields
         for collection in self.__collections:
-            fields_rows = self.session.query(self.table_classes[FIELD_TABLE]).filter(self.table_classes[FIELD_TABLE].collection == collection).all()
+            fields_rows = self.session.query(self.table_classes[FIELD_TABLE]).filter(
+                self.table_classes[FIELD_TABLE].collection == collection).all()
             self.__fields[collection] = {}
             for field_row in fields_rows:
                 self.__fields[collection][field_row.name] = field_row
@@ -403,7 +415,9 @@ class DatabaseSession:
                 documents_rows = self.session.query(self.table_classes[collection]).all()
                 self.__documents[collection] = {}
                 for document_row in documents_rows:
-                    self.__documents[collection][getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(self, collection, document_row)
+                    self.__documents[collection][
+                        getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(self, collection,
+                                                                                                      document_row)
 
         # Names
         for collection in self.__collections:
@@ -424,8 +438,9 @@ class DatabaseSession:
         documents_rows = self.session.query(self.table_classes[collection]).all()
         self.__documents[collection] = {}
         for document_row in documents_rows:
-            self.__documents[collection][getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(self, collection, document_row)
-    
+            self.__documents[collection][getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(
+                self, collection, document_row)
+
     """ COLLECTIONS """
 
     def add_collection(self, name, primary_key="name"):
@@ -438,12 +453,11 @@ class DatabaseSession:
         # Checks
         collection_row = self.get_collection(name)
         if collection_row is not None or name in self.table_classes:
-            raise ValueError("A collection/table with the name " +
-                             str(name) + " already exists")
+            raise ValueError("A collection/table with the name {0} already exists".format(name))
         if not isinstance(name, str):
-            raise ValueError("The collection name must be of type " + str(str) + ", but collection name of type " + str(type(name)) + " given")
+            raise ValueError("The collection name must be of type {0}, but collection name of type {1} given".format(str, type(name)))
         if not isinstance(primary_key, str):
-            raise ValueError("The collection primary_key must be of type " + str(str) + ", but collection primary_key of type " + str(type(primary_key)) + " given")
+            raise ValueError("The collection primary_key must be of type {0}, but collection primary_key of type {1} given".format(str, type(primary_key)))
 
         # Adding the collection row
         collection_row = self.table_classes[COLLECTION_TABLE](name=name, primary_key=primary_key)
@@ -462,7 +476,8 @@ class DatabaseSession:
 
         # Adding the primary_key of the collection as field
         primary_key_field = self.table_classes[FIELD_TABLE](name=primary_key, collection=name,
-                                             type=FIELD_TYPE_STRING, description="Primary_key of the document collection " + name)
+                                                            type=FIELD_TYPE_STRING,
+                                                            description="Primary_key of the document collection " + name)
         self.session.add(primary_key_field)
 
         if self.__caches:
@@ -483,11 +498,13 @@ class DatabaseSession:
 
         collection_row = self.get_collection(name)
         if collection_row is None:
-            raise ValueError("The collection " + str(name) + " does not exist")
+            raise ValueError("The collection {0} does not exist".format(name))
 
         # Removing the collection row
-        self.session.query(self.table_classes[COLLECTION_TABLE]).filter(self.table_classes[COLLECTION_TABLE].name == name).delete()
-        self.session.query(self.table_classes[FIELD_TABLE]).filter(self.table_classes[FIELD_TABLE].collection == name).delete()
+        self.session.query(self.table_classes[COLLECTION_TABLE]).filter(
+            self.table_classes[COLLECTION_TABLE].name == name).delete()
+        self.session.query(self.table_classes[FIELD_TABLE]).filter(
+            self.table_classes[FIELD_TABLE].collection == name).delete()
 
         # Removing the collection document table + metadata associated
         collection_query = DropTable(self.table_classes[name].__table__)
@@ -523,7 +540,8 @@ class DatabaseSession:
         else:
             if not isinstance(name, six.string_types):
                 return None
-            collection_row = self.session.query(self.table_classes[COLLECTION_TABLE]).filter(self.table_classes[COLLECTION_TABLE].name == name).first()
+            collection_row = self.session.query(self.table_classes[COLLECTION_TABLE]).filter(
+                self.table_classes[COLLECTION_TABLE].name == name).first()
             return collection_row
 
     def get_collections_names(self):
@@ -571,7 +589,7 @@ class DatabaseSession:
             for collection in collections:
                 self.__refresh_cache_documents(collection)
 
-    def add_field(self, collection, name, field_type, description=None, 
+    def add_field(self, collection, name, field_type, description=None,
                   index=False, flush=True):
         """
         Adds a field to the database, if it does not already exist
@@ -587,25 +605,21 @@ class DatabaseSession:
         # Checks
         collection_row = self.get_collection(collection)
         if collection_row is None:
-            raise ValueError("The collection " +
-                             str(collection) + " does not exist")
+            raise ValueError("The collection {0} does not exist".format(collection))
         field_row = self.get_field(collection, name)
         if field_row is not None:
-            raise ValueError("A field with the name " +
-                             str(name) + " already exists in the collection " + collection)
+            raise ValueError("A field with the name {0} already exists in the collection {1}".format(name, collection))
         if not isinstance(name, str):
-            raise ValueError("The field name must be of type " + str(str) +
-                             ", but field name of type " + str(type(name)) + " given")
+            raise ValueError("The field name must be of type {0}, but field name of type {1} given".format(str, type(name)))
         if not field_type in ALL_TYPES:
-            raise ValueError("The field type must be in " + str(ALL_TYPES) + ", but " + str(
-                field_type) + " given")
+            raise ValueError("The field type must be in {0}, but {1} given".format(ALL_TYPES, field_type))
         if not isinstance(description, str) and description is not None:
             raise ValueError(
-                "The field description must be of type " + str(str) + " or None, but field description of type " + str(
-                    type(description)) + " given")
+                "The field description must be of type {0} or None, but field description of type {1} given".format(str, type(description)))
 
         # Adding the field in the field table
-        field_row = self.table_classes[FIELD_TABLE](name=name, collection=collection, type=field_type, description=description)
+        field_row = self.table_classes[FIELD_TABLE](name=name, collection=collection, type=field_type,
+                                                    description=description)
 
         if self.__caches:
             self.__fields[collection][name] = field_row
@@ -617,7 +631,9 @@ class DatabaseSession:
         if field_type in LIST_TYPES:
             if self.list_tables:
                 table = 'list_%s_%s' % (collection, self.field_name_to_column_name(collection, name))
-                list_table = Table(table, self.metadata, Column('document_id', String, primary_key=True), Column('i', Integer, primary_key=True), Column('value', TYPE_TO_COLUMN[field_type[5:]]))
+                list_table = Table(table, self.metadata, Column('document_id', String, primary_key=True),
+                                   Column('i', Integer, primary_key=True),
+                                   Column('value', TYPE_TO_COLUMN[field_type[5:]]))
                 list_query = CreateTable(list_table)
                 self.session.execute(list_query)
 
@@ -638,7 +654,7 @@ class DatabaseSession:
         # Column created in document table, and in initial table if initial values are used
 
         document_query = str('ALTER TABLE %s ADD COLUMN %s %s' %
-                         (collection, column_name, column_str_type))
+                             (collection, column_name, column_str_type))
         self.session.execute(document_query)
         self.table_classes[collection].__table__.append_column(column)
 
@@ -691,22 +707,19 @@ class DatabaseSession:
 
         collection_row = self.get_collection(collection)
         if collection_row is None:
-            raise ValueError("The collection " +
-                             str(collection) + " does not exist")
+            raise ValueError("The collection {0} does not exist".format(collection))
         field_rows = []
         if isinstance(field, list):
             for field_elem in field:
                 field_row = self.get_field(collection, field_elem)
                 if field_row is None:
-                    raise ValueError("The field with the name " +
-                                     str(field_elem) + " does not exist in the collection " + str(collection))
+                    raise ValueError("The field with the name {0} does not exist in the collection {1}".format(field_elem, collection))
                 else:
                     field_rows.append(field_row)
         else:
             field_row = self.get_field(collection, field)
             if field_row is None:
-                raise ValueError("The field with the name " +
-                                 str(field) + " does not exist in the collection " + str(collection))
+                raise ValueError("The field with the name {0} does not exist in the collection {1}".format(field, collection))
             else:
                 field_rows.append(field_row)
 
@@ -808,7 +821,9 @@ class DatabaseSession:
         else:
             if not isinstance(collection, six.string_types) or not isinstance(name, six.string_types):
                 return None
-            field_row = self.session.query(self.table_classes[FIELD_TABLE]).filter(self.table_classes[FIELD_TABLE].name == name).filter(self.table_classes[FIELD_TABLE].collection == collection).first()
+            field_row = self.session.query(self.table_classes[FIELD_TABLE]).filter(
+                self.table_classes[FIELD_TABLE].name == name).filter(
+                self.table_classes[FIELD_TABLE].collection == collection).first()
             return field_row
 
     def get_fields_names(self, collection):
@@ -871,17 +886,15 @@ class DatabaseSession:
 
         collection_row = self.get_collection(collection)
         if collection_row is None:
-            raise ValueError("The collection " + str(collection) + " does not exist")
+            raise ValueError("The collection {0} does not exist".format(collection))
         field_row = self.get_field(collection, field)
         if field_row is None:
-            raise ValueError("The field with the name " +
-                             str(field) + " does not exist in the collection " + str(collection))
+            raise ValueError("The field with the name {0} does not exist in the collection {1}".format(field, collection))
         document_row = self.get_document(collection, document)
         if document_row is None:
-            raise ValueError("The document with the name " +
-                             str(document) + " does not exist in the collection " + str(collection))
+            raise ValueError("The document with the name {0} does not exist in the collection {1}".format(document, collection))
         if not self.check_type_value(new_value, field_row.type):
-            raise ValueError("The value " + str(new_value) + " is invalid for the type " + field_row.type)
+            raise ValueError("The value {0} is invalid for the type {1}".format(new_value, field_row.type))
 
         column_name = self.field_name_to_column_name(collection, field)
         new_column = self.python_to_column(field_row.type, new_value)
@@ -890,16 +903,16 @@ class DatabaseSession:
             setattr(document_row.row, column_name, new_column)
         else:
             raise ValueError("Impossible to set the primary_key value of a document")
-        
+
         if self.list_tables and isinstance(new_value, list):
             primary_key = self.get_collection(collection).primary_key
-            document_id = document_row[primary_key]            
+            document_id = document_row[primary_key]
             table_name = 'list_%s_%s' % (collection, column_name)
-            
+
             table = self.metadata.tables[table_name]
             sql = table.delete(table.c.document_id == document_id)
             self.session.execute(sql)
-            
+
             sql = table.insert()
             sql_params = []
             cvalues = [self.python_to_column(field_row.type[5:], i) for i in new_value]
@@ -909,7 +922,7 @@ class DatabaseSession:
                 index += 1
             if sql_params:
                 self.session.execute(sql, params=sql_params)
-    
+
         if flush:
             self.session.flush()
 
@@ -926,18 +939,16 @@ class DatabaseSession:
 
         collection_row = self.get_collection(collection)
         if collection_row is None:
-            raise ValueError("The collection " + str(collection) + " does not exist")
+            raise ValueError("The collection {0} does not exist".format(collection))
         document_row = self.get_document(collection, document)
         if document_row is None:
-            raise ValueError("The document with the name " +
-                             str(document) + " does not exist in the collection " + str(collection))
+            raise ValueError("The document with the name {0} does not exist in the collection {1}".format(document, collection))
         for field in values:
             field_row = self.get_field(collection, field)
             if field_row is None:
-                raise ValueError("The field with the name " +
-                                 str(field) + " does not exist in the collection " + str(collection))
+                raise ValueError("The field with the name {0} does not exist in the collection {1}".format(field, collection))
             if not self.check_type_value(values[field], field_row.type):
-                raise ValueError("The value " + str(values[field]) + " is invalid for the type " + field_row.type)
+                raise ValueError("The value {0} is invalid for the type {1}".format(values[field], field_row.type))
 
         database_values = {}
         for field in values:
@@ -993,20 +1004,18 @@ class DatabaseSession:
 
         collection_row = self.get_collection(collection)
         if collection_row is None:
-            raise ValueError("The collection " + str(collection) + " does not exist")
+            raise ValueError("The collection {0} does not exist".format(collection))
         field_row = self.get_field(collection, field)
         if field_row is None:
-            raise ValueError("The field with the name " +
-                             str(field) + " does not exist in the collection " + str(collection))
+            raise ValueError("The field with the name {0} does not exist in the collection {1}".format(field, collection))
         document_row = self.get_document(collection, document)
         if document_row is None:
-            raise ValueError("The document with the name " +
-                             str(document) + " does not exist in the collection " + str(collection))
+            raise ValueError("The document with the name {0} does not exist in the collection {1}".format(document, collection))
 
         sql_column_name = self.field_name_to_column_name(collection, field)
         old_value = getattr(document_row.row, sql_column_name)
         setattr(document_row.row, sql_column_name, None)
-        
+
         if self.list_tables and field_row.type.startswith('list_'):
             primary_key = self.get_collection(collection).primary_key
             document_id = document_row[primary_key]
@@ -1075,16 +1084,13 @@ class DatabaseSession:
 
         if checks:
             if collection_row is None:
-                raise ValueError("The collection " + str(collection) + " does not exist")
+                raise ValueError("The collection {0} does not exist".format(collection))
             if field_row is None:
-                raise ValueError("The field with the name " +
-                                 str(field) + " does not exist in the collection " + str(collection))
+                raise ValueError("The field with the name {0} does not exist in the collection {1}".format(field, collection))
             if document_row is None:
-                raise ValueError("The document with the name " +
-                                 str(document) + " does not exist in the collection " + str(collection))
+                raise ValueError("The document with the name {0} does not exist in the collection {1}".format(document, collection))
             if not self.check_type_value(value, field_row.type):
-                raise ValueError("The value " +
-                                 str(value) + " is invalid for the type " + field_row.type)
+                raise ValueError("The value {0} is invalid for the type {1}".format(value, field_row.type))
 
         field_name = self.field_name_to_column_name(collection, field)
         database_value = getattr(
@@ -1117,8 +1123,7 @@ class DatabaseSession:
             self.unsaved_modifications = True
 
         else:
-            raise ValueError("The tuple <" + str(field) + ", " +
-                             str(document) + "> already has a value in the collection " + str(collection))
+            raise ValueError("The tuple <{0}, {1}> already has a value in the collection {2}".format(field, document, collection))
 
     """ DOCUMENTS """
 
@@ -1143,7 +1148,7 @@ class DatabaseSession:
             column = getattr(self.table_classes[collection], primary_key)
             value = column.type.python_type(document)
             query = self.session.query(self.table_classes[collection]).filter(
-                    column == value)
+                column == value)
             document_row = query.first()
             if document_row is not None:
                 document_row = FieldRow(self, collection, document_row)
@@ -1188,15 +1193,14 @@ class DatabaseSession:
 
         collection_row = self.get_collection(collection)
         if collection_row is None:
-            raise ValueError("The collection " + str(collection) + " does not exist")
+            raise ValueError("The collection {0} does not exist".format(collection))
         document_row = self.get_document(collection, document)
         if document_row is None:
-            raise ValueError("The document with the name " +
-                             str(document) + " does not exist in the collection " + str(collection))
+            raise ValueError("The document with the name {0} does not exist in the collection {1}".format(document, collection))
         primary_key = collection_row.primary_key
 
         self.session.query(self.table_classes[collection]).filter(
-                getattr(self.table_classes[collection], primary_key) == document).delete()
+            getattr(self.table_classes[collection], primary_key) == document).delete()
 
         # Removing document from list tables
         if self.list_tables:
@@ -1221,22 +1225,19 @@ class DatabaseSession:
 
         collection_row = self.get_collection(collection)
         if collection_row is None:
-            raise ValueError("The collection " +
-                             str(collection) + " does not exist")
+            raise ValueError("The collection {0} does not exist".format(collection))
         primary_key = self.get_collection(collection).primary_key
         if not isinstance(document, dict) and not isinstance(document, str):
             raise ValueError(
-                "The document must be of type " + str(dict) + " or " + str(str) + ", but document of type " + str(
-                    type(document)) + " given")
+                "The document must be of type {0} or {1}, but document of type {2} given".format(dict, str, document))
         if isinstance(document, dict) and primary_key not in document:
-            raise ValueError("The primary_key " + primary_key + " of the collection " + str(collection) + " is missing from the document dictionary")
+            raise ValueError("The primary_key {0} of the collection {1} is missing from the document dictionary".format(primary_key, collection))
         if isinstance(document, dict):
             document_row = self.get_document(collection, document[primary_key])
         else:
             document_row = self.get_document(collection, document)
         if document_row is not None:
-            raise ValueError("A document with the name " +
-                             str(document) + " already exists in the collection " + str(collection))
+            raise ValueError("A document with the name {0} already exists in the collection {1}".format(document, collection))
 
         if not isinstance(document, dict):
             document = {primary_key: document}
@@ -1251,7 +1252,7 @@ class DatabaseSession:
             column_values[column_name] = column_value
             if self.list_tables and isinstance(v, list):
                 table = 'list_%s_%s' % (collection, column_name)
-                #sql = sql_text('INSERT INTO %s (document_id, i, value) VALUES (:document_id, :i, :value)' % table)
+                # sql = sql_text('INSERT INTO %s (document_id, i, value) VALUES (:document_id, :i, :value)' % table)
                 sql = self.metadata.tables[table].insert()
                 sql_params = []
                 cvalues = [self.python_to_column(field_type[5:], i) for i in v]
@@ -1278,7 +1279,7 @@ class DatabaseSession:
 
         self.unsaved_modifications = True
 
-    """ UTILS """
+    """ MODIFICATIONS """
 
     def save_modifications(self):
         """
@@ -1309,6 +1310,7 @@ class DatabaseSession:
 
         return self.unsaved_modifications
 
+    """ FILTERS """
 
     def filter_query(self, collection, filter, query_type=None):
         """
@@ -1354,6 +1356,8 @@ class DatabaseSession:
             row = FieldRow(self, collection, row)
             if python_filter is None or python_filter(row):
                 yield row
+
+    """ UTILS """
 
     def python_to_column(self, column_type, value):
         """
@@ -1404,8 +1408,10 @@ class DatabaseSession:
             return list_value
         return [converter(i) for i in list_value]
 
+
 class Undefined:
     pass
+
 
 class FieldRow:
     '''

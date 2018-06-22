@@ -45,6 +45,29 @@ def create_test_case(**database_creation_parameters):
                 db.clear()
             return db
 
+        def test_wrong_constructor_parameters(self):
+            """
+            Tests the parameters of the Database class constructor
+            """
+
+            # Testing with wrong query_type
+            try:
+                populse_db.database.Database("engine", query_type="wrong_query_type")
+                self.fail()
+            except ValueError:
+                pass
+            try:
+                populse_db.database.Database("engine", query_type=True)
+                self.fail()
+            except ValueError:
+                pass
+            # Testing with wrong caches
+            try:
+                populse_db.database.Database("engine", caches="False")
+                self.fail()
+            except ValueError:
+                pass
+
         def test_add_field(self):
             """
             Tests the method adding a field

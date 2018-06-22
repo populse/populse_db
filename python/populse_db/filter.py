@@ -535,10 +535,16 @@ class FilterToGuessedQuery(FilterToMixedQuery):
         except FilterImplementationLimit:
             transformer = FilterToPythonQuery(self.database, self.collection)
             return transformer.transform(*args, **kwargs)
+
+# Query_types
+QUERY_SQL = "sql"
+QUERY_PYTHON = "python"
+QUERY_MIXED = "mixed"
+QUERY_GUESS = "guess"
     
 _filter_to_query_classes = {
-    'sql' : FilterToSqlQuery,
-    'python' : FilterToPythonQuery,
-    'mixed' : FilterToMixedQuery,
-    'guess' : FilterToGuessedQuery,
+    QUERY_SQL : FilterToSqlQuery,
+    QUERY_PYTHON : FilterToPythonQuery,
+    QUERY_MIXED : FilterToMixedQuery,
+    QUERY_GUESS : FilterToGuessedQuery,
 }
