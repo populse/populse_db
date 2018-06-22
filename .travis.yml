@@ -13,11 +13,11 @@ before_script:
 
 install:
   - pip install -e .[postgres]
-  - pip install --user codecov
+  - pip install codecov
 
 script: 
   - python -m populse_db.test
   - coverage run populse_db.test
 
 after_success:
-- codecov
+- codeco
