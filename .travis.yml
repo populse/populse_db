@@ -17,7 +17,7 @@ install:
 
 script: 
   - python -m populse_db.test
-  - coverage run populse_db.test
+  - coverage run python/populse_db/test.py
 
 after_success:
-- codeco
+- codecov
