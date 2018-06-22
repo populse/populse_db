@@ -14,4 +14,9 @@ before_script:
 install:
   - pip install -e .[postgres]
 
-script: python -m populse_db.test
+script: 
+  - python -m populse_db.test
+  - coverage run populse_db.test
+
+after_success:
+- codecov
