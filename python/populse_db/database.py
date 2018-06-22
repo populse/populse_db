@@ -258,19 +258,15 @@ class DatabaseSession:
     DatabaseSession API
 
     attributes:
+        - database: database
+        - session: session related to the database
         - table_classes: list of table classes, generated automatically
         - base: database base
         - metadata: database metadata
-        - unsaved_modifications: bool to know if there are unsaved
+        - unsaved_modifications: boolean to know if there are unsaved
           modifications in the database
-        - documents: document rows
-        - fields: fields rows
-        - names: fields column names
-        - collections: collections rows
 
     methods:
-        - fill_caches: fill the caches at database opening
-        - refresh_cache_documents: refreshes the cache of documents after adding/removing fields
         - add_collection: adds a collection
         - remove_collection: removes a collection
         - get_collection: gives the collection row
@@ -278,39 +274,29 @@ class DatabaseSession:
         - get_collections_names: gives all collection names
         - add_field: adds a field
         - add_fields: adds a list of fields
+        - remove_field: removes a field
+        - get_field: Gives all fields rows
+        - get_fields_names: gives all fields names
         - field_type_to_column_type: gives the column type corresponding
           to a field type
         - field_name_to_column_name: gives the column name corresponding
           to the field name
-        - remove_field: removes a field
-        - get_field: Gives all fields rows
-        - get_fields_names: gives all fields names
-        - get_documents: gives all document rows
-        - get_documents_names: gives all document names
         - get_value: gives the value of <document, field>
         - set_value: sets the value of <document, field>
         - set_values: sets several values of a collection document
         - remove_value: removes the value of <document, field>
         - check_type_value: checks the type of a value
-        - add_value: adds a value to <document, field>
+        - new_value: adds a value to <document, field>
         - get_document: gives the document row given a document name
         - get_documents: gives all document rows
         - get_documents_names: gives all document names
         - add_document: adds a document
         - remove_document: removes a document
-        - get_documents_matching_constraints: gives the documents matching the
-          constraints given in parameter
-        - get_documents_matching_search: gives the documents matching the
-          search
-        - get_documents_matching_advanced_search: gives the documents matching
-          the advanced search
-        - get_documents_matching_field_value_couples: gives the documents
-          containing all <field, value> given in parameter
         - save_modifications: saves the pending modifications
         - unsave_modifications: unsaves the pending modifications
         - has_unsaved_modifications: to know if there are unsaved
           modifications
-        - update_table_classes: redefines the model after schema update
+        - filter_documents: gives the list of documents matching the filter
     """
 
     # Some types (e.g. time, date and datetime) cannot be
@@ -334,12 +320,11 @@ class DatabaseSession:
 
     def __init__(self, database, session):
         """
-        Creates an API of the database instance
-        :param string_engine: string engine of the database file, can be already existing, or not
-        :param caches: to know if the caches must be used, False by default
-        :param list_tables: to know if tables must be used for list types
-        :param query_type: default value for filtering query type
+        Creates a session API of the database instance
+        :param database: Database to take into account
+        :param session: Session related to the database
         """
+
         self.database = database
         self.session = session
 
@@ -361,7 +346,6 @@ class DatabaseSession:
             self.__fill_caches()
 
     # Shortcuts to access Database attributes
-
     @property
     def __caches(self):
         return self.database.caches
@@ -389,7 +373,7 @@ class DatabaseSession:
 
     def __fill_caches(self):
         """
-        Fills the caches at database opening
+        Fills the caches at database opening if they are used
         """
 
         self.__documents = {}
@@ -410,14 +394,12 @@ class DatabaseSession:
             for field_row in fields_rows:
                 self.__fields[collection][field_row.name] = field_row
 
-            # Documents
-            for collection in self.__collections:
-                documents_rows = self.session.query(self.table_classes[collection]).all()
-                self.__documents[collection] = {}
-                for document_row in documents_rows:
-                    self.__documents[collection][
-                        getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(self, collection,
-                                                                                                      document_row)
+        # Documents
+        for collection in self.__collections:
+            documents_rows = self.session.query(self.table_classes[collection]).all()
+            self.__documents[collection] = {}
+            for document_row in documents_rows:
+                self.__documents[collection][getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(self, collection, document_row)
 
         # Names
         for collection in self.__collections:
@@ -446,8 +428,8 @@ class DatabaseSession:
     def add_collection(self, name, primary_key="name"):
         """
         Adds a collection
-        :param name: New collection name => "name" by default
-        :param primary_key: New collection primary_key column
+        :param name: New collection name
+        :param primary_key: New collection primary_key column => "name" by default
         """
 
         # Checks
@@ -477,7 +459,7 @@ class DatabaseSession:
         # Adding the primary_key of the collection as field
         primary_key_field = self.table_classes[FIELD_TABLE](name=primary_key, collection=name,
                                                             type=FIELD_TYPE_STRING,
-                                                            description="Primary_key of the document collection " + name)
+                                                            description="Primary_key of the document collection {0}".format(name))
         self.session.add(primary_key_field)
 
         if self.__caches:
@@ -496,6 +478,7 @@ class DatabaseSession:
         :param name: collection to remove
         """
 
+        # Checks
         collection_row = self.get_collection(name)
         if collection_row is None:
             raise ValueError("The collection {0} does not exist".format(name))
@@ -738,6 +721,7 @@ class DatabaseSession:
         remaining_columns = [copy.copy(c) for c in old_document_table.columns
                              if c.name not in str(field_names)]
 
+        # Creation of backup table, not containing the column
         document_backup_table = Table(collection + "_backup", self.metadata)
 
         for column in old_document_table.columns:
@@ -750,9 +734,11 @@ class DatabaseSession:
             [c.name for c in remaining_columns], select)
         self.session.execute(insert)
 
+        # Removing the original table
         self.metadata.remove(old_document_table)
         self.session.execute(DropTable(old_document_table))
 
+        # Recreating the table without the column
         new_document_table = Table(collection, self.metadata)
         for column in document_backup_table.columns:
             new_document_table.append_column(column.copy())
@@ -765,6 +751,7 @@ class DatabaseSession:
             [c.name for c in remaining_columns], select)
         self.session.execute(insert)
 
+        # Removing the backup table
         self.metadata.remove(document_backup_table)
         self.session.execute(DropTable(document_backup_table))
 
@@ -884,6 +871,7 @@ class DatabaseSession:
         :param flush: bool to know if flush to do
         """
 
+        # Checks
         collection_row = self.get_collection(collection)
         if collection_row is None:
             raise ValueError("The collection {0} does not exist".format(collection))
@@ -998,10 +986,11 @@ class DatabaseSession:
         Removes the value associated to <document, field> in the collection
         :param collection: document collection (str)
         :param document: document name (str)
-        :param field: Field name (str)
-        :param flush: To know if flush to do (put False in the middle of removing values) => True by default
+        :param field: field name (str)
+        :param flush: boolean to know if flush to do (put False in the middle of removing values) => True by default
         """
 
+        # Checks
         collection_row = self.get_collection(collection)
         if collection_row is None:
             raise ValueError("The collection {0} does not exist".format(collection))
@@ -1073,9 +1062,8 @@ class DatabaseSession:
         :param collection: document collection
         :param document: document name
         :param field: Field name
-        :param current_value: current value
-        :param initial_value: initial value (initial values must be activated)
-        :param checks: bool to know if flush to do and value check (Put False in the middle of adding values, during import)
+        :param value: value
+        :param checks: boolean to know if flush to do and value check (Put False in the middle of adding values, during import)
         """
 
         collection_row = self.get_collection(collection)
@@ -1220,9 +1208,10 @@ class DatabaseSession:
         Adds a document to a collection
         :param collection: document collection (str)
         :param document: dictionary of document values (dict), or document primary_key (str)
-        :param flush: Bool to know if flush to do, put False in the middle of filling the table => True by default
+        :param flush: boolean to know if flush to do, put False in the middle of filling the table => True by default
         """
 
+        # Checks
         collection_row = self.get_collection(collection)
         if collection_row is None:
             raise ValueError("The collection {0} does not exist".format(collection))
@@ -1302,8 +1291,7 @@ class DatabaseSession:
 
     def has_unsaved_modifications(self):
         """
-        Knowing if the database has pending modifications that are
-        unsaved
+        Knowing if the database has pending modifications that are unsaved
         :return: True if there are pending modifications to save,
                  False otherwise
         """
