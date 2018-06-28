@@ -114,7 +114,7 @@ class Database:
                     os.makedirs(os.path.dirname(self.__db_file))
 
         self.create_empty_schema(self.string_engine)
-        self.engine = create_engine(self.string_engine)
+        self.engine = create_engine(self.string_engine, connect_args={'check_same_thread': False})
 
         if string_engine.startswith('sqlite'):
             @event.listens_for(self.engine, "connect")
