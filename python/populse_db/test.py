@@ -20,6 +20,7 @@ def create_test_case(**database_creation_parameters):
             Creates a temporary folder containing the database file that will be used for the test
             """
 
+            print(self._testMethodName)
             self.temp_folder = tempfile.mkdtemp()
             self.path = os.path.join(self.temp_folder, "test.db")
             if 'string_engine' not in database_creation_parameters:
