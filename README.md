@@ -4,26 +4,22 @@ SQLAlchemy based database API for Populse
 
 # Tools
 
-The database is working with SQLite, a .db file
+The API can support every database type, it takes an engine as entry
 
 The database is managed thanks to the ORM SQLAlchemy
 
 # Relational schema
 ![alt text](doc/schema.png "Relational schema")
 
-Type {string, integer, float, date, datetime, time, list_string, list_integer, list_float, list_date, list_datetime, list_time}
+Type {string, integer, float, date, datetime, time, json, list_string, list_integer, list_float, list_date, list_datetime, list_time, list_json}
 	
-Unit {degree, ms, mm, MHz, Hz/pixel}
-
 # Installation
 
 python directory must be added to $PYTHONPATH 
 
 # Import
 
-	from populse_db.DatabaseModel import createDatabase, TAG_TYPE_INTEGER, ...
-
-	from populse_db.Database import Database
+	import populse_db
 	
 # Tests
 
