@@ -1,14 +1,15 @@
+import datetime
 import os
 import shutil
-import unittest
 import tempfile
-import datetime
+import unittest
 
 from sqlalchemy.exc import OperationalError
 
 import populse_db
 
-def create_test_case(**database_creation_parameters):        
+
+def create_test_case(**database_creation_parameters):
     class TestDatabaseMethods(unittest.TestCase):
         """
         Class executing the unit tests of populse_db
@@ -81,7 +82,8 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Testing with a first field
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                                  "Name of the patient")
 
                 # Checking the field properties
                 field = session.get_field("collection1", "PatientName")
@@ -92,7 +94,8 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing with a field that already exists
                 try:
-                    session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+                    session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                                      "Name of the patient")
                     self.fail()
                 except ValueError:
                     pass
@@ -102,9 +105,11 @@ def create_test_case(**database_creation_parameters):
                 session.add_field("collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, "with space")
                 session.add_field("collection1", "AcquisitionTime", populse_db.database.FIELD_TYPE_TIME, None)
                 session.add_field("collection1", "AcquisitionDate", populse_db.database.FIELD_TYPE_DATETIME, None)
-                session.add_field("collection1", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
+                session.add_field("collection1", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER,
+                                  None)
 
-                session.add_field("collection1", "Bitspervoxel", populse_db.database.FIELD_TYPE_INTEGER, "without space")
+                session.add_field("collection1", "Bitspervoxel", populse_db.database.FIELD_TYPE_INTEGER,
+                                  "without space")
                 self.assertEqual(session.get_field(
                     "collection1", "Bitspervoxel").description, "without space")
                 self.assertEqual(session.get_field(
@@ -114,7 +119,8 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing with wrong parameters
                 try:
-                    session.add_field("collection_not_existing", "Field", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
+                    session.add_field("collection_not_existing", "Field", populse_db.database.FIELD_TYPE_LIST_INTEGER,
+                                      None)
                     self.fail()
                 except ValueError:
                     pass
@@ -159,7 +165,8 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("current", "name")
 
                 # Adding fields
-                session.add_field("current", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+                session.add_field("current", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                                  "Name of the patient")
                 session.add_field("current", "SequenceName", populse_db.database.FIELD_TYPE_STRING, None)
                 session.add_field("current", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
 
@@ -196,7 +203,8 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(session.get_field("current", "SequenceName"))
 
                 # Adding fields again
-                session.add_field("current", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+                session.add_field("current", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                                  "Name of the patient")
                 session.add_field("current", "SequenceName", populse_db.database.FIELD_TYPE_STRING, None)
                 session.add_field("current", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
 
@@ -252,7 +260,8 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding field
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                                  "Name of the patient")
 
                 # Testing that the field is returned if it exists
                 self.assertIsNotNone(session.get_field("collection1", "PatientName"))
@@ -277,12 +286,14 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding field
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                                  "Name of the patient")
 
                 fields = session.get_fields("collection1")
                 self.assertEqual(len(fields), 2)
 
-                session.add_field("collection1", "SequenceName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+                session.add_field("collection1", "SequenceName", populse_db.database.FIELD_TYPE_STRING,
+                                  "Name of the patient")
 
                 fields = session.get_fields("collection1")
                 self.assertEqual(len(fields), 3)
@@ -309,7 +320,8 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding fields
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                                  "Name of the patient")
                 session.add_field(
                     "collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, None)
                 session.add_field(
@@ -378,7 +390,7 @@ def create_test_case(**database_creation_parameters):
                 except ValueError:
                     pass
                 self.assertEqual(session.get_value("collection1",
-                    "document1", "Bits per voxel"), 2)
+                                                   "document1", "Bits per voxel"), 2)
                 try:
                     session.set_value("collection1", "document1", "Bits per voxel", 35.8)
                     self.fail()
@@ -493,14 +505,16 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding field
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                                  "Name of the patient")
 
                 fields = session.get_fields_names("collection1")
                 self.assertEqual(len(fields), 2)
                 self.assertTrue("name" in fields)
                 self.assertTrue("PatientName" in fields)
 
-                session.add_field("collection1", "SequenceName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+                session.add_field("collection1", "SequenceName", populse_db.database.FIELD_TYPE_STRING,
+                                  "Name of the patient")
 
                 fields = session.get_fields_names("collection1")
                 self.assertEqual(len(fields), 3)
@@ -536,8 +550,10 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding fields
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
-                session.add_field("collection1", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
+                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                                  "Name of the patient")
+                session.add_field("collection1", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER,
+                                  None)
                 session.add_field("collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, None)
                 session.add_field("collection1", "Grids spacing", populse_db.database.FIELD_TYPE_LIST_FLOAT, None)
 
@@ -547,7 +563,7 @@ def create_test_case(**database_creation_parameters):
                 session.new_value(
                     "collection1", "document1", "Dataset dimensions", [3, 28, 28, 3])
                 session.new_value("collection1", "document1", "Grids spacing", [
-                                0.234375, 0.234375, 0.4])
+                    0.234375, 0.234375, 0.4])
 
                 # Testing that the value is returned if it exists
                 self.assertEqual(session.get_value(
@@ -620,13 +636,15 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding fields
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                                  "Name of the patient")
                 session.add_field(
                     "collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, None)
                 session.add_field("collection1", "BandWidth", populse_db.database.FIELD_TYPE_FLOAT, None)
                 session.add_field("collection1", "AcquisitionTime", populse_db.database.FIELD_TYPE_TIME, None)
                 session.add_field("collection1", "AcquisitionDate", populse_db.database.FIELD_TYPE_DATETIME, None)
-                session.add_field("collection1", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
+                session.add_field("collection1", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER,
+                                  None)
                 session.add_field("collection1", "Grids spacing", populse_db.database.FIELD_TYPE_LIST_FLOAT, None)
                 session.add_field("collection1", "Boolean", populse_db.database.FIELD_TYPE_BOOLEAN, None)
                 session.add_field("collection1", "Boolean list", populse_db.database.FIELD_TYPE_LIST_BOOLEAN, None)
@@ -638,7 +656,7 @@ def create_test_case(**database_creation_parameters):
                 session.new_value(
                     "collection1", "document1", "Dataset dimensions", [3, 28, 28, 3])
                 session.new_value("collection1", "document2", "Grids spacing", [
-                                0.234375, 0.234375, 0.4])
+                    0.234375, 0.234375, 0.4])
                 session.new_value("collection1", "document1", "Boolean", True)
 
                 # Testing when not existing
@@ -699,7 +717,7 @@ def create_test_case(**database_creation_parameters):
                 # Testing with wrong types
                 try:
                     session.new_value("collection1", "document2", "Bits per voxel",
-                                    "space_field", "space_field")
+                                      "space_field", "space_field")
                     self.fail()
                 except ValueError:
                     pass
@@ -801,7 +819,8 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding field
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING, "Name of the patient")
+                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                                  "Name of the patient")
 
                 # Adding value
                 session.new_value("collection1", "document1", "PatientName", "test")
@@ -1180,10 +1199,10 @@ def create_test_case(**database_creation_parameters):
 
                 # Adding fields
                 session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
-                                            "Name of the patient")
+                                  "Name of the patient")
                 session.add_field("collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, None)
                 session.add_field("collection1", "Dataset dimensions",
-                                            populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
+                                  populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
 
                 # Adding values
                 session.new_value("collection1", "document1", "PatientName", "test")
@@ -1256,7 +1275,7 @@ def create_test_case(**database_creation_parameters):
                 list_date = [datetime.date(2018, 5, 23), datetime.date(1899, 12, 31)]
                 list_time = [datetime.time(12, 41, 33, 540), datetime.time(1, 2, 3)]
                 list_datetime = [datetime.datetime(2018, 5, 23, 12, 41, 33, 540),
-                                datetime.datetime(1899, 12, 31, 1, 2, 3)]
+                                 datetime.datetime(1899, 12, 31, 1, 2, 3)]
 
                 session.new_value("collection1", "document1", "list_date", list_date)
                 self.assertEqual(
@@ -1270,17 +1289,21 @@ def create_test_case(**database_creation_parameters):
 
         def test_filters(self):
             list_datetime = [datetime.datetime(2018, 5, 23, 12, 41, 33, 540),
-                            datetime.datetime(1981, 5, 8, 20, 0),
-                            datetime.datetime(1899, 12, 31, 1, 2, 3)]
+                             datetime.datetime(1981, 5, 8, 20, 0),
+                             datetime.datetime(1899, 12, 31, 1, 2, 3)]
 
             database = self.create_database()
             with database as session:
                 session.add_collection("collection1", "name")
 
-                session.add_field("collection1", 'format', field_type=populse_db.database.FIELD_TYPE_STRING, description=None, index=True)
-                session.add_field("collection1", 'strings', field_type=populse_db.database.FIELD_TYPE_LIST_STRING, description=None)
-                session.add_field("collection1", 'datetime', field_type=populse_db.database.FIELD_TYPE_DATETIME, description=None)
-                session.add_field("collection1", 'has_format', field_type=populse_db.database.FIELD_TYPE_BOOLEAN, description=None)
+                session.add_field("collection1", 'format', field_type=populse_db.database.FIELD_TYPE_STRING,
+                                  description=None, index=True)
+                session.add_field("collection1", 'strings', field_type=populse_db.database.FIELD_TYPE_LIST_STRING,
+                                  description=None)
+                session.add_field("collection1", 'datetime', field_type=populse_db.database.FIELD_TYPE_DATETIME,
+                                  description=None)
+                session.add_field("collection1", 'has_format', field_type=populse_db.database.FIELD_TYPE_BOOLEAN,
+                                  description=None)
 
                 session.save_modifications()
                 files = ('abc', 'bcd', 'def', 'xyz')
@@ -1299,552 +1322,552 @@ def create_test_case(**database_creation_parameters):
                             session.add_document("collection1", document)
                         document = '/%s_%d.none' % (file, date.year)
                         session.add_document("collection1", dict(name=document, strings=list(file)))
-                #session.save_modifications()
+                # session.save_modifications()
 
                 for filter, expected in (
-                    ('format == "NIFTI"',
-                    {
-                    '/xyz_1899.nii',
-                    '/xyz_2018.nii',
-                    '/abc_2018.nii',
-                    '/bcd_1899.nii',
-                    '/bcd_2018.nii',
-                    '/def_1899.nii',
-                    '/abc_1981.nii',
-                    '/def_2018.nii',
-                    '/def_1981.nii',
-                    '/bcd_1981.nii',
-                    '/abc_1899.nii',
-                    '/xyz_1981.nii'
-                    }
-                    ),
-                    
-                    ('"b" IN strings',
-                    {
-                    '/bcd_2018.mgz',
-                    '/abc_1899.mgz',
-                    '/abc_1899.dcm',
-                    '/bcd_1981.dcm',
-                    '/abc_1981.dcm',
-                    '/bcd_1981.mgz',
-                    '/bcd_1899.mgz',
-                    '/abc_1981.mgz',
-                    '/abc_2018.mgz',
-                    '/abc_2018.dcm',
-                    '/bcd_2018.dcm',
-                    '/bcd_1899.dcm',
-                    '/abc_2018.nii',
-                    '/bcd_1899.nii',
-                    '/abc_1981.nii',
-                    '/bcd_1981.nii',
-                    '/abc_1899.nii',
-                    '/bcd_2018.nii',
-                    '/abc_1899.none',
-                    '/bcd_1899.none',
-                    '/bcd_1981.none',
-                    '/abc_2018.none',
-                    '/bcd_2018.none',
-                    '/abc_1981.none'
-                    }
-                    ),
-                    
-                    ('(format == "NIFTI" OR NOT format == "DICOM")',
-                    {
-                    '/xyz_1899.nii',
-                    '/xyz_1899.mgz',
-                    '/bcd_2018.mgz',
-                    '/bcd_1899.nii',
-                    '/bcd_2018.nii',
-                    '/def_1899.nii',
-                    '/bcd_1981.mgz',
-                    '/abc_1981.nii',
-                    '/def_2018.mgz',
-                    '/abc_1899.nii',
-                    '/def_1899.mgz',
-                    '/xyz_1899.none',
-                    '/abc_2018.nii',
-                    '/def_1899.none',
-                    '/bcd_1899.mgz',
-                    '/def_2018.nii',
-                    '/abc_1981.mgz',
-                    '/abc_1899.none',
-                    '/xyz_1981.mgz',
-                    '/bcd_1981.nii',
-                    '/xyz_1981.nii',
-                    '/abc_2018.mgz',
-                    '/xyz_2018.nii',
-                    '/abc_1899.mgz',
-                    '/def_1981.nii',
-                    '/def_1981.mgz',
-                    '/bcd_1899.none',
-                    '/xyz_2018.mgz',
-                    '/bcd_1981.none',
-                    '/xyz_1981.none',
-                    '/abc_1981.none',
-                    '/def_2018.none',
-                    '/xyz_2018.none',
-                    '/abc_2018.none',
-                    '/def_1981.none',
-                    '/bcd_2018.none'
-                    }
-                    ),
-                    
-                    ('"a" IN strings',
-                    {
-                    '/abc_1899.none',
-                    '/abc_1899.nii',
-                    '/abc_2018.nii',
-                    '/abc_1899.mgz',
-                    '/abc_1899.dcm',
-                    '/abc_1981.dcm',
-                    '/abc_1981.nii',
-                    '/abc_1981.mgz',
-                    '/abc_2018.mgz',
-                    '/abc_2018.dcm',
-                    '/abc_2018.none',
-                    '/abc_1981.none'
-                    }
-                    ),
-                    
-                    ('NOT "b" IN strings',
-                    {
-                    '/xyz_1899.nii',
-                    '/xyz_2018.dcm',
-                    '/def_1981.dcm',
-                    '/xyz_2018.nii',
-                    '/xyz_1981.dcm',
-                    '/def_1899.none',
-                    '/xyz_1899.dcm',
-                    '/xyz_1981.nii',
-                    '/def_1899.dcm',
-                    '/def_1899.nii',
-                    '/def_2018.mgz',
-                    '/def_2018.nii',
-                    '/xyz_1899.mgz',
-                    '/def_2018.dcm',
-                    '/def_1899.mgz',
-                    '/def_1981.mgz',
-                    '/xyz_1981.mgz',
-                    '/xyz_2018.mgz',
-                    '/xyz_1899.none',
-                    '/def_1981.nii',
-                    '/xyz_2018.none',
-                    '/xyz_1981.none',
-                    '/def_2018.none',
-                    '/def_1981.none'
-                    }
-                    ),
-                    ('("a" IN strings OR NOT "b" IN strings)',
-                    {
-                    '/xyz_1899.nii',
-                    '/xyz_1899.mgz',
-                    '/def_1899.nii',
-                    '/abc_1981.nii',
-                    '/def_2018.mgz',
-                    '/abc_1899.nii',
-                    '/def_1899.mgz',
-                    '/abc_2018.dcm',
-                    '/xyz_1899.none',
-                    '/xyz_2018.dcm',
-                    '/def_1981.dcm',
-                    '/abc_2018.nii',
-                    '/def_1899.none',
-                    '/abc_1981.dcm',
-                    '/def_2018.nii',
-                    '/abc_1981.mgz',
-                    '/def_2018.dcm',
-                    '/abc_1899.none',
-                    '/xyz_1981.mgz',
-                    '/xyz_1899.dcm',
-                    '/abc_1899.dcm',
-                    '/def_1899.dcm',
-                    '/xyz_1981.nii',
-                    '/abc_2018.mgz',
-                    '/xyz_2018.nii',
-                    '/abc_1899.mgz',
-                    '/xyz_1981.dcm',
-                    '/def_1981.nii',
-                    '/def_1981.mgz',
-                    '/xyz_2018.mgz',
-                    '/xyz_1981.none',
-                    '/abc_1981.none',
-                    '/def_2018.none',
-                    '/xyz_2018.none',
-                    '/abc_2018.none',
-                    '/def_1981.none'
-                    }
-                    ),
-                    
-                    ('format IN ["DICOM", "NIFTI"]',
-                    {
-                    '/xyz_1899.nii',
-                    '/xyz_2018.dcm',
-                    '/bcd_1899.nii',
-                    '/def_1899.nii',
-                    '/abc_1981.nii',
-                    '/abc_1899.nii',
-                    '/bcd_2018.nii',
-                    '/abc_2018.dcm',
-                    '/bcd_1899.dcm',
-                    '/def_1981.dcm',
-                    '/abc_2018.nii',
-                    '/abc_1981.dcm',
-                    '/bcd_2018.dcm',
-                    '/def_2018.nii',
-                    '/def_2018.dcm',
-                    '/xyz_1899.dcm',
-                    '/abc_1899.dcm',
-                    '/def_1899.dcm',
-                    '/bcd_1981.nii',
-                    '/xyz_1981.nii',
-                    '/xyz_2018.nii',
-                    '/xyz_1981.dcm',
-                    '/def_1981.nii',
-                    '/bcd_1981.dcm',
-                    }
-                    ),
+                        ('format == "NIFTI"',
+                         {
+                             '/xyz_1899.nii',
+                             '/xyz_2018.nii',
+                             '/abc_2018.nii',
+                             '/bcd_1899.nii',
+                             '/bcd_2018.nii',
+                             '/def_1899.nii',
+                             '/abc_1981.nii',
+                             '/def_2018.nii',
+                             '/def_1981.nii',
+                             '/bcd_1981.nii',
+                             '/abc_1899.nii',
+                             '/xyz_1981.nii'
+                         }
+                         ),
 
-                    ('(format == "NIFTI" OR NOT format == "DICOM") AND ("a" IN strings OR NOT "b" IN strings)',
-                    {
-                    '/abc_1899.none',
-                    '/xyz_1899.mgz',
-                    '/abc_1981.mgz',
-                    '/abc_2018.nii',
-                    '/xyz_1899.nii',
-                    '/abc_1899.mgz',
-                    '/def_1899.mgz',
-                    '/def_1899.nii',
-                    '/def_1899.none',
-                    '/abc_1981.nii',
-                    '/def_2018.nii',
-                    '/xyz_2018.nii',
-                    '/def_1981.nii',
-                    '/abc_1899.nii',
-                    '/xyz_1981.nii',
-                    '/abc_2018.mgz',
-                    '/def_1981.mgz',
-                    '/xyz_2018.mgz',
-                    '/xyz_1899.none',
-                    '/def_2018.mgz',
-                    '/xyz_1981.mgz',
-                    '/xyz_1981.none',
-                    '/abc_1981.none',
-                    '/def_2018.none',
-                    '/xyz_2018.none',
-                    '/abc_2018.none',
-                    '/def_1981.none'
-                    }
-                    ),
-                    
-                    ('format > "DICOM"',
-                    {
-                    '/xyz_1899.nii',
-                    '/xyz_1899.mgz',
-                    '/bcd_2018.mgz',
-                    '/bcd_1899.nii',
-                    '/bcd_2018.nii',
-                    '/def_1899.nii',
-                    '/bcd_1981.mgz',
-                    '/abc_1981.nii',
-                    '/def_2018.mgz',
-                    '/abc_1899.nii',
-                    '/def_1899.mgz',
-                    '/abc_2018.nii',
-                    '/def_2018.nii',
-                    '/abc_1981.mgz',
-                    '/xyz_1981.mgz',
-                    '/bcd_1981.nii',
-                    '/xyz_1981.nii',
-                    '/abc_2018.mgz',
-                    '/xyz_2018.nii',
-                    '/abc_1899.mgz',
-                    '/def_1981.nii',
-                    '/def_1981.mgz',
-                    '/bcd_1899.mgz',
-                    '/xyz_2018.mgz'
-                    }
-                    ),
-                    
-                    ('format <= "DICOM"',
-                    {
-                    '/abc_1981.dcm',
-                    '/def_1899.dcm',
-                    #'/xyz_2018.none',
-                    '/abc_2018.dcm',
-                    #'/xyz_1899.none',
-                    '/bcd_1899.dcm',
-                    #'/bcd_1981.none',
-                    '/def_1981.dcm',
-                    #'/def_1899.none',
-                    #'/xyz_1981.none',
-                    #'/def_2018.none',
-                    '/bcd_2018.dcm',
-                    '/def_2018.dcm',
-                    #'/abc_1899.none',
-                    '/xyz_2018.dcm',
-                    '/xyz_1899.dcm',
-                    '/abc_1899.dcm',
-                    #'/def_1981.none',
-                    #'/bcd_2018.none',
-                    #'/abc_1981.none',
-                    '/xyz_1981.dcm',
-                    #'/abc_2018.none',
-                    '/bcd_1981.dcm',
-                    #'/bcd_1899.none'
-                    }
-                    ),
-                    
-                    ('format > "DICOM" AND strings != ["b", "c", "d"]',
-                    {
-                    '/xyz_1899.nii',
-                    '/xyz_1899.mgz',
-                    '/abc_1981.mgz',
-                    '/abc_2018.nii',
-                    '/xyz_2018.nii',
-                    '/abc_1899.mgz',
-                    '/def_1899.mgz',
-                    '/def_1899.nii',
-                    '/abc_1981.nii',
-                    '/def_2018.nii',
-                    '/def_1981.nii',
-                    '/abc_1899.nii',
-                    '/xyz_1981.nii',
-                    '/abc_2018.mgz',
-                    '/def_1981.mgz',
-                    '/xyz_2018.mgz',
-                    '/def_2018.mgz',
-                    '/xyz_1981.mgz'
-                    }
-                    ),
-                    
-                    ('format <= "DICOM" AND strings == ["b", "c", "d"]',
-                    {
-                    #'/bcd_1899.none',
-                    '/bcd_2018.dcm',
-                    '/bcd_1981.dcm',
-                    '/bcd_1899.dcm',
-                    #'/bcd_1981.none',
-                    #'/bcd_2018.none',
-                    }
-                    ),
-                    
-                    ('has_format in [false, null]',
-                    {
-                    '/def_1899.none',
-                    '/abc_1899.none',
-                    '/bcd_1899.none',
-                    '/xyz_1899.none',
-                    '/bcd_2018.none',
-                    '/abc_1981.none',
-                    '/def_2018.none',
-                    '/xyz_2018.none',
-                    '/abc_2018.none',
-                    '/def_1981.none',
-                    '/xyz_1981.none',
-                    '/bcd_1981.none',
-                    }
-                    ),
-                    
-                    ('format == null',
-                    {
-                    '/bcd_1981.none',
-                    '/abc_1899.none',
-                    '/def_1899.none',
-                    '/bcd_2018.none',
-                    '/abc_1981.none',
-                    '/def_2018.none',
-                    '/xyz_2018.none',
-                    '/abc_2018.none',
-                    '/def_1981.none',
-                    '/bcd_1899.none',
-                    '/xyz_1899.none',
-                    '/xyz_1981.none'
-                    }
-                    ),
-                    
-                    ('strings == null',
-                    set()),
-                    
-                    ('strings != NULL',
-                    {
-                    '/xyz_1899.nii',
-                    '/xyz_2018.dcm',
-                    '/xyz_1899.mgz',
-                    '/bcd_2018.mgz',
-                    '/bcd_1899.nii',
-                    '/def_2018.none',
-                    '/def_1899.mgz',
-                    '/def_1899.nii',
-                    '/bcd_1981.mgz',
-                    '/abc_1981.nii',
-                    '/def_2018.mgz',
-                    '/abc_1899.nii',
-                    '/bcd_2018.nii',
-                    '/abc_2018.dcm',
-                    '/xyz_1899.none',
-                    '/bcd_1899.dcm',
-                    '/bcd_1981.none',
-                    '/def_1981.dcm',
-                    '/abc_2018.nii',
-                    '/def_1899.none',
-                    '/xyz_1981.none',
-                    '/abc_1981.dcm',
-                    '/bcd_2018.dcm',
-                    '/def_2018.nii',
-                    '/abc_1981.mgz',
-                    '/def_2018.dcm',
-                    '/abc_1899.none',
-                    '/xyz_1981.mgz',
-                    '/xyz_1899.dcm',
-                    '/abc_1899.dcm',
-                    '/def_1899.dcm',
-                    '/bcd_1981.nii',
-                    '/def_1981.none',
-                    '/xyz_1981.nii',
-                    '/abc_2018.mgz',
-                    '/xyz_2018.none',
-                    '/xyz_2018.nii',
-                    '/abc_1899.mgz',
-                    '/bcd_1899.mgz',
-                    '/bcd_2018.none',
-                    '/abc_1981.none',
-                    '/xyz_1981.dcm',
-                    '/abc_2018.none',
-                    '/def_1981.nii',
-                    '/bcd_1981.dcm',
-                    '/def_1981.mgz',
-                    '/bcd_1899.none',
-                    '/xyz_2018.mgz'
-                    }
-                    ),
-                    
-                    ('format != NULL',
-                    {
-                    '/xyz_1899.nii',
-                    '/xyz_1899.mgz',
-                    '/bcd_2018.mgz',
-                    '/bcd_1899.nii',
-                    '/def_1899.mgz',
-                    '/def_1899.nii',
-                    '/bcd_1981.mgz',
-                    '/abc_1981.nii',
-                    '/def_2018.mgz',
-                    '/abc_1899.nii',
-                    '/bcd_2018.nii',
-                    '/abc_2018.dcm',
-                    '/xyz_1981.mgz',
-                    '/def_1981.dcm',
-                    '/abc_2018.nii',
-                    '/abc_1981.dcm',
-                    '/bcd_2018.dcm',
-                    '/def_2018.nii',
-                    '/bcd_1981.nii',
-                    '/abc_1981.mgz',
-                    '/def_2018.dcm',
-                    '/bcd_1899.dcm',
-                    '/xyz_2018.dcm',
-                    '/xyz_1899.dcm',
-                    '/abc_1899.dcm',
-                    '/def_1899.dcm',
-                    '/bcd_1899.mgz',
-                    '/xyz_1981.nii',
-                    '/abc_2018.mgz',
-                    '/xyz_2018.nii',
-                    '/abc_1899.mgz',
-                    '/xyz_1981.dcm',
-                    '/def_1981.nii',
-                    '/bcd_1981.dcm',
-                    '/def_1981.mgz',
-                    '/xyz_2018.mgz'
-                    }
-                    ),
+                        ('"b" IN strings',
+                         {
+                             '/bcd_2018.mgz',
+                             '/abc_1899.mgz',
+                             '/abc_1899.dcm',
+                             '/bcd_1981.dcm',
+                             '/abc_1981.dcm',
+                             '/bcd_1981.mgz',
+                             '/bcd_1899.mgz',
+                             '/abc_1981.mgz',
+                             '/abc_2018.mgz',
+                             '/abc_2018.dcm',
+                             '/bcd_2018.dcm',
+                             '/bcd_1899.dcm',
+                             '/abc_2018.nii',
+                             '/bcd_1899.nii',
+                             '/abc_1981.nii',
+                             '/bcd_1981.nii',
+                             '/abc_1899.nii',
+                             '/bcd_2018.nii',
+                             '/abc_1899.none',
+                             '/bcd_1899.none',
+                             '/bcd_1981.none',
+                             '/abc_2018.none',
+                             '/bcd_2018.none',
+                             '/abc_1981.none'
+                         }
+                         ),
 
-                    ('name like "%.nii"',
-                    {
-                    '/xyz_1899.nii',
-                    '/xyz_2018.nii',
-                    '/abc_2018.nii',
-                    '/bcd_1899.nii',
-                    '/bcd_2018.nii',
-                    '/def_1899.nii',
-                    '/abc_1981.nii',
-                    '/def_2018.nii',
-                    '/def_1981.nii',
-                    '/bcd_1981.nii',
-                    '/abc_1899.nii',
-                    '/xyz_1981.nii'
-                    }
-                    ),
+                        ('(format == "NIFTI" OR NOT format == "DICOM")',
+                         {
+                             '/xyz_1899.nii',
+                             '/xyz_1899.mgz',
+                             '/bcd_2018.mgz',
+                             '/bcd_1899.nii',
+                             '/bcd_2018.nii',
+                             '/def_1899.nii',
+                             '/bcd_1981.mgz',
+                             '/abc_1981.nii',
+                             '/def_2018.mgz',
+                             '/abc_1899.nii',
+                             '/def_1899.mgz',
+                             '/xyz_1899.none',
+                             '/abc_2018.nii',
+                             '/def_1899.none',
+                             '/bcd_1899.mgz',
+                             '/def_2018.nii',
+                             '/abc_1981.mgz',
+                             '/abc_1899.none',
+                             '/xyz_1981.mgz',
+                             '/bcd_1981.nii',
+                             '/xyz_1981.nii',
+                             '/abc_2018.mgz',
+                             '/xyz_2018.nii',
+                             '/abc_1899.mgz',
+                             '/def_1981.nii',
+                             '/def_1981.mgz',
+                             '/bcd_1899.none',
+                             '/xyz_2018.mgz',
+                             '/bcd_1981.none',
+                             '/xyz_1981.none',
+                             '/abc_1981.none',
+                             '/def_2018.none',
+                             '/xyz_2018.none',
+                             '/abc_2018.none',
+                             '/def_1981.none',
+                             '/bcd_2018.none'
+                         }
+                         ),
 
-                    ('name ilike "%A%"',
-                    {
-                    '/abc_1899.none',
-                    '/abc_1899.nii',
-                    '/abc_2018.nii',
-                    '/abc_1899.mgz',
-                    '/abc_1899.dcm',
-                    '/abc_1981.dcm',
-                    '/abc_1981.nii',
-                    '/abc_1981.mgz',
-                    '/abc_2018.mgz',
-                    '/abc_2018.dcm',
-                    '/abc_2018.none',
-                    '/abc_1981.none'
-                    }
-                    ),
+                        ('"a" IN strings',
+                         {
+                             '/abc_1899.none',
+                             '/abc_1899.nii',
+                             '/abc_2018.nii',
+                             '/abc_1899.mgz',
+                             '/abc_1899.dcm',
+                             '/abc_1981.dcm',
+                             '/abc_1981.nii',
+                             '/abc_1981.mgz',
+                             '/abc_2018.mgz',
+                             '/abc_2018.dcm',
+                             '/abc_2018.none',
+                             '/abc_1981.none'
+                         }
+                         ),
 
-                    ('all',
-                    {
-                    '/xyz_1899.nii',
-                    '/xyz_2018.dcm',
-                    '/xyz_1899.mgz',
-                    '/bcd_2018.mgz',
-                    '/bcd_1899.nii',
-                    '/def_2018.none',
-                    '/def_1899.mgz',
-                    '/def_1899.nii',
-                    '/bcd_1981.mgz',
-                    '/abc_1981.nii',
-                    '/def_2018.mgz',
-                    '/abc_1899.nii',
-                    '/bcd_2018.nii',
-                    '/abc_2018.dcm',
-                    '/xyz_1899.none',
-                    '/bcd_1899.dcm',
-                    '/bcd_1981.none',
-                    '/def_1981.dcm',
-                    '/abc_2018.nii',
-                    '/def_1899.none',
-                    '/xyz_1981.none',
-                    '/abc_1981.dcm',
-                    '/bcd_2018.dcm',
-                    '/def_2018.nii',
-                    '/abc_1981.mgz',
-                    '/def_2018.dcm',
-                    '/abc_1899.none',
-                    '/xyz_1981.mgz',
-                    '/xyz_1899.dcm',
-                    '/abc_1899.dcm',
-                    '/def_1899.dcm',
-                    '/bcd_1981.nii',
-                    '/def_1981.none',
-                    '/xyz_1981.nii',
-                    '/abc_2018.mgz',
-                    '/xyz_2018.none',
-                    '/xyz_2018.nii',
-                    '/abc_1899.mgz',
-                    '/bcd_1899.mgz',
-                    '/bcd_2018.none',
-                    '/abc_1981.none',
-                    '/xyz_1981.dcm',
-                    '/abc_2018.none',
-                    '/def_1981.nii',
-                    '/bcd_1981.dcm',
-                    '/def_1981.mgz',
-                    '/bcd_1899.none',
-                    '/xyz_2018.mgz'
-                    }
-                    )):
+                        ('NOT "b" IN strings',
+                         {
+                             '/xyz_1899.nii',
+                             '/xyz_2018.dcm',
+                             '/def_1981.dcm',
+                             '/xyz_2018.nii',
+                             '/xyz_1981.dcm',
+                             '/def_1899.none',
+                             '/xyz_1899.dcm',
+                             '/xyz_1981.nii',
+                             '/def_1899.dcm',
+                             '/def_1899.nii',
+                             '/def_2018.mgz',
+                             '/def_2018.nii',
+                             '/xyz_1899.mgz',
+                             '/def_2018.dcm',
+                             '/def_1899.mgz',
+                             '/def_1981.mgz',
+                             '/xyz_1981.mgz',
+                             '/xyz_2018.mgz',
+                             '/xyz_1899.none',
+                             '/def_1981.nii',
+                             '/xyz_2018.none',
+                             '/xyz_1981.none',
+                             '/def_2018.none',
+                             '/def_1981.none'
+                         }
+                         ),
+                        ('("a" IN strings OR NOT "b" IN strings)',
+                         {
+                             '/xyz_1899.nii',
+                             '/xyz_1899.mgz',
+                             '/def_1899.nii',
+                             '/abc_1981.nii',
+                             '/def_2018.mgz',
+                             '/abc_1899.nii',
+                             '/def_1899.mgz',
+                             '/abc_2018.dcm',
+                             '/xyz_1899.none',
+                             '/xyz_2018.dcm',
+                             '/def_1981.dcm',
+                             '/abc_2018.nii',
+                             '/def_1899.none',
+                             '/abc_1981.dcm',
+                             '/def_2018.nii',
+                             '/abc_1981.mgz',
+                             '/def_2018.dcm',
+                             '/abc_1899.none',
+                             '/xyz_1981.mgz',
+                             '/xyz_1899.dcm',
+                             '/abc_1899.dcm',
+                             '/def_1899.dcm',
+                             '/xyz_1981.nii',
+                             '/abc_2018.mgz',
+                             '/xyz_2018.nii',
+                             '/abc_1899.mgz',
+                             '/xyz_1981.dcm',
+                             '/def_1981.nii',
+                             '/def_1981.mgz',
+                             '/xyz_2018.mgz',
+                             '/xyz_1981.none',
+                             '/abc_1981.none',
+                             '/def_2018.none',
+                             '/xyz_2018.none',
+                             '/abc_2018.none',
+                             '/def_1981.none'
+                         }
+                         ),
+
+                        ('format IN ["DICOM", "NIFTI"]',
+                         {
+                             '/xyz_1899.nii',
+                             '/xyz_2018.dcm',
+                             '/bcd_1899.nii',
+                             '/def_1899.nii',
+                             '/abc_1981.nii',
+                             '/abc_1899.nii',
+                             '/bcd_2018.nii',
+                             '/abc_2018.dcm',
+                             '/bcd_1899.dcm',
+                             '/def_1981.dcm',
+                             '/abc_2018.nii',
+                             '/abc_1981.dcm',
+                             '/bcd_2018.dcm',
+                             '/def_2018.nii',
+                             '/def_2018.dcm',
+                             '/xyz_1899.dcm',
+                             '/abc_1899.dcm',
+                             '/def_1899.dcm',
+                             '/bcd_1981.nii',
+                             '/xyz_1981.nii',
+                             '/xyz_2018.nii',
+                             '/xyz_1981.dcm',
+                             '/def_1981.nii',
+                             '/bcd_1981.dcm',
+                         }
+                         ),
+
+                        ('(format == "NIFTI" OR NOT format == "DICOM") AND ("a" IN strings OR NOT "b" IN strings)',
+                         {
+                             '/abc_1899.none',
+                             '/xyz_1899.mgz',
+                             '/abc_1981.mgz',
+                             '/abc_2018.nii',
+                             '/xyz_1899.nii',
+                             '/abc_1899.mgz',
+                             '/def_1899.mgz',
+                             '/def_1899.nii',
+                             '/def_1899.none',
+                             '/abc_1981.nii',
+                             '/def_2018.nii',
+                             '/xyz_2018.nii',
+                             '/def_1981.nii',
+                             '/abc_1899.nii',
+                             '/xyz_1981.nii',
+                             '/abc_2018.mgz',
+                             '/def_1981.mgz',
+                             '/xyz_2018.mgz',
+                             '/xyz_1899.none',
+                             '/def_2018.mgz',
+                             '/xyz_1981.mgz',
+                             '/xyz_1981.none',
+                             '/abc_1981.none',
+                             '/def_2018.none',
+                             '/xyz_2018.none',
+                             '/abc_2018.none',
+                             '/def_1981.none'
+                         }
+                         ),
+
+                        ('format > "DICOM"',
+                         {
+                             '/xyz_1899.nii',
+                             '/xyz_1899.mgz',
+                             '/bcd_2018.mgz',
+                             '/bcd_1899.nii',
+                             '/bcd_2018.nii',
+                             '/def_1899.nii',
+                             '/bcd_1981.mgz',
+                             '/abc_1981.nii',
+                             '/def_2018.mgz',
+                             '/abc_1899.nii',
+                             '/def_1899.mgz',
+                             '/abc_2018.nii',
+                             '/def_2018.nii',
+                             '/abc_1981.mgz',
+                             '/xyz_1981.mgz',
+                             '/bcd_1981.nii',
+                             '/xyz_1981.nii',
+                             '/abc_2018.mgz',
+                             '/xyz_2018.nii',
+                             '/abc_1899.mgz',
+                             '/def_1981.nii',
+                             '/def_1981.mgz',
+                             '/bcd_1899.mgz',
+                             '/xyz_2018.mgz'
+                         }
+                         ),
+
+                        ('format <= "DICOM"',
+                         {
+                             '/abc_1981.dcm',
+                             '/def_1899.dcm',
+                             # '/xyz_2018.none',
+                             '/abc_2018.dcm',
+                             # '/xyz_1899.none',
+                             '/bcd_1899.dcm',
+                             # '/bcd_1981.none',
+                             '/def_1981.dcm',
+                             # '/def_1899.none',
+                             # '/xyz_1981.none',
+                             # '/def_2018.none',
+                             '/bcd_2018.dcm',
+                             '/def_2018.dcm',
+                             # '/abc_1899.none',
+                             '/xyz_2018.dcm',
+                             '/xyz_1899.dcm',
+                             '/abc_1899.dcm',
+                             # '/def_1981.none',
+                             # '/bcd_2018.none',
+                             # '/abc_1981.none',
+                             '/xyz_1981.dcm',
+                             # '/abc_2018.none',
+                             '/bcd_1981.dcm',
+                             # '/bcd_1899.none'
+                         }
+                         ),
+
+                        ('format > "DICOM" AND strings != ["b", "c", "d"]',
+                         {
+                             '/xyz_1899.nii',
+                             '/xyz_1899.mgz',
+                             '/abc_1981.mgz',
+                             '/abc_2018.nii',
+                             '/xyz_2018.nii',
+                             '/abc_1899.mgz',
+                             '/def_1899.mgz',
+                             '/def_1899.nii',
+                             '/abc_1981.nii',
+                             '/def_2018.nii',
+                             '/def_1981.nii',
+                             '/abc_1899.nii',
+                             '/xyz_1981.nii',
+                             '/abc_2018.mgz',
+                             '/def_1981.mgz',
+                             '/xyz_2018.mgz',
+                             '/def_2018.mgz',
+                             '/xyz_1981.mgz'
+                         }
+                         ),
+
+                        ('format <= "DICOM" AND strings == ["b", "c", "d"]',
+                         {
+                             # '/bcd_1899.none',
+                             '/bcd_2018.dcm',
+                             '/bcd_1981.dcm',
+                             '/bcd_1899.dcm',
+                             # '/bcd_1981.none',
+                             # '/bcd_2018.none',
+                         }
+                         ),
+
+                        ('has_format in [false, null]',
+                         {
+                             '/def_1899.none',
+                             '/abc_1899.none',
+                             '/bcd_1899.none',
+                             '/xyz_1899.none',
+                             '/bcd_2018.none',
+                             '/abc_1981.none',
+                             '/def_2018.none',
+                             '/xyz_2018.none',
+                             '/abc_2018.none',
+                             '/def_1981.none',
+                             '/xyz_1981.none',
+                             '/bcd_1981.none',
+                         }
+                         ),
+
+                        ('format == null',
+                         {
+                             '/bcd_1981.none',
+                             '/abc_1899.none',
+                             '/def_1899.none',
+                             '/bcd_2018.none',
+                             '/abc_1981.none',
+                             '/def_2018.none',
+                             '/xyz_2018.none',
+                             '/abc_2018.none',
+                             '/def_1981.none',
+                             '/bcd_1899.none',
+                             '/xyz_1899.none',
+                             '/xyz_1981.none'
+                         }
+                         ),
+
+                        ('strings == null',
+                         set()),
+
+                        ('strings != NULL',
+                         {
+                             '/xyz_1899.nii',
+                             '/xyz_2018.dcm',
+                             '/xyz_1899.mgz',
+                             '/bcd_2018.mgz',
+                             '/bcd_1899.nii',
+                             '/def_2018.none',
+                             '/def_1899.mgz',
+                             '/def_1899.nii',
+                             '/bcd_1981.mgz',
+                             '/abc_1981.nii',
+                             '/def_2018.mgz',
+                             '/abc_1899.nii',
+                             '/bcd_2018.nii',
+                             '/abc_2018.dcm',
+                             '/xyz_1899.none',
+                             '/bcd_1899.dcm',
+                             '/bcd_1981.none',
+                             '/def_1981.dcm',
+                             '/abc_2018.nii',
+                             '/def_1899.none',
+                             '/xyz_1981.none',
+                             '/abc_1981.dcm',
+                             '/bcd_2018.dcm',
+                             '/def_2018.nii',
+                             '/abc_1981.mgz',
+                             '/def_2018.dcm',
+                             '/abc_1899.none',
+                             '/xyz_1981.mgz',
+                             '/xyz_1899.dcm',
+                             '/abc_1899.dcm',
+                             '/def_1899.dcm',
+                             '/bcd_1981.nii',
+                             '/def_1981.none',
+                             '/xyz_1981.nii',
+                             '/abc_2018.mgz',
+                             '/xyz_2018.none',
+                             '/xyz_2018.nii',
+                             '/abc_1899.mgz',
+                             '/bcd_1899.mgz',
+                             '/bcd_2018.none',
+                             '/abc_1981.none',
+                             '/xyz_1981.dcm',
+                             '/abc_2018.none',
+                             '/def_1981.nii',
+                             '/bcd_1981.dcm',
+                             '/def_1981.mgz',
+                             '/bcd_1899.none',
+                             '/xyz_2018.mgz'
+                         }
+                         ),
+
+                        ('format != NULL',
+                         {
+                             '/xyz_1899.nii',
+                             '/xyz_1899.mgz',
+                             '/bcd_2018.mgz',
+                             '/bcd_1899.nii',
+                             '/def_1899.mgz',
+                             '/def_1899.nii',
+                             '/bcd_1981.mgz',
+                             '/abc_1981.nii',
+                             '/def_2018.mgz',
+                             '/abc_1899.nii',
+                             '/bcd_2018.nii',
+                             '/abc_2018.dcm',
+                             '/xyz_1981.mgz',
+                             '/def_1981.dcm',
+                             '/abc_2018.nii',
+                             '/abc_1981.dcm',
+                             '/bcd_2018.dcm',
+                             '/def_2018.nii',
+                             '/bcd_1981.nii',
+                             '/abc_1981.mgz',
+                             '/def_2018.dcm',
+                             '/bcd_1899.dcm',
+                             '/xyz_2018.dcm',
+                             '/xyz_1899.dcm',
+                             '/abc_1899.dcm',
+                             '/def_1899.dcm',
+                             '/bcd_1899.mgz',
+                             '/xyz_1981.nii',
+                             '/abc_2018.mgz',
+                             '/xyz_2018.nii',
+                             '/abc_1899.mgz',
+                             '/xyz_1981.dcm',
+                             '/def_1981.nii',
+                             '/bcd_1981.dcm',
+                             '/def_1981.mgz',
+                             '/xyz_2018.mgz'
+                         }
+                         ),
+
+                        ('name like "%.nii"',
+                         {
+                             '/xyz_1899.nii',
+                             '/xyz_2018.nii',
+                             '/abc_2018.nii',
+                             '/bcd_1899.nii',
+                             '/bcd_2018.nii',
+                             '/def_1899.nii',
+                             '/abc_1981.nii',
+                             '/def_2018.nii',
+                             '/def_1981.nii',
+                             '/bcd_1981.nii',
+                             '/abc_1899.nii',
+                             '/xyz_1981.nii'
+                         }
+                         ),
+
+                        ('name ilike "%A%"',
+                         {
+                             '/abc_1899.none',
+                             '/abc_1899.nii',
+                             '/abc_2018.nii',
+                             '/abc_1899.mgz',
+                             '/abc_1899.dcm',
+                             '/abc_1981.dcm',
+                             '/abc_1981.nii',
+                             '/abc_1981.mgz',
+                             '/abc_2018.mgz',
+                             '/abc_2018.dcm',
+                             '/abc_2018.none',
+                             '/abc_1981.none'
+                         }
+                         ),
+
+                        ('all',
+                         {
+                             '/xyz_1899.nii',
+                             '/xyz_2018.dcm',
+                             '/xyz_1899.mgz',
+                             '/bcd_2018.mgz',
+                             '/bcd_1899.nii',
+                             '/def_2018.none',
+                             '/def_1899.mgz',
+                             '/def_1899.nii',
+                             '/bcd_1981.mgz',
+                             '/abc_1981.nii',
+                             '/def_2018.mgz',
+                             '/abc_1899.nii',
+                             '/bcd_2018.nii',
+                             '/abc_2018.dcm',
+                             '/xyz_1899.none',
+                             '/bcd_1899.dcm',
+                             '/bcd_1981.none',
+                             '/def_1981.dcm',
+                             '/abc_2018.nii',
+                             '/def_1899.none',
+                             '/xyz_1981.none',
+                             '/abc_1981.dcm',
+                             '/bcd_2018.dcm',
+                             '/def_2018.nii',
+                             '/abc_1981.mgz',
+                             '/def_2018.dcm',
+                             '/abc_1899.none',
+                             '/xyz_1981.mgz',
+                             '/xyz_1899.dcm',
+                             '/abc_1899.dcm',
+                             '/def_1899.dcm',
+                             '/bcd_1981.nii',
+                             '/def_1981.none',
+                             '/xyz_1981.nii',
+                             '/abc_2018.mgz',
+                             '/xyz_2018.none',
+                             '/xyz_2018.nii',
+                             '/abc_1899.mgz',
+                             '/bcd_1899.mgz',
+                             '/bcd_2018.none',
+                             '/abc_1981.none',
+                             '/xyz_1981.dcm',
+                             '/abc_2018.none',
+                             '/def_1981.nii',
+                             '/bcd_1981.dcm',
+                             '/def_1981.mgz',
+                             '/bcd_1899.none',
+                             '/xyz_2018.mgz'
+                         }
+                         )):
                     try:
                         documents = set(document.name for document in session.filter_documents("collection1", filter))
                         self.assertEqual(documents, expected)
@@ -1859,13 +1882,14 @@ def create_test_case(**database_creation_parameters):
             database = self.create_database()
             with database as session:
                 session.add_collection("collection1", "name")
-                session.add_field("collection1", 'strings', field_type=populse_db.database.FIELD_TYPE_LIST_STRING, description=None)
+                session.add_field("collection1", 'strings', field_type=populse_db.database.FIELD_TYPE_LIST_STRING,
+                                  description=None)
                 session.add_document("collection1", 'test')
                 session.new_value("collection1", 'test', 'strings', ['a', 'b', 'c'])
                 session.save_modifications()
                 names = list(document.name for document in session.filter_documents("collection1", '"b" IN strings'))
                 self.assertEqual(names, ['test'])
-                
+
                 session.set_value("collection1", 'test', 'strings', ['x', 'y', 'z'])
                 session.save_modifications()
                 names = list(document.name for document in session.filter_documents("collection1", '"b" IN strings'))
@@ -1877,8 +1901,7 @@ def create_test_case(**database_creation_parameters):
                 session.save_modifications()
                 names = list(document.name for document in session.filter_documents("collection1", '"y" IN strings'))
                 self.assertEqual(names, [])
-            
-            
+
         def test_filter_literals(self):
             """
             Test the Python values returned (internaly) for literals by the
@@ -1918,7 +1941,7 @@ def create_test_case(**database_creation_parameters):
             }
             # Adds the literal for a list of all elements in the dictionary
             literals['[%s]' % ','.join(literals.keys())] = list(literals.values())
-            
+
             parser = populse_db.filter.literal_parser()
             for literal, expected_value in literals.items():
                 tree = parser.parse(literal)
@@ -1931,33 +1954,34 @@ def create_test_case(**database_creation_parameters):
                 with database as session:
                     session.add_collection("collection1", "name")
                     session.add_document("collection1", {"name": "toto"})
-                    boom # Raises an exception, modifications are rolled back
+                    boom  # Raises an exception, modifications are rolled back
             except NameError:
                 pass
-            
+
             with database as session:
                 session.add_collection("collection1", "name")
                 session.add_document("collection1", {"name": "titi"})
-            
+
             # Reopen the database to check that "titi" was commited
             database = self.create_database(clear=False)
             with database as session:
                 names = [i.name for i in session.filter_documents("collection1", "all")]
                 self.assertEqual(names, ['titi'])
-                
+
                 # Check that recursive session creation always return the
                 # same object
                 with database as session2:
                     self.assertIs(session, session2)
                     with database as session3:
                         self.assertIs(session, session3)
-            
+
             # Check that previous session was released and that
             # a new one is created.
             with database as session4:
                 self.assertIsNot(session, session4)
 
     return TestDatabaseMethods
+
 
 def load_tests(loader, standard_tests, pattern):
     suite = unittest.TestSuite()
@@ -1972,17 +1996,18 @@ def load_tests(loader, standard_tests, pattern):
                    dict(caches=True, list_tables=False, query_type='guess')):
         tests = loader.loadTestsFromTestCase(create_test_case(**params))
         suite.addTests(tests)
-    
+
     # Tests with postgresql. All the tests will be skiped if
     # it is not possible to connect to populse_db_tests database.
     tests = loader.loadTestsFromTestCase(create_test_case(
-        string_engine='postgresql:///populse_db_tests', 
-        caches=False, 
-        list_tables=True, 
+        string_engine='postgresql:///populse_db_tests',
+        caches=False,
+        list_tables=True,
         query_type='mixed'))
     suite.addTests(tests)
-                   
+
     return suite
+
 
 if __name__ == '__main__':
     unittest.main()

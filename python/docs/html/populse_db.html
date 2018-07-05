@@ -1,0 +1,905 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>populse_db package &mdash; populse_db 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="populse_db 1.0.0 documentation" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="populse-db-package">
+<h1>populse_db package<a class="headerlink" href="#populse-db-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-populse_db.database">
+<span id="populse-db-database-module"></span><h2>populse_db.database module<a class="headerlink" href="#module-populse_db.database" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="populse_db.database.Database">
+<em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">Database</code><span class="sig-paren">(</span><em>string_engine</em>, <em>caches=False</em>, <em>list_tables=True</em>, <em>query_type='mixed'</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.Database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Database API</p>
+<dl class="docutils">
+<dt>attributes:</dt>
+<dd><ul class="first last">
+<li><p class="first">string_engine: String engine of the database</p>
+</li>
+<li><p class="first">caches: Bool to know if the caches must be used</p>
+</li>
+<li><dl class="first docutils">
+<dt>list_tables: Bool to know if list tables must be used</dt>
+<dd><p class="first last">True if tables are created to store values of
+list fields and have a pure SQL version of IN
+operator in filters</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>query_type: Default query implementation for filter_query()</dt>
+<dd><p class="first last">and filter_documents()
+Can be &#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;guess&#8217;</p>
+</dd>
+</dl>
+</li>
+<li><p class="first">engine: SQLAlchemy database engine</p>
+</li>
+</ul>
+</dd>
+<dt>methods:</dt>
+<dd><ul class="first last simple">
+<li>create_empty_schemas: Initializes empty database schema</li>
+<li>__enter__: Creates or gets a DatabaseSession instance</li>
+<li>__exit__: Releases the latest created DatabaseSession</li>
+<li>clear: Clears the database</li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="populse_db.database.Database.clear">
+<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.Database.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes all documents and collections in the database</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="populse_db.database.Database.create_empty_schema">
+<em class="property">static </em><code class="descname">create_empty_schema</code><span class="sig-paren">(</span><em>string_engine</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.Database.create_empty_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the database file with an empty schema
+:param string_engine: Path of the new database file</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="populse_db.database.DatabaseSession">
+<em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">DatabaseSession</code><span class="sig-paren">(</span><em>database</em>, <em>session</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>DatabaseSession API</p>
+<dl class="docutils">
+<dt>attributes:</dt>
+<dd><ul class="first last simple">
+<li>database: database</li>
+<li>session: session related to the database</li>
+<li>table_classes: list of table classes, generated automatically</li>
+<li>base: database base</li>
+<li>metadata: database metadata</li>
+<li>unsaved_modifications: boolean to know if there are unsaved
+modifications in the database</li>
+</ul>
+</dd>
+<dt>methods:</dt>
+<dd><ul class="first last simple">
+<li>add_collection: adds a collection</li>
+<li>remove_collection: removes a collection</li>
+<li>get_collection: gives the collection row</li>
+<li>get_collections: gives all collection rows</li>
+<li>get_collections_names: gives all collection names</li>
+<li>add_field: adds a field</li>
+<li>add_fields: adds a list of fields</li>
+<li>remove_field: removes a field</li>
+<li>get_field: Gives all fields rows</li>
+<li>get_fields_names: gives all fields names</li>
+<li>field_type_to_column_type: gives the column type corresponding
+to a field type</li>
+<li>field_name_to_column_name: gives the column name corresponding
+to the field name</li>
+<li>get_value: gives the value of &lt;document, field&gt;</li>
+<li>set_value: sets the value of &lt;document, field&gt;</li>
+<li>set_values: sets several values of a collection document</li>
+<li>remove_value: removes the value of &lt;document, field&gt;</li>
+<li>check_type_value: checks the type of a value</li>
+<li>new_value: adds a value to &lt;document, field&gt;</li>
+<li>get_document: gives the document row given a document name</li>
+<li>get_documents: gives all document rows</li>
+<li>get_documents_names: gives all document names</li>
+<li>add_document: adds a document</li>
+<li>remove_document: removes a document</li>
+<li>save_modifications: saves the pending modifications</li>
+<li>unsave_modifications: unsaves the pending modifications</li>
+<li>has_unsaved_modifications: to know if there are unsaved
+modifications</li>
+<li>filter_documents: gives the list of documents matching the filter</li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.add_collection">
+<code class="descname">add_collection</code><span class="sig-paren">(</span><em>name</em>, <em>primary_key='name'</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a collection
+:param name: New collection name
+:param primary_key: New collection primary_key column =&gt; &#8220;name&#8221; by default</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.add_document">
+<code class="descname">add_document</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_document" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a document to a collection
+:param collection: Document collection (str)
+:param document: Dictionary of document values (dict), or document primary_key (str)
+:param flush: Bool to know if flush to do, put False in the middle of filling the table =&gt; True by default</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.add_field">
+<code class="descname">add_field</code><span class="sig-paren">(</span><em>collection</em>, <em>name</em>, <em>field_type</em>, <em>description=None</em>, <em>index=False</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a field to the database, if it does not already exist
+:param collection: Field collection (str)
+:param name: Field name (str)
+:param field_type: Field type (string, int, float, boolean, date, datetime,</p>
+<blockquote>
+<div>time, json, list_string, list_int, list_float, list_boolean, list_date,
+list_datetime, list_time, or list_json)</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>description</strong> &#8211; Field description (str or None) =&gt; None by default</li>
+<li><strong>flush</strong> &#8211; Bool to know if the table classes must be updated (put False if in the middle of filling fields) =&gt; True by default</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.add_fields">
+<code class="descname">add_fields</code><span class="sig-paren">(</span><em>fields</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds the list of fields
+:param fields: list of fields (collection, name, type, description)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.check_type_value">
+<code class="descname">check_type_value</code><span class="sig-paren">(</span><em>value</em>, <em>valid_type</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.check_type_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the type of the value
+:param value: Value
+:param type: Type that the value is supposed to have
+:return: True if the value is valid, False otherwise</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.column_to_list">
+<code class="descname">column_to_list</code><span class="sig-paren">(</span><em>column_type</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.column_to_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a value of a database column into the corresponding
+Python list value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.column_to_python">
+<code class="descname">column_to_python</code><span class="sig-paren">(</span><em>column_type</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.column_to_python" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a value of a database column into the corresponding
+Python value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.field_name_to_column_name">
+<code class="descname">field_name_to_column_name</code><span class="sig-paren">(</span><em>collection</em>, <em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.field_name_to_column_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms the field name into a valid and unique column name, by hashing it
+:param collection: Field collection (str)
+:param field: Field name (str)
+:return: Valid and unique (hashed) column name</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="populse_db.database.DatabaseSession.field_type_to_column_type">
+<em class="property">static </em><code class="descname">field_type_to_column_type</code><span class="sig-paren">(</span><em>field_type</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.field_type_to_column_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gives the sqlalchemy column type corresponding to the field type
+:param field_type: Column type
+:return: The sql column type given the field type</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.filter_documents">
+<code class="descname">filter_documents</code><span class="sig-paren">(</span><em>collection</em>, <em>filter_query</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.filter_documents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over documents selected by filter_query. Each item yield is a
+row of the column table returned by sqlalchemy. filter_query can be
+the result of self.filter_query() or a string containing a filter
+(in this case self.fliter_query() is called to get the actual query).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.filter_query">
+<code class="descname">filter_query</code><span class="sig-paren">(</span><em>collection</em>, <em>filter</em>, <em>query_type=None</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.filter_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a filter string, return a query that can be used with
+filter_documents() to select documents.
+:param query_type: Type of query to build. Can be &#8216;mixed&#8217;,</p>
+<blockquote>
+<div>&#8216;sql&#8217;, &#8216;python&#8217; or &#8216;guess&#8217;. If None, self.query_type
+is used.</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.get_collection">
+<code class="descname">get_collection</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the collection row of the collection
+:param name: Collection name
+:return: The collection row if it exists, None otherwise</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.get_collections">
+<code class="descname">get_collections</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gives the list of collection rows
+:return: List of document rows of the collection</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.get_collections_names">
+<code class="descname">get_collections_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collections_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gives the list of collection names
+:return: List of document names of the collection</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.get_document">
+<code class="descname">get_document</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_document" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gives the document row of a document, given a collection
+:param collection: Document collection
+:param document: Document name
+:return The document row if the document exists, None otherwise</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.get_documents">
+<code class="descname">get_documents</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_documents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gives the list of document rows, given a collection
+:param collection: Documents collection
+:return: List of document rows of the collection</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.get_documents_names">
+<code class="descname">get_documents_names</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_documents_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gives the list of document names, given a collection
+:param collection: Documents collection
+:return: List of document names of the collection</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.get_field">
+<code class="descname">get_field</code><span class="sig-paren">(</span><em>collection</em>, <em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gives the column row given a column name and a collection
+:param collection: Document collection
+:param name: Column name
+:return: The column row if the column exists, None otherwise</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.get_fields">
+<code class="descname">get_fields</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gives the list of fields rows, given a collection
+:param collection: Fields collection
+:return: List of fields rows of the colletion</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.get_fields_names">
+<code class="descname">get_fields_names</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_fields_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gives the list of fields, given a collection
+:param collection: Fields collection
+:return: List of fields names of the collection</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.get_value">
+<code class="descname">get_value</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gives the current value of &lt;document, field&gt; in the collection
+:param collection: Document collection (str)
+:param document: Document name (str)
+:param field: Field name (str)
+:return: The current value of &lt;document, field&gt; in the collection if it exists, None otherwise</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.has_unsaved_modifications">
+<code class="descname">has_unsaved_modifications</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.has_unsaved_modifications" title="Permalink to this definition">¶</a></dt>
+<dd><p>Knowing if the database has pending modifications that are unsaved
+:return: True if there are pending modifications to save,</p>
+<blockquote>
+<div>False otherwise</div></blockquote>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="populse_db.database.DatabaseSession.list_tables">
+<code class="descname">list_tables</code><a class="headerlink" href="#populse_db.database.DatabaseSession.list_tables" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.list_to_column">
+<code class="descname">list_to_column</code><span class="sig-paren">(</span><em>column_type</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.list_to_column" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a python list value into a suitable value to put in a
+database column.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.new_value">
+<code class="descname">new_value</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>field</em>, <em>value</em>, <em>checks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.new_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a value for &lt;document, field&gt;
+:param collection: Document collection
+:param document: Document name
+:param field: Field name
+:param value: Value to add
+:param checks: Bool to know if flush to do and value check (Put False in the middle of adding values, during import)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.python_to_column">
+<code class="descname">python_to_column</code><span class="sig-paren">(</span><em>column_type</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.python_to_column" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a python value into a suitable value to put in a
+database column.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="populse_db.database.DatabaseSession.query_type">
+<code class="descname">query_type</code><a class="headerlink" href="#populse_db.database.DatabaseSession.query_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.remove_collection">
+<code class="descname">remove_collection</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes a collection
+:param name: Collection to remove</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.remove_document">
+<code class="descname">remove_document</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_document" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes a document in the collection
+:param collection: Document collection (str)
+:param document: Document name (str)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.remove_field">
+<code class="descname">remove_field</code><span class="sig-paren">(</span><em>collection</em>, <em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes a field in the collection
+:param collection: Field collection
+:param field: Field name (str), or list of fields (str)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.remove_value">
+<code class="descname">remove_value</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>field</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the value associated to &lt;document, field&gt; in the collection
+:param collection: Focument collection (str)
+:param document: Document name (str)
+:param field: Field name (str)
+:param flush: Bool to know if flush to do (put False in the middle of removing values) =&gt; True by default</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.save_modifications">
+<code class="descname">save_modifications</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.save_modifications" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the modifications by committing the session</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.set_value">
+<code class="descname">set_value</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>field</em>, <em>new_value</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.set_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the value associated to &lt;document, field&gt;
+:param collection: Document collection (str)
+:param document: Document name (str)
+:param field: Field name (str)
+:param new_value: New value
+:param flush: Bool to know if flush to do</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.set_values">
+<code class="descname">set_values</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>values</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.set_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the values of a collection document
+:param collection: Document collection (str)
+:param document: Document name (str)
+:param values: Dictionary of values (key=field, value=value)
+:param flush: Bool to know if flush to do</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.unsave_modifications">
+<code class="descname">unsave_modifications</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.unsave_modifications" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unsaves the modifications by rolling back the session</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="populse_db.database.FieldRow">
+<em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">FieldRow</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em>, <em>row</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.FieldRow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A FieldRow is an object that makes it possible to access to attributes of
+a database row returned by sqlalchemy using the column name. If the
+attribute with the field name is not found, it is hashed and search in the
+actual row. If found, it is stored in the FieldRow instance.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="populse_db.database.Undefined">
+<em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">Undefined</code><a class="headerlink" href="#populse_db.database.Undefined" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-populse_db.filter">
+<span id="populse-db-filter-module"></span><h2>populse_db.filter module<a class="headerlink" href="#module-populse_db.filter" title="Permalink to this headline">¶</a></h2>
+<dl class="exception">
+<dt id="populse_db.filter.FilterImplementationLimit">
+<em class="property">exception </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterImplementationLimit</code><a class="headerlink" href="#populse_db.filter.FilterImplementationLimit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">NotImplementedError</span></code></p>
+<p>This exception is raised when a valid filter cannot
+be converted to a query for a specific implementation
+(for instance some list comparison operators cannot be
+used in SQL)</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="populse_db.filter.FilterToGuessedQuery">
+<em class="property">class </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterToGuessedQuery</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToGuessedQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#populse_db.filter.FilterToMixedQuery" title="populse_db.filter.FilterToMixedQuery"><code class="xref py py-class docutils literal"><span class="pre">populse_db.filter.FilterToMixedQuery</span></code></a></p>
+<dl class="method">
+<dt id="populse_db.filter.FilterToGuessedQuery.transform">
+<code class="descname">transform</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToGuessedQuery.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="populse_db.filter.FilterToMixedQuery">
+<em class="property">class </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterToMixedQuery</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToMixedQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#populse_db.filter.FilterToSqlQuery" title="populse_db.filter.FilterToSqlQuery"><code class="xref py py-class docutils literal"><span class="pre">populse_db.filter.FilterToSqlQuery</span></code></a>, <a class="reference internal" href="#populse_db.filter.FilterToPythonQuery" title="populse_db.filter.FilterToPythonQuery"><code class="xref py py-class docutils literal"><span class="pre">populse_db.filter.FilterToPythonQuery</span></code></a></p>
+<dl class="method">
+<dt id="populse_db.filter.FilterToMixedQuery.build_condition_combine_conditions">
+<code class="descname">build_condition_combine_conditions</code><span class="sig-paren">(</span><em>left_condition</em>, <em>operator_str</em>, <em>right_condition</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToMixedQuery.build_condition_combine_conditions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToMixedQuery.build_condition_field_in_list_field">
+<code class="descname">build_condition_field_in_list_field</code><span class="sig-paren">(</span><em>field</em>, <em>list_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToMixedQuery.build_condition_field_in_list_field" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToMixedQuery.build_condition_literal_in_list_field">
+<code class="descname">build_condition_literal_in_list_field</code><span class="sig-paren">(</span><em>value</em>, <em>list_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToMixedQuery.build_condition_literal_in_list_field" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToMixedQuery.build_condition_negation">
+<code class="descname">build_condition_negation</code><span class="sig-paren">(</span><em>condition</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToMixedQuery.build_condition_negation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="populse_db.filter.FilterToPythonQuery">
+<em class="property">class </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterToPythonQuery</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#populse_db.filter.FilterToQuery" title="populse_db.filter.FilterToQuery"><code class="xref py py-class docutils literal"><span class="pre">populse_db.filter.FilterToQuery</span></code></a></p>
+<dl class="method">
+<dt id="populse_db.filter.FilterToPythonQuery.build_condition_all">
+<code class="descname">build_condition_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.build_condition_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToPythonQuery.build_condition_combine_conditions">
+<code class="descname">build_condition_combine_conditions</code><span class="sig-paren">(</span><em>left_condition</em>, <em>operator_str</em>, <em>right_condition</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.build_condition_combine_conditions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToPythonQuery.build_condition_field_in_list">
+<code class="descname">build_condition_field_in_list</code><span class="sig-paren">(</span><em>field</em>, <em>list_value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.build_condition_field_in_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build an condition checking if a field value is a
+constant list value</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToPythonQuery.build_condition_field_in_list_field">
+<code class="descname">build_condition_field_in_list_field</code><span class="sig-paren">(</span><em>field</em>, <em>list_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.build_condition_field_in_list_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build an condition checking if a field value is in another
+list field value</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToPythonQuery.build_condition_field_op_field">
+<code class="descname">build_condition_field_op_field</code><span class="sig-paren">(</span><em>left_field</em>, <em>operator_str</em>, <em>right_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.build_condition_field_op_field" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToPythonQuery.build_condition_field_op_value">
+<code class="descname">build_condition_field_op_value</code><span class="sig-paren">(</span><em>field</em>, <em>operator_str</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.build_condition_field_op_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToPythonQuery.build_condition_literal_in_list_field">
+<code class="descname">build_condition_literal_in_list_field</code><span class="sig-paren">(</span><em>value</em>, <em>list_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.build_condition_literal_in_list_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build an condition checking if a constant value is in a list field</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToPythonQuery.build_condition_negation">
+<code class="descname">build_condition_negation</code><span class="sig-paren">(</span><em>condition</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.build_condition_negation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToPythonQuery.build_condition_value_op_field">
+<code class="descname">build_condition_value_op_field</code><span class="sig-paren">(</span><em>value</em>, <em>operator_str</em>, <em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.build_condition_value_op_field" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="populse_db.filter.FilterToPythonQuery.ilike">
+<em class="property">static </em><code class="descname">ilike</code><span class="sig-paren">(</span><em>value</em>, <em>like_pattern</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.ilike" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="populse_db.filter.FilterToPythonQuery.like">
+<em class="property">static </em><code class="descname">like</code><span class="sig-paren">(</span><em>value</em>, <em>like_pattern</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.like" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="populse_db.filter.FilterToPythonQuery.like_to_re">
+<em class="property">static </em><code class="descname">like_to_re</code><span class="sig-paren">(</span><em>like_pattern</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.like_to_re" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="populse_db.filter.FilterToPythonQuery.python_operators">
+<code class="descname">python_operators</code><em class="property"> = {'==': &lt;built-in function eq&gt;, '!=': &lt;built-in function ne&gt;, '&lt;=': &lt;built-in function le&gt;, '&gt;': &lt;built-in function gt&gt;, 'and': &lt;built-in function and_&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;staticmethod object at 0x7fab7d555710&gt;, '&gt;=': &lt;built-in function ge&gt;, 'ilike': &lt;staticmethod object at 0x7fab7d555780&gt;, '&lt;': &lt;built-in function lt&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="populse_db.filter.FilterToQuery">
+<em class="property">class </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterToQuery</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">lark.tree.Transformer</span></code></p>
+<p>Transform the parsing of a filter expression into object(s) that can
+be used ot select items from a database. The produced object is one
+of the three following items :
+- An SqlAlchemy expression (that can be passed to select()) if the filter</p>
+<blockquote>
+<div>can be fully expressed with SQL in all SqlAlchemy engines.</div></blockquote>
+<ul class="simple">
+<li>Python function taking a path row from SqlAlchemy and returning True if
+the row is selected by the filter or False otherwise.</li>
+<li>A tuple containing an SqlAlchemy expression and a boolean Python
+function if the filter can be expressed as a AND combination of these
+two elements.</li>
+</ul>
+<dl class="method">
+<dt id="populse_db.filter.FilterToQuery.all">
+<code class="descname">all</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToQuery.condition">
+<code class="descname">condition</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.condition" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToQuery.conditions">
+<code class="descname">conditions</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.conditions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToQuery.date">
+<code class="descname">date</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.date" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToQuery.datetime">
+<code class="descname">datetime</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.datetime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToQuery.field_name">
+<code class="descname">field_name</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.field_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToQuery.find_field_type">
+<code class="descname">find_field_type</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.find_field_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="populse_db.filter.FilterToQuery.invalidCombinationMessage">
+<code class="descname">invalidCombinationMessage</code><em class="property"> = 'Invalid combination of conditions on simple fields and on list fields'</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.invalidCombinationMessage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="populse_db.filter.FilterToQuery.is_field">
+<em class="property">static </em><code class="descname">is_field</code><span class="sig-paren">(</span><em>object</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.is_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if an object is an SqlAlchemy column object</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="populse_db.filter.FilterToQuery.is_list_field">
+<em class="property">static </em><code class="descname">is_list_field</code><span class="sig-paren">(</span><em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.is_list_field" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToQuery.keyword_literal">
+<code class="descname">keyword_literal</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="populse_db.filter.FilterToQuery.keyword_literals">
+<code class="descname">keyword_literals</code><em class="property"> = {'true': True, 'null': None, 'false': False}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToQuery.list">
+<code class="descname">list</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToQuery.negation">
+<code class="descname">negation</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.negation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToQuery.number">
+<code class="descname">number</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.number" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="populse_db.filter.FilterToQuery.python_type_to_tag_type">
+<code class="descname">python_type_to_tag_type</code><em class="property"> = {&lt;class 'bool'&gt;: 'boolean', &lt;class 'int'&gt;: 'int', &lt;class 'datetime.date'&gt;: 'date', &lt;class 'str'&gt;: 'string', &lt;class 'datetime.time'&gt;: 'time', &lt;class 'NoneType'&gt;: None, &lt;class 'datetime.datetime'&gt;: 'datetime', &lt;class 'float'&gt;: 'float'}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.python_type_to_tag_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToQuery.quoted_field_name">
+<code class="descname">quoted_field_name</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.quoted_field_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToQuery.string">
+<code class="descname">string</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.string" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToQuery.time">
+<code class="descname">time</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.time" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="populse_db.filter.FilterToSqlQuery">
+<em class="property">class </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterToSqlQuery</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#populse_db.filter.FilterToQuery" title="populse_db.filter.FilterToQuery"><code class="xref py py-class docutils literal"><span class="pre">populse_db.filter.FilterToQuery</span></code></a></p>
+<dl class="method">
+<dt id="populse_db.filter.FilterToSqlQuery.build_condition_all">
+<code class="descname">build_condition_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.build_condition_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToSqlQuery.build_condition_combine_conditions">
+<code class="descname">build_condition_combine_conditions</code><span class="sig-paren">(</span><em>left_condition</em>, <em>operator_str</em>, <em>right_condition</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.build_condition_combine_conditions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToSqlQuery.build_condition_field_in_list">
+<code class="descname">build_condition_field_in_list</code><span class="sig-paren">(</span><em>field</em>, <em>list_value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.build_condition_field_in_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build an condition checking if a field value is a
+constant list value</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToSqlQuery.build_condition_field_in_list_field">
+<code class="descname">build_condition_field_in_list_field</code><span class="sig-paren">(</span><em>field</em>, <em>list_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.build_condition_field_in_list_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build an condition checking if a field value is in another
+list field value</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToSqlQuery.build_condition_field_op_field">
+<code class="descname">build_condition_field_op_field</code><span class="sig-paren">(</span><em>left_field</em>, <em>operator_str</em>, <em>right_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.build_condition_field_op_field" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToSqlQuery.build_condition_field_op_value">
+<code class="descname">build_condition_field_op_value</code><span class="sig-paren">(</span><em>field</em>, <em>operator_str</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.build_condition_field_op_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToSqlQuery.build_condition_literal_in_list_field">
+<code class="descname">build_condition_literal_in_list_field</code><span class="sig-paren">(</span><em>value</em>, <em>list_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.build_condition_literal_in_list_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build an condition checking if a constant value is in a list field</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToSqlQuery.build_condition_negation">
+<code class="descname">build_condition_negation</code><span class="sig-paren">(</span><em>condition</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.build_condition_negation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToSqlQuery.build_condition_value_op_field">
+<code class="descname">build_condition_value_op_field</code><span class="sig-paren">(</span><em>value</em>, <em>operator_str</em>, <em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.build_condition_value_op_field" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToSqlQuery.get_column">
+<code class="descname">get_column</code><span class="sig-paren">(</span><em>column</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.get_column" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the SqlAlchemy Column object corresponding to
+a populse_db field object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.filter.FilterToSqlQuery.get_column_value">
+<code class="descname">get_column_value</code><span class="sig-paren">(</span><em>python_value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.get_column_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a Python value to a value suitable to put in a database column</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
+<code class="descname">sql_operators</code><em class="property"> = {'==': &lt;function sql_equal at 0x7fab7d5730d0&gt;, '!=': &lt;function sql_differ at 0x7fab7d4fe9d8&gt;, '&lt;=': &lt;built-in function le&gt;, '&gt;': &lt;built-in function gt&gt;, 'and': &lt;built-in function and_&gt;, 'or': &lt;built-in function or_&gt;, 'ilike': &lt;function ilike_op at 0x7fab7dff39d8&gt;, '&gt;=': &lt;built-in function ge&gt;, 'like': &lt;function like_op at 0x7fab7dff38c8&gt;, '&lt;': &lt;built-in function lt&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="populse_db.filter.filter_parser">
+<code class="descclassname">populse_db.filter.</code><code class="descname">filter_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.filter_parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a singleton instance of Lark grammar parser for filter expression</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="populse_db.filter.literal_parser">
+<code class="descclassname">populse_db.filter.</code><code class="descname">literal_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.literal_parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an instance of Lark grammar parser for parsing only a literal
+value (int, string, list, date, etc.) from a filter expression. This
+is used for testing the parsing of literals.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="populse_db.filter.sql_differ">
+<code class="descclassname">populse_db.filter.</code><code class="descname">sql_differ</code><span class="sig-paren">(</span><em>a</em>, <em>b</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.sql_differ" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="populse_db.filter.sql_equal">
+<code class="descclassname">populse_db.filter.</code><code class="descname">sql_equal</code><span class="sig-paren">(</span><em>a</em>, <em>b</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.sql_equal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-populse_db.info">
+<span id="populse-db-info-module"></span><h2>populse_db.info module<a class="headerlink" href="#module-populse_db.info" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-populse_db.script">
+<span id="populse-db-script-module"></span><h2>populse_db.script module<a class="headerlink" href="#module-populse_db.script" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-populse_db.script_empty_database">
+<span id="populse-db-script-empty-database-module"></span><h2>populse_db.script_empty_database module<a class="headerlink" href="#module-populse_db.script_empty_database" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-populse_db.test">
+<span id="populse-db-test-module"></span><h2>populse_db.test module<a class="headerlink" href="#module-populse_db.test" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="populse_db.test.create_test_case">
+<code class="descclassname">populse_db.test.</code><code class="descname">create_test_case</code><span class="sig-paren">(</span><em>**database_creation_parameters</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.create_test_case" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="populse_db.test.load_tests">
+<code class="descclassname">populse_db.test.</code><code class="descname">load_tests</code><span class="sig-paren">(</span><em>loader</em>, <em>standard_tests</em>, <em>pattern</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.load_tests" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-populse_db">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-populse_db" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">populse_db package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-populse_db.database">populse_db.database module</a></li>
+<li><a class="reference internal" href="#module-populse_db.filter">populse_db.filter module</a></li>
+<li><a class="reference internal" href="#module-populse_db.info">populse_db.info module</a></li>
+<li><a class="reference internal" href="#module-populse_db.script">populse_db.script module</a></li>
+<li><a class="reference internal" href="#module-populse_db.script_empty_database">populse_db.script_empty_database module</a></li>
+<li><a class="reference internal" href="#module-populse_db.test">populse_db.test module</a></li>
+<li><a class="reference internal" href="#module-populse_db">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/populse_db.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, populse.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/populse_db.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

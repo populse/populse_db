@@ -72,35 +72,47 @@ class Database:
     Database API
 
     attributes:
-        - string_engine: string engine of the database
-        - caches: Boolean to know if the caches must be used
-        - list_tables: Boolean to know if list tables must be used
+        - string_engine: String engine of the database
+        - caches: Bool to know if the caches must be used
+        - list_tables: Bool to know if list tables must be used
                         True if tables are created to store values of
                         list fields and have a pure SQL version of IN
                         operator in filters
-        - query_type: default query implementation for filter_query()
+        - query_type: Default query implementation for filter_query()
                       and filter_documents()
                       Can be 'sql', 'python', 'mixed', or 'guess'
         - engine: SQLAlchemy database engine
 
     methods:
-        - create_empty_schemas: initializes empty database schema
-        - __enter__: create or get a DatabaseSession instance
-        - __exit__: release the latest created DatabaseSession
-        - clear: clears the database
+        - create_empty_schemas: Initializes empty database schema
+        - __enter__: Creates or gets a DatabaseSession instance
+        - __exit__: Releases the latest created DatabaseSession
+        - clear: Clears the database
 
     """
 
     def __init__(self, string_engine, caches=False, list_tables=True,
                  query_type='mixed'):
+        """
+        Initiazation of the database
+        :param string_engine: database engine
+        :param caches: Bool to know if the caches must be used or no
+        :param list_tables: Bool to know if tables must be created to store list values
+        :param query_type: Type of query to use for the filters ('sql', 'python', 'mixed', or 'guess')
+        """
+
         self.string_engine = string_engine
         if not isinstance(caches, bool):
-            raise ValueError("Wrong caches, it must be of type {0}, but caches of type {1} given".format(bool, type(caches)))
+            raise ValueError(
+                "Wrong caches, it must be of type {0}, but caches of type {1} given".format(bool, type(caches)))
         self.caches = caches
         if not isinstance(list_tables, bool):
-            raise ValueError("Wrong list_tables, it must be of type {0}, but list_tables of type {1} given".format(bool, type(list_tables)))
+            raise ValueError("Wrong list_tables, it must be of type {0}, but list_tables of type {1} given".format(bool,
+                                                                                                                   type(
+                                                                                                                       list_tables)))
         self.list_tables = list_tables
-        query_list = [populse_db.filter.QUERY_MIXED, populse_db.filter.QUERY_GUESS, populse_db.filter.QUERY_PYTHON, populse_db.filter.QUERY_SQL]
+        query_list = [populse_db.filter.QUERY_MIXED, populse_db.filter.QUERY_GUESS, populse_db.filter.QUERY_PYTHON,
+                      populse_db.filter.QUERY_SQL]
         if query_type not in query_list:
             raise ValueError("Wrong query_type, it must be in {0}, but {1} given".format(query_list, query_type))
         self.query_type = query_type
@@ -241,7 +253,7 @@ class Database:
 
     def clear(self):
         """
-        Remove all documents and collections in the database
+        Removes all documents and collections in the database
         """
 
         metadata = MetaData()
@@ -255,6 +267,7 @@ class Database:
             return True
         else:
             return False
+
 
 class DatabaseSession:
     """
@@ -402,7 +415,9 @@ class DatabaseSession:
             documents_rows = self.session.query(self.table_classes[collection]).all()
             self.__documents[collection] = {}
             for document_row in documents_rows:
-                self.__documents[collection][getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(self, collection, document_row)
+                self.__documents[collection][
+                    getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(self, collection,
+                                                                                                  document_row)
 
         # Names
         for collection in self.__collections:
@@ -416,7 +431,7 @@ class DatabaseSession:
     def __refresh_cache_documents(self, collection):
         """
         Refreshes the document cache after field added/removed
-        :param collection: collection to refresh
+        :param collection: Collection to refresh
         """
 
         self.__documents[collection].clear()
@@ -440,9 +455,13 @@ class DatabaseSession:
         if collection_row is not None or name in self.table_classes:
             raise ValueError("A collection/table with the name {0} already exists".format(name))
         if not isinstance(name, str):
-            raise ValueError("The collection name must be of type {0}, but collection name of type {1} given".format(str, type(name)))
+            raise ValueError(
+                "The collection name must be of type {0}, but collection name of type {1} given".format(str,
+                                                                                                        type(name)))
         if not isinstance(primary_key, str):
-            raise ValueError("The collection primary_key must be of type {0}, but collection primary_key of type {1} given".format(str, type(primary_key)))
+            raise ValueError(
+                "The collection primary_key must be of type {0}, but collection primary_key of type {1} given".format(
+                    str, type(primary_key)))
 
         # Adding the collection row
         collection_row = self.table_classes[COLLECTION_TABLE](name=name, primary_key=primary_key)
@@ -462,7 +481,8 @@ class DatabaseSession:
         # Adding the primary_key of the collection as field
         primary_key_field = self.table_classes[FIELD_TABLE](name=primary_key, collection=name,
                                                             type=FIELD_TYPE_STRING,
-                                                            description="Primary_key of the document collection {0}".format(name))
+                                                            description="Primary_key of the document collection {0}".format(
+                                                                name))
         self.session.add(primary_key_field)
 
         if self.__caches:
@@ -478,7 +498,7 @@ class DatabaseSession:
     def remove_collection(self, name):
         """
         Removes a collection
-        :param name: collection to remove
+        :param name: Collection to remove
         """
 
         # Checks
@@ -514,7 +534,7 @@ class DatabaseSession:
     def get_collection(self, name):
         """
         Returns the collection row of the collection
-        :param name: collection name
+        :param name: Collection name
         :return: The collection row if it exists, None otherwise
         """
 
@@ -533,7 +553,7 @@ class DatabaseSession:
     def get_collections_names(self):
         """
         Gives the list of collection names
-        :return: list of document names of the collection
+        :return: List of document names of the collection
         """
 
         collections = self.session.query(self.table_classes[COLLECTION_TABLE].name).all()
@@ -543,7 +563,7 @@ class DatabaseSession:
     def get_collections(self):
         """
         Gives the list of collection rows
-        :return: list of document rows of the collection
+        :return: List of document rows of the collection
         """
 
         return self.session.query(self.table_classes[COLLECTION_TABLE]).all()
@@ -579,13 +599,13 @@ class DatabaseSession:
                   index=False, flush=True):
         """
         Adds a field to the database, if it does not already exist
-        :param collection: field collection (str)
-        :param name: field name (str)
-        :param field_type: field type (string, int, float, boolean, date, datetime,
-                     time, list_string, list_int, list_float, list_boolean, list_date,
-                     list_datetime, or list_time)
-        :param description: field description (str or None) => None by default
-        :param flush: bool to know if the table classes must be updated (put False if in the middle of filling fields) => True by default
+        :param collection: Field collection (str)
+        :param name: Field name (str)
+        :param field_type: Field type (string, int, float, boolean, date, datetime,
+                     time, json, list_string, list_int, list_float, list_boolean, list_date,
+                     list_datetime, list_time, or list_json)
+        :param description: Field description (str or None) => None by default
+        :param flush: Bool to know if the table classes must be updated (put False if in the middle of filling fields) => True by default
         """
 
         # Checks
@@ -596,12 +616,15 @@ class DatabaseSession:
         if field_row is not None:
             raise ValueError("A field with the name {0} already exists in the collection {1}".format(name, collection))
         if not isinstance(name, str):
-            raise ValueError("The field name must be of type {0}, but field name of type {1} given".format(str, type(name)))
+            raise ValueError(
+                "The field name must be of type {0}, but field name of type {1} given".format(str, type(name)))
         if not field_type in ALL_TYPES:
             raise ValueError("The field type must be in {0}, but {1} given".format(ALL_TYPES, field_type))
         if not isinstance(description, str) and description is not None:
             raise ValueError(
-                "The field description must be of type {0} or None, but field description of type {1} given".format(str, type(description)))
+                "The field description must be of type {0} or None, but field description of type {1} given".format(str,
+                                                                                                                    type(
+                                                                                                                        description)))
 
         # Adding the field in the field table
         field_row = self.table_classes[FIELD_TABLE](name=name, collection=collection, type=field_type,
@@ -660,7 +683,7 @@ class DatabaseSession:
     def field_type_to_column_type(field_type):
         """
         Gives the sqlalchemy column type corresponding to the field type
-        :param field_type: column type
+        :param field_type: Column type
         :return: The sql column type given the field type
         """
 
@@ -669,8 +692,8 @@ class DatabaseSession:
     def field_name_to_column_name(self, collection, field):
         """
         Transforms the field name into a valid and unique column name, by hashing it
-        :param collection: field collection (str)
-        :param field: field name (str)
+        :param collection: Field collection (str)
+        :param field: Field name (str)
         :return: Valid and unique (hashed) column name
         """
 
@@ -687,8 +710,8 @@ class DatabaseSession:
     def remove_field(self, collection, field):
         """
         Removes a field in the collection
-        :param collection: field collection
-        :param field: field name (str), or list of fields (str)
+        :param collection: Field collection
+        :param field: Field name (str), or list of fields (str)
         """
 
         collection_row = self.get_collection(collection)
@@ -699,13 +722,16 @@ class DatabaseSession:
             for field_elem in field:
                 field_row = self.get_field(collection, field_elem)
                 if field_row is None:
-                    raise ValueError("The field with the name {0} does not exist in the collection {1}".format(field_elem, collection))
+                    raise ValueError(
+                        "The field with the name {0} does not exist in the collection {1}".format(field_elem,
+                                                                                                  collection))
                 else:
                     field_rows.append(field_row)
         else:
             field_row = self.get_field(collection, field)
             if field_row is None:
-                raise ValueError("The field with the name {0} does not exist in the collection {1}".format(field, collection))
+                raise ValueError(
+                    "The field with the name {0} does not exist in the collection {1}".format(field, collection))
             else:
                 field_rows.append(field_row)
 
@@ -798,8 +824,8 @@ class DatabaseSession:
     def get_field(self, collection, name):
         """
         Gives the column row given a column name and a collection
-        :param collection: document collection
-        :param name: column name
+        :param collection: Document collection
+        :param name: Column name
         :return: The column row if the column exists, None otherwise
         """
 
@@ -819,7 +845,7 @@ class DatabaseSession:
     def get_fields_names(self, collection):
         """
         Gives the list of fields, given a collection
-        :param collection: fields collection
+        :param collection: Fields collection
         :return: List of fields names of the collection
         """
 
@@ -833,7 +859,7 @@ class DatabaseSession:
     def get_fields(self, collection):
         """
         Gives the list of fields rows, given a collection
-        :param collection: fields collection
+        :param collection: Fields collection
         :return: List of fields rows of the colletion
         """
 
@@ -867,11 +893,11 @@ class DatabaseSession:
     def set_value(self, collection, document, field, new_value, flush=True):
         """
         Sets the value associated to <document, field>
-        :param collection: document collection (str)
-        :param document: document name (str)
+        :param collection: Document collection (str)
+        :param document: Document name (str)
         :param field: Field name (str)
-        :param new_value: new value
-        :param flush: bool to know if flush to do
+        :param new_value: New value
+        :param flush: Bool to know if flush to do
         """
 
         # Checks
@@ -880,10 +906,12 @@ class DatabaseSession:
             raise ValueError("The collection {0} does not exist".format(collection))
         field_row = self.get_field(collection, field)
         if field_row is None:
-            raise ValueError("The field with the name {0} does not exist in the collection {1}".format(field, collection))
+            raise ValueError(
+                "The field with the name {0} does not exist in the collection {1}".format(field, collection))
         document_row = self.get_document(collection, document)
         if document_row is None:
-            raise ValueError("The document with the name {0} does not exist in the collection {1}".format(document, collection))
+            raise ValueError(
+                "The document with the name {0} does not exist in the collection {1}".format(document, collection))
         if not self.check_type_value(new_value, field_row.type):
             raise ValueError("The value {0} is invalid for the type {1}".format(new_value, field_row.type))
 
@@ -922,10 +950,10 @@ class DatabaseSession:
     def set_values(self, collection, document, values, flush=True):
         """
         Sets the values of a collection document
-        :param collection: document collection (str)
-        :param document: document name (str)
+        :param collection: Document collection (str)
+        :param document: Document name (str)
         :param values: Dictionary of values (key=field, value=value)
-        :param flush: bool to know if flush to do
+        :param flush: Bool to know if flush to do
         """
 
         collection_row = self.get_collection(collection)
@@ -933,11 +961,13 @@ class DatabaseSession:
             raise ValueError("The collection {0} does not exist".format(collection))
         document_row = self.get_document(collection, document)
         if document_row is None:
-            raise ValueError("The document with the name {0} does not exist in the collection {1}".format(document, collection))
+            raise ValueError(
+                "The document with the name {0} does not exist in the collection {1}".format(document, collection))
         for field in values:
             field_row = self.get_field(collection, field)
             if field_row is None:
-                raise ValueError("The field with the name {0} does not exist in the collection {1}".format(field, collection))
+                raise ValueError(
+                    "The field with the name {0} does not exist in the collection {1}".format(field, collection))
             if not self.check_type_value(values[field], field_row.type):
                 raise ValueError("The value {0} is invalid for the type {1}".format(values[field], field_row.type))
 
@@ -987,10 +1017,10 @@ class DatabaseSession:
     def remove_value(self, collection, document, field, flush=True):
         """
         Removes the value associated to <document, field> in the collection
-        :param collection: document collection (str)
-        :param document: document name (str)
-        :param field: field name (str)
-        :param flush: boolean to know if flush to do (put False in the middle of removing values) => True by default
+        :param collection: Focument collection (str)
+        :param document: Document name (str)
+        :param field: Field name (str)
+        :param flush: Bool to know if flush to do (put False in the middle of removing values) => True by default
         """
 
         # Checks
@@ -999,10 +1029,12 @@ class DatabaseSession:
             raise ValueError("The collection {0} does not exist".format(collection))
         field_row = self.get_field(collection, field)
         if field_row is None:
-            raise ValueError("The field with the name {0} does not exist in the collection {1}".format(field, collection))
+            raise ValueError(
+                "The field with the name {0} does not exist in the collection {1}".format(field, collection))
         document_row = self.get_document(collection, document)
         if document_row is None:
-            raise ValueError("The document with the name {0} does not exist in the collection {1}".format(document, collection))
+            raise ValueError(
+                "The document with the name {0} does not exist in the collection {1}".format(document, collection))
 
         sql_column_name = self.field_name_to_column_name(collection, field)
         old_value = getattr(document_row.row, sql_column_name)
@@ -1023,8 +1055,8 @@ class DatabaseSession:
     def check_type_value(self, value, valid_type):
         """
         Checks the type of the value
-        :param value: value
-        :param type: type that the value is supposed to have
+        :param value: Value
+        :param type: Type that the value is supposed to have
         :return: True if the value is valid, False otherwise
         """
 
@@ -1062,11 +1094,11 @@ class DatabaseSession:
     def new_value(self, collection, document, field, value, checks=True):
         """
         Adds a value for <document, field>
-        :param collection: document collection
-        :param document: document name
+        :param collection: Document collection
+        :param document: Document name
         :param field: Field name
-        :param value: value
-        :param checks: boolean to know if flush to do and value check (Put False in the middle of adding values, during import)
+        :param value: Value to add
+        :param checks: Bool to know if flush to do and value check (Put False in the middle of adding values, during import)
         """
 
         collection_row = self.get_collection(collection)
@@ -1077,9 +1109,11 @@ class DatabaseSession:
             if collection_row is None:
                 raise ValueError("The collection {0} does not exist".format(collection))
             if field_row is None:
-                raise ValueError("The field with the name {0} does not exist in the collection {1}".format(field, collection))
+                raise ValueError(
+                    "The field with the name {0} does not exist in the collection {1}".format(field, collection))
             if document_row is None:
-                raise ValueError("The document with the name {0} does not exist in the collection {1}".format(document, collection))
+                raise ValueError(
+                    "The document with the name {0} does not exist in the collection {1}".format(document, collection))
             if not self.check_type_value(value, field_row.type):
                 raise ValueError("The value {0} is invalid for the type {1}".format(value, field_row.type))
 
@@ -1114,15 +1148,16 @@ class DatabaseSession:
             self.unsaved_modifications = True
 
         else:
-            raise ValueError("The tuple <{0}, {1}> already has a value in the collection {2}".format(field, document, collection))
+            raise ValueError(
+                "The tuple <{0}, {1}> already has a value in the collection {2}".format(field, document, collection))
 
     """ DOCUMENTS """
 
     def get_document(self, collection, document):
         """
         Gives the document row of a document, given a collection
-        :param collection: document collection
-        :param document: document name
+        :param collection: Document collection
+        :param document: Document name
         :return The document row if the document exists, None otherwise
         """
 
@@ -1148,8 +1183,8 @@ class DatabaseSession:
     def get_documents_names(self, collection):
         """
         Gives the list of document names, given a collection
-        :param collection: documents collection
-        :return: list of document names of the collection
+        :param collection: Documents collection
+        :return: List of document names of the collection
         """
 
         collection_row = self.get_collection(collection)
@@ -1163,8 +1198,8 @@ class DatabaseSession:
     def get_documents(self, collection):
         """
         Gives the list of document rows, given a collection
-        :param collection: documents collection
-        :return: list of document rows of the collection
+        :param collection: Documents collection
+        :return: List of document rows of the collection
         """
 
         collection_row = self.get_collection(collection)
@@ -1178,8 +1213,8 @@ class DatabaseSession:
     def remove_document(self, collection, document):
         """
         Removes a document in the collection
-        :param collection: document collection (str)
-        :param document: document name (str)
+        :param collection: Document collection (str)
+        :param document: Document name (str)
         """
 
         collection_row = self.get_collection(collection)
@@ -1187,7 +1222,8 @@ class DatabaseSession:
             raise ValueError("The collection {0} does not exist".format(collection))
         document_row = self.get_document(collection, document)
         if document_row is None:
-            raise ValueError("The document with the name {0} does not exist in the collection {1}".format(document, collection))
+            raise ValueError(
+                "The document with the name {0} does not exist in the collection {1}".format(document, collection))
         primary_key = collection_row.primary_key
 
         self.session.query(self.table_classes[collection]).filter(
@@ -1209,9 +1245,9 @@ class DatabaseSession:
     def add_document(self, collection, document, flush=True):
         """
         Adds a document to a collection
-        :param collection: document collection (str)
-        :param document: dictionary of document values (dict), or document primary_key (str)
-        :param flush: boolean to know if flush to do, put False in the middle of filling the table => True by default
+        :param collection: Document collection (str)
+        :param document: Dictionary of document values (dict), or document primary_key (str)
+        :param flush: Bool to know if flush to do, put False in the middle of filling the table => True by default
         """
 
         # Checks
@@ -1223,13 +1259,16 @@ class DatabaseSession:
             raise ValueError(
                 "The document must be of type {0} or {1}, but document of type {2} given".format(dict, str, document))
         if isinstance(document, dict) and primary_key not in document:
-            raise ValueError("The primary_key {0} of the collection {1} is missing from the document dictionary".format(primary_key, collection))
+            raise ValueError(
+                "The primary_key {0} of the collection {1} is missing from the document dictionary".format(primary_key,
+                                                                                                           collection))
         if isinstance(document, dict):
             document_row = self.get_document(collection, document[primary_key])
         else:
             document_row = self.get_document(collection, document)
         if document_row is not None:
-            raise ValueError("A document with the name {0} already exists in the collection {1}".format(document, collection))
+            raise ValueError(
+                "A document with the name {0} already exists in the collection {1}".format(document, collection))
 
         if not isinstance(document, dict):
             document = {primary_key: document}
@@ -1307,7 +1346,7 @@ class DatabaseSession:
         """
         Given a filter string, return a query that can be used with
         filter_documents() to select documents.
-        :param query_type: type of query to build. Can be 'mixed', 
+        :param query_type: Type of query to build. Can be 'mixed',
             'sql', 'python' or 'guess'. If None, self.query_type
             is used.
         """
