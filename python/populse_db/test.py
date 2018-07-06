@@ -788,7 +788,7 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing that a document is returned if it exists
                 self.assertIsInstance(session.get_document(
-                    "collection1", "document1").row, session.table_classes["collection1"])
+                    "collection1", "document1").row, session.table_classes[session.name_to_valid_column_name("collection1")])
 
                 # Testing that None is returned if the document does not exist
                 self.assertIsNone(session.get_document("collection1", "document3"))
@@ -884,7 +884,7 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing that the document has been added
                 document = session.get_document("collection1", "document1")
-                self.assertIsInstance(document.row, session.table_classes["collection1"])
+                self.assertIsInstance(document.row, session.table_classes[session.name_to_valid_column_name("collection1")])
                 self.assertEqual(document.name, "document1")
 
                 # Testing when trying to add a document that already exists

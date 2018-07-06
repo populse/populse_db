@@ -295,8 +295,8 @@ class DatabaseSession:
         - get_fields_names: gives all fields names
         - field_type_to_column_type: gives the column type corresponding
           to a field type
-        - field_name_to_column_name: gives the column name corresponding
-          to the field name
+        - name_to_valid_column_name: gives the valid table/column name corresponding
+          to the name
         - get_value: gives the value of <document, field>
         - set_value: sets the value of <document, field>
         - set_values: sets several values of a collection document
@@ -412,21 +412,12 @@ class DatabaseSession:
 
         # Documents
         for collection in self.__collections:
-            documents_rows = self.session.query(self.table_classes[collection]).all()
+            documents_rows = self.session.query(self.table_classes[self.name_to_valid_column_name(collection)]).all()
             self.__documents[collection] = {}
             for document_row in documents_rows:
                 self.__documents[collection][
-                    getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(self, collection,
-                                                                                                  document_row)
-
-        # Names
-        for collection in self.__collections:
-            self.__names[collection] = {}
-            for field in self.__fields[collection]:
-                if field == self.__collections[collection].primary_key:
-                    self.__names[collection][field] = field
-                else:
-                    self.__names[collection][field] = hashlib.md5(field.encode('utf-8')).hexdigest()
+                    getattr(document_row, self.name_to_valid_column_name(self.__collections[collection].primary_key))] = FieldRow(self, collection,
+                                                                                                                                              document_row)
 
     def __refresh_cache_documents(self, collection):
         """
@@ -435,10 +426,10 @@ class DatabaseSession:
         """
 
         self.__documents[collection].clear()
-        documents_rows = self.session.query(self.table_classes[collection]).all()
+        documents_rows = self.session.query(self.table_classes[self.name_to_valid_column_name(collection)]).all()
         self.__documents[collection] = {}
         for document_row in documents_rows:
-            self.__documents[collection][getattr(document_row, self.__collections[collection].primary_key)] = FieldRow(
+            self.__documents[collection][getattr(document_row, self.name_to_valid_column_name(self.__collections[collection].primary_key))] = FieldRow(
                 self, collection, document_row)
 
     """ COLLECTIONS """
@@ -468,15 +459,17 @@ class DatabaseSession:
         self.session.add(collection_row)
 
         # Creating the collection document table
-        collection_table = Table(name, self.metadata, Column(primary_key, String, primary_key=True))
+        pk_name = self.name_to_valid_column_name(primary_key)
+        table_name = self.name_to_valid_column_name(name)
+        collection_table = Table(table_name, self.metadata, Column(pk_name, String, primary_key=True))
         collection_query = CreateTable(collection_table)
         self.session.execute(collection_query)
 
         # Creating the class associated
-        collection_dict = {'__tablename__': name, '__table__': collection_table}
-        collection_class = type(name, (self.base,), collection_dict)
+        collection_dict = {'__tablename__': table_name, '__table__': collection_table}
+        collection_class = type(table_name, (self.base,), collection_dict)
         mapper(collection_class, collection_table)
-        self.table_classes[name] = collection_class
+        self.table_classes[table_name] = collection_class
 
         # Adding the primary_key of the collection as field
         primary_key_field = self.table_classes[FIELD_TABLE](name=primary_key, collection=name,
@@ -489,8 +482,6 @@ class DatabaseSession:
             self.__documents[name] = {}
             self.__fields[name] = {}
             self.__fields[name][primary_key] = primary_key_field
-            self.__names[name] = {}
-            self.__names[name][primary_key] = primary_key
             self.__collections[name] = collection_row
 
         self.session.flush()
@@ -513,9 +504,9 @@ class DatabaseSession:
             self.table_classes[FIELD_TABLE].collection == name).delete()
 
         # Removing the collection document table + metadata associated
-        collection_query = DropTable(self.table_classes[name].__table__)
+        collection_query = DropTable(self.table_classes[self.name_to_valid_column_name(name)].__table__)
         self.session.execute(collection_query)
-        self.metadata.remove(self.table_classes[name].__table__)
+        self.metadata.remove(self.table_classes[self.name_to_valid_column_name(name)].__table__)
 
         # Removing the class associated
         self.table_classes.pop(name, None)
@@ -523,7 +514,6 @@ class DatabaseSession:
         if self.__caches:
             self.__documents.pop(name, None)
             self.__fields.pop(name, None)
-            self.__names.pop(name, None)
             self.__collections.pop(name, None)
 
         self.session.flush()
@@ -632,14 +622,13 @@ class DatabaseSession:
 
         if self.__caches:
             self.__fields[collection][name] = field_row
-            self.__names[collection][name] = hashlib.md5(name.encode('utf-8')).hexdigest()
 
         self.session.add(field_row)
 
         # Fields creation
         if field_type in LIST_TYPES:
             if self.list_tables:
-                table = 'list_%s_%s' % (collection, self.field_name_to_column_name(collection, name))
+                table = 'list_%s_%s' % (collection, self.name_to_valid_column_name(name))
                 list_table = Table(table, self.metadata, Column('document_id', String, primary_key=True),
                                    Column('i', Integer, primary_key=True),
                                    Column('value', TYPE_TO_COLUMN[field_type[5:]]))
@@ -656,16 +645,16 @@ class DatabaseSession:
         else:
             field_type = self.field_type_to_column_type(field_type)
 
-        column = Column(self.field_name_to_column_name(collection, name), field_type, index=index)
+        column = Column(self.name_to_valid_column_name(name), field_type, index=index)
         column_str_type = column.type.compile(self.database.engine.dialect)
         column_name = column.compile(dialect=self.database.engine.dialect)
 
         # Column created in document table, and in initial table if initial values are used
 
-        document_query = str('ALTER TABLE %s ADD COLUMN %s %s' %
-                             (collection, column_name, column_str_type))
+        document_query = str('ALTER TABLE "%s" ADD COLUMN %s %s' %
+                             (self.name_to_valid_column_name(collection), column_name, column_str_type))
         self.session.execute(document_query)
-        self.table_classes[collection].__table__.append_column(column)
+        self.table_classes[self.name_to_valid_column_name(collection)].__table__.append_column(column)
 
         # Redefinition of the table classes
         if flush:
@@ -689,23 +678,23 @@ class DatabaseSession:
 
         return TYPE_TO_COLUMN[field_type]
 
-    def field_name_to_column_name(self, collection, field):
+    def name_to_valid_column_name(self, name):
         """
-        Transforms the field name into a valid and unique column name, by hashing it
-        :param collection: Field collection (str)
-        :param field: Field name (str)
-        :return: Valid and unique (hashed) column name
+        Transforms the name into a valid and unique table/column name, by hashing it
+        :param name: Name (str)
+        :return: Valid and unique (hashed) table/column name
         """
 
         if self.__caches:
-            return self.__names[collection][field]
+            try:
+                return self.__names[name]
+            except KeyError:
+                valid_name = hashlib.md5(name.encode('utf-8')).hexdigest()
+                self.__names[name] = valid_name
+                return valid_name
         else:
-            primary_key = self.get_collection(collection).primary_key
-            if field == primary_key:
-                return field
-            else:
-                field_name = hashlib.md5(field.encode('utf-8')).hexdigest()
-                return field_name
+            valid_name = hashlib.md5(name.encode('utf-8')).hexdigest()
+            return valid_name
 
     def remove_field(self, collection, field):
         """
@@ -738,12 +727,12 @@ class DatabaseSession:
         field_names = []
         if isinstance(field, list):
             for field_elem in field:
-                field_names.append(self.field_name_to_column_name(collection, field_elem))
+                field_names.append(self.name_to_valid_column_name(field_elem))
         else:
-            field_names.append(self.field_name_to_column_name(collection, field))
+            field_names.append(self.name_to_valid_column_name(field))
 
-        # Field removed from document table
-        old_document_table = Table(collection, self.metadata)
+        # Field removed from collection document table
+        old_document_table = Table(self.name_to_valid_column_name(collection), self.metadata)
         select = sql.select(
             [c for c in old_document_table.c if c.name not in str(field_names)])
 
@@ -751,7 +740,7 @@ class DatabaseSession:
                              if c.name not in str(field_names)]
 
         # Creation of backup table, not containing the column
-        document_backup_table = Table(collection + "_backup", self.metadata)
+        document_backup_table = Table(self.name_to_valid_column_name(collection) + "_backup", self.metadata)
 
         for column in old_document_table.columns:
             if column.name not in str(field_names):
@@ -768,7 +757,7 @@ class DatabaseSession:
         self.session.execute(DropTable(old_document_table))
 
         # Recreating the table without the column
-        new_document_table = Table(collection, self.metadata)
+        new_document_table = Table(self.name_to_valid_column_name(collection), self.metadata)
         for column in document_backup_table.columns:
             new_document_table.append_column(column.copy())
 
@@ -788,14 +777,14 @@ class DatabaseSession:
             if isinstance(field, list):
                 for field_elem in field:
                     if self.get_field(collection, field_elem).type in LIST_TYPES:
-                        table = 'list_%s_%s' % (collection, self.field_name_to_column_name(collection, field_elem))
+                        table = 'list_%s_%s' % (collection, self.name_to_valid_column_name(field_elem))
                         collection_query = DropTable(self.table_classes[table].__table__)
                         self.session.execute(collection_query)
                         self.metadata.remove(self.table_classes[table].__table__)
 
             else:
                 if self.get_field(collection, field).type in LIST_TYPES:
-                    table = 'list_%s_%s' % (collection, self.field_name_to_column_name(collection, field))
+                    table = 'list_%s_%s' % (collection, self.name_to_valid_column_name(field))
                     collection_query = DropTable(self.table_classes[table].__table__)
                     self.session.execute(collection_query)
                     self.metadata.remove(self.table_classes[table].__table__)
@@ -814,10 +803,8 @@ class DatabaseSession:
             if isinstance(field, list):
                 for field_elem in field:
                     self.__fields[collection].pop(field_elem, None)
-                    self.__names[collection].pop(field_elem, None)
             else:
                 self.__fields[collection].pop(field, None)
-                self.__names[collection].pop(field, None)
 
         self.unsaved_modifications = True
 
@@ -915,7 +902,7 @@ class DatabaseSession:
         if not self.check_type_value(new_value, field_row.type):
             raise ValueError("The value {0} is invalid for the type {1}".format(new_value, field_row.type))
 
-        column_name = self.field_name_to_column_name(collection, field)
+        column_name = self.name_to_valid_column_name(field)
         new_column = self.python_to_column(field_row.type, new_value)
 
         if field != collection_row.primary_key:
@@ -973,7 +960,7 @@ class DatabaseSession:
 
         database_values = {}
         for field in values:
-            column_name = self.field_name_to_column_name(collection, field)
+            column_name = self.name_to_valid_column_name(field)
             field_row = self.get_field(collection, field)
             new_column = self.python_to_column(field_row.type, values[field])
             database_values[column_name] = new_column
@@ -1036,7 +1023,7 @@ class DatabaseSession:
             raise ValueError(
                 "The document with the name {0} does not exist in the collection {1}".format(document, collection))
 
-        sql_column_name = self.field_name_to_column_name(collection, field)
+        sql_column_name = self.name_to_valid_column_name(field)
         old_value = getattr(document_row.row, sql_column_name)
         setattr(document_row.row, sql_column_name, None)
 
@@ -1117,7 +1104,7 @@ class DatabaseSession:
             if not self.check_type_value(value, field_row.type):
                 raise ValueError("The value {0} is invalid for the type {1}".format(value, field_row.type))
 
-        field_name = self.field_name_to_column_name(collection, field)
+        field_name = self.name_to_valid_column_name(field)
         database_value = getattr(
             document_row, field_name)
 
@@ -1171,9 +1158,9 @@ class DatabaseSession:
                 return None
         else:
             primary_key = collection_row.primary_key
-            column = getattr(self.table_classes[collection], primary_key)
+            column = getattr(self.table_classes[self.name_to_valid_column_name(collection)], self.name_to_valid_column_name(primary_key))
             value = column.type.python_type(document)
-            query = self.session.query(self.table_classes[collection]).filter(
+            query = self.session.query(self.table_classes[self.name_to_valid_column_name(collection)]).filter(
                 column == value)
             document_row = query.first()
             if document_row is not None:
@@ -1191,8 +1178,8 @@ class DatabaseSession:
         if collection_row is None:
             return []
         else:
-            documents = self.session.query(getattr(self.table_classes[collection], collection_row.primary_key)).all()
-            documents_list = [getattr(document, collection_row.primary_key) for document in documents]
+            documents = self.session.query(getattr(self.table_classes[self.name_to_valid_column_name(collection)], self.name_to_valid_column_name(collection_row.primary_key))).all()
+            documents_list = [getattr(document, self.name_to_valid_column_name(collection_row.primary_key)) for document in documents]
             return documents_list
 
     def get_documents(self, collection):
@@ -1206,7 +1193,7 @@ class DatabaseSession:
         if collection_row is None:
             return []
         else:
-            documents = self.session.query(self.table_classes[collection]).all()
+            documents = self.session.query(self.table_classes[self.name_to_valid_column_name(collection)]).all()
             documents_list = [FieldRow(self, collection, document) for document in documents]
             return documents_list
 
@@ -1226,8 +1213,8 @@ class DatabaseSession:
                 "The document with the name {0} does not exist in the collection {1}".format(document, collection))
         primary_key = collection_row.primary_key
 
-        self.session.query(self.table_classes[collection]).filter(
-            getattr(self.table_classes[collection], primary_key) == document).delete()
+        self.session.query(self.table_classes[self.name_to_valid_column_name(collection)]).filter(
+            getattr(self.table_classes[self.name_to_valid_column_name(collection)], self.name_to_valid_column_name(primary_key)) == document).delete()
 
         # Removing document from list tables
         if self.list_tables:
@@ -1274,10 +1261,10 @@ class DatabaseSession:
             document = {primary_key: document}
 
         document_id = document[primary_key]
-        column_values = {primary_key: document_id}
+        column_values = {self.name_to_valid_column_name(primary_key): document_id}
         lists = []
         for k, v in document.items():
-            column_name = self.field_name_to_column_name(collection, k)
+            column_name = self.name_to_valid_column_name(k)
             field_type = self.get_field(collection, k).type
             column_value = self.python_to_column(field_type, v)
             column_values[column_name] = column_value
@@ -1298,7 +1285,7 @@ class DatabaseSession:
                 if sql_params:
                     self.session.execute(sql, params=sql_params)
 
-        document_row = self.table_classes[collection](**column_values)
+        document_row = self.table_classes[self.name_to_valid_column_name(collection)](**column_values)
         self.session.add(document_row)
 
         if self.__caches:
@@ -1369,17 +1356,17 @@ class DatabaseSession:
         if isinstance(filter_query, six.string_types):
             filter_query = self.filter_query(collection, filter_query)
         if filter_query is None:
-            select = self.metadata.tables[collection].select()
+            select = self.metadata.tables[self.name_to_valid_column_name(collection)].select()
             python_filter = None
         elif isinstance(filter_query, types.FunctionType):
-            select = self.metadata.tables[collection].select()
+            select = self.metadata.tables[self.name_to_valid_column_name(collection)].select()
             python_filter = filter_query
         elif isinstance(filter_query, tuple):
             sql_condition, python_filter = filter_query
-            select = select = self.metadata.tables[collection].select(
+            select = select = self.metadata.tables[self.name_to_valid_column_name(collection)].select(
                 sql_condition)
         else:
-            select = self.metadata.tables[collection].select(
+            select = self.metadata.tables[self.name_to_valid_column_name(collection)].select(
                 filter_query)
             python_filter = None
         for row in self.session.execute(select):
@@ -1455,20 +1442,16 @@ class FieldRow:
         self.database = database
         self.collection = collection
         self.row = row
-        primary_key = list(self.database.metadata.tables[collection].primary_key.columns.values())[0].name
-        setattr(self, primary_key, getattr(self.row, primary_key))
 
     def __getattr__(self, name):
         try:
             return getattr(self.row, name)
         except AttributeError as e:
-            hashed_name = hashlib.md5(name.encode('utf-8')).hexdigest()
-            result = getattr(self.row, hashed_name, Undefined)
+            result = getattr(self.row, self.database.name_to_valid_column_name(name), Undefined)
             if result is Undefined:
                 raise
             result = self.database.column_to_python(
                 self.database.get_field(self.collection, name).type, result)
-            setattr(self, hashed_name, result)
             return result
 
     def __getitem__(self, name):

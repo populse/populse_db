@@ -323,8 +323,8 @@ class FilterToSqlQuery(FilterToQuery):
         Return the SqlAlchemy Column object corresponding to
         a populse_db field object.
         '''
-        return getattr(self.database.metadata.tables[self.collection].c,
-                       self.database.field_name_to_column_name(self.collection, column.name))
+        return getattr(self.database.metadata.tables[self.database.name_to_valid_column_name(self.collection)].c,
+                       self.database.name_to_valid_column_name(column.name))
 
     def get_column_value(self, python_value):
         '''
@@ -345,7 +345,7 @@ class FilterToSqlQuery(FilterToQuery):
             raise FilterImplementationLimit(
                 'Cannot convert IN operator in SQL because database model does not include tables for list fields')
         value = self.get_column_value(value)
-        collection_table = self.database.metadata.tables[self.collection]
+        collection_table = self.database.metadata.tables[self.database.name_to_valid_column_name(self.collection)]
         primary_key = list(collection_table.primary_key.columns.values())[0]
         list_column = self.get_column(list_field)
         list_table = self.database.metadata.tables['list_%s_%s' % (self.collection, list_column.name)]
