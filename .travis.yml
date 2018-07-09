@@ -37,9 +37,9 @@ before_script:
 
 install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install -e .[postgres]; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install -e .[postgres]; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip2 install -e .[postgres]; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install codecov; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install codecov; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip2 install codecov; fi
 
 script: 
   - python -m populse_db.test
