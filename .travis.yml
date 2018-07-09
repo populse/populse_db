@@ -14,6 +14,7 @@ services:
   - postgresql
 
 before_script:
+  - brew update
   - psql -c 'create database populse_db_tests;' -U postgres  
 
 install:
