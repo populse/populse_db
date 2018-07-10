@@ -29,13 +29,10 @@ python directory must be added to $PYTHONPATH
 
 Unit tests written thanks to the python module unittest
 
-Tested with Python2 and Python3
+The module is ensure to work with Python >= 3.3
 
 # Launch the tests
 
 Add the directory python/populse_db in $PATH, or open this directory inside a terminal
 	
-	python2 Test.py  # With Python2
-	
-	python3 Test.py  # With Python3
-
+	python python/populse_db/test.py
