@@ -1,4 +1,4 @@
-# populse_db [![Build Status](https://travis-ci.org/populse/populse_db.svg?branch=master)](https://travis-ci.org/populse/populse_db) [![codecov.io](https://codecov.io/github/populse/populse_db/coverage.svg?branch=master)](https://codecov.io/github/populse/populse_db) [![](https://img.shields.io/github/license/populse/populse_db.svg)](https://github.com/populse/populse_db/blob/master/LICENSE.md) [![PyPi version](https://img.shields.io/pypi/v/populse_db.svg)]
+# populse_db [![Build Status](https://travis-ci.org/populse/populse_db.svg?branch=master)](https://travis-ci.org/populse/populse_db) [![codecov.io](https://codecov.io/github/populse/populse_db/coverage.svg?branch=master)](https://codecov.io/github/populse/populse_db) [![](https://img.shields.io/github/license/populse/populse_db.svg)](https://github.com/populse/populse_db/blob/master/LICENSE.md) [![PyPi version](https://img.shields.io/pypi/v/populse_db.svg)](https://pypi.python.org/pypi/populse_db/)
 
 SQLAlchemy based database API for Populse
 
