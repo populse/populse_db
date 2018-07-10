@@ -43,7 +43,9 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip2 install codecov; fi
 
 script: 
-  - python -m populse_db.test
+  - python -V
+  - python3 -V
+  - python3 -m populse_db.test
   - coverage run python/populse_db/test.py
 
 after_success:
