@@ -43,7 +43,7 @@ Add the directory python/populse_db in $PATH, or open this directory inside a te
 * lark-parser
 * python-dateutil
 
-Other packages used:
+# Other packages used
   * ast
   * copy
   * datetime
