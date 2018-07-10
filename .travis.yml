@@ -5,18 +5,6 @@ matrix:
     - os: linux
       language: python  
       python:
-        - "3.0"
-    - os: linux
-      language: python  
-      python:
-        - "3.1"
-    - os: linux
-      language: python  
-      python:
-        - "3.2"
-    - os: linux
-      language: python  
-      python:
         - "3.3"
     - os: linux
       language: python  
