@@ -37,7 +37,7 @@ Add the directory python/populse_db in $PATH, or open this directory inside a te
 	
 	python python/populse_db/test.py
 	
-# Dependencies
+# Requirements
 
 * sqlalchemy
 * lark-parser
