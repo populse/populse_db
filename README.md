@@ -2,6 +2,10 @@
 
 SQLAlchemy based database API for Populse
 
+# Website
+
+The documentation is available on populse_db's website here: [https://populse.github.io/populse_db](https://populse.github.io/populse_db)
+
 # Tools
 
 The API can support every database type, it takes an engine as entry
