@@ -36,3 +36,22 @@ The module is ensure to work with Python >= 3.3
 Add the directory python/populse_db in $PATH, or open this directory inside a terminal
 	
 	python python/populse_db/test.py
+	
+# Dependencies
+
+* sqlalchemy
+* lark-parser
+* python-dateutil
+
+Other packages used:
+  * ast
+  * copy
+  * datetime
+  * hashlib
+  * operator
+  * os
+  * re
+  * six
+  * tempfile
+  * types
+  * unittest
