@@ -9,7 +9,7 @@ The API can support every database type, it takes an engine as entry
 The database is managed thanks to the ORM SQLAlchemy
 
 # Relational schema
-![alt text](doc/schema.png "Relational schema")
+![alt text](docs/schema.png "Relational schema")
 
 Type {string, integer, float, date, datetime, time, json, list_string, list_integer, list_float, list_date, list_datetime, list_time, list_json}
 	
