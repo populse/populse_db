@@ -33,7 +33,8 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install pyenv-virtualenv; fi
 
 before_script:
-  - psql -c 'create database populse_db_tests;' -U postgres  
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then psql -c 'create database populse_db_tests;' -U postgres; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew services start postgresql; fi
 
 install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install -e .[postgres]; fi
