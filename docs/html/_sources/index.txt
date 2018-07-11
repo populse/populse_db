@@ -43,8 +43,8 @@ Documentation
    
    cd docs/
    make html
-   cp -R build/doctrees/ ./doctrees
-   cp -R build/html/ ./html
+   cp -R build/doctrees/ ./doctrees/
+   cp -R build/html/ ./html/
    rm -d -r build/html/
    rm -d -r build/doctrees/
    cd ..
