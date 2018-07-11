@@ -29,6 +29,10 @@ python/ directory must be added to $PYTHONPATH
 
 Unit tests written thanks to the python module unittest
 
+Continuous integration made with Travis
+
+Code coverage calculated by the python module codecov
+
 The module is ensured to work with Python >= 3.3
 
 The module is ensured to work on the platforms Linux and OSX (It is supposed to work on Windows, hasn't been tested yet)
