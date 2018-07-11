@@ -17,7 +17,7 @@ From source:
     cd /tmp
     rm -r /tmp/populse_db
 
-python directory must be added to $PYTHONPATH 
+python/ directory must be added to $PYTHONPATH 
 
 # Usage
 
