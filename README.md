@@ -11,11 +11,6 @@ The documentation is available on populse_db's website here: [https://populse.gi
 The API can support every database type, it takes an engine as entry
 
 The database is managed thanks to the ORM SQLAlchemy
-
-# Relational schema
-![alt text](docs/pictures/schema.png "Relational schema")
-
-Type {string, integer, float, date, datetime, time, json, list_string, list_integer, list_float, list_date, list_datetime, list_time, list_json}
 	
 # Installation
 
@@ -29,7 +24,9 @@ python directory must be added to $PYTHONPATH
 
 Unit tests written thanks to the python module unittest
 
-The module is ensure to work with Python >= 3.3
+The module is ensured to work with Python >= 3.3
+
+The module is ensured to work on the platforms linux and osx
 
 # Launch the tests
 
