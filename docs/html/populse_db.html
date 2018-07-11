@@ -588,7 +588,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'!=': &lt;built-in function ne&gt;, 'like': &lt;staticmethod object at 0x7fbeb2e06a20&gt;, '&gt;': &lt;built-in function gt&gt;, '&lt;': &lt;built-in function lt&gt;, 'and': &lt;built-in function and_&gt;, '&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '&gt;=': &lt;built-in function ge&gt;, '==': &lt;built-in function eq&gt;, 'ilike': &lt;staticmethod object at 0x7fbeb2e06a58&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'&lt;=': &lt;built-in function le&gt;, 'ilike': &lt;staticmethod object at 0x7f10c7d7fe48&gt;, 'and': &lt;built-in function and_&gt;, '&gt;=': &lt;built-in function ge&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;staticmethod object at 0x7f10c7d7fc50&gt;, '==': &lt;built-in function eq&gt;, '!=': &lt;built-in function ne&gt;, '&gt;': &lt;built-in function gt&gt;, '&lt;': &lt;built-in function lt&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -668,7 +668,7 @@ two elements.</li>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToQuery.keyword_literals">
-<code class="descname">keyword_literals</code><em class="property"> = {'false': False, 'null': None, 'true': True}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<code class="descname">keyword_literals</code><em class="property"> = {'null': None, 'true': True, 'false': False}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -777,7 +777,7 @@ a populse_db field object.</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'!=': &lt;function sql_differ at 0x7fbeb2df89d8&gt;, 'like': &lt;function like_op at 0x7fbeb38b38c8&gt;, '&gt;': &lt;built-in function gt&gt;, '&lt;': &lt;built-in function lt&gt;, 'and': &lt;built-in function and_&gt;, '&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '&gt;=': &lt;built-in function ge&gt;, '==': &lt;function sql_equal at 0x7fbeb2e300d0&gt;, 'ilike': &lt;function ilike_op at 0x7fbeb38b39d8&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'&lt;=': &lt;built-in function le&gt;, 'ilike': &lt;function ilike_op at 0x7f10c886e840&gt;, 'and': &lt;built-in function and_&gt;, '&gt;=': &lt;built-in function ge&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;function like_op at 0x7f10c886e730&gt;, '==': &lt;function sql_equal at 0x7f10c7da5f28&gt;, '!=': &lt;function sql_differ at 0x7f10c7d748c8&gt;, '&gt;': &lt;built-in function gt&gt;, '&lt;': &lt;built-in function lt&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -810,11 +810,11 @@ is used for testing the parsing of literals.</p>
 <div class="section" id="module-populse_db.info">
 <span id="populse-db-info-module"></span><h2>populse_db.info module<a class="headerlink" href="#module-populse_db.info" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-populse_db.script">
-<span id="populse-db-script-module"></span><h2>populse_db.script module<a class="headerlink" href="#module-populse_db.script" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="populse-db-script-module">
+<h2>populse_db.script module<a class="headerlink" href="#populse-db-script-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-populse_db.script_empty_database">
-<span id="populse-db-script-empty-database-module"></span><h2>populse_db.script_empty_database module<a class="headerlink" href="#module-populse_db.script_empty_database" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="populse-db-script-empty-database-module">
+<h2>populse_db.script_empty_database module<a class="headerlink" href="#populse-db-script-empty-database-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-populse_db.test">
 <span id="populse-db-test-module"></span><h2>populse_db.test module<a class="headerlink" href="#module-populse_db.test" title="Permalink to this headline">¶</a></h2>
@@ -847,8 +847,8 @@ is used for testing the parsing of literals.</p>
 <li><a class="reference internal" href="#module-populse_db.database">populse_db.database module</a></li>
 <li><a class="reference internal" href="#module-populse_db.filter">populse_db.filter module</a></li>
 <li><a class="reference internal" href="#module-populse_db.info">populse_db.info module</a></li>
-<li><a class="reference internal" href="#module-populse_db.script">populse_db.script module</a></li>
-<li><a class="reference internal" href="#module-populse_db.script_empty_database">populse_db.script_empty_database module</a></li>
+<li><a class="reference internal" href="#populse-db-script-module">populse_db.script module</a></li>
+<li><a class="reference internal" href="#populse-db-script-empty-database-module">populse_db.script_empty_database module</a></li>
 <li><a class="reference internal" href="#module-populse_db.test">populse_db.test module</a></li>
 <li><a class="reference internal" href="#module-populse_db">Module contents</a></li>
 </ul>

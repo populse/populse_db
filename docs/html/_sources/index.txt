@@ -26,10 +26,10 @@ Installation
    
    sudo apt-get install git
    git clone https://github.com/populse/populse_db.git /tmp/populse_db
-   cd /tmp/populse_db
+   sudo cd /tmp/populse_db
    python setup.py install
    cd /tmp
-   rm -r /tmp/populse_db
+   sudo rm -r /tmp/populse_db
 
 * python/ directory must be added to $PYTHONPATH
 
