@@ -45,6 +45,11 @@ def create_test_case(**database_creation_parameters):
             shutil.rmtree(self.temp_folder)
 
         def create_database(self, clear=True):
+            """
+            Opens the database
+            :param clear: Bool to know if the database must be cleared
+            """
+
             try:
                 db = populse_db.database.Database(**database_creation_parameters)
             except OperationalError as e:
@@ -71,6 +76,7 @@ def create_test_case(**database_creation_parameters):
                 self.fail()
             except ValueError:
                 pass
+
             # Testing with wrong caches
             try:
                 populse_db.database.Database("engine", caches="False")
@@ -86,7 +92,7 @@ def create_test_case(**database_creation_parameters):
             database = self.create_database()
             with database as session:
 
-                # Adding collection
+                # Adding a collection
                 session.add_collection("collection1", "name")
 
                 # Testing with a first field
@@ -108,22 +114,23 @@ def create_test_case(**database_creation_parameters):
                 except ValueError:
                     pass
 
-                # Testing with all field types
+                # Testing with several field types
                 session.add_field("collection1", "BandWidth", populse_db.database.FIELD_TYPE_FLOAT, None)
-                session.add_field("collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, "with space")
                 session.add_field("collection1", "AcquisitionTime", populse_db.database.FIELD_TYPE_TIME, None)
                 session.add_field("collection1", "AcquisitionDate", populse_db.database.FIELD_TYPE_DATETIME, None)
                 session.add_field("collection1", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER,
                                   None)
+                session.add_field("collection1", "Boolean", populse_db.database.FIELD_TYPE_BOOLEAN, None)
+                session.add_field("collection1", "Boolean list", populse_db.database.FIELD_TYPE_LIST_BOOLEAN, None)
 
+                # Testing with close field names
+                session.add_field("collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, "with space")
                 session.add_field("collection1", "Bitspervoxel", populse_db.database.FIELD_TYPE_INTEGER,
                                   "without space")
                 self.assertEqual(session.get_field(
                     "collection1", "Bitspervoxel").description, "without space")
                 self.assertEqual(session.get_field(
                     "collection1", "Bits per voxel").description, "with space")
-                session.add_field("collection1", "Boolean", populse_db.database.FIELD_TYPE_BOOLEAN, None)
-                session.add_field("collection1", "Boolean list", populse_db.database.FIELD_TYPE_LIST_BOOLEAN, None)
 
                 # Testing with wrong parameters
                 try:
@@ -169,7 +176,8 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                # Adding collection
+
+                # Adding a collection
                 session.add_collection("current", "name")
 
                 # Adding fields
@@ -243,7 +251,7 @@ def create_test_case(**database_creation_parameters):
                 except ValueError:
                     pass
 
-                # Testing with wrong parameter
+                # Testing with wrong parameters
                 try:
                     session.remove_field("current", 1)
                     self.fail()
@@ -264,10 +272,10 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                # Adding collection
+                # Adding a collection
                 session.add_collection("collection1", "name")
 
-                # Adding field
+                # Adding a field
                 session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
                                   "Name of the patient")
 
@@ -285,15 +293,15 @@ def create_test_case(**database_creation_parameters):
 
         def test_get_fields(self):
             """
-            Tests the method giving the fields rows, given a collection
+            Tests the method giving all fields rows, given a collection
             """
 
             database = self.create_database()
             with database as session:
-                # Adding collection
+                # Adding a collection
                 session.add_collection("collection1", "name")
 
-                # Adding field
+                # Adding a field
                 session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
                                   "Name of the patient")
 
@@ -306,7 +314,7 @@ def create_test_case(**database_creation_parameters):
                 fields = session.get_fields("collection1")
                 self.assertEqual(len(fields), 3)
 
-                # Adding second collection
+                # Adding a second collection
                 session.add_collection("collection2", "id")
 
                 fields = session.get_fields("collection1")
@@ -319,10 +327,11 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                # Adding collection
+
+                # Adding a collection
                 session.add_collection("collection1", "name")
 
-                # Adding document
+                # Adding a document
                 document = {}
                 document["name"] = "document1"
                 session.add_document("collection1", document)
@@ -337,7 +346,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_field(
                     "collection1", "AcquisitionTime", populse_db.database.FIELD_TYPE_TIME, None)
 
-                # Adding values and changing it
+                # Adding values and setting them
                 session.new_value("collection1", "document1", "PatientName", "test", "test")
                 session.set_value("collection1", "document1", "PatientName", "test2")
 
@@ -369,7 +378,7 @@ def create_test_case(**database_creation_parameters):
                 session.set_value("collection1", "document1", "PatientName", None)
                 self.assertIsNone(session.get_value("collection1", "document1", "PatientName"))
 
-                # Testing when not existing
+                # Testing when the value is not existing
                 try:
                     session.set_value("collection_not_existing", "document3", "PatientName", None)
                     self.fail()
@@ -429,7 +438,7 @@ def create_test_case(**database_creation_parameters):
                 except ValueError:
                     pass
 
-                # Testing primary key set impossible
+                # Testing that setting a primary key value is impossible
                 try:
                     session.set_value("collection1", "document1", "name", None)
                     self.fail()
@@ -443,7 +452,8 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                # Adding collection
+
+                # Adding a collection
                 session.add_collection("collection1")
 
                 # Adding fields
@@ -481,7 +491,7 @@ def create_test_case(**database_creation_parameters):
                 except ValueError:
                     pass
 
-                # Trying with field not existing
+                # Trying with the field not existing
                 values = {}
                 values["PatientName"] = "Patient"
                 values["BandWidth"] = 25000
@@ -509,10 +519,10 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                # Adding collection
+                # Adding a collection
                 session.add_collection("collection1", "name")
 
-                # Adding field
+                # Adding a field
                 session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
                                   "Name of the patient")
 
@@ -530,7 +540,7 @@ def create_test_case(**database_creation_parameters):
                 self.assertTrue("PatientName" in fields)
                 self.assertTrue("SequenceName" in fields)
 
-                # Adding second collection
+                # Adding a second collection
                 session.add_collection("collection2", "id")
 
                 fields = session.get_fields_names("collection1")
@@ -549,7 +559,7 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                # Adding collection
+                # Adding a collection
                 session.add_collection("collection1", "name")
 
                 # Adding documents
@@ -583,7 +593,7 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(session.get_value(
                     "collection1", "document1", "Grids spacing"), [0.234375, 0.234375, 0.4])
 
-                # Testing when not existing
+                # Testing when the value is not existing
                 self.assertIsNone(session.get_value("collection_not_existing", "document1", "PatientName"))
                 self.assertIsNone(session.get_value("collection1", "document3", "PatientName"))
                 self.assertIsNone(session.get_value("collection1", "document1", "NotExisting"))
@@ -632,7 +642,8 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                # Adding collection
+
+                # Adding a collection
                 session.add_collection("collection1", "name")
 
                 # Adding documents
@@ -667,7 +678,7 @@ def create_test_case(**database_creation_parameters):
                     0.234375, 0.234375, 0.4])
                 session.new_value("collection1", "document1", "Boolean", True)
 
-                # Testing when not existing
+                # Testing when the cell is not existing
                 try:
                     session.new_value("collection_not_existing", "document1", "PatientName", "test")
                     self.fail()
@@ -786,17 +797,18 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                # Adding collection
+                # Adding a collection
                 session.add_collection("collection1", "name")
 
-                # Adding document
+                # Adding a document
                 document = {}
                 document["name"] = "document1"
                 session.add_document("collection1", document)
 
                 # Testing that a document is returned if it exists
                 self.assertIsInstance(session.get_document(
-                    "collection1", "document1").row, session.table_classes[session.name_to_valid_column_name("collection1")])
+                    "collection1", "document1").row,
+                                      session.table_classes[session.name_to_valid_column_name("collection1")])
 
                 # Testing that None is returned if the document does not exist
                 self.assertIsNone(session.get_document("collection1", "document3"))
@@ -804,7 +816,7 @@ def create_test_case(**database_creation_parameters):
                 # Testing that None is returned if the collection does not exist
                 self.assertIsNone(session.get_document("collection_not_existing", "document1"))
 
-                # Testing with wrong parameter
+                # Testing with wrong parameters
                 self.assertIsNone(session.get_document(False, "document1"))
                 self.assertIsNone(session.get_document("collection1", None))
                 self.assertIsNone(session.get_document("collection1", 1))
@@ -815,7 +827,8 @@ def create_test_case(**database_creation_parameters):
             """
             database = self.create_database()
             with database as session:
-                # Adding collection
+
+                # Adding a collection
                 session.add_collection("collection1", "name")
 
                 # Adding documents
@@ -826,14 +839,14 @@ def create_test_case(**database_creation_parameters):
                 document["name"] = "document2"
                 session.add_document("collection1", document)
 
-                # Adding field
+                # Adding a field
                 session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
                                   "Name of the patient")
 
-                # Adding value
+                # Adding a value
                 session.new_value("collection1", "document1", "PatientName", "test")
 
-                # Removing document
+                # Removing a document
                 session.remove_document("collection1", "document1")
 
                 # Testing that the document is removed from all tables
@@ -856,13 +869,13 @@ def create_test_case(**database_creation_parameters):
                 except ValueError:
                     pass
 
-                # Removing document
+                # Removing a document
                 session.remove_document("collection1", "document2")
 
-                # Testing that the document is removed from document (and initial) tables
+                # Testing that the document is removed from the collection
                 self.assertIsNone(session.get_document("collection1", "document2"))
 
-                # Removing document a second time
+                # Trying to remove the document a second time
                 try:
                     session.remove_document("collection1", "document1")
                     self.fail()
@@ -876,14 +889,15 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                # Adding collection
+
+                # Adding a collection
                 session.add_collection("collection1", "name")
 
-                # Adding field
+                # Adding fields
                 session.add_field("collection1", "List", populse_db.database.FIELD_TYPE_LIST_INTEGER)
                 session.add_field("collection1", "Int", populse_db.database.FIELD_TYPE_INTEGER)
 
-                # Adding document
+                # Adding a document
                 document = {}
                 document["name"] = "document1"
                 document["List"] = [1, 2, 3]
@@ -892,7 +906,8 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing that the document has been added
                 document = session.get_document("collection1", "document1")
-                self.assertIsInstance(document.row, session.table_classes[session.name_to_valid_column_name("collection1")])
+                self.assertIsInstance(document.row,
+                                      session.table_classes[session.name_to_valid_column_name("collection1")])
                 self.assertEqual(document.name, "document1")
 
                 # Testing when trying to add a document that already exists
@@ -926,7 +941,7 @@ def create_test_case(**database_creation_parameters):
                 document["name"] = "document2"
                 session.add_document("collection1", document)
 
-                # Adding document with dictionary without primary key
+                # Adding a document with a dictionary without the primary key
                 try:
                     document = {}
                     document["no_primary_key"] = "document1"
@@ -942,6 +957,7 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
+
                 # Adding a first collection
                 session.add_collection("collection1")
 
@@ -985,6 +1001,7 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
+
                 # Adding a first collection
                 session.add_collection("collection1")
 
@@ -993,7 +1010,7 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(collection.name, "collection1")
                 self.assertEqual(collection.primary_key, "name")
 
-                # Removing collection
+                # Removing a collection
                 session.remove_collection("collection1")
 
                 # Testing that it does not exist anymore
@@ -1018,7 +1035,7 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(collection.primary_key, "name")
                 self.assertIsNone(session.get_collection("collection2"))
 
-                # Adding field
+                # Adding a field
                 session.add_field("collection1", "Field", populse_db.database.FIELD_TYPE_STRING)
                 field = session.get_field("collection1", "Field")
                 self.assertEqual(field.name, "Field")
@@ -1026,12 +1043,12 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(field.description)
                 self.assertEqual(field.type, populse_db.database.FIELD_TYPE_STRING)
 
-                # Adding document
+                # Adding a document
                 session.add_document("collection1", "document")
                 document = session.get_document("collection1", "document")
                 self.assertEqual(document.name, "document")
 
-                # Removing the collection containing the field and the document and testing that everything is None
+                # Removing the collection containing the field and the document and testing that it is indeed removed
                 session.remove_collection("collection1")
                 self.assertIsNone(session.get_collection("collection1"))
                 self.assertIsNone(session.get_field("collection1", "name"))
@@ -1090,7 +1107,7 @@ def create_test_case(**database_creation_parameters):
                 # Testing that there is no collection at first
                 self.assertEqual(session.get_collections(), [])
 
-                # Adding collection
+                # Adding a collection
                 session.add_collection("collection1")
 
                 collections = session.get_collections()
@@ -1118,7 +1135,7 @@ def create_test_case(**database_creation_parameters):
                 # Testing that there is no collection at first
                 self.assertEqual(session.get_collections_names(), [])
 
-                # Adding collection
+                # Adding a collection
                 session.add_collection("collection1")
 
                 self.assertEqual(session.get_collections_names(), ["collection1"])
@@ -1156,7 +1173,7 @@ def create_test_case(**database_creation_parameters):
                 documents2 = session.get_documents("collection2")
                 self.assertEqual(len(documents2), 2)
 
-                # Testing with collection not existing
+                # Testing with a collection not existing
                 self.assertEqual(session.get_documents("collection_not_existing"), [])
                 self.assertEqual(session.get_documents("collection"), [])
                 self.assertEqual(session.get_documents(None), [])
@@ -1187,7 +1204,7 @@ def create_test_case(**database_creation_parameters):
                 self.assertTrue("document3" in documents2)
                 self.assertTrue("document4" in documents2)
 
-                # Testing with collection not existing
+                # Testing with a collection not existing
                 self.assertEqual(session.get_documents_names("collection_not_existing"), [])
                 self.assertEqual(session.get_documents_names("collection"), [])
                 self.assertEqual(session.get_documents_names(None), [])
@@ -1199,10 +1216,11 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                # Adding collection
+
+                # Adding a collection
                 session.add_collection("collection1", "name")
 
-                # Adding document
+                # Adding a document
                 session.add_document("collection1", "document1")
 
                 # Adding fields
@@ -1230,25 +1248,21 @@ def create_test_case(**database_creation_parameters):
                 session.remove_value("collection1", "document1", "Dataset dimensions")
 
                 # Testing when not existing
-
                 try:
                     session.remove_value("collection_not_existing", "document1", "PatientName")
                     self.fail()
                 except ValueError:
                     pass
-
                 try:
                     session.remove_value("collection1", "document3", "PatientName")
                     self.fail()
                 except ValueError:
                     pass
-
                 try:
                     session.remove_value("collection1", "document1", "NotExisting")
                     self.fail()
                 except ValueError:
                     pass
-
                 try:
                     session.remove_value("collection1", "document3", "NotExisting")
                     self.fail()
@@ -1268,7 +1282,7 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                # Adding collection
+                # Adding a collection
                 session.add_collection("collection1", "name")
 
                 # Adding fields
@@ -1330,7 +1344,6 @@ def create_test_case(**database_creation_parameters):
                             session.add_document("collection1", document)
                         document = '/%s_%d.none' % (file, date.year)
                         session.add_document("collection1", dict(name=document, strings=list(file)))
-                # session.save_modifications()
 
                 for filter, expected in (
                         ('format == "NIFTI"',
@@ -1600,28 +1613,16 @@ def create_test_case(**database_creation_parameters):
                          {
                              '/abc_1981.dcm',
                              '/def_1899.dcm',
-                             # '/xyz_2018.none',
                              '/abc_2018.dcm',
-                             # '/xyz_1899.none',
                              '/bcd_1899.dcm',
-                             # '/bcd_1981.none',
                              '/def_1981.dcm',
-                             # '/def_1899.none',
-                             # '/xyz_1981.none',
-                             # '/def_2018.none',
                              '/bcd_2018.dcm',
                              '/def_2018.dcm',
-                             # '/abc_1899.none',
                              '/xyz_2018.dcm',
                              '/xyz_1899.dcm',
                              '/abc_1899.dcm',
-                             # '/def_1981.none',
-                             # '/bcd_2018.none',
-                             # '/abc_1981.none',
                              '/xyz_1981.dcm',
-                             # '/abc_2018.none',
                              '/bcd_1981.dcm',
-                             # '/bcd_1899.none'
                          }
                          ),
 
@@ -1650,12 +1651,9 @@ def create_test_case(**database_creation_parameters):
 
                         ('format <= "DICOM" AND strings == ["b", "c", "d"]',
                          {
-                             # '/bcd_1899.none',
                              '/bcd_2018.dcm',
                              '/bcd_1981.dcm',
                              '/bcd_1899.dcm',
-                             # '/bcd_1981.none',
-                             # '/bcd_2018.none',
                          }
                          ),
 
@@ -1915,6 +1913,7 @@ def create_test_case(**database_creation_parameters):
             Test the Python values returned (internaly) for literals by the
             interpretor of filter expression 
             """
+
             literals = {
                 'True': True,
                 'TRUE': True,
@@ -1957,6 +1956,10 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(value, expected_value)
 
         def test_with(self):
+            """
+            Tests the database session
+            """
+
             database = self.create_database()
             try:
                 with database as session:
@@ -1992,6 +1995,13 @@ def create_test_case(**database_creation_parameters):
 
 
 def load_tests(loader, standard_tests, pattern):
+    """
+    Prepares the tests parameters
+    :param loader:
+    :param standard_tests:
+    :param pattern:
+    :return: A test suite
+    """
     suite = unittest.TestSuite()
 
     for params in (dict(caches=False, list_tables=True, query_type='mixed'),

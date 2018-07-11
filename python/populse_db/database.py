@@ -75,6 +75,7 @@ TYPE_TO_COLUMN[FIELD_TYPE_LIST_JSON] = String
 FIELD_TABLE = "field"
 COLLECTION_TABLE = "collection"
 
+
 class Database:
     """
     Database API
@@ -92,7 +93,7 @@ class Database:
         - engine: SQLAlchemy database engine
 
     methods:
-        - create_empty_schemas: Initializes empty database schema
+        - create_empty_schemas: Initializes an empty database schema
         - __enter__: Creates or gets a DatabaseSession instance
         - __exit__: Releases the latest created DatabaseSession
         - clear: Clears the database
@@ -104,7 +105,17 @@ class Database:
         """
         Initiazation of the database
         :param string_engine: database engine
-        :param caches: Bool to know if the caches must be used or no
+                              The engine is constructed this way: dialect[+driver]://user:password@host/dbname[?key=value..]
+                              The dialect can be mysql, oracle, postgresql, mssql, or sqlite
+                              The driver is the name of a DBAPI, such as psycopg2, pyodbc, or cx_oracle
+                              For sqlite databases, the file can be not existing yet, it will be created in this case
+                              Examples: -"mysql://scott:tiger@hostname/dbname"
+                                        -"postgresql://scott:tiger@localhost/test"
+                                        -"sqlite:///foo.db"
+                                        -"oracle+cx_oracle://scott:tiger@tnsname"
+                                        -"mssql+pyodbc://scott:tiger@mydsn"
+                              See sqlalchemy documentation for more precisions about the engine (http://docs.sqlalchemy.org/en/latest/core/engines.html)
+        :param caches: Bool to know if the caches must be used
         :param list_tables: Bool to know if tables must be created to store list values
         :param query_type: Type of query to use for the filters ('sql', 'python', 'mixed', or 'guess')
         """
@@ -125,7 +136,7 @@ class Database:
             raise ValueError("Wrong query_type, it must be in {0}, but {1} given".format(query_list, query_type))
         self.query_type = query_type
 
-        # SQLite database: we create it if it does not exist
+        # SQLite database: It is created if it does not exist
         if string_engine.startswith('sqlite'):
             self.__db_file = re.sub("sqlite.*:///", "", string_engine)
             if not os.path.exists(self.__db_file):
@@ -424,8 +435,10 @@ class DatabaseSession:
             self.__documents[collection] = {}
             for document_row in documents_rows:
                 self.__documents[collection][
-                    getattr(document_row, self.name_to_valid_column_name(self.__collections[collection].primary_key))] = FieldRow(self, collection,
-                                                                                                                                              document_row)
+                    getattr(document_row,
+                            self.name_to_valid_column_name(self.__collections[collection].primary_key))] = FieldRow(
+                    self, collection,
+                    document_row)
 
     def __refresh_cache_documents(self, collection):
         """
@@ -437,7 +450,8 @@ class DatabaseSession:
         documents_rows = self.session.query(self.table_classes[self.name_to_valid_column_name(collection)]).all()
         self.__documents[collection] = {}
         for document_row in documents_rows:
-            self.__documents[collection][getattr(document_row, self.name_to_valid_column_name(self.__collections[collection].primary_key))] = FieldRow(
+            self.__documents[collection][getattr(document_row, self.name_to_valid_column_name(
+                self.__collections[collection].primary_key))] = FieldRow(
                 self, collection, document_row)
 
     """ COLLECTIONS """
@@ -1166,7 +1180,8 @@ class DatabaseSession:
                 return None
         else:
             primary_key = collection_row.primary_key
-            column = getattr(self.table_classes[self.name_to_valid_column_name(collection)], self.name_to_valid_column_name(primary_key))
+            column = getattr(self.table_classes[self.name_to_valid_column_name(collection)],
+                             self.name_to_valid_column_name(primary_key))
             value = column.type.python_type(document)
             query = self.session.query(self.table_classes[self.name_to_valid_column_name(collection)]).filter(
                 column == value)
@@ -1186,8 +1201,10 @@ class DatabaseSession:
         if collection_row is None:
             return []
         else:
-            documents = self.session.query(getattr(self.table_classes[self.name_to_valid_column_name(collection)], self.name_to_valid_column_name(collection_row.primary_key))).all()
-            documents_list = [getattr(document, self.name_to_valid_column_name(collection_row.primary_key)) for document in documents]
+            documents = self.session.query(getattr(self.table_classes[self.name_to_valid_column_name(collection)],
+                                                   self.name_to_valid_column_name(collection_row.primary_key))).all()
+            documents_list = [getattr(document, self.name_to_valid_column_name(collection_row.primary_key)) for document
+                              in documents]
             return documents_list
 
     def get_documents(self, collection):
@@ -1222,7 +1239,8 @@ class DatabaseSession:
         primary_key = collection_row.primary_key
 
         self.session.query(self.table_classes[self.name_to_valid_column_name(collection)]).filter(
-            getattr(self.table_classes[self.name_to_valid_column_name(collection)], self.name_to_valid_column_name(primary_key)) == document).delete()
+            getattr(self.table_classes[self.name_to_valid_column_name(collection)],
+                    self.name_to_valid_column_name(primary_key)) == document).delete()
 
         # Removing document from list tables
         if self.list_tables:

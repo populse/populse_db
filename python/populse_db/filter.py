@@ -308,7 +308,7 @@ def sql_equal(a, b):
 
 def sql_differ(a, b):
     r = ((a != b) | (sql_operators.eq(a, None) & sql_operators.ne(b, None))) | (
-                sql_operators.ne(a, None) & sql_operators.eq(b, None))
+            sql_operators.ne(a, None) & sql_operators.eq(b, None))
     return r
 
 

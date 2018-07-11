@@ -17,7 +17,6 @@ version_extra = ""
 # Expected by setup.py: string of form "X.Y.Z"
 __version__ = "{0}.{1}.{2}".format(version_major, version_minor, version_micro)
 
-
 # Expected by setup.py: the status of the project
 CLASSIFIERS = ['Development Status :: 5 - Production/Stable',
                'Environment :: Console',
@@ -26,7 +25,7 @@ CLASSIFIERS = ['Development Status :: 5 - Production/Stable',
                'Programming Language :: SQL',
                'Natural Language :: English',
                'Topic :: Database',
-              ]
+               ]
 
 # Project descriptions
 NAME = 'populse_db'
