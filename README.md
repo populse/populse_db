@@ -57,3 +57,11 @@ Add the directory python/populse_db in $PATH, or open this directory inside a te
   * tempfile
   * types
   * unittest
+  
+  # License
+  
+  The whole populse project is open source
+  
+  Populse_db is precisely released under the CeCILL-B software license
+  
+  You can find all the details on the license [here](http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html)
