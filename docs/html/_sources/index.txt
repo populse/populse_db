@@ -15,6 +15,7 @@ Overview
 * SQLAlchemy based database API for Populse
 * It can support every database type, it takes an engine as entry
 * Populse_db is ensured to work with Python >= 3.3
+* Populse_db is ensured to work on the platforms linux and osx
 
 Installation
 -------------
@@ -29,6 +30,24 @@ Installation
    python setup.py install
    cd /tmp
    rm -r /tmp/populse_db
+
+Documentation
+-------------
+
+* This documentation website has been generated with Sphinx
+* The source code of this website is in docs/ folder (The website is actually in docs/html/ folder, but docs/index.html is redirecting to the website)
+
+* Generate the website (from populse_db root folder):
+
+.. code-block:: python
+   
+   cd docs/
+   make html
+   cp -R build/doctrees/ ./doctrees
+   cp -R build/html/ ./html
+   rm -d -r build/html/
+   rm -d -r build/doctrees/
+   cd ..
 
 .. toctree::
    :maxdepth: 2
