@@ -44,7 +44,7 @@
 <li>SQLAlchemy based database API for Populse</li>
 <li>It can support every database type, it takes an engine as entry</li>
 <li>Populse_db is ensured to work with Python &gt;= 3.3</li>
-<li>Populse_db is ensured to work on the platforms linux and osx</li>
+<li>Populse_db is ensured to work on the platforms Linux and OSX</li>
 </ul>
 </div>
 <div class="section" id="installation">
@@ -80,6 +80,53 @@
 <span class="n">cd</span> <span class="o">..</span>
 </pre></div>
 </div>
+</div>
+<div class="section" id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
+<p>The modules required for populse_db are the following ones:</p>
+<ul class="simple">
+<li>sqlalchemy</li>
+<li>lark-parser</li>
+<li>python-dateutil</li>
+</ul>
+</div>
+<div class="section" id="other-packages-used">
+<h2>Other packages used<a class="headerlink" href="#other-packages-used" title="Permalink to this headline">¶</a></h2>
+<p>The other packages used by populse_db are the following ones:</p>
+<ul class="simple">
+<li>ast</li>
+<li>copy</li>
+<li>datetime</li>
+<li>hashlib</li>
+<li>operator</li>
+<li>os</li>
+<li>re</li>
+<li>six</li>
+<li>tempfile</li>
+<li>types</li>
+<li>unittest</li>
+</ul>
+</div>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<p>Details on the import:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">populse_db</span>                          <span class="o">-&gt;</span>  <span class="n">OK</span>
+<span class="kn">from</span> <span class="nn">populse_db.database</span> <span class="kn">import</span> <span class="n">Database</span>   <span class="o">-&gt;</span>  <span class="n">Wrong</span> <span class="n">usage</span> <span class="p">(</span><span class="n">Cyclic</span> <span class="n">problems</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">populse_db.database</span>                 <span class="o">-&gt;</span>  <span class="n">Wrong</span> <span class="n">usage</span> <span class="p">(</span><span class="n">Cyclic</span> <span class="n">problems</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="tests">
+<h2>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Unit tests have been written with the package unittest</li>
+<li>Continuous integration has been deployed with Travis</li>
+<li>The code coverage is generated with the package codecov</li>
+<li>The script of tests is python/populse_db/test.py, so the following command launches the tests:</li>
+</ul>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">python</span> <span class="n">python</span><span class="o">/</span><span class="n">populse_db</span><span class="o">/</span><span class="n">test</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
 <div class="toctree-wrapper compound">
 <ul class="simple">
 </ul>
@@ -113,6 +160,10 @@
 <li><a class="reference internal" href="#overview">Overview</a></li>
 <li><a class="reference internal" href="#installation">Installation</a></li>
 <li><a class="reference internal" href="#documentation">Documentation</a></li>
+<li><a class="reference internal" href="#requirements">Requirements</a></li>
+<li><a class="reference internal" href="#other-packages-used">Other packages used</a></li>
+<li><a class="reference internal" href="#usage">Usage</a></li>
+<li><a class="reference internal" href="#tests">Tests</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 <li><a class="reference internal" href="#license">License</a></li>
 </ul>

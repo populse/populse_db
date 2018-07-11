@@ -10,15 +10,15 @@ Populse_db's documentation
 ======================================
 
 Overview
--------------
+--------
 
 * SQLAlchemy based database API for Populse
 * It can support every database type, it takes an engine as entry
 * Populse_db is ensured to work with Python >= 3.3
-* Populse_db is ensured to work on the platforms linux and osx
+* Populse_db is ensured to work on the platforms Linux and OSX
 
 Installation
--------------
+------------
 
 * From source:
 
@@ -51,21 +51,67 @@ Documentation
    rm -d -r build/doctrees/
    cd ..
 
+Requirements
+------------
+
+The modules required for populse_db are the following ones:
+
+* sqlalchemy
+* lark-parser
+* python-dateutil
+
+Other packages used
+-------------------
+
+The other packages used by populse_db are the following ones:
+
+* ast
+* copy
+* datetime
+* hashlib
+* operator
+* os
+* re
+* six
+* tempfile
+* types
+* unittest
+
+Usage
+-----
+
+Details on the import:
+
+.. code-block:: python
+   
+   import populse_db                          ->  OK
+   from populse_db.database import Database   ->  Wrong usage (Cyclic problems)
+   import populse_db.database                 ->  Wrong usage (Cyclic problems)
+
+Tests
+-----
+
+* Unit tests have been written with the package unittest
+* Continuous integration has been deployed with Travis
+* The code coverage is generated with the package codecov
+* The script of tests is python/populse_db/test.py, so the following command launches the tests:
+
+.. code-block:: python
+   
+   python python/populse_db/test.py
+
 .. toctree::
    :maxdepth: 2
 
 Indices and tables
--------------
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
 
 License
--------------
-
-.. _cecillB: http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-.. _license: https://github.com/populse/populse_db/blob/master/LICENSE.en
+-------
 
 The whole populse project is open source.
 
