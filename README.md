@@ -37,7 +37,7 @@ The module is ensured to work with Python >= 3.3
 
 The module is ensured to work on the platforms Linux and OSX (It is supposed to work on Windows, hasn't been tested yet)
 
-# Launch the tests
+The script of tests is python/populse_db/test.py, so the following command launches the tests:
 	
 	python test.py (if python/populse_db/ directory has been added to $PATH, or if $PWD in the terminal)
         
