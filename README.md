@@ -2,15 +2,9 @@
 
 SQLAlchemy based database API for Populse
 
-# Website
+# Documentation
 
 The documentation is available on populse_db's website here: [https://populse.github.io/populse_db](https://populse.github.io/populse_db)
-
-# Tools
-
-The API can support every database type, it takes an engine as entry
-
-The database is managed thanks to the ORM SQLAlchemy
 	
 # Installation
 
@@ -26,7 +20,7 @@ Unit tests written thanks to the python module unittest
 
 The module is ensured to work with Python >= 3.3
 
-The module is ensured to work on the platforms linux and osx
+The module is ensured to work on the platforms Linux and OSX
 
 # Launch the tests
 
