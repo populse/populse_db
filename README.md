@@ -8,11 +8,22 @@ The documentation is available on populse_db's website here: [https://populse.gi
 	
 # Installation
 
+From source:
+
+    sudo apt-get install git
+    git clone https://github.com/populse/populse_db.git /tmp/populse_db
+    cd /tmp/populse_db
+    python setup.py install
+    cd /tmp
+    rm -r /tmp/populse_db
+
 python directory must be added to $PYTHONPATH 
 
-# Import
+# Usage
 
-	import populse_db
+	import populse_db                          ->  OK
+	from populse_db.database import Database   ->  Wrong usage (Cyclic problems)
+	import populse_db.database                 ->  Wrong usage (Cyclic problems)
 	
 # Tests
 
