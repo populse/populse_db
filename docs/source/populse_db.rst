@@ -28,22 +28,6 @@ populse_db.info module
     :undoc-members:
     :show-inheritance:
 
-populse_db.script module
-------------------------
-
-.. automodule:: populse_db.script
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-populse_db.script_empty_database module
----------------------------------------
-
-.. automodule:: populse_db.script_empty_database
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 populse_db.test module
 ----------------------
 
