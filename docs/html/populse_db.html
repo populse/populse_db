@@ -83,6 +83,34 @@ Can be &#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;g
 </ul>
 </dd>
 </dl>
+<p>Initiazation of the database
+:param string_engine: database engine</p>
+<blockquote>
+<div><p>The engine is constructed this way: dialect[+driver]://user:password&#64;host/dbname[?key=value..]
+The dialect can be mysql, oracle, postgresql, mssql, or sqlite
+The driver is the name of a DBAPI, such as psycopg2, pyodbc, or cx_oracle
+For sqlite databases, the file can be not existing yet, it will be created in this case
+Examples: -&#8220;mysql://scott:tiger&#64;hostname/dbname&#8221;</p>
+<blockquote>
+<div>-&#8220;postgresql://scott:tiger&#64;localhost/test&#8221;
+-&#8220;sqlite:///foo.db&#8221;
+-&#8220;oracle+cx_oracle://scott:tiger&#64;tnsname&#8221;
+-&#8220;mssql+pyodbc://scott:tiger&#64;mydsn&#8221;</div></blockquote>
+<p>See sqlalchemy documentation for more precisions about the engine (<a class="reference external" href="http://docs.sqlalchemy.org/en/latest/core/engines.html">http://docs.sqlalchemy.org/en/latest/core/engines.html</a>)</p>
+</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>caches</strong> &#8211; Bool to know if the caches must be used</li>
+<li><strong>list_tables</strong> &#8211; Bool to know if tables must be created to store list values</li>
+<li><strong>query_type</strong> &#8211; Type of query to use for the filters (&#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;guess&#8217;)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="populse_db.database.Database.clear">
 <code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.Database.clear" title="Permalink to this definition">¶</a></dt>
@@ -150,6 +178,9 @@ modifications</li>
 </ul>
 </dd>
 </dl>
+<p>Creates a session API of the database instance
+:param database: Database to take into account
+:param session: Session related to the database</p>
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.add_collection">
 <code class="descname">add_collection</code><span class="sig-paren">(</span><em>name</em>, <em>primary_key='name'</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_collection" title="Permalink to this definition">¶</a></dt>
@@ -588,7 +619,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'&lt;': &lt;built-in function lt&gt;, 'or': &lt;built-in function or_&gt;, '!=': &lt;built-in function ne&gt;, 'and': &lt;built-in function and_&gt;, '==': &lt;built-in function eq&gt;, '&gt;': &lt;built-in function gt&gt;, 'like': &lt;staticmethod object at 0x7f6af5592748&gt;, '&lt;=': &lt;built-in function le&gt;, '&gt;=': &lt;built-in function ge&gt;, 'ilike': &lt;staticmethod object at 0x7f6af5592898&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'&gt;': &lt;built-in function gt&gt;, '!=': &lt;built-in function ne&gt;, '&lt;': &lt;built-in function lt&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;staticmethod object at 0x7f49f2d6fc18&gt;, '&lt;=': &lt;built-in function le&gt;, 'and': &lt;built-in function and_&gt;, 'ilike': &lt;staticmethod object at 0x7f49f2d6fc88&gt;, '==': &lt;built-in function eq&gt;, '&gt;=': &lt;built-in function ge&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -668,7 +699,7 @@ two elements.</li>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToQuery.keyword_literals">
-<code class="descname">keyword_literals</code><em class="property"> = {'true': True, 'false': False, 'null': None}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<code class="descname">keyword_literals</code><em class="property"> = {'false': False, 'true': True, 'null': None}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -777,7 +808,7 @@ a populse_db field object.</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'&lt;': &lt;built-in function lt&gt;, 'or': &lt;built-in function or_&gt;, '!=': &lt;function sql_differ at 0x7f6af54b7950&gt;, 'and': &lt;built-in function and_&gt;, '==': &lt;function sql_equal at 0x7f6af55ac048&gt;, '&gt;': &lt;built-in function gt&gt;, 'like': &lt;function like_op at 0x7f6af602a840&gt;, '&lt;=': &lt;built-in function le&gt;, '&gt;=': &lt;built-in function ge&gt;, 'ilike': &lt;function ilike_op at 0x7f6af602a950&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'&gt;': &lt;built-in function gt&gt;, '!=': &lt;function sql_differ at 0x7f49f2c969d8&gt;, '&lt;': &lt;built-in function lt&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;function like_op at 0x7f49f380a8c8&gt;, '&lt;=': &lt;built-in function le&gt;, 'and': &lt;built-in function and_&gt;, 'ilike': &lt;function ilike_op at 0x7f49f380a9d8&gt;, '==': &lt;function sql_equal at 0x7f49f2d0c0d0&gt;, '&gt;=': &lt;built-in function ge&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>

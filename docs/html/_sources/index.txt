@@ -80,13 +80,13 @@ The other packages used by populse_db are the following ones:
 Usage
 -----
 
-Details on the import:
+Import examples:
 
 .. code-block:: python
    
-   import populse_db                          ->  OK
-   from populse_db.database import Database   ->  Wrong usage (Cyclic problems)
-   import populse_db.database                 ->  Wrong usage (Cyclic problems)
+   import populse_db
+   from populse_db.database import Database
+   import populse_db.database                
 
 Tests
 -----

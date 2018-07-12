@@ -14,7 +14,10 @@ import unittest
 
 from sqlalchemy.exc import OperationalError
 
-import populse_db
+from populse_db.database import Database, FIELD_TYPE_STRING, FIELD_TYPE_FLOAT, FIELD_TYPE_TIME, FIELD_TYPE_DATETIME, \
+    FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_BOOLEAN, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_INTEGER, FIELD_TYPE_LIST_DATE, \
+    FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_FLOAT
+from populse_db.filter import literal_parser, FilterToQuery
 
 
 def create_test_case(**database_creation_parameters):
@@ -51,7 +54,7 @@ def create_test_case(**database_creation_parameters):
             """
 
             try:
-                db = populse_db.database.Database(**database_creation_parameters)
+                db = Database(**database_creation_parameters)
             except OperationalError as e:
                 if database_creation_parameters['string_engine'].startswith('postgresql'):
                     raise unittest.SkipTest(str(e))
@@ -67,19 +70,19 @@ def create_test_case(**database_creation_parameters):
 
             # Testing with wrong query_type
             try:
-                populse_db.database.Database("engine", query_type="wrong_query_type")
+                Database("engine", query_type="wrong_query_type")
                 self.fail()
             except ValueError:
                 pass
             try:
-                populse_db.database.Database("engine", query_type=True)
+                Database("engine", query_type=True)
                 self.fail()
             except ValueError:
                 pass
 
             # Testing with wrong caches
             try:
-                populse_db.database.Database("engine", caches="False")
+                Database("engine", caches="False")
                 self.fail()
             except ValueError:
                 pass
@@ -96,36 +99,36 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Testing with a first field
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
                                   "Name of the patient")
 
                 # Checking the field properties
                 field = session.get_field("collection1", "PatientName")
                 self.assertEqual(field.name, "PatientName")
-                self.assertEqual(field.type, populse_db.database.FIELD_TYPE_STRING)
+                self.assertEqual(field.type, FIELD_TYPE_STRING)
                 self.assertEqual(field.description, "Name of the patient")
                 self.assertEqual(field.collection, "collection1")
 
                 # Testing with a field that already exists
                 try:
-                    session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                    session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
                                       "Name of the patient")
                     self.fail()
                 except ValueError:
                     pass
 
                 # Testing with several field types
-                session.add_field("collection1", "BandWidth", populse_db.database.FIELD_TYPE_FLOAT, None)
-                session.add_field("collection1", "AcquisitionTime", populse_db.database.FIELD_TYPE_TIME, None)
-                session.add_field("collection1", "AcquisitionDate", populse_db.database.FIELD_TYPE_DATETIME, None)
-                session.add_field("collection1", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER,
+                session.add_field("collection1", "BandWidth", FIELD_TYPE_FLOAT, None)
+                session.add_field("collection1", "AcquisitionTime", FIELD_TYPE_TIME, None)
+                session.add_field("collection1", "AcquisitionDate", FIELD_TYPE_DATETIME, None)
+                session.add_field("collection1", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER,
                                   None)
-                session.add_field("collection1", "Boolean", populse_db.database.FIELD_TYPE_BOOLEAN, None)
-                session.add_field("collection1", "Boolean list", populse_db.database.FIELD_TYPE_LIST_BOOLEAN, None)
+                session.add_field("collection1", "Boolean", FIELD_TYPE_BOOLEAN, None)
+                session.add_field("collection1", "Boolean list", FIELD_TYPE_LIST_BOOLEAN, None)
 
                 # Testing with close field names
-                session.add_field("collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, "with space")
-                session.add_field("collection1", "Bitspervoxel", populse_db.database.FIELD_TYPE_INTEGER,
+                session.add_field("collection1", "Bits per voxel", FIELD_TYPE_INTEGER, "with space")
+                session.add_field("collection1", "Bitspervoxel", FIELD_TYPE_INTEGER,
                                   "without space")
                 self.assertEqual(session.get_field(
                     "collection1", "Bitspervoxel").description, "without space")
@@ -134,18 +137,18 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing with wrong parameters
                 try:
-                    session.add_field("collection_not_existing", "Field", populse_db.database.FIELD_TYPE_LIST_INTEGER,
+                    session.add_field("collection_not_existing", "Field", FIELD_TYPE_LIST_INTEGER,
                                       None)
                     self.fail()
                 except ValueError:
                     pass
                 try:
-                    session.add_field(True, "Field", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
+                    session.add_field(True, "Field", FIELD_TYPE_LIST_INTEGER, None)
                     self.fail()
                 except ValueError:
                     pass
                 try:
-                    session.add_field("collection1", None, populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
+                    session.add_field("collection1", None, FIELD_TYPE_LIST_INTEGER, None)
                     self.fail()
                 except ValueError:
                     pass
@@ -155,14 +158,14 @@ def create_test_case(**database_creation_parameters):
                 except ValueError:
                     pass
                 try:
-                    session.add_field("collection1", "Patient Name", populse_db.database.FIELD_TYPE_STRING, 1.5)
+                    session.add_field("collection1", "Patient Name", FIELD_TYPE_STRING, 1.5)
                     self.fail()
                 except ValueError:
                     pass
 
                 # Testing that the document primary key field is taken
                 try:
-                    session.add_field("collection1", "name", populse_db.database.FIELD_TYPE_STRING, None)
+                    session.add_field("collection1", "name", FIELD_TYPE_STRING, None)
                     self.fail()
                 except ValueError:
                     pass
@@ -181,10 +184,10 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("current", "name")
 
                 # Adding fields
-                session.add_field("current", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                session.add_field("current", "PatientName", FIELD_TYPE_STRING,
                                   "Name of the patient")
-                session.add_field("current", "SequenceName", populse_db.database.FIELD_TYPE_STRING, None)
-                session.add_field("current", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
+                session.add_field("current", "SequenceName", FIELD_TYPE_STRING, None)
+                session.add_field("current", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
 
                 # Adding documents
                 document = {}
@@ -219,10 +222,10 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(session.get_field("current", "SequenceName"))
 
                 # Adding fields again
-                session.add_field("current", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                session.add_field("current", "PatientName", FIELD_TYPE_STRING,
                                   "Name of the patient")
-                session.add_field("current", "SequenceName", populse_db.database.FIELD_TYPE_STRING, None)
-                session.add_field("current", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
+                session.add_field("current", "SequenceName", FIELD_TYPE_STRING, None)
+                session.add_field("current", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
 
                 # Testing with list of fields
                 session.remove_field("current", ["SequenceName", "PatientName"])
@@ -276,7 +279,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding a field
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
                                   "Name of the patient")
 
                 # Testing that the field is returned if it exists
@@ -302,13 +305,13 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding a field
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
                                   "Name of the patient")
 
                 fields = session.get_fields("collection1")
                 self.assertEqual(len(fields), 2)
 
-                session.add_field("collection1", "SequenceName", populse_db.database.FIELD_TYPE_STRING,
+                session.add_field("collection1", "SequenceName", FIELD_TYPE_STRING,
                                   "Name of the patient")
 
                 fields = session.get_fields("collection1")
@@ -337,14 +340,14 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding fields
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
                                   "Name of the patient")
                 session.add_field(
-                    "collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, None)
+                    "collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
                 session.add_field(
-                    "collection1", "AcquisitionDate", populse_db.database.FIELD_TYPE_DATETIME, None)
+                    "collection1", "AcquisitionDate", FIELD_TYPE_DATETIME, None)
                 session.add_field(
-                    "collection1", "AcquisitionTime", populse_db.database.FIELD_TYPE_TIME, None)
+                    "collection1", "AcquisitionTime", FIELD_TYPE_TIME, None)
 
                 # Adding values and setting them
                 session.new_value("collection1", "document1", "PatientName", "test", "test")
@@ -457,9 +460,9 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1")
 
                 # Adding fields
-                session.add_field("collection1", "SequenceName", populse_db.database.FIELD_TYPE_STRING)
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING)
-                session.add_field("collection1", "BandWidth", populse_db.database.FIELD_TYPE_FLOAT)
+                session.add_field("collection1", "SequenceName", FIELD_TYPE_STRING)
+                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING)
+                session.add_field("collection1", "BandWidth", FIELD_TYPE_FLOAT)
 
                 # Adding documents
                 session.add_document("collection1", "document1")
@@ -523,7 +526,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding a field
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
                                   "Name of the patient")
 
                 fields = session.get_fields_names("collection1")
@@ -531,7 +534,7 @@ def create_test_case(**database_creation_parameters):
                 self.assertTrue("name" in fields)
                 self.assertTrue("PatientName" in fields)
 
-                session.add_field("collection1", "SequenceName", populse_db.database.FIELD_TYPE_STRING,
+                session.add_field("collection1", "SequenceName", FIELD_TYPE_STRING,
                                   "Name of the patient")
 
                 fields = session.get_fields_names("collection1")
@@ -568,12 +571,12 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding fields
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
                                   "Name of the patient")
-                session.add_field("collection1", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER,
+                session.add_field("collection1", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER,
                                   None)
-                session.add_field("collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, None)
-                session.add_field("collection1", "Grids spacing", populse_db.database.FIELD_TYPE_LIST_FLOAT, None)
+                session.add_field("collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
+                session.add_field("collection1", "Grids spacing", FIELD_TYPE_LIST_FLOAT, None)
 
                 # Adding values
                 session.new_value("collection1", "document1", "PatientName", "test")
@@ -613,26 +616,26 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                is_valid = session.check_type_value("string", populse_db.database.FIELD_TYPE_STRING)
+                is_valid = session.check_type_value("string", FIELD_TYPE_STRING)
                 self.assertTrue(is_valid)
-                is_valid = session.check_type_value(1, populse_db.database.FIELD_TYPE_STRING)
+                is_valid = session.check_type_value(1, FIELD_TYPE_STRING)
                 self.assertFalse(is_valid)
-                is_valid = session.check_type_value(None, populse_db.database.FIELD_TYPE_STRING)
+                is_valid = session.check_type_value(None, FIELD_TYPE_STRING)
                 self.assertTrue(is_valid)
-                is_valid = session.check_type_value(1, populse_db.database.FIELD_TYPE_INTEGER)
+                is_valid = session.check_type_value(1, FIELD_TYPE_INTEGER)
                 self.assertTrue(is_valid)
-                is_valid = session.check_type_value(1, populse_db.database.FIELD_TYPE_FLOAT)
+                is_valid = session.check_type_value(1, FIELD_TYPE_FLOAT)
                 self.assertTrue(is_valid)
-                is_valid = session.check_type_value(1.5, populse_db.database.FIELD_TYPE_FLOAT)
+                is_valid = session.check_type_value(1.5, FIELD_TYPE_FLOAT)
                 self.assertTrue(is_valid)
                 is_valid = session.check_type_value(None, None)
                 self.assertFalse(is_valid)
-                is_valid = session.check_type_value([1.5], populse_db.database.FIELD_TYPE_LIST_FLOAT)
+                is_valid = session.check_type_value([1.5], FIELD_TYPE_LIST_FLOAT)
                 self.assertTrue(is_valid)
-                is_valid = session.check_type_value(1.5, populse_db.database.FIELD_TYPE_LIST_FLOAT)
+                is_valid = session.check_type_value(1.5, FIELD_TYPE_LIST_FLOAT)
                 self.assertFalse(is_valid)
                 is_valid = session.check_type_value(
-                    [1.5, "test"], populse_db.database.FIELD_TYPE_LIST_FLOAT)
+                    [1.5, "test"], FIELD_TYPE_LIST_FLOAT)
                 self.assertFalse(is_valid)
 
         def test_new_value(self):
@@ -655,18 +658,18 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding fields
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
                                   "Name of the patient")
                 session.add_field(
-                    "collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, None)
-                session.add_field("collection1", "BandWidth", populse_db.database.FIELD_TYPE_FLOAT, None)
-                session.add_field("collection1", "AcquisitionTime", populse_db.database.FIELD_TYPE_TIME, None)
-                session.add_field("collection1", "AcquisitionDate", populse_db.database.FIELD_TYPE_DATETIME, None)
-                session.add_field("collection1", "Dataset dimensions", populse_db.database.FIELD_TYPE_LIST_INTEGER,
+                    "collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
+                session.add_field("collection1", "BandWidth", FIELD_TYPE_FLOAT, None)
+                session.add_field("collection1", "AcquisitionTime", FIELD_TYPE_TIME, None)
+                session.add_field("collection1", "AcquisitionDate", FIELD_TYPE_DATETIME, None)
+                session.add_field("collection1", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER,
                                   None)
-                session.add_field("collection1", "Grids spacing", populse_db.database.FIELD_TYPE_LIST_FLOAT, None)
-                session.add_field("collection1", "Boolean", populse_db.database.FIELD_TYPE_BOOLEAN, None)
-                session.add_field("collection1", "Boolean list", populse_db.database.FIELD_TYPE_LIST_BOOLEAN, None)
+                session.add_field("collection1", "Grids spacing", FIELD_TYPE_LIST_FLOAT, None)
+                session.add_field("collection1", "Boolean", FIELD_TYPE_BOOLEAN, None)
+                session.add_field("collection1", "Boolean list", FIELD_TYPE_LIST_BOOLEAN, None)
 
                 # Adding values
                 session.new_value("collection1", "document1", "PatientName", "test")
@@ -840,7 +843,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding a field
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
                                   "Name of the patient")
 
                 # Adding a value
@@ -894,8 +897,8 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding fields
-                session.add_field("collection1", "List", populse_db.database.FIELD_TYPE_LIST_INTEGER)
-                session.add_field("collection1", "Int", populse_db.database.FIELD_TYPE_INTEGER)
+                session.add_field("collection1", "List", FIELD_TYPE_LIST_INTEGER)
+                session.add_field("collection1", "Int", FIELD_TYPE_INTEGER)
 
                 # Adding a document
                 document = {}
@@ -1036,12 +1039,12 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(session.get_collection("collection2"))
 
                 # Adding a field
-                session.add_field("collection1", "Field", populse_db.database.FIELD_TYPE_STRING)
+                session.add_field("collection1", "Field", FIELD_TYPE_STRING)
                 field = session.get_field("collection1", "Field")
                 self.assertEqual(field.name, "Field")
                 self.assertEqual(field.collection, "collection1")
                 self.assertIsNone(field.description)
-                self.assertEqual(field.type, populse_db.database.FIELD_TYPE_STRING)
+                self.assertEqual(field.type, FIELD_TYPE_STRING)
 
                 # Adding a document
                 session.add_document("collection1", "document")
@@ -1224,11 +1227,11 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", "document1")
 
                 # Adding fields
-                session.add_field("collection1", "PatientName", populse_db.database.FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
                                   "Name of the patient")
-                session.add_field("collection1", "Bits per voxel", populse_db.database.FIELD_TYPE_INTEGER, None)
+                session.add_field("collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
                 session.add_field("collection1", "Dataset dimensions",
-                                  populse_db.database.FIELD_TYPE_LIST_INTEGER, None)
+                                  FIELD_TYPE_LIST_INTEGER, None)
 
                 # Adding values
                 session.new_value("collection1", "document1", "PatientName", "test")
@@ -1286,9 +1289,9 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding fields
-                session.add_field("collection1", "list_date", populse_db.database.FIELD_TYPE_LIST_DATE, None)
-                session.add_field("collection1", "list_time", populse_db.database.FIELD_TYPE_LIST_TIME, None)
-                session.add_field("collection1", "list_datetime", populse_db.database.FIELD_TYPE_LIST_DATETIME, None)
+                session.add_field("collection1", "list_date", FIELD_TYPE_LIST_DATE, None)
+                session.add_field("collection1", "list_time", FIELD_TYPE_LIST_TIME, None)
+                session.add_field("collection1", "list_datetime", FIELD_TYPE_LIST_DATETIME, None)
 
                 document = {}
                 document["name"] = "document1"
@@ -1318,13 +1321,13 @@ def create_test_case(**database_creation_parameters):
             with database as session:
                 session.add_collection("collection1", "name")
 
-                session.add_field("collection1", 'format', field_type=populse_db.database.FIELD_TYPE_STRING,
+                session.add_field("collection1", 'format', field_type=FIELD_TYPE_STRING,
                                   description=None, index=True)
-                session.add_field("collection1", 'strings', field_type=populse_db.database.FIELD_TYPE_LIST_STRING,
+                session.add_field("collection1", 'strings', field_type=FIELD_TYPE_LIST_STRING,
                                   description=None)
-                session.add_field("collection1", 'datetime', field_type=populse_db.database.FIELD_TYPE_DATETIME,
+                session.add_field("collection1", 'datetime', field_type=FIELD_TYPE_DATETIME,
                                   description=None)
-                session.add_field("collection1", 'has_format', field_type=populse_db.database.FIELD_TYPE_BOOLEAN,
+                session.add_field("collection1", 'has_format', field_type=FIELD_TYPE_BOOLEAN,
                                   description=None)
 
                 session.save_modifications()
@@ -1888,7 +1891,7 @@ def create_test_case(**database_creation_parameters):
             database = self.create_database()
             with database as session:
                 session.add_collection("collection1", "name")
-                session.add_field("collection1", 'strings', field_type=populse_db.database.FIELD_TYPE_LIST_STRING,
+                session.add_field("collection1", 'strings', field_type=FIELD_TYPE_LIST_STRING,
                                   description=None)
                 session.add_document("collection1", 'test')
                 session.new_value("collection1", 'test', 'strings', ['a', 'b', 'c'])
@@ -1949,10 +1952,10 @@ def create_test_case(**database_creation_parameters):
             # Adds the literal for a list of all elements in the dictionary
             literals['[%s]' % ','.join(literals.keys())] = list(literals.values())
 
-            parser = populse_db.filter.literal_parser()
+            parser = literal_parser()
             for literal, expected_value in literals.items():
                 tree = parser.parse(literal)
-                value = populse_db.filter.FilterToQuery(None, None).transform(tree)
+                value = FilterToQuery(None, None).transform(tree)
                 self.assertEqual(value, expected_value)
 
         def test_with(self):
