@@ -21,9 +21,9 @@ python/ directory must be added to $PYTHONPATH
 
 # Usage
 
-	import populse_db                          ->  OK
-	from populse_db.database import Database   ->  Wrong usage (Cyclic problems)
-	import populse_db.database                 ->  Wrong usage (Cyclic problems)
+	import populse_db                          
+	from populse_db.database import Database   
+	import populse_db.database                 
 	
 # Tests
 
