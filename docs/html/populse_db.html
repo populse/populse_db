@@ -83,26 +83,25 @@ Can be &#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;g
 </ul>
 </dd>
 </dl>
-<p>Initiazation of the database
-:param string_engine: database engine</p>
-<blockquote>
-<div><p>The engine is constructed this way: dialect[+driver]://user:password&#64;host/dbname[?key=value..]
-The dialect can be mysql, oracle, postgresql, mssql, or sqlite
-The driver is the name of a DBAPI, such as psycopg2, pyodbc, or cx_oracle
-For sqlite databases, the file can be not existing yet, it will be created in this case
-Examples: -&#8220;mysql://scott:tiger&#64;hostname/dbname&#8221;</p>
-<blockquote>
-<div>-&#8220;postgresql://scott:tiger&#64;localhost/test&#8221;
--&#8220;sqlite:///foo.db&#8221;
--&#8220;oracle+cx_oracle://scott:tiger&#64;tnsname&#8221;
--&#8220;mssql+pyodbc://scott:tiger&#64;mydsn&#8221;</div></blockquote>
-<p>See sqlalchemy documentation for more precisions about the engine (<a class="reference external" href="http://docs.sqlalchemy.org/en/latest/core/engines.html">http://docs.sqlalchemy.org/en/latest/core/engines.html</a>)</p>
-</div></blockquote>
+<p>Initiazation of the database</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>string_engine</strong> &#8211; <p>database engine</p>
+<p>The engine is constructed this way: dialect[+driver]://user:password&#64;host/dbname[?key=value..]</p>
+<p>The dialect can be mysql, oracle, postgresql, mssql, or sqlite</p>
+<p>The driver is the name of a DBAPI, such as psycopg2, pyodbc, or cx_oracle</p>
+<p>For sqlite databases, the file can be not existing yet, it will be created in this case</p>
+<p>Examples: -&#8220;mysql://scott:tiger&#64;hostname/dbname&#8221;</p>
+<blockquote>
+<div>-&#8220;postgresql://scott:tiger&#64;localhost/test&#8221;<p>-&#8220;sqlite:///foo.db&#8221;</p>
+<p>-&#8220;oracle+cx_oracle://scott:tiger&#64;tnsname&#8221;</p>
+<p>-&#8220;mssql+pyodbc://scott:tiger&#64;mydsn&#8221;</p>
+</div></blockquote>
+<p>See sqlalchemy documentation for more precisions about the engine (<a class="reference external" href="http://docs.sqlalchemy.org/en/latest/core/engines.html">http://docs.sqlalchemy.org/en/latest/core/engines.html</a>)</p>
+</li>
 <li><strong>caches</strong> &#8211; Bool to know if the caches must be used</li>
 <li><strong>list_tables</strong> &#8211; Bool to know if tables must be created to store list values</li>
 <li><strong>query_type</strong> &#8211; Type of query to use for the filters (&#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;guess&#8217;)</li>
@@ -120,8 +119,15 @@ Examples: -&#8220;mysql://scott:tiger&#64;hostname/dbname&#8221;</p>
 <dl class="staticmethod">
 <dt id="populse_db.database.Database.create_empty_schema">
 <em class="property">static </em><code class="descname">create_empty_schema</code><span class="sig-paren">(</span><em>string_engine</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.Database.create_empty_schema" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates the database file with an empty schema
-:param string_engine: Path of the new database file</p>
+<dd><p>Creates the database file with an empty schema</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>string_engine</strong> &#8211; Path of the new database file</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -139,7 +145,7 @@ Examples: -&#8220;mysql://scott:tiger&#64;hostname/dbname&#8221;</p>
 <li>table_classes: list of table classes, generated automatically</li>
 <li>base: database base</li>
 <li>metadata: database metadata</li>
-<li>unsaved_modifications: boolean to know if there are unsaved
+<li>unsaved_modifications: bool to know if there are unsaved
 modifications in the database</li>
 </ul>
 </dd>
@@ -178,41 +184,70 @@ modifications</li>
 </ul>
 </dd>
 </dl>
-<p>Creates a session API of the database instance
-:param database: Database to take into account
-:param session: Session related to the database</p>
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.add_collection">
-<code class="descname">add_collection</code><span class="sig-paren">(</span><em>name</em>, <em>primary_key='name'</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_collection" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds a collection
-:param name: New collection name
-:param primary_key: New collection primary_key column =&gt; &#8220;name&#8221; by default</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.add_document">
-<code class="descname">add_document</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_document" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds a document to a collection
-:param collection: Document collection (str)
-:param document: Dictionary of document values (dict), or document primary_key (str)
-:param flush: Bool to know if flush to do, put False in the middle of filling the table =&gt; True by default</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.add_field">
-<code class="descname">add_field</code><span class="sig-paren">(</span><em>collection</em>, <em>name</em>, <em>field_type</em>, <em>description=None</em>, <em>index=False</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_field" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds a field to the database, if it does not already exist
-:param collection: Field collection (str)
-:param name: Field name (str)
-:param field_type: Field type (string, int, float, boolean, date, datetime,</p>
-<blockquote>
-<div>time, json, list_string, list_int, list_float, list_boolean, list_date,
-list_datetime, list_time, or list_json)</div></blockquote>
+<p>Creates a session API of the database instance</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>database</strong> &#8211; Database to take into account</li>
+<li><strong>session</strong> &#8211; Session related to the database</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.add_collection">
+<code class="descname">add_collection</code><span class="sig-paren">(</span><em>name</em>, <em>primary_key='name'</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> &#8211; New collection name (str)</li>
+<li><strong>primary_key</strong> &#8211; New collection primary_key column =&gt; &#8220;name&#8221; by default</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.add_document">
+<code class="descname">add_document</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_document" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a document to a collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>collection</strong> &#8211; Document collection (str)</li>
+<li><strong>document</strong> &#8211; Dictionary of document values (dict), or document primary_key (str)</li>
+<li><strong>flush</strong> &#8211; Bool to know if flush to do, put False in the middle of filling the table =&gt; True by default</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.add_field">
+<code class="descname">add_field</code><span class="sig-paren">(</span><em>collection</em>, <em>name</em>, <em>field_type</em>, <em>description=None</em>, <em>index=False</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a field to the database, if it does not already exist</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>collection</strong> &#8211; Field collection (str)</li>
+<li><strong>name</strong> &#8211; Field name (str)</li>
+<li><strong>field_type</strong> &#8211; Field type (string, int, float, boolean, date, datetime,
+time, json, list_string, list_int, list_float, list_boolean, list_date,
+list_datetime, list_time, or list_json)</li>
 <li><strong>description</strong> &#8211; Field description (str or None) =&gt; None by default</li>
 <li><strong>flush</strong> &#8211; Bool to know if the table classes must be updated (put False if in the middle of filling fields) =&gt; True by default</li>
 </ul>
@@ -225,17 +260,36 @@ list_datetime, list_time, or list_json)</div></blockquote>
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.add_fields">
 <code class="descname">add_fields</code><span class="sig-paren">(</span><em>fields</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_fields" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds the list of fields
-:param fields: list of fields (collection, name, type, description)</p>
+<dd><p>Adds the list of fields</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fields</strong> &#8211; list of fields (collection, name, type, description)</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.check_type_value">
 <code class="descname">check_type_value</code><span class="sig-paren">(</span><em>value</em>, <em>valid_type</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.check_type_value" title="Permalink to this definition">¶</a></dt>
-<dd><p>Checks the type of the value
-:param value: Value
-:param type: Type that the value is supposed to have
-:return: True if the value is valid, False otherwise</p>
+<dd><p>Checks the type of the value</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>value</strong> &#8211; Value</li>
+<li><strong>type</strong> &#8211; Type that the value is supposed to have</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">True if the value is valid, False otherwise</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -255,17 +309,25 @@ Python value.</p>
 <dl class="staticmethod">
 <dt id="populse_db.database.DatabaseSession.field_type_to_column_type">
 <em class="property">static </em><code class="descname">field_type_to_column_type</code><span class="sig-paren">(</span><em>field_type</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.field_type_to_column_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the sqlalchemy column type corresponding to the field type
-:param field_type: Column type
-:return: The sql column type given the field type</p>
+<dd><p>Gives the sqlalchemy column type corresponding to the field type</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>field_type</strong> &#8211; Column type</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The sql column type given the field type</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.filter_documents">
 <code class="descname">filter_documents</code><span class="sig-paren">(</span><em>collection</em>, <em>filter_query</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.filter_documents" title="Permalink to this definition">¶</a></dt>
-<dd><p>Iterate over documents selected by filter_query. Each item yield is a
-row of the column table returned by sqlalchemy. filter_query can be
-the result of self.filter_query() or a string containing a filter
+<dd><p>Iterate over documents selected by filter_query.</p>
+<p>Each item yield is a row of the column table returned by sqlalchemy.</p>
+<p>filter_query can be the result of self.filter_query() or a string containing a filter
 (in this case self.fliter_query() is called to get the actual query).</p>
 </dd></dl>
 
@@ -273,102 +335,203 @@ the result of self.filter_query() or a string containing a filter
 <dt id="populse_db.database.DatabaseSession.filter_query">
 <code class="descname">filter_query</code><span class="sig-paren">(</span><em>collection</em>, <em>filter</em>, <em>query_type=None</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.filter_query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a filter string, return a query that can be used with
-filter_documents() to select documents.
-:param query_type: Type of query to build. Can be &#8216;mixed&#8217;,</p>
-<blockquote>
-<div>&#8216;sql&#8217;, &#8216;python&#8217; or &#8216;guess&#8217;. If None, self.query_type
-is used.</div></blockquote>
+filter_documents() to select documents.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>query_type</strong> &#8211; <p>Type of query to build.</p>
+<p>Can be &#8216;mixed&#8217;, &#8216;sql&#8217;, &#8216;python&#8217; or &#8216;guess&#8217;.</p>
+<p>If None, the default query_type is used.</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_collection">
 <code class="descname">get_collection</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collection" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the collection row of the collection
-:param name: Collection name
-:return: The collection row if it exists, None otherwise</p>
+<dd><p>Returns the collection row of the collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; Collection name</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The collection row if it exists, None otherwise</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_collections">
 <code class="descname">get_collections</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collections" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the list of collection rows
-:return: List of document rows of the collection</p>
+<dd><p>Gives the list of collection rows</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">List of document rows of the collection</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_collections_names">
 <code class="descname">get_collections_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collections_names" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the list of collection names
-:return: List of document names of the collection</p>
+<dd><p>Gives the list of collection names</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">List of document names of the collection</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_document">
 <code class="descname">get_document</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_document" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the document row of a document, given a collection
-:param collection: Document collection
-:param document: Document name
-:return The document row if the document exists, None otherwise</p>
+<dd><p>Gives the document row of a document, given a collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>collection</strong> &#8211; Document collection</li>
+<li><strong>document</strong> &#8211; Document name</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>:return The document row if the document exists, None otherwise</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_documents">
 <code class="descname">get_documents</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_documents" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the list of document rows, given a collection
-:param collection: Documents collection
-:return: List of document rows of the collection</p>
+<dd><p>Gives the list of document rows, given a collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Documents collection</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of document rows of the collection</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_documents_names">
 <code class="descname">get_documents_names</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_documents_names" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the list of document names, given a collection
-:param collection: Documents collection
-:return: List of document names of the collection</p>
+<dd><p>Gives the list of document names, given a collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Documents collection</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of document names of the collection</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_field">
 <code class="descname">get_field</code><span class="sig-paren">(</span><em>collection</em>, <em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_field" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the column row given a column name and a collection
-:param collection: Document collection
-:param name: Column name
-:return: The column row if the column exists, None otherwise</p>
+<dd><p>Gives the column row given a column name and a collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>collection</strong> &#8211; Document collection</li>
+<li><strong>name</strong> &#8211; Column name</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The column row if the column exists, None otherwise</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_fields">
 <code class="descname">get_fields</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_fields" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the list of fields rows, given a collection
-:param collection: Fields collection
-:return: List of fields rows of the colletion</p>
+<dd><p>Gives the list of fields rows, given a collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Fields collection</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of fields rows of the colletion</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_fields_names">
 <code class="descname">get_fields_names</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_fields_names" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the list of fields, given a collection
-:param collection: Fields collection
-:return: List of fields names of the collection</p>
+<dd><p>Gives the list of fields, given a collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Fields collection</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of fields names of the collection</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_value">
 <code class="descname">get_value</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_value" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the current value of &lt;document, field&gt; in the collection
-:param collection: Document collection (str)
-:param document: Document name (str)
-:param field: Field name (str)
-:return: The current value of &lt;document, field&gt; in the collection if it exists, None otherwise</p>
+<dd><p>Gives the current value of &lt;document, field&gt; in the collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>collection</strong> &#8211; Document collection (str)</li>
+<li><strong>document</strong> &#8211; Document name (str)</li>
+<li><strong>field</strong> &#8211; Field name (str)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The current value of &lt;document, field&gt; in the collection if it exists, None otherwise</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.has_unsaved_modifications">
 <code class="descname">has_unsaved_modifications</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.has_unsaved_modifications" title="Permalink to this definition">¶</a></dt>
-<dd><p>Knowing if the database has pending modifications that are unsaved
-:return: True if there are pending modifications to save,</p>
-<blockquote>
-<div>False otherwise</div></blockquote>
+<dd><p>Knowing if the database has pending modifications that are unsaved</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if there are pending modifications to save,
+False otherwise</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
@@ -386,20 +549,38 @@ database column.</p>
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.name_to_valid_column_name">
 <code class="descname">name_to_valid_column_name</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.name_to_valid_column_name" title="Permalink to this definition">¶</a></dt>
-<dd><p>Transforms the name into a valid and unique table/column name, by hashing it
-:param name: Name (str)
-:return: Valid and unique (hashed) table/column name</p>
+<dd><p>Transforms the name into a valid and unique table/column name, by hashing it</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; Name (str)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Valid and unique (hashed) table/column name</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.new_value">
 <code class="descname">new_value</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>field</em>, <em>value</em>, <em>checks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.new_value" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds a value for &lt;document, field&gt;
-:param collection: Document collection
-:param document: Document name
-:param field: Field name
-:param value: Value to add
-:param checks: Bool to know if flush to do and value check (Put False in the middle of adding values, during import)</p>
+<dd><p>Adds a value for &lt;document, field&gt;</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>collection</strong> &#8211; Document collection</li>
+<li><strong>document</strong> &#8211; Document name</li>
+<li><strong>field</strong> &#8211; Field name</li>
+<li><strong>value</strong> &#8211; Value to add</li>
+<li><strong>checks</strong> &#8211; Bool to know if flush to do and value check (Put False in the middle of adding values, during import)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -417,34 +598,71 @@ database column.</p>
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.remove_collection">
 <code class="descname">remove_collection</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_collection" title="Permalink to this definition">¶</a></dt>
-<dd><p>Removes a collection
-:param name: Collection to remove</p>
+<dd><p>Removes a collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; Collection to remove</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.remove_document">
 <code class="descname">remove_document</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_document" title="Permalink to this definition">¶</a></dt>
-<dd><p>Removes a document in the collection
-:param collection: Document collection (str)
-:param document: Document name (str)</p>
+<dd><p>Removes a document in the collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>collection</strong> &#8211; Document collection (str)</li>
+<li><strong>document</strong> &#8211; Document name (str)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.remove_field">
 <code class="descname">remove_field</code><span class="sig-paren">(</span><em>collection</em>, <em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_field" title="Permalink to this definition">¶</a></dt>
-<dd><p>Removes a field in the collection
-:param collection: Field collection
-:param field: Field name (str), or list of fields (str)</p>
+<dd><p>Removes a field in the collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>collection</strong> &#8211; Field collection</li>
+<li><strong>field</strong> &#8211; Field name (str), or list of fields (str)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.remove_value">
 <code class="descname">remove_value</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>field</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_value" title="Permalink to this definition">¶</a></dt>
-<dd><p>Removes the value associated to &lt;document, field&gt; in the collection
-:param collection: Focument collection (str)
-:param document: Document name (str)
-:param field: Field name (str)
-:param flush: Bool to know if flush to do (put False in the middle of removing values) =&gt; True by default</p>
+<dd><p>Removes the value associated to &lt;document, field&gt; in the collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>collection</strong> &#8211; Focument collection (str)</li>
+<li><strong>document</strong> &#8211; Document name (str)</li>
+<li><strong>field</strong> &#8211; Field name (str)</li>
+<li><strong>flush</strong> &#8211; Bool to know if flush to do (put False in the middle of removing values) =&gt; True by default</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -456,22 +674,42 @@ database column.</p>
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.set_value">
 <code class="descname">set_value</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>field</em>, <em>new_value</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.set_value" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets the value associated to &lt;document, field&gt;
-:param collection: Document collection (str)
-:param document: Document name (str)
-:param field: Field name (str)
-:param new_value: New value
-:param flush: Bool to know if flush to do</p>
+<dd><p>Sets the value associated to &lt;document, field&gt;</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>collection</strong> &#8211; Document collection (str)</li>
+<li><strong>document</strong> &#8211; Document name (str)</li>
+<li><strong>field</strong> &#8211; Field name (str)</li>
+<li><strong>new_value</strong> &#8211; New value</li>
+<li><strong>flush</strong> &#8211; Bool to know if flush to do</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.set_values">
 <code class="descname">set_values</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>values</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.set_values" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets the values of a collection document
-:param collection: Document collection (str)
-:param document: Document name (str)
-:param values: Dictionary of values (key=field, value=value)
-:param flush: Bool to know if flush to do</p>
+<dd><p>Sets the values of a collection document</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>collection</strong> &#8211; Document collection (str)</li>
+<li><strong>document</strong> &#8211; Document name (str)</li>
+<li><strong>values</strong> &#8211; Dictionary of values (key=field, value=value)</li>
+<li><strong>flush</strong> &#8211; Bool to know if flush to do</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -487,9 +725,10 @@ database column.</p>
 <em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">FieldRow</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em>, <em>row</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.FieldRow" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>A FieldRow is an object that makes it possible to access to attributes of
-a database row returned by sqlalchemy using the column name. If the
-attribute with the field name is not found, it is hashed and search in the
-actual row. If found, it is stored in the FieldRow instance.</p>
+a database row returned by sqlalchemy using the column name.</p>
+<p>If the attribute with the field name is not found, it is hashed and search in the
+actual row.</p>
+<p>If found, it is stored in the FieldRow instance.</p>
 </dd></dl>
 
 <dl class="class">
@@ -619,7 +858,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'&gt;': &lt;built-in function gt&gt;, '!=': &lt;built-in function ne&gt;, '&lt;': &lt;built-in function lt&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;staticmethod object at 0x7f49f2d6fc18&gt;, '&lt;=': &lt;built-in function le&gt;, 'and': &lt;built-in function and_&gt;, 'ilike': &lt;staticmethod object at 0x7f49f2d6fc88&gt;, '==': &lt;built-in function eq&gt;, '&gt;=': &lt;built-in function ge&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'&lt;': &lt;built-in function lt&gt;, 'and': &lt;built-in function and_&gt;, '!=': &lt;built-in function ne&gt;, '==': &lt;built-in function eq&gt;, '&gt;': &lt;built-in function gt&gt;, '&gt;=': &lt;built-in function ge&gt;, 'or': &lt;built-in function or_&gt;, 'ilike': &lt;staticmethod object at 0x7f86ee1265c0&gt;, '&lt;=': &lt;built-in function le&gt;, 'like': &lt;staticmethod object at 0x7f86ee126550&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -629,12 +868,11 @@ list field value</p>
 <em class="property">class </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterToQuery</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">lark.tree.Transformer</span></code></p>
 <p>Transform the parsing of a filter expression into object(s) that can
-be used ot select items from a database. The produced object is one
-of the three following items :
-- An SqlAlchemy expression (that can be passed to select()) if the filter</p>
-<blockquote>
-<div>can be fully expressed with SQL in all SqlAlchemy engines.</div></blockquote>
+be used ot select items from a database.</p>
+<p>The produced object is one of the three following items :</p>
 <ul class="simple">
+<li>An SqlAlchemy expression (that can be passed to select()) if the filter
+can be fully expressed with SQL in all SqlAlchemy engines.</li>
 <li>Python function taking a path row from SqlAlchemy and returning True if
 the row is selected by the filter or False otherwise.</li>
 <li>A tuple containing an SqlAlchemy expression and a boolean Python
@@ -699,7 +937,7 @@ two elements.</li>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToQuery.keyword_literals">
-<code class="descname">keyword_literals</code><em class="property"> = {'false': False, 'true': True, 'null': None}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<code class="descname">keyword_literals</code><em class="property"> = {'true': True, 'null': None, 'false': False}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -808,7 +1046,7 @@ a populse_db field object.</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'&gt;': &lt;built-in function gt&gt;, '!=': &lt;function sql_differ at 0x7f49f2c969d8&gt;, '&lt;': &lt;built-in function lt&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;function like_op at 0x7f49f380a8c8&gt;, '&lt;=': &lt;built-in function le&gt;, 'and': &lt;built-in function and_&gt;, 'ilike': &lt;function ilike_op at 0x7f49f380a9d8&gt;, '==': &lt;function sql_equal at 0x7f49f2d0c0d0&gt;, '&gt;=': &lt;built-in function ge&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'&lt;': &lt;built-in function lt&gt;, 'and': &lt;built-in function and_&gt;, '!=': &lt;function sql_differ at 0x7f86ee04bc80&gt;, '==': &lt;function sql_equal at 0x7f86ee0c4378&gt;, '&gt;': &lt;built-in function gt&gt;, '&gt;=': &lt;built-in function ge&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;function like_op at 0x7f86eec42ae8&gt;, '&lt;=': &lt;built-in function le&gt;, 'ilike': &lt;function ilike_op at 0x7f86eec42bf8&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -823,8 +1061,8 @@ a populse_db field object.</p>
 <dt id="populse_db.filter.literal_parser">
 <code class="descclassname">populse_db.filter.</code><code class="descname">literal_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.literal_parser" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return an instance of Lark grammar parser for parsing only a literal
-value (int, string, list, date, etc.) from a filter expression. This
-is used for testing the parsing of literals.</p>
+value (int, string, list, date, etc.) from a filter expression.</p>
+<p>This is used for testing the parsing of literals.</p>
 </dd></dl>
 
 <dl class="function">
@@ -851,11 +1089,23 @@ is used for testing the parsing of literals.</p>
 <dl class="function">
 <dt id="populse_db.test.load_tests">
 <code class="descclassname">populse_db.test.</code><code class="descname">load_tests</code><span class="sig-paren">(</span><em>loader</em>, <em>standard_tests</em>, <em>pattern</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.load_tests" title="Permalink to this definition">¶</a></dt>
-<dd><p>Prepares the tests parameters
-:param loader:
-:param standard_tests:
-:param pattern:
-:return: A test suite</p>
+<dd><p>Prepares the tests parameters</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>loader</strong> &#8211; </li>
+<li><strong>standard_tests</strong> &#8211; </li>
+<li><strong>pattern</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A test suite</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>

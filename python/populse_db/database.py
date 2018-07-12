@@ -102,21 +102,34 @@ class Database:
 
     def __init__(self, string_engine, caches=False, list_tables=True,
                  query_type='mixed'):
-        """
-        Initiazation of the database
+        """Initiazation of the database
+
         :param string_engine: database engine
+
                               The engine is constructed this way: dialect[+driver]://user:password@host/dbname[?key=value..]
+
                               The dialect can be mysql, oracle, postgresql, mssql, or sqlite
+
                               The driver is the name of a DBAPI, such as psycopg2, pyodbc, or cx_oracle
+
                               For sqlite databases, the file can be not existing yet, it will be created in this case
+
                               Examples: -"mysql://scott:tiger@hostname/dbname"
+
                                         -"postgresql://scott:tiger@localhost/test"
+
                                         -"sqlite:///foo.db"
+
                                         -"oracle+cx_oracle://scott:tiger@tnsname"
+
                                         -"mssql+pyodbc://scott:tiger@mydsn"
+
                               See sqlalchemy documentation for more precisions about the engine (http://docs.sqlalchemy.org/en/latest/core/engines.html)
+
         :param caches: Bool to know if the caches must be used
+
         :param list_tables: Bool to know if tables must be created to store list values
+
         :param query_type: Type of query to use for the filters ('sql', 'python', 'mixed', or 'guess')
         """
 
@@ -161,7 +174,9 @@ class Database:
             def set_sqlite_pragma(dbapi_connection, connection_record):
                 """
                 Manages the pragmas during the database opening
+
                 :param dbapi_connection:
+
                 :param connection_record:
                 """
                 dbapi_connection.execute('pragma case_sensitive_like=ON')
@@ -179,6 +194,7 @@ class Database:
     def create_empty_schema(string_engine):
         """
         Creates the database file with an empty schema
+
         :param string_engine: Path of the new database file
         """
 
@@ -298,7 +314,7 @@ class DatabaseSession:
         - table_classes: list of table classes, generated automatically
         - base: database base
         - metadata: database metadata
-        - unsaved_modifications: boolean to know if there are unsaved
+        - unsaved_modifications: bool to know if there are unsaved
           modifications in the database
 
     methods:
@@ -356,7 +372,9 @@ class DatabaseSession:
     def __init__(self, database, session):
         """
         Creates a session API of the database instance
+
         :param database: Database to take into account
+
         :param session: Session related to the database
         """
 
@@ -443,6 +461,7 @@ class DatabaseSession:
     def __refresh_cache_documents(self, collection):
         """
         Refreshes the document cache after field added/removed
+
         :param collection: Collection to refresh
         """
 
@@ -459,7 +478,9 @@ class DatabaseSession:
     def add_collection(self, name, primary_key="name"):
         """
         Adds a collection
-        :param name: New collection name
+
+        :param name: New collection name (str)
+
         :param primary_key: New collection primary_key column => "name" by default
         """
 
@@ -511,6 +532,7 @@ class DatabaseSession:
     def remove_collection(self, name):
         """
         Removes a collection
+
         :param name: Collection to remove
         """
 
@@ -546,7 +568,9 @@ class DatabaseSession:
     def get_collection(self, name):
         """
         Returns the collection row of the collection
+
         :param name: Collection name
+
         :return: The collection row if it exists, None otherwise
         """
 
@@ -565,6 +589,7 @@ class DatabaseSession:
     def get_collections_names(self):
         """
         Gives the list of collection names
+
         :return: List of document names of the collection
         """
 
@@ -575,6 +600,7 @@ class DatabaseSession:
     def get_collections(self):
         """
         Gives the list of collection rows
+
         :return: List of document rows of the collection
         """
 
@@ -585,6 +611,7 @@ class DatabaseSession:
     def add_fields(self, fields):
         """
         Adds the list of fields
+
         :param fields: list of fields (collection, name, type, description)
         """
 
@@ -611,12 +638,17 @@ class DatabaseSession:
                   index=False, flush=True):
         """
         Adds a field to the database, if it does not already exist
+
         :param collection: Field collection (str)
+
         :param name: Field name (str)
+
         :param field_type: Field type (string, int, float, boolean, date, datetime,
                      time, json, list_string, list_int, list_float, list_boolean, list_date,
                      list_datetime, list_time, or list_json)
+
         :param description: Field description (str or None) => None by default
+
         :param flush: Bool to know if the table classes must be updated (put False if in the middle of filling fields) => True by default
         """
 
@@ -694,7 +726,9 @@ class DatabaseSession:
     def field_type_to_column_type(field_type):
         """
         Gives the sqlalchemy column type corresponding to the field type
+
         :param field_type: Column type
+
         :return: The sql column type given the field type
         """
 
@@ -703,7 +737,9 @@ class DatabaseSession:
     def name_to_valid_column_name(self, name):
         """
         Transforms the name into a valid and unique table/column name, by hashing it
+
         :param name: Name (str)
+
         :return: Valid and unique (hashed) table/column name
         """
 
@@ -721,7 +757,9 @@ class DatabaseSession:
     def remove_field(self, collection, field):
         """
         Removes a field in the collection
+
         :param collection: Field collection
+
         :param field: Field name (str), or list of fields (str)
         """
 
@@ -833,8 +871,11 @@ class DatabaseSession:
     def get_field(self, collection, name):
         """
         Gives the column row given a column name and a collection
+
         :param collection: Document collection
+
         :param name: Column name
+
         :return: The column row if the column exists, None otherwise
         """
 
@@ -854,7 +895,9 @@ class DatabaseSession:
     def get_fields_names(self, collection):
         """
         Gives the list of fields, given a collection
+
         :param collection: Fields collection
+
         :return: List of fields names of the collection
         """
 
@@ -868,7 +911,9 @@ class DatabaseSession:
     def get_fields(self, collection):
         """
         Gives the list of fields rows, given a collection
+
         :param collection: Fields collection
+
         :return: List of fields rows of the colletion
         """
 
@@ -881,9 +926,13 @@ class DatabaseSession:
     def get_value(self, collection, document, field):
         """
         Gives the current value of <document, field> in the collection
+
         :param collection: Document collection (str)
+
         :param document: Document name (str)
+
         :param field: Field name (str)
+
         :return: The current value of <document, field> in the collection if it exists, None otherwise
         """
 
@@ -902,10 +951,15 @@ class DatabaseSession:
     def set_value(self, collection, document, field, new_value, flush=True):
         """
         Sets the value associated to <document, field>
+
         :param collection: Document collection (str)
+
         :param document: Document name (str)
+
         :param field: Field name (str)
+
         :param new_value: New value
+
         :param flush: Bool to know if flush to do
         """
 
@@ -959,9 +1013,13 @@ class DatabaseSession:
     def set_values(self, collection, document, values, flush=True):
         """
         Sets the values of a collection document
+
         :param collection: Document collection (str)
+
         :param document: Document name (str)
+
         :param values: Dictionary of values (key=field, value=value)
+
         :param flush: Bool to know if flush to do
         """
 
@@ -1026,9 +1084,13 @@ class DatabaseSession:
     def remove_value(self, collection, document, field, flush=True):
         """
         Removes the value associated to <document, field> in the collection
+
         :param collection: Focument collection (str)
+
         :param document: Document name (str)
+
         :param field: Field name (str)
+
         :param flush: Bool to know if flush to do (put False in the middle of removing values) => True by default
         """
 
@@ -1064,8 +1126,11 @@ class DatabaseSession:
     def check_type_value(self, value, valid_type):
         """
         Checks the type of the value
+
         :param value: Value
+
         :param type: Type that the value is supposed to have
+
         :return: True if the value is valid, False otherwise
         """
 
@@ -1103,10 +1168,15 @@ class DatabaseSession:
     def new_value(self, collection, document, field, value, checks=True):
         """
         Adds a value for <document, field>
+
         :param collection: Document collection
+
         :param document: Document name
+
         :param field: Field name
+
         :param value: Value to add
+
         :param checks: Bool to know if flush to do and value check (Put False in the middle of adding values, during import)
         """
 
@@ -1165,8 +1235,11 @@ class DatabaseSession:
     def get_document(self, collection, document):
         """
         Gives the document row of a document, given a collection
+
         :param collection: Document collection
+
         :param document: Document name
+
         :return The document row if the document exists, None otherwise
         """
 
@@ -1193,7 +1266,9 @@ class DatabaseSession:
     def get_documents_names(self, collection):
         """
         Gives the list of document names, given a collection
+
         :param collection: Documents collection
+
         :return: List of document names of the collection
         """
 
@@ -1210,7 +1285,9 @@ class DatabaseSession:
     def get_documents(self, collection):
         """
         Gives the list of document rows, given a collection
+
         :param collection: Documents collection
+
         :return: List of document rows of the collection
         """
 
@@ -1225,7 +1302,9 @@ class DatabaseSession:
     def remove_document(self, collection, document):
         """
         Removes a document in the collection
+
         :param collection: Document collection (str)
+
         :param document: Document name (str)
         """
 
@@ -1258,8 +1337,11 @@ class DatabaseSession:
     def add_document(self, collection, document, flush=True):
         """
         Adds a document to a collection
+
         :param collection: Document collection (str)
+
         :param document: Dictionary of document values (dict), or document primary_key (str)
+
         :param flush: Bool to know if flush to do, put False in the middle of filling the table => True by default
         """
 
@@ -1347,6 +1429,7 @@ class DatabaseSession:
     def has_unsaved_modifications(self):
         """
         Knowing if the database has pending modifications that are unsaved
+
         :return: True if there are pending modifications to save,
                  False otherwise
         """
@@ -1359,9 +1442,12 @@ class DatabaseSession:
         """
         Given a filter string, return a query that can be used with
         filter_documents() to select documents.
-        :param query_type: Type of query to build. Can be 'mixed',
-            'sql', 'python' or 'guess'. If None, self.query_type
-            is used.
+
+        :param query_type: Type of query to build.
+
+            Can be 'mixed', 'sql', 'python' or 'guess'.
+
+            If None, the default query_type is used.
         """
 
         if query_type is None:
@@ -1373,9 +1459,11 @@ class DatabaseSession:
 
     def filter_documents(self, collection, filter_query):
         """
-        Iterate over documents selected by filter_query. Each item yield is a
-        row of the column table returned by sqlalchemy. filter_query can be
-        the result of self.filter_query() or a string containing a filter
+        Iterate over documents selected by filter_query.
+
+        Each item yield is a row of the column table returned by sqlalchemy.
+
+        filter_query can be the result of self.filter_query() or a string containing a filter
         (in this case self.fliter_query() is called to get the actual query).
         """
 
@@ -1459,9 +1547,12 @@ class Undefined:
 class FieldRow:
     '''
     A FieldRow is an object that makes it possible to access to attributes of
-    a database row returned by sqlalchemy using the column name. If the
-    attribute with the field name is not found, it is hashed and search in the
-    actual row. If found, it is stored in the FieldRow instance.
+    a database row returned by sqlalchemy using the column name.
+
+    If the attribute with the field name is not found, it is hashed and search in the
+    actual row.
+
+    If found, it is stored in the FieldRow instance.
     '''
 
     def __init__(self, database, collection, row):

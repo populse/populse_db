@@ -113,8 +113,9 @@ def filter_parser():
 def literal_parser():
     '''
     Return an instance of Lark grammar parser for parsing only a literal
-    value (int, string, list, date, etc.) from a filter expression. This
-    is used for testing the parsing of literals.
+    value (int, string, list, date, etc.) from a filter expression.
+
+    This is used for testing the parsing of literals.
     '''
     return Lark(filter_grammar, start='literal')
 
@@ -131,12 +132,16 @@ class FilterImplementationLimit(NotImplementedError):
 class FilterToQuery(Transformer):
     '''
     Transform the parsing of a filter expression into object(s) that can
-    be used ot select items from a database. The produced object is one
-    of the three following items :
+    be used ot select items from a database.
+
+    The produced object is one of the three following items :
+
     - An SqlAlchemy expression (that can be passed to select()) if the filter
       can be fully expressed with SQL in all SqlAlchemy engines.
+
     - Python function taking a path row from SqlAlchemy and returning True if
       the row is selected by the filter or False otherwise.
+
     - A tuple containing an SqlAlchemy expression and a boolean Python
       function if the filter can be expressed as a AND combination of these
       two elements.

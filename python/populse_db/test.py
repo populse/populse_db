@@ -2000,9 +2000,13 @@ def create_test_case(**database_creation_parameters):
 def load_tests(loader, standard_tests, pattern):
     """
     Prepares the tests parameters
+
     :param loader:
+
     :param standard_tests:
+
     :param pattern:
+
     :return: A test suite
     """
     suite = unittest.TestSuite()
