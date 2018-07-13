@@ -3,11 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. toctree::
 
+     documentation
 
-
-Populse_db's documentation
-======================================
+Generalities
+============
 
 Overview
 --------
@@ -15,7 +16,7 @@ Overview
 * SQLAlchemy based database API for Populse
 * It can support every database type, it takes an engine as entry
 * Populse_db is ensured to work with Python >= 3.3
-* Populse_db is ensured to work on the platforms Linux and OSX
+* Populse_db is ensured to work on the platforms Linux and OSX (It is supposed to work on Windows, hasn't been tested yet)
 
 Installation
 ------------
@@ -101,16 +102,6 @@ Tests
    python test.py (if python/populse_db/ directory has been added to $PATH, or if $PWD in the terminal)
    python python/populse_db/test.py (from populse_db root folder)
 
-.. toctree::
-   :maxdepth: 2
-
-Indices and tables
-------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
 License
 -------
 
@@ -120,5 +111,5 @@ Populse_db is precisely released under the CeCILL-B software license.
 
 You can find all the details on the license `here
 <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_, or refer to the license file `here
-<https://github.com/populse/populse_db/blob/master/LICENSE.en>`_
+<https://github.com/populse/populse_db/blob/master/LICENSE.en>`_.
 

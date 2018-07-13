@@ -8,7 +8,7 @@
     
     <title>populse_db package &mdash; populse_db 1.0.0 documentation</title>
     
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
@@ -23,19 +23,23 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="populse_db 1.0.0 documentation" href="index.html" />
-   
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
+    <link rel="top" title="populse_db 1.0.0 documentation" href="index.html" /> 
   </head>
-  <body role="document">  
+  <body role="document">
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>populse_db 1.0.0 documentation</span></a></h1>
+        <h2 class="heading"><span>populse_db package</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body" role="main">
-            
+      </div>
+      <div class="content">
+        
+        
   <div class="section" id="populse-db-package">
 <h1>populse_db package<a class="headerlink" href="#populse-db-package" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="submodules">
@@ -94,12 +98,17 @@ Can be &#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;g
 <p>The dialect can be mysql, oracle, postgresql, mssql, or sqlite</p>
 <p>The driver is the name of a DBAPI, such as psycopg2, pyodbc, or cx_oracle</p>
 <p>For sqlite databases, the file can be not existing yet, it will be created in this case</p>
-<p>Examples: -&#8220;mysql://scott:tiger&#64;hostname/dbname&#8221;</p>
-<blockquote>
-<div>-&#8220;postgresql://scott:tiger&#64;localhost/test&#8221;<p>-&#8220;sqlite:///foo.db&#8221;</p>
-<p>-&#8220;oracle+cx_oracle://scott:tiger&#64;tnsname&#8221;</p>
-<p>-&#8220;mssql+pyodbc://scott:tiger&#64;mydsn&#8221;</p>
-</div></blockquote>
+<dl class="docutils">
+<dt>Examples:</dt>
+<dd><ul class="first last">
+<li>&#8220;mysql://scott:tiger&#64;hostname/dbname&#8221;</li>
+<li>&#8220;postgresql://scott:tiger&#64;localhost/test&#8221;</li>
+<li>&#8220;sqlite:///foo.db&#8221;</li>
+<li>&#8220;oracle+cx_oracle://scott:tiger&#64;tnsname&#8221;</li>
+<li>&#8220;mssql+pyodbc://scott:tiger&#64;mydsn&#8221;</li>
+</ul>
+</dd>
+</dl>
 <p>See sqlalchemy documentation for more precisions about the engine (<a class="reference external" href="http://docs.sqlalchemy.org/en/latest/core/engines.html">http://docs.sqlalchemy.org/en/latest/core/engines.html</a>)</p>
 </li>
 <li><strong>caches</strong> &#8211; Bool to know if the caches must be used</li>
@@ -858,7 +867,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'&lt;': &lt;built-in function lt&gt;, 'and': &lt;built-in function and_&gt;, '!=': &lt;built-in function ne&gt;, '==': &lt;built-in function eq&gt;, '&gt;': &lt;built-in function gt&gt;, '&gt;=': &lt;built-in function ge&gt;, 'or': &lt;built-in function or_&gt;, 'ilike': &lt;staticmethod object at 0x7f86ee1265c0&gt;, '&lt;=': &lt;built-in function le&gt;, 'like': &lt;staticmethod object at 0x7f86ee126550&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'==': &lt;built-in function eq&gt;, '&gt;=': &lt;built-in function ge&gt;, 'and': &lt;built-in function and_&gt;, 'like': &lt;staticmethod object at 0x7f4a30c8cf60&gt;, '&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '&lt;': &lt;built-in function lt&gt;, '&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;staticmethod object at 0x7f4a30c8cfd0&gt;, '!=': &lt;built-in function ne&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -937,7 +946,7 @@ two elements.</li>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToQuery.keyword_literals">
-<code class="descname">keyword_literals</code><em class="property"> = {'true': True, 'null': None, 'false': False}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<code class="descname">keyword_literals</code><em class="property"> = {'true': True, 'false': False, 'null': None}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -1046,7 +1055,7 @@ a populse_db field object.</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'&lt;': &lt;built-in function lt&gt;, 'and': &lt;built-in function and_&gt;, '!=': &lt;function sql_differ at 0x7f86ee04bc80&gt;, '==': &lt;function sql_equal at 0x7f86ee0c4378&gt;, '&gt;': &lt;built-in function gt&gt;, '&gt;=': &lt;built-in function ge&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;function like_op at 0x7f86eec42ae8&gt;, '&lt;=': &lt;built-in function le&gt;, 'ilike': &lt;function ilike_op at 0x7f86eec42bf8&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'==': &lt;function sql_equal at 0x7f4a30c302f0&gt;, '&gt;=': &lt;built-in function ge&gt;, 'and': &lt;built-in function and_&gt;, 'like': &lt;function like_op at 0x7f4a3176ca60&gt;, '&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '&lt;': &lt;built-in function lt&gt;, '&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;function ilike_op at 0x7f4a3176cb70&gt;, '!=': &lt;function sql_differ at 0x7f4a30bb8bf8&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1115,68 +1124,18 @@ value (int, string, list, date, etc.) from a filter expression.</p>
 </div>
 
 
-          </div>
-        </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">populse_db package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-populse_db.database">populse_db.database module</a></li>
-<li><a class="reference internal" href="#module-populse_db.filter">populse_db.filter module</a></li>
-<li><a class="reference internal" href="#module-populse_db.info">populse_db.info module</a></li>
-<li><a class="reference internal" href="#module-populse_db.test">populse_db.test module</a></li>
-<li><a class="reference internal" href="#module-populse_db">Module contents</a></li>
-</ul>
-</li>
-</ul>
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/populse_db.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
-<div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-        </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2018, populse.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
-      
-      |
-      <a href="_sources/populse_db.txt"
-          rel="nofollow">Page source</a>
-    </div>
 
-    
-
-    
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2018, populse.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+    </div>
   </body>
 </html>

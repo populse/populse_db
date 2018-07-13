@@ -114,15 +114,12 @@ class Database:
 
                               For sqlite databases, the file can be not existing yet, it will be created in this case
 
-                              Examples: -"mysql://scott:tiger@hostname/dbname"
-
-                                        -"postgresql://scott:tiger@localhost/test"
-
-                                        -"sqlite:///foo.db"
-
-                                        -"oracle+cx_oracle://scott:tiger@tnsname"
-
-                                        -"mssql+pyodbc://scott:tiger@mydsn"
+                              Examples:
+                                        - "mysql://scott:tiger@hostname/dbname"
+                                        - "postgresql://scott:tiger@localhost/test"
+                                        - "sqlite:///foo.db"
+                                        - "oracle+cx_oracle://scott:tiger@tnsname"
+                                        - "mssql+pyodbc://scott:tiger@mydsn"
 
                               See sqlalchemy documentation for more precisions about the engine (http://docs.sqlalchemy.org/en/latest/core/engines.html)
 
