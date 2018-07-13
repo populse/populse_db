@@ -18,24 +18,6 @@ Overview
 * Populse_db is ensured to work with Python >= 3.3
 * Populse_db is ensured to work on the platforms Linux and OSX (It is supposed to work on Windows, hasn't been tested yet)
 
-Documentation
--------------
-
-* This documentation website has been generated with Sphinx
-* The source code of this website is in docs/ directory (The website is actually in docs/html/ directory, but docs/index.html is redirecting to the website)
-
-* Generate the website (from populse_db root directory):
-
-.. code-block:: python
-   
-   cd docs/
-   make html
-   cp -R build/doctrees/ ./doctrees/
-   cp -R build/html/ ./html/
-   rm -d -r build/html/
-   rm -d -r build/doctrees/
-   cd ..
-
 Requirements
 ------------
 
@@ -61,6 +43,24 @@ The other packages used by populse_db are the following ones:
 * tempfile
 * types
 * unittest              
+
+Documentation
+-------------
+
+* This documentation website has been generated with Sphinx
+* The source code of this website is in docs/ directory (The website is actually in docs/html/ directory, but docs/index.html is redirecting to the website)
+
+* Generate the website (from populse_db root directory):
+
+.. code-block:: python
+   
+   cd docs/
+   make html
+   cp -R build/doctrees/ ./doctrees/
+   cp -R build/html/ ./html/
+   rm -d -r build/html/
+   rm -d -r build/doctrees/
+   cd ..
 
 License
 -------
