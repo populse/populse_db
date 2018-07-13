@@ -48,8 +48,7 @@ Tests
 Using populse_db
 ----------------
 
-* Small script to show the initialization and some examples of calls (The script is available `here
-<https://github.com/populse/populse_db/blob/master/python/populse_db/script.py>`_):
+* Small script to show the initialization and some examples of calls:
 
 .. code-block:: python
    
@@ -93,4 +92,8 @@ Using populse_db
      session.save_modifications()
 
    shutil.rmtree(temp_folder)
+
+The script is available `here <https://github.com/populse/populse_db/blob/master/python/populse_db/script.py>`_.
+
+The database file test.py resulting from the script is available `here <https://github.com/populse/populse_db/blob/master/python/populse_db/test.db>`_.
 
