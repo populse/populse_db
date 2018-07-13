@@ -47,6 +47,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="documentation.html">Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="documentation.html#id1">API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="documentation.html#id2">User documentation</a></li>
 </ul>
 </li>
 </ul>
@@ -62,29 +63,12 @@
 <li>Populse_db is ensured to work on the platforms Linux and OSX (It is supposed to work on Windows, hasn&#8217;t been tested yet)</li>
 </ul>
 </div>
-<div class="section" id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li>From source:</li>
-</ul>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">git</span>
-<span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">populse</span><span class="o">/</span><span class="n">populse_db</span><span class="o">.</span><span class="n">git</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">populse_db</span>
-<span class="n">cd</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">populse_db</span>
-<span class="n">sudo</span> <span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
-<span class="n">cd</span> <span class="o">/</span><span class="n">tmp</span>
-<span class="n">sudo</span> <span class="n">rm</span> <span class="o">-</span><span class="n">r</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">populse_db</span>
-</pre></div>
-</div>
-<ul class="simple">
-<li>python/ directory must be added to $PYTHONPATH</li>
-</ul>
-</div>
 <div class="section" id="documentation">
 <h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>This documentation website has been generated with Sphinx</li>
-<li>The source code of this website is in docs/ folder (The website is actually in docs/html/ folder, but docs/index.html is redirecting to the website)</li>
-<li>Generate the website (from populse_db root folder):</li>
+<li>The source code of this website is in docs/ directory (The website is actually in docs/html/ directory, but docs/index.html is redirecting to the website)</li>
+<li>Generate the website (from populse_db root directory):</li>
 </ul>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">cd</span> <span class="n">docs</span><span class="o">/</span>
 <span class="n">make</span> <span class="n">html</span>
@@ -121,28 +105,6 @@
 <li>types</li>
 <li>unittest</li>
 </ul>
-</div>
-<div class="section" id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
-<p>Import examples:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">populse_db</span>
-<span class="kn">from</span> <span class="nn">populse_db.database</span> <span class="kn">import</span> <span class="n">Database</span>
-<span class="kn">import</span> <span class="nn">populse_db.database</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="tests">
-<h2>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li>Unit tests have been written with the package unittest</li>
-<li>Continuous integration has been deployed with Travis</li>
-<li>The code coverage is generated with the package codecov</li>
-<li>The script of tests is python/populse_db/test.py, so the following command launches the tests:</li>
-</ul>
-<div class="highlight-python"><div class="highlight"><pre>python test.py (if python/populse_db/ directory has been added to $PATH, or if $PWD in the terminal)
-python python/populse_db/test.py (from populse_db root folder)
-</pre></div>
-</div>
 </div>
 <div class="section" id="license">
 <h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>

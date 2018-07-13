@@ -1,3 +1,7 @@
+.. toctree::
+
+   index
+
 populse_db package
 ==================
 

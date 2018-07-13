@@ -40,7 +40,24 @@
       <div class="content">
         
         
-  <div class="section" id="populse-db-package">
+  <div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="documentation.html">Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="documentation.html#id1">API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="documentation.html#id2">User documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Generalities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="index.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#documentation">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#other-packages-used">Other packages used</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#license">License</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="populse-db-package">
 <h1>populse_db package<a class="headerlink" href="#populse-db-package" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
@@ -867,7 +884,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'==': &lt;built-in function eq&gt;, '&gt;=': &lt;built-in function ge&gt;, 'and': &lt;built-in function and_&gt;, 'like': &lt;staticmethod object at 0x7f4a30c8cf60&gt;, '&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '&lt;': &lt;built-in function lt&gt;, '&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;staticmethod object at 0x7f4a30c8cfd0&gt;, '!=': &lt;built-in function ne&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'and': &lt;built-in function and_&gt;, '&gt;=': &lt;built-in function ge&gt;, '==': &lt;built-in function eq&gt;, '!=': &lt;built-in function ne&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;staticmethod object at 0x7f53a09b8550&gt;, '&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;staticmethod object at 0x7f53a09b8198&gt;, '&lt;': &lt;built-in function lt&gt;, '&lt;=': &lt;built-in function le&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -946,7 +963,7 @@ two elements.</li>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToQuery.keyword_literals">
-<code class="descname">keyword_literals</code><em class="property"> = {'true': True, 'false': False, 'null': None}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<code class="descname">keyword_literals</code><em class="property"> = {'false': False, 'null': None, 'true': True}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -1055,7 +1072,7 @@ a populse_db field object.</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'==': &lt;function sql_equal at 0x7f4a30c302f0&gt;, '&gt;=': &lt;built-in function ge&gt;, 'and': &lt;built-in function and_&gt;, 'like': &lt;function like_op at 0x7f4a3176ca60&gt;, '&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '&lt;': &lt;built-in function lt&gt;, '&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;function ilike_op at 0x7f4a3176cb70&gt;, '!=': &lt;function sql_differ at 0x7f4a30bb8bf8&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'and': &lt;built-in function and_&gt;, '&gt;=': &lt;built-in function ge&gt;, '==': &lt;function sql_equal at 0x7f53a0980b70&gt;, '!=': &lt;function sql_differ at 0x7f53a08eb620&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;function like_op at 0x7f53a16ccb70&gt;, '&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;function ilike_op at 0x7f53a16ccc80&gt;, '&lt;': &lt;built-in function lt&gt;, '&lt;=': &lt;built-in function le&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
