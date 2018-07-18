@@ -95,5 +95,17 @@ Using populse_db
 
 The script is available `here <https://github.com/populse/populse_db/blob/master/python/populse_db/script.py>`_.
 
-The database file test.py resulting from the script is available `here <https://github.com/populse/populse_db/blob/master/python/populse_db/test.db>`_.
+The database file test.py resulting from the script is available `here <https://github.com/populse/populse_db/blob/master/docs/databases/test.db>`_.
+
+As you can see in the collection table, the collection Profile has been created.
+
+.. image:: ../../pictures/test_db_collection.png
+
+As you can see in the field table, the three fields First name, Last name, and Age have been created, in addition to the primary key.
+
+.. image:: ../../pictures/test_db_field.png
+
+As you can see in the collection profile table, the two profiles David and Lucie have been created.
+
+.. image:: ../../pictures/test_db_profile.png
 
