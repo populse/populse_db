@@ -99,13 +99,13 @@ The database file test.py resulting from the script is available `here <https://
 
 As you can see in the collection table, the collection Profile has been created.
 
-.. image:: ../../pictures/test_db_collection.png
+.. image:: ../pictures/test_db_collection.png
 
 As you can see in the field table, the three fields First name, Last name, and Age have been created, in addition to the primary key.
 
-.. image:: ../../pictures/test_db_field.png
+.. image:: ../pictures/test_db_field.png
 
 As you can see in the collection profile table, the two profiles David and Lucie have been created.
 
-.. image:: ../../pictures/test_db_profile.png
+.. image:: ../pictures/test_db_profile.png
 
