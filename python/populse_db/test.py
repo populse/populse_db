@@ -16,7 +16,7 @@ from sqlalchemy.exc import OperationalError
 
 from populse_db.database import Database, FIELD_TYPE_STRING, FIELD_TYPE_FLOAT, FIELD_TYPE_TIME, FIELD_TYPE_DATETIME, \
     FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_BOOLEAN, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_INTEGER, FIELD_TYPE_LIST_DATE, \
-    FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_FLOAT
+    FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_FLOAT, DatabaseSession
 from populse_db.filter import literal_parser, FilterToQuery
 
 
@@ -616,25 +616,25 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                is_valid = session.check_type_value("string", FIELD_TYPE_STRING)
+                is_valid = DatabaseSession._DatabaseSession__check_type_value("string", FIELD_TYPE_STRING)
                 self.assertTrue(is_valid)
-                is_valid = session.check_type_value(1, FIELD_TYPE_STRING)
+                is_valid = DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_STRING)
                 self.assertFalse(is_valid)
-                is_valid = session.check_type_value(None, FIELD_TYPE_STRING)
+                is_valid = DatabaseSession._DatabaseSession__check_type_value(None, FIELD_TYPE_STRING)
                 self.assertTrue(is_valid)
-                is_valid = session.check_type_value(1, FIELD_TYPE_INTEGER)
+                is_valid = DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_INTEGER)
                 self.assertTrue(is_valid)
-                is_valid = session.check_type_value(1, FIELD_TYPE_FLOAT)
+                is_valid = DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_FLOAT)
                 self.assertTrue(is_valid)
-                is_valid = session.check_type_value(1.5, FIELD_TYPE_FLOAT)
+                is_valid = DatabaseSession._DatabaseSession__check_type_value(1.5, FIELD_TYPE_FLOAT)
                 self.assertTrue(is_valid)
-                is_valid = session.check_type_value(None, None)
+                is_valid = DatabaseSession._DatabaseSession__check_type_value(None, None)
                 self.assertFalse(is_valid)
-                is_valid = session.check_type_value([1.5], FIELD_TYPE_LIST_FLOAT)
+                is_valid = DatabaseSession._DatabaseSession__check_type_value([1.5], FIELD_TYPE_LIST_FLOAT)
                 self.assertTrue(is_valid)
-                is_valid = session.check_type_value(1.5, FIELD_TYPE_LIST_FLOAT)
+                is_valid = DatabaseSession._DatabaseSession__check_type_value(1.5, FIELD_TYPE_LIST_FLOAT)
                 self.assertFalse(is_valid)
-                is_valid = session.check_type_value(
+                is_valid = DatabaseSession._DatabaseSession__check_type_value(
                     [1.5, "test"], FIELD_TYPE_LIST_FLOAT)
                 self.assertFalse(is_valid)
 

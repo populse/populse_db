@@ -79,16 +79,20 @@
 </li>
 <li><dl class="first docutils">
 <dt>list_tables: Bool to know if list tables must be used</dt>
-<dd><p class="first last">True if tables are created to store values of
-list fields and have a pure SQL version of IN
-operator in filters</p>
+<dd><ul class="first last simple">
+<li>True if tables are created to store values of list fields and have a pure SQL version of IN operator in filters</li>
+</ul>
 </dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>query_type: Default query implementation for filter_query()</dt>
-<dd><p class="first last">and filter_documents()
-Can be &#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;guess&#8217;</p>
+<dd><blockquote class="first">
+<div><p>and filter_documents()</p>
+</div></blockquote>
+<ul class="last simple">
+<li>Can be &#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;guess&#8217;</li>
+</ul>
 </dd>
 </dl>
 </li>
@@ -98,14 +102,13 @@ Can be &#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;g
 </dd>
 <dt>methods:</dt>
 <dd><ul class="first last simple">
-<li>create_empty_schemas: Initializes an empty database schema</li>
 <li>__enter__: Creates or gets a DatabaseSession instance</li>
 <li>__exit__: Releases the latest created DatabaseSession</li>
 <li>clear: Clears the database</li>
 </ul>
 </dd>
 </dl>
-<p>Initiazation of the database</p>
+<p>Initialization of the database</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -127,11 +130,11 @@ Can be &#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;g
 </ul>
 </dd>
 </dl>
-<p>See sqlalchemy documentation for more precisions about the engine (<a class="reference external" href="http://docs.sqlalchemy.org/en/latest/core/engines.html">http://docs.sqlalchemy.org/en/latest/core/engines.html</a>)</p>
+<p>See sqlalchemy documentation for more precisions about the engine: <a class="reference external" href="http://docs.sqlalchemy.org/en/latest/core/engines.html">http://docs.sqlalchemy.org/en/latest/core/engines.html</a></p>
 </li>
-<li><strong>caches</strong> &#8211; Bool to know if the caches must be used</li>
-<li><strong>list_tables</strong> &#8211; Bool to know if tables must be created to store list values</li>
-<li><strong>query_type</strong> &#8211; Type of query to use for the filters (&#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;guess&#8217;)</li>
+<li><strong>caches</strong> &#8211; Bool to know if the caches must be used =&gt; False by default</li>
+<li><strong>list_tables</strong> &#8211; Bool to know if tables must be created to store list values =&gt; True by default</li>
+<li><strong>query_type</strong> &#8211; Type of query to use for the filters (&#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;guess&#8217;) =&gt; &#8216;mixed&#8217; by default</li>
 </ul>
 </td>
 </tr>
@@ -141,20 +144,6 @@ Can be &#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;g
 <dt id="populse_db.database.Database.clear">
 <code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.Database.clear" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes all documents and collections in the database</p>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt id="populse_db.database.Database.create_empty_schema">
-<em class="property">static </em><code class="descname">create_empty_schema</code><span class="sig-paren">(</span><em>string_engine</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.Database.create_empty_schema" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates the database file with an empty schema</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>string_engine</strong> &#8211; Path of the new database file</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 </dd></dl>
@@ -188,8 +177,6 @@ modifications in the database</li>
 <li>remove_field: removes a field</li>
 <li>get_field: Gives all fields rows</li>
 <li>get_fields_names: gives all fields names</li>
-<li>field_type_to_column_type: gives the column type corresponding
-to a field type</li>
 <li>name_to_valid_column_name: gives the valid table/column name corresponding
 to the name</li>
 <li>get_value: gives the value of &lt;document, field&gt;</li>
@@ -211,14 +198,14 @@ modifications</li>
 </ul>
 </dd>
 </dl>
-<p>Creates a session API of the database instance</p>
+<p>Creates a session API of the Database instance</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>database</strong> &#8211; Database to take into account</li>
-<li><strong>session</strong> &#8211; Session related to the database</li>
+<li><strong>database</strong> &#8211; Database instance to take into account</li>
+<li><strong>session</strong> &#8211; Session instance attached to the Database instance</li>
 </ul>
 </td>
 </tr>
@@ -233,8 +220,8 @@ modifications</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>name</strong> &#8211; New collection name (str)</li>
-<li><strong>primary_key</strong> &#8211; New collection primary_key column =&gt; &#8220;name&#8221; by default</li>
+<li><strong>name</strong> &#8211; New collection name (str, must not be existing)</li>
+<li><strong>primary_key</strong> &#8211; New collection primary_key column (str) =&gt; &#8220;name&#8221; by default</li>
 </ul>
 </td>
 </tr>
@@ -251,11 +238,19 @@ modifications</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>collection</strong> &#8211; Document collection (str)</li>
+<li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
 <li><strong>document</strong> &#8211; Dictionary of document values (dict), or document primary_key (str)</li>
-<li><strong>flush</strong> &#8211; Bool to know if flush to do, put False in the middle of filling the table =&gt; True by default</li>
 </ul>
 </td>
+</tr>
+</tbody>
+</table>
+<p>The primary_key must not be existing.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>flush</strong> &#8211; Bool to know if flush to do, put False in the middle of filling the table =&gt; True by default</td>
 </tr>
 </tbody>
 </table>
@@ -270,12 +265,13 @@ modifications</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>collection</strong> &#8211; Field collection (str)</li>
+<li><strong>collection</strong> &#8211; Field collection (str, must be existing)</li>
 <li><strong>name</strong> &#8211; Field name (str)</li>
-<li><strong>field_type</strong> &#8211; Field type (string, int, float, boolean, date, datetime,
-time, json, list_string, list_int, list_float, list_boolean, list_date,
-list_datetime, list_time, or list_json)</li>
+<li><strong>field_type</strong> &#8211; Field type, in (&#8216;string&#8217;, &#8216;int&#8217;, &#8216;float&#8217;, &#8216;boolean&#8217;, &#8216;date&#8217;, &#8216;datetime&#8217;,
+&#8216;time&#8217;, &#8216;json&#8217;, &#8216;list_string&#8217;, &#8216;list_int&#8217;, &#8216;list_float&#8217;, &#8216;list_boolean&#8217;, &#8216;list_date&#8217;,
+&#8216;list_datetime&#8217;, &#8216;list_time&#8217;, &#8216;list_json&#8217;)</li>
 <li><strong>description</strong> &#8211; Field description (str or None) =&gt; None by default</li>
+<li><strong>index</strong> &#8211; Bool to know if indexing must be done =&gt; False by default</li>
 <li><strong>flush</strong> &#8211; Bool to know if the table classes must be updated (put False if in the middle of filling fields) =&gt; True by default</li>
 </ul>
 </td>
@@ -292,58 +288,7 @@ list_datetime, list_time, or list_json)</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fields</strong> &#8211; list of fields (collection, name, type, description)</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.check_type_value">
-<code class="descname">check_type_value</code><span class="sig-paren">(</span><em>value</em>, <em>valid_type</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.check_type_value" title="Permalink to this definition">¶</a></dt>
-<dd><p>Checks the type of the value</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>value</strong> &#8211; Value</li>
-<li><strong>type</strong> &#8211; Type that the value is supposed to have</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">True if the value is valid, False otherwise</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.column_to_list">
-<code class="descname">column_to_list</code><span class="sig-paren">(</span><em>column_type</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.column_to_list" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a value of a database column into the corresponding
-Python list value.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.column_to_python">
-<code class="descname">column_to_python</code><span class="sig-paren">(</span><em>column_type</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.column_to_python" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a value of a database column into the corresponding
-Python value.</p>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt id="populse_db.database.DatabaseSession.field_type_to_column_type">
-<em class="property">static </em><code class="descname">field_type_to_column_type</code><span class="sig-paren">(</span><em>field_type</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.field_type_to_column_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the sqlalchemy column type corresponding to the field type</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>field_type</strong> &#8211; Column type</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The sql column type given the field type</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fields</strong> &#8211; List of fields (collection, name, type, description)</td>
 </tr>
 </tbody>
 </table>
@@ -352,24 +297,42 @@ Python value.</p>
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.filter_documents">
 <code class="descname">filter_documents</code><span class="sig-paren">(</span><em>collection</em>, <em>filter_query</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.filter_documents" title="Permalink to this definition">¶</a></dt>
-<dd><p>Iterate over documents selected by filter_query.</p>
-<p>Each item yield is a row of the column table returned by sqlalchemy.</p>
+<dd><p>Iterates over the collection documents selected by filter_query</p>
+<p>Each item yield is a row of the collection table returned by sqlalchemy</p>
 <p>filter_query can be the result of self.filter_query() or a string containing a filter
-(in this case self.fliter_query() is called to get the actual query).</p>
+(in this case self.fliter_query() is called to get the actual query)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>collection</strong> &#8211; Filter collection (str, must be existing)</li>
+<li><strong>filter_query</strong> &#8211; Filter query (str)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.filter_query">
 <code class="descname">filter_query</code><span class="sig-paren">(</span><em>collection</em>, <em>filter</em>, <em>query_type=None</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.filter_query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a filter string, return a query that can be used with
-filter_documents() to select documents.</p>
+filter_documents() to select documents</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>query_type</strong> &#8211; <p>Type of query to build.</p>
-<p>Can be &#8216;mixed&#8217;, &#8216;sql&#8217;, &#8216;python&#8217; or &#8216;guess&#8217;.</p>
-<p>If None, the default query_type is used.</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>query_type</strong> &#8211; <p>Type of query to build, in (&#8216;mixed&#8217;, &#8216;sql&#8217;, &#8216;python&#8217;, &#8216;guess&#8217;) =&gt; None by default</p>
+<ul>
+<li>If None, the default query_type is used.</li>
+</ul>
+</li>
+<li><strong>filter</strong> &#8211; </li>
+<li><strong>collection</strong> &#8211; Filter collection (str, must be existing)</li>
+</ul>
 </td>
 </tr>
 </tbody>
@@ -384,7 +347,7 @@ filter_documents() to select documents.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; Collection name</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; Collection name (str, must be existing)</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The collection row if it exists, None otherwise</td>
 </tr>
@@ -395,12 +358,12 @@ filter_documents() to select documents.</p>
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_collections">
 <code class="descname">get_collections</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collections" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the list of collection rows</p>
+<dd><p>Gives the list of all collection rows</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">List of document rows of the collection</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">List of all collection rows</td>
 </tr>
 </tbody>
 </table>
@@ -409,12 +372,12 @@ filter_documents() to select documents.</p>
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_collections_names">
 <code class="descname">get_collections_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collections_names" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the list of collection names</p>
+<dd><p>Gives the list of all collection names</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">List of document names of the collection</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">List of all collection names</td>
 </tr>
 </tbody>
 </table>
@@ -429,8 +392,8 @@ filter_documents() to select documents.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>collection</strong> &#8211; Document collection</li>
-<li><strong>document</strong> &#8211; Document name</li>
+<li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
+<li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
 </ul>
 </td>
 </tr>
@@ -442,14 +405,14 @@ filter_documents() to select documents.</p>
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_documents">
 <code class="descname">get_documents</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_documents" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the list of document rows, given a collection</p>
+<dd><p>Gives the list of all document rows, given a collection</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Documents collection</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Documents collection (str, must be existing)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of document rows of the collection</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all document rows of the collection</td>
 </tr>
 </tbody>
 </table>
@@ -458,14 +421,14 @@ filter_documents() to select documents.</p>
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_documents_names">
 <code class="descname">get_documents_names</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_documents_names" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the list of document names, given a collection</p>
+<dd><p>Gives the list of all document names, given a collection</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Documents collection</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Documents collection (str, must be existing)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of document names of the collection</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all document names of the collection</td>
 </tr>
 </tbody>
 </table>
@@ -567,13 +530,6 @@ False otherwise</td>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="populse_db.database.DatabaseSession.list_to_column">
-<code class="descname">list_to_column</code><span class="sig-paren">(</span><em>column_type</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.list_to_column" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a python list value into a suitable value to put in a
-database column.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="populse_db.database.DatabaseSession.name_to_valid_column_name">
 <code class="descname">name_to_valid_column_name</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.name_to_valid_column_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Transforms the name into a valid and unique table/column name, by hashing it</p>
@@ -610,13 +566,6 @@ database column.</p>
 </table>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.python_to_column">
-<code class="descname">python_to_column</code><span class="sig-paren">(</span><em>column_type</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.python_to_column" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a python value into a suitable value to put in a
-database column.</p>
-</dd></dl>
-
 <dl class="attribute">
 <dt id="populse_db.database.DatabaseSession.query_type">
 <code class="descname">query_type</code><a class="headerlink" href="#populse_db.database.DatabaseSession.query_type" title="Permalink to this definition">¶</a></dt>
@@ -630,7 +579,7 @@ database column.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; Collection to remove</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; Collection to remove (str, must be existing)</td>
 </tr>
 </tbody>
 </table>
@@ -645,8 +594,8 @@ database column.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>collection</strong> &#8211; Document collection (str)</li>
-<li><strong>document</strong> &#8211; Document name (str)</li>
+<li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
+<li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
 </ul>
 </td>
 </tr>
@@ -885,7 +834,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'and': &lt;built-in function and_&gt;, '&lt;': &lt;built-in function lt&gt;, 'like': &lt;staticmethod object at 0x7f59200cb898&gt;, '==': &lt;built-in function eq&gt;, '!=': &lt;built-in function ne&gt;, '&gt;': &lt;built-in function gt&gt;, '&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '&gt;=': &lt;built-in function ge&gt;, 'ilike': &lt;staticmethod object at 0x7f59200cb908&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'&lt;': &lt;built-in function lt&gt;, '&gt;=': &lt;built-in function ge&gt;, 'ilike': &lt;staticmethod object at 0x7f55e24f8c50&gt;, 'and': &lt;built-in function and_&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;staticmethod object at 0x7f55e24f8be0&gt;, '&gt;': &lt;built-in function gt&gt;, '==': &lt;built-in function eq&gt;, '&lt;=': &lt;built-in function le&gt;, '!=': &lt;built-in function ne&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -964,7 +913,7 @@ two elements.</li>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToQuery.keyword_literals">
-<code class="descname">keyword_literals</code><em class="property"> = {'true': True, 'false': False, 'null': None}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<code class="descname">keyword_literals</code><em class="property"> = {'null': None, 'true': True, 'false': False}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -1073,7 +1022,7 @@ a populse_db field object.</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'and': &lt;built-in function and_&gt;, '&lt;': &lt;built-in function lt&gt;, 'like': &lt;function like_op at 0x7f5920ae7bf8&gt;, '==': &lt;function sql_equal at 0x7f5920067400&gt;, '!=': &lt;function sql_differ at 0x7f591ffedd08&gt;, '&gt;': &lt;built-in function gt&gt;, '&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '&gt;=': &lt;built-in function ge&gt;, 'ilike': &lt;function ilike_op at 0x7f5920ae7d08&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'&lt;': &lt;built-in function lt&gt;, '&gt;=': &lt;built-in function ge&gt;, 'ilike': &lt;function ilike_op at 0x7f55e2f56b70&gt;, 'and': &lt;built-in function and_&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;function like_op at 0x7f55e2f56a60&gt;, '&gt;': &lt;built-in function gt&gt;, '==': &lt;function sql_equal at 0x7f55e24952f0&gt;, '&lt;=': &lt;built-in function le&gt;, '!=': &lt;function sql_differ at 0x7f55e241ebf8&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>

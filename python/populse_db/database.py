@@ -84,16 +84,15 @@ class Database:
         - string_engine: String engine of the database
         - caches: Bool to know if the caches must be used
         - list_tables: Bool to know if list tables must be used
-                        True if tables are created to store values of
-                        list fields and have a pure SQL version of IN
-                        operator in filters
+            - True if tables are created to store values of list fields and have a pure SQL version of IN operator in filters
+
         - query_type: Default query implementation for filter_query()
                       and filter_documents()
-                      Can be 'sql', 'python', 'mixed', or 'guess'
+            - Can be 'sql', 'python', 'mixed', or 'guess'
+
         - engine: SQLAlchemy database engine
 
     methods:
-        - create_empty_schemas: Initializes an empty database schema
         - __enter__: Creates or gets a DatabaseSession instance
         - __exit__: Releases the latest created DatabaseSession
         - clear: Clears the database
@@ -102,7 +101,7 @@ class Database:
 
     def __init__(self, string_engine, caches=False, list_tables=True,
                  query_type='mixed'):
-        """Initiazation of the database
+        """Initialization of the database
 
         :param string_engine: database engine
 
@@ -121,13 +120,13 @@ class Database:
                                         - "oracle+cx_oracle://scott:tiger@tnsname"
                                         - "mssql+pyodbc://scott:tiger@mydsn"
 
-                              See sqlalchemy documentation for more precisions about the engine (http://docs.sqlalchemy.org/en/latest/core/engines.html)
+                              See sqlalchemy documentation for more precisions about the engine: http://docs.sqlalchemy.org/en/latest/core/engines.html
 
-        :param caches: Bool to know if the caches must be used
+        :param caches: Bool to know if the caches must be used => False by default
 
-        :param list_tables: Bool to know if tables must be created to store list values
+        :param list_tables: Bool to know if tables must be created to store list values => True by default
 
-        :param query_type: Type of query to use for the filters ('sql', 'python', 'mixed', or 'guess')
+        :param query_type: Type of query to use for the filters ('sql', 'python', 'mixed', or 'guess') => 'mixed' by default
         """
 
         self.string_engine = string_engine
@@ -154,7 +153,7 @@ class Database:
                 if not os.path.exists(parent_dir):
                     os.makedirs(os.path.dirname(self.__db_file))
 
-        self.create_empty_schema(self.string_engine)
+        self.__create_empty_schema(self.string_engine)
         if string_engine.startswith('sqlite'):
             self.engine = create_engine(self.string_engine, connect_args={'check_same_thread': False})
         else:
@@ -188,11 +187,11 @@ class Database:
             bind=self.engine, autocommit=False, autoflush=False))
 
     @staticmethod
-    def create_empty_schema(string_engine):
+    def __create_empty_schema(string_engine):
         """
         Creates the database file with an empty schema
 
-        :param string_engine: Path of the new database file
+        :param string_engine: String engine of the new database file (see Database class constructor for more details)
         """
 
         engine = create_engine(string_engine)
@@ -325,8 +324,6 @@ class DatabaseSession:
         - remove_field: removes a field
         - get_field: Gives all fields rows
         - get_fields_names: gives all fields names
-        - field_type_to_column_type: gives the column type corresponding
-          to a field type
         - name_to_valid_column_name: gives the valid table/column name corresponding
           to the name
         - get_value: gives the value of <document, field>
@@ -368,11 +365,11 @@ class DatabaseSession:
 
     def __init__(self, database, session):
         """
-        Creates a session API of the database instance
+        Creates a session API of the Database instance
 
-        :param database: Database to take into account
+        :param database: Database instance to take into account
 
-        :param session: Session related to the database
+        :param session: Session instance attached to the Database instance
         """
 
         self.database = database
@@ -412,6 +409,7 @@ class DatabaseSession:
         """
         Redefines the model after an update of the schema
         """
+
         self.table_classes = {}
         self.base = automap_base(metadata=self.metadata)
         self.base.prepare(engine=self.database.engine)
@@ -457,9 +455,9 @@ class DatabaseSession:
 
     def __refresh_cache_documents(self, collection):
         """
-        Refreshes the document cache after field added/removed
+        Refreshes the document cache after a field added or removed
 
-        :param collection: Collection to refresh
+        :param collection: Collection to refresh (str, must be existing)
         """
 
         self.__documents[collection].clear()
@@ -476,9 +474,9 @@ class DatabaseSession:
         """
         Adds a collection
 
-        :param name: New collection name (str)
+        :param name: New collection name (str, must not be existing)
 
-        :param primary_key: New collection primary_key column => "name" by default
+        :param primary_key: New collection primary_key column (str) => "name" by default
         """
 
         # Checks
@@ -530,7 +528,7 @@ class DatabaseSession:
         """
         Removes a collection
 
-        :param name: Collection to remove
+        :param name: Collection to remove (str, must be existing)
         """
 
         # Checks
@@ -566,7 +564,7 @@ class DatabaseSession:
         """
         Returns the collection row of the collection
 
-        :param name: Collection name
+        :param name: Collection name (str, must be existing)
 
         :return: The collection row if it exists, None otherwise
         """
@@ -585,9 +583,9 @@ class DatabaseSession:
 
     def get_collections_names(self):
         """
-        Gives the list of collection names
+        Gives the list of all collection names
 
-        :return: List of document names of the collection
+        :return: List of all collection names
         """
 
         collections = self.session.query(self.table_classes[COLLECTION_TABLE].name).all()
@@ -596,9 +594,9 @@ class DatabaseSession:
 
     def get_collections(self):
         """
-        Gives the list of collection rows
+        Gives the list of all collection rows
 
-        :return: List of document rows of the collection
+        :return: List of all collection rows
         """
 
         return self.session.query(self.table_classes[COLLECTION_TABLE]).all()
@@ -609,7 +607,7 @@ class DatabaseSession:
         """
         Adds the list of fields
 
-        :param fields: list of fields (collection, name, type, description)
+        :param fields: List of fields (collection, name, type, description)
         """
 
         collections = []
@@ -636,15 +634,17 @@ class DatabaseSession:
         """
         Adds a field to the database, if it does not already exist
 
-        :param collection: Field collection (str)
+        :param collection: Field collection (str, must be existing)
 
         :param name: Field name (str)
 
-        :param field_type: Field type (string, int, float, boolean, date, datetime,
-                     time, json, list_string, list_int, list_float, list_boolean, list_date,
-                     list_datetime, list_time, or list_json)
+        :param field_type: Field type, in ('string', 'int', 'float', 'boolean', 'date', 'datetime',
+                     'time', 'json', 'list_string', 'list_int', 'list_float', 'list_boolean', 'list_date',
+                     'list_datetime', 'list_time', 'list_json')
 
         :param description: Field description (str or None) => None by default
+
+        :param index: Bool to know if indexing must be done => False by default
 
         :param flush: Bool to know if the table classes must be updated (put False if in the middle of filling fields) => True by default
         """
@@ -694,7 +694,7 @@ class DatabaseSession:
             # String columns if it list type, as the str representation of the lists will be stored
             field_type = String
         else:
-            field_type = self.field_type_to_column_type(field_type)
+            field_type = self.__field_type_to_column_type(field_type)
 
         column = Column(self.name_to_valid_column_name(name), field_type, index=index)
         column_str_type = column.type.compile(self.database.engine.dialect)
@@ -718,18 +718,6 @@ class DatabaseSession:
                 self.__refresh_cache_documents(collection)
 
         self.unsaved_modifications = True
-
-    @staticmethod
-    def field_type_to_column_type(field_type):
-        """
-        Gives the sqlalchemy column type corresponding to the field type
-
-        :param field_type: Column type
-
-        :return: The sql column type given the field type
-        """
-
-        return TYPE_TO_COLUMN[field_type]
 
     def name_to_valid_column_name(self, name):
         """
@@ -972,11 +960,11 @@ class DatabaseSession:
         if document_row is None:
             raise ValueError(
                 "The document with the name {0} does not exist in the collection {1}".format(document, collection))
-        if not self.check_type_value(new_value, field_row.type):
+        if not self.__check_type_value(new_value, field_row.type):
             raise ValueError("The value {0} is invalid for the type {1}".format(new_value, field_row.type))
 
         column_name = self.name_to_valid_column_name(field)
-        new_column = self.python_to_column(field_row.type, new_value)
+        new_column = self.__python_to_column(field_row.type, new_value)
 
         if field != collection_row.primary_key:
             setattr(document_row.row, column_name, new_column)
@@ -994,7 +982,7 @@ class DatabaseSession:
 
             sql = table.insert()
             sql_params = []
-            cvalues = [self.python_to_column(field_row.type[5:], i) for i in new_value]
+            cvalues = [self.__python_to_column(field_row.type[5:], i) for i in new_value]
             index = 0
             for i in cvalues:
                 sql_params.append({'document_id': document_id, 'i': index, 'value': i})
@@ -1032,14 +1020,14 @@ class DatabaseSession:
             if field_row is None:
                 raise ValueError(
                     "The field with the name {0} does not exist in the collection {1}".format(field, collection))
-            if not self.check_type_value(values[field], field_row.type):
+            if not self.__check_type_value(values[field], field_row.type):
                 raise ValueError("The value {0} is invalid for the type {1}".format(values[field], field_row.type))
 
         database_values = {}
         for field in values:
             column_name = self.name_to_valid_column_name(field)
             field_row = self.get_field(collection, field)
-            new_column = self.python_to_column(field_row.type, values[field])
+            new_column = self.__python_to_column(field_row.type, values[field])
             database_values[column_name] = new_column
             if collection_row.primary_key == field:
                 raise ValueError("Impossible to set the primary_key value of a document")
@@ -1051,7 +1039,7 @@ class DatabaseSession:
         # Updating list tables values
         for field in values:
             field_row = self.get_field(collection, field)
-            database_value = self.python_to_column(field_row.type, values[field])
+            database_value = self.__python_to_column(field_row.type, values[field])
             if self.list_tables and isinstance(database_value, list):
                 primary_key = self.get_collection(collection).primary_key
                 document_id = getattr(document_row.row, primary_key)
@@ -1063,7 +1051,7 @@ class DatabaseSession:
 
                 sql = table.insert()
                 sql_params = []
-                cvalues = [self.python_to_column(field_row.type[5:], i) for i in database_value]
+                cvalues = [self.__python_to_column(field_row.type[5:], i) for i in database_value]
                 index = 0
                 for i in cvalues:
                     sql_params.append({'document_id': document_id, 'i': index, 'value': i})
@@ -1120,48 +1108,6 @@ class DatabaseSession:
             self.session.flush()
         self.unsaved_modifications = True
 
-    def check_type_value(self, value, valid_type):
-        """
-        Checks the type of the value
-
-        :param value: Value
-
-        :param type: Type that the value is supposed to have
-
-        :return: True if the value is valid, False otherwise
-        """
-
-        value_type = type(value)
-        if valid_type is None:
-            return False
-        if value is None:
-            return True
-        if valid_type == FIELD_TYPE_INTEGER and value_type == int:
-            return True
-        if valid_type == FIELD_TYPE_FLOAT and value_type == int:
-            return True
-        if valid_type == FIELD_TYPE_FLOAT and value_type == float:
-            return True
-        if valid_type == FIELD_TYPE_BOOLEAN and value_type == bool:
-            return True
-        if valid_type == FIELD_TYPE_STRING and value_type == str:
-            return True
-        if valid_type == FIELD_TYPE_JSON and value_type == dict:
-            return True
-        if valid_type == FIELD_TYPE_DATETIME and value_type == datetime:
-            return True
-        if valid_type == FIELD_TYPE_TIME and value_type == time:
-            return True
-        if valid_type == FIELD_TYPE_DATE and value_type == date:
-            return True
-        if (valid_type in LIST_TYPES
-                and value_type == list):
-            for value_element in value:
-                if not self.check_type_value(value_element, valid_type.replace("list_", "")):
-                    return False
-            return True
-        return False
-
     def new_value(self, collection, document, field, value, checks=True):
         """
         Adds a value for <document, field>
@@ -1190,7 +1136,7 @@ class DatabaseSession:
             if document_row is None:
                 raise ValueError(
                     "The document with the name {0} does not exist in the collection {1}".format(document, collection))
-            if not self.check_type_value(value, field_row.type):
+            if not self.__check_type_value(value, field_row.type):
                 raise ValueError("The value {0} is invalid for the type {1}".format(value, field_row.type))
 
         field_name = self.name_to_valid_column_name(field)
@@ -1200,7 +1146,7 @@ class DatabaseSession:
         # We add the value only if it does not already exist
         if database_value is None:
             if value is not None:
-                current_value = self.python_to_column(
+                current_value = self.__python_to_column(
                     field_row.type, value)
                 setattr(
                     document_row.row, field_name,
@@ -1211,7 +1157,7 @@ class DatabaseSession:
                     table = 'list_%s_%s' % (collection, field_name)
                     sql = self.metadata.tables[table].insert()
                     sql_params = []
-                    cvalues = [self.python_to_column(field_row.type[5:], i) for i in value]
+                    cvalues = [self.__python_to_column(field_row.type[5:], i) for i in value]
                     index = 0
                     for i in cvalues:
                         sql_params.append({'document_id': document_id, 'i': index, 'value': i})
@@ -1233,9 +1179,9 @@ class DatabaseSession:
         """
         Gives the document row of a document, given a collection
 
-        :param collection: Document collection
+        :param collection: Document collection (str, must be existing)
 
-        :param document: Document name
+        :param document: Document name (str, must be existing)
 
         :return The document row if the document exists, None otherwise
         """
@@ -1262,11 +1208,11 @@ class DatabaseSession:
 
     def get_documents_names(self, collection):
         """
-        Gives the list of document names, given a collection
+        Gives the list of all document names, given a collection
 
-        :param collection: Documents collection
+        :param collection: Documents collection (str, must be existing)
 
-        :return: List of document names of the collection
+        :return: List of all document names of the collection
         """
 
         collection_row = self.get_collection(collection)
@@ -1281,11 +1227,11 @@ class DatabaseSession:
 
     def get_documents(self, collection):
         """
-        Gives the list of document rows, given a collection
+        Gives the list of all document rows, given a collection
 
-        :param collection: Documents collection
+        :param collection: Documents collection (str, must be existing)
 
-        :return: List of document rows of the collection
+        :return: List of all document rows of the collection
         """
 
         collection_row = self.get_collection(collection)
@@ -1300,9 +1246,9 @@ class DatabaseSession:
         """
         Removes a document in the collection
 
-        :param collection: Document collection (str)
+        :param collection: Document collection (str, must be existing)
 
-        :param document: Document name (str)
+        :param document: Document name (str, must be existing)
         """
 
         collection_row = self.get_collection(collection)
@@ -1335,9 +1281,11 @@ class DatabaseSession:
         """
         Adds a document to a collection
 
-        :param collection: Document collection (str)
+        :param collection: Document collection (str, must be existing)
 
         :param document: Dictionary of document values (dict), or document primary_key (str)
+
+        The primary_key must not be existing.
 
         :param flush: Bool to know if flush to do, put False in the middle of filling the table => True by default
         """
@@ -1371,14 +1319,14 @@ class DatabaseSession:
         for k, v in document.items():
             column_name = self.name_to_valid_column_name(k)
             field_type = self.get_field(collection, k).type
-            column_value = self.python_to_column(field_type, v)
+            column_value = self.__python_to_column(field_type, v)
             column_values[column_name] = column_value
             if self.list_tables and isinstance(v, list):
                 table = 'list_%s_%s' % (collection, column_name)
                 # sql = sql_text('INSERT INTO %s (document_id, i, value) VALUES (:document_id, :i, :value)' % table)
                 sql = self.metadata.tables[table].insert()
                 sql_params = []
-                cvalues = [self.python_to_column(field_type[5:], i) for i in v]
+                cvalues = [self.__python_to_column(field_type[5:], i) for i in v]
                 index = 0
                 for i in cvalues:
                     sql_params.append({'document_id': document_id, 'i': index, 'value': i})
@@ -1438,13 +1386,15 @@ class DatabaseSession:
     def filter_query(self, collection, filter, query_type=None):
         """
         Given a filter string, return a query that can be used with
-        filter_documents() to select documents.
+        filter_documents() to select documents
 
-        :param query_type: Type of query to build.
+        :param query_type: Type of query to build, in ('mixed', 'sql', 'python', 'guess') => None by default
 
-            Can be 'mixed', 'sql', 'python' or 'guess'.
+                                - If None, the default query_type is used.
 
-            If None, the default query_type is used.
+        :param filter:
+
+        :param collection: Filter collection (str, must be existing)
         """
 
         if query_type is None:
@@ -1456,12 +1406,15 @@ class DatabaseSession:
 
     def filter_documents(self, collection, filter_query):
         """
-        Iterate over documents selected by filter_query.
+        Iterates over the collection documents selected by filter_query
 
-        Each item yield is a row of the column table returned by sqlalchemy.
+        Each item yield is a row of the collection table returned by sqlalchemy
 
         filter_query can be the result of self.filter_query() or a string containing a filter
-        (in this case self.fliter_query() is called to get the actual query).
+        (in this case self.fliter_query() is called to get the actual query)
+
+        :param collection: Filter collection (str, must be existing)
+        :param filter_query: Filter query (str)
         """
 
         if isinstance(filter_query, six.string_types):
@@ -1487,43 +1440,102 @@ class DatabaseSession:
 
     """ UTILS """
 
-    def python_to_column(self, column_type, value):
+    @staticmethod
+    def __field_type_to_column_type(field_type):
+        """
+        Gives the sqlalchemy column type corresponding to the field type
+
+        :param field_type: Column type
+
+        :return: The sql column type given the field type
+        """
+
+        return TYPE_TO_COLUMN[field_type]
+
+    @staticmethod
+    def __check_type_value(value, valid_type):
+        """
+        Checks the type of the value
+
+        :param value: Value
+
+        :param type: Type that the value is supposed to have
+
+        :return: True if the value is valid, False otherwise
+        """
+
+        value_type = type(value)
+        if valid_type is None:
+            return False
+        if value is None:
+            return True
+        if valid_type == FIELD_TYPE_INTEGER and value_type == int:
+            return True
+        if valid_type == FIELD_TYPE_FLOAT and value_type == int:
+            return True
+        if valid_type == FIELD_TYPE_FLOAT and value_type == float:
+            return True
+        if valid_type == FIELD_TYPE_BOOLEAN and value_type == bool:
+            return True
+        if valid_type == FIELD_TYPE_STRING and value_type == str:
+            return True
+        if valid_type == FIELD_TYPE_JSON and value_type == dict:
+            return True
+        if valid_type == FIELD_TYPE_DATETIME and value_type == datetime:
+            return True
+        if valid_type == FIELD_TYPE_TIME and value_type == time:
+            return True
+        if valid_type == FIELD_TYPE_DATE and value_type == date:
+            return True
+        if (valid_type in LIST_TYPES
+                and value_type == list):
+            for value_element in value:
+                if not DatabaseSession.__check_type_value(value_element, valid_type.replace("list_", "")):
+                    return False
+            return True
+        return False
+
+    @staticmethod
+    def __python_to_column(column_type, value):
         """
         Convert a python value into a suitable value to put in a
         database column.
         """
         if isinstance(value, list):
-            return self.list_to_column(column_type, value)
+            return DatabaseSession.__list_to_column(column_type, value)
         elif isinstance(value, dict):
             return str(value)
         else:
             return value
 
-    def column_to_python(self, column_type, value):
+    @staticmethod
+    def __column_to_python(column_type, value):
         """
         Convert a value of a database column into the corresponding
         Python value.
         """
         if column_type.startswith('list_'):
-            return self.column_to_list(column_type, value)
+            return DatabaseSession.__column_to_list(column_type, value)
         elif column_type == FIELD_TYPE_JSON:
             return ast.literal_eval(value)
         else:
             return value
 
-    def list_to_column(self, column_type, value):
+    @staticmethod
+    def __list_to_column(column_type, value):
         """
         Convert a python list value into a suitable value to put in a
         database column.
         """
-        converter = self._list_item_to_string.get(column_type)
+        converter = DatabaseSession._list_item_to_string.get(column_type)
         if converter is None:
             list_value = value
         else:
             list_value = [converter(i) for i in value]
         return repr(list_value)
 
-    def column_to_list(self, column_type, value):
+    @staticmethod
+    def __column_to_list(column_type, value):
         """
         Convert a value of a database column into the corresponding
         Python list value.
@@ -1531,11 +1543,10 @@ class DatabaseSession:
         if value is None:
             return None
         list_value = ast.literal_eval(value)
-        converter = self._string_to_list_item.get(column_type)
+        converter = DatabaseSession._string_to_list_item.get(column_type)
         if converter is None:
             return list_value
         return [converter(i) for i in list_value]
-
 
 class Undefined:
     pass
@@ -1564,7 +1575,7 @@ class FieldRow:
             result = getattr(self.row, self.database.name_to_valid_column_name(name), Undefined)
             if result is Undefined:
                 raise
-            result = self.database.column_to_python(
+            result = DatabaseSession._DatabaseSession__column_to_python(
                 self.database.get_field(self.collection, name).type, result)
             return result
 

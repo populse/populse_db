@@ -22,6 +22,7 @@ from sqlalchemy.sql.elements import BinaryExpression
 import populse_db
 
 # The grammar (in Lark format) used to parse filter strings
+from populse_db.database import DatabaseSession
 
 filter_grammar = '''
 ?start : filter
@@ -344,7 +345,7 @@ class FilterToSqlQuery(FilterToQuery):
         Convert a Python value to a value suitable to put in a database column
         '''
         tag_type = self.find_field_type(python_value)
-        column_value = self.database.python_to_column(tag_type, python_value)
+        column_value = DatabaseSession._DatabaseSession__python_to_column(tag_type, python_value)
         return column_value
 
     def build_condition_all(self):
