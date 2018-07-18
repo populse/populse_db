@@ -63,6 +63,31 @@
 <li>Populse_db is ensured to work on the platforms Linux and OSX (It is supposed to work on Windows, hasn&#8217;t been tested yet)</li>
 </ul>
 </div>
+<div class="section" id="relational-schema">
+<h2>Relational schema<a class="headerlink" href="#relational-schema" title="Permalink to this headline">¶</a></h2>
+<p>The relational schema of populse_db is generic, and completely dynamic.</p>
+<p>Populse_db is composed of three elements:</p>
+<ul class="simple">
+<li>Collection (table)</li>
+<li>Field (column in a collection)</li>
+<li>Document (row in a collection)</li>
+</ul>
+<p>The methods of the API populse_db mainly allow you to add and remove collections, fields, and documents.</p>
+<p>Beware that all table and column names (except collection and field tables) are hashed with md5, in order to avoid issues with forbidden characters.</p>
+<p>When a database is created, it is empty.</p>
+<img alt="_images/schema.png" src="_images/schema.png" />
+<p>Both tables are empty, as there is no collection yet.</p>
+<img alt="_images/empty_database.jpg" src="_images/empty_database.jpg" />
+<p>When a collection is added, it is added to the list of collections, and the collection table is created.</p>
+<p>Exact call: session.add_collection(&#8220;collection_test&#8221;, &#8220;index&#8221;)</p>
+<img alt="_images/database_collection.jpg" src="_images/database_collection.jpg" />
+<p>When a document is added to a collection, a row is inserted in the collection table.</p>
+<p>Exact call: session.add_document(&#8220;collection_test&#8221;, &#8220;document&#8221;)</p>
+<img alt="_images/database_document.jpg" src="_images/database_document.jpg" />
+<p>When a field is added to a collection, it is added in the list of fields, and a column is created in the collection table.</p>
+<p>Exact call: session.add_field(&#8220;collection_test&#8221;, &#8220;field&#8221;, populse_db.database.FIELD_TYPE_STRING, &#8220;field test&#8221;)</p>
+<img alt="_images/database_field.jpg" src="_images/database_field.jpg" />
+</div>
 <div class="section" id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
 <p>The modules required for populse_db are the following ones:</p>

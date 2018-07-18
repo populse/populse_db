@@ -18,6 +18,47 @@ Overview
 * Populse_db is ensured to work with Python >= 3.3
 * Populse_db is ensured to work on the platforms Linux and OSX (It is supposed to work on Windows, hasn't been tested yet)
 
+Relational schema
+-----------------
+
+The relational schema of populse_db is generic, and completely dynamic.
+
+Populse_db is composed of three elements:
+
+* Collection (table)
+* Field (column in a collection)
+* Document (row in a collection)
+
+The methods of the API populse_db mainly allow you to add and remove collections, fields, and documents.
+
+Beware that all table and column names (except collection and field tables) are hashed with md5, in order to avoid issues with forbidden characters.
+
+When a database is created, it is empty.
+
+.. image:: ../pictures/schema.png
+
+Both tables are empty, as there is no collection yet.
+
+.. image:: ../pictures/empty_database.jpg
+
+When a collection is added, it is added to the list of collections, and the collection table is created.
+
+Exact call: session.add_collection("collection_test", "index")
+
+.. image:: ../pictures/database_collection.jpg
+
+When a document is added to a collection, a row is inserted in the collection table.
+
+Exact call: session.add_document("collection_test", "document")
+
+.. image:: ../pictures/database_document.jpg
+
+When a field is added to a collection, it is added in the list of fields, and a column is created in the collection table.
+
+Exact call: session.add_field("collection_test", "field", populse_db.database.FIELD_TYPE_STRING, "field test")
+
+.. image:: ../pictures/database_field.jpg
+
 Requirements
 ------------
 
