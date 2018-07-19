@@ -31,9 +31,9 @@ with database as session:
     session.add_document("Profile", profile1)
 
     session.add_document("Profile", "profile2")
-    session.new_value("Profile", "profile2", "First name", "David")
-    session.new_value("Profile", "profile2", "Last name", "HARBINE")
-    session.new_value("Profile", "profile2", "Age", 23)
+    session.add_value("Profile", "profile2", "First name", "David")
+    session.add_value("Profile", "profile2", "Last name", "HARBINE")
+    session.add_value("Profile", "profile2", "Age", 23)
 
     session.save_modifications()
 

@@ -122,9 +122,17 @@ class Database:
         :param list_tables: Bool to know if tables must be created to store list values (Put True to have a pure SQL version of IN operator in filters) => True by default
 
         :param query_type: Type of query to use for the filters ('sql', 'python', 'mixed', or 'guess') => 'mixed' by default
+
+        :raise ValueError: - If string_engine is invalid
+                           - If caches is invalid
+                           - If list_tables is invalid
+                           - If query_type is invalid
         """
 
         self.string_engine = string_engine
+        if not isinstance(string_engine, str):
+            raise ValueError(
+                "Wrong string_engine, it must be of type {0}, but caches of type {1} given".format(str, type(string_engine)))
         if not isinstance(caches, bool):
             raise ValueError(
                 "Wrong caches, it must be of type {0}, but caches of type {1} given".format(bool, type(caches)))
@@ -362,6 +370,8 @@ class DatabaseSession:
         :param database: Database instance to take into account
 
         :param session: Session instance attached to the Database instance
+
+        :raise ValueError: If the database isn't a populse_db database
         """
 
         self.database = database
@@ -469,6 +479,10 @@ class DatabaseSession:
         :param name: New collection name (str, must not be existing)
 
         :param primary_key: New collection primary_key column (str) => "name" by default
+
+        :raise ValueError: - If the collection is already existing
+                           - If the collection name is invalid
+                           - If the primary_key is invalid
         """
 
         # Checks
@@ -521,6 +535,8 @@ class DatabaseSession:
         Removes a collection
 
         :param name: Collection to remove (str, must be existing)
+
+        :raise ValueError: If the collection does not exist
         """
 
         # Checks
@@ -639,6 +655,12 @@ class DatabaseSession:
         :param index: Bool to know if indexing must be done => False by default
 
         :param flush: Bool to know if the table classes must be updated (put False if in the middle of filling fields) => True by default
+
+        :raise ValueError: - If the collection does not exist
+                           - If the field already exists
+                           - If the field name is invalid
+                           - If the field type is invalid
+                           - If the field description is invalid
         """
 
         # Checks
@@ -738,6 +760,9 @@ class DatabaseSession:
         :param collection: Field collection (str, must be existing)
 
         :param field: Field name (str, must be existing), or list of fields (list of str, must all be existing)
+
+        :raise ValueError: - If the collection does not exist
+                           - If the field does not exist
         """
 
         collection_row = self.get_collection(collection)
@@ -938,6 +963,12 @@ class DatabaseSession:
         :param new_value: New value
 
         :param flush: Bool to know if flush to do => True by default
+
+        :raise ValueError: - If the collection does not exist
+                           - If the field does not exist
+                           - If the document does not exist
+                           - If the value is invalid
+                           - If trying to set the primary_key
         """
 
         # Checks
@@ -998,6 +1029,12 @@ class DatabaseSession:
         :param values: Dict of values (key=field, value=value)
 
         :param flush: Bool to know if flush to do => True by default
+
+        :raise ValueError: - If the collection does not exist
+                           - If the field does not exist
+                           - If the document does not exist
+                           - If the values are invalid
+                           - If trying to set the primary_key
         """
 
         collection_row = self.get_collection(collection)
@@ -1007,6 +1044,9 @@ class DatabaseSession:
         if document_row is None:
             raise ValueError(
                 "The document with the name {0} does not exist in the collection {1}".format(document, collection))
+        if not isinstance(values, dict):
+            raise ValueError(
+                "The values must be of type {0}, but values of type {1} given".format(dict, type(values)))
         for field in values:
             field_row = self.get_field(collection, field)
             if field_row is None:
@@ -1069,6 +1109,10 @@ class DatabaseSession:
         :param field: Field name (str, must be existing)
 
         :param flush: Bool to know if flush to do (put False in the middle of removing values) => True by default
+
+        :raise ValueError: - If the collection does not exist
+                           - If the field does not exist
+                           - If the document does not exist
         """
 
         # Checks
@@ -1113,6 +1157,12 @@ class DatabaseSession:
         :param value: Value to add
 
         :param checks: Bool to know if flush to do and value check (Put False in the middle of adding values) => True by default
+
+        :raise ValueError: - If the collection does not exist
+                           - If the field does not exist
+                           - If the document does not exist
+                           - If the value is invalid
+                           - If <collection, document, field> already has a value
         """
 
         collection_row = self.get_collection(collection)
@@ -1241,6 +1291,9 @@ class DatabaseSession:
         :param collection: Document collection (str, must be existing)
 
         :param document: Document name (str, must be existing)
+
+        :raise ValueError: - If the collection does not exist
+                           - If the document does not exist
         """
 
         collection_row = self.get_collection(collection)
@@ -1280,6 +1333,10 @@ class DatabaseSession:
                             - The primary_key must not be existing
 
         :param flush: Bool to know if flush to do, put False in the middle of filling the table => True by default
+
+        :raise ValueError: - If the collection does not exist
+                           - If the document already exists
+                           - If document is invalid (invalid name or no primary_key)
         """
 
         # Checks

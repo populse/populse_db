@@ -93,7 +93,7 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>string_engine</strong> &#8211; <p>Database engine</p>
 <p>The engine is constructed this way: dialect[+driver]://user:password&#64;host/dbname[?key=value..]</p>
 <p>The dialect can be mysql, oracle, postgresql, mssql, or sqlite</p>
@@ -116,6 +116,15 @@
 <li><strong>list_tables</strong> &#8211; Bool to know if tables must be created to store list values (Put True to have a pure SQL version of IN operator in filters) =&gt; True by default</li>
 <li><strong>query_type</strong> &#8211; Type of query to use for the filters (&#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;guess&#8217;) =&gt; &#8216;mixed&#8217; by default</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<li>If string_engine is invalid</li>
+<li>If caches is invalid</li>
+<li>If list_tables is invalid</li>
+<li>If query_type is invalid</li>
+</ul>
+</p>
 </td>
 </tr>
 </tbody>
@@ -180,10 +189,13 @@ modifications</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>database</strong> &#8211; Database instance to take into account</li>
 <li><strong>session</strong> &#8211; Session instance attached to the Database instance</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; If the database isn&#8217;t a populse_db database</p>
 </td>
 </tr>
 </tbody>
@@ -196,10 +208,18 @@ modifications</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>name</strong> &#8211; New collection name (str, must not be existing)</li>
 <li><strong>primary_key</strong> &#8211; New collection primary_key column (str) =&gt; &#8220;name&#8221; by default</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<li>If the collection is already existing</li>
+<li>If the collection name is invalid</li>
+<li>If the primary_key is invalid</li>
+</ul>
+</p>
 </td>
 </tr>
 </tbody>
@@ -214,7 +234,7 @@ modifications</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
 <li><strong>document</strong> &#8211; <p>Dictionary of document values (dict), or document primary_key (str)</p>
 <ul>
@@ -223,6 +243,14 @@ modifications</li>
 </li>
 <li><strong>flush</strong> &#8211; Bool to know if flush to do, put False in the middle of filling the table =&gt; True by default</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<li>If the collection does not exist</li>
+<li>If the document already exists</li>
+<li>If document is invalid (invalid name or no primary_key)</li>
+</ul>
+</p>
 </td>
 </tr>
 </tbody>
@@ -237,7 +265,7 @@ modifications</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>collection</strong> &#8211; Field collection (str, must be existing)</li>
 <li><strong>name</strong> &#8211; Field name (str, must not be existing)</li>
 <li><strong>field_type</strong> &#8211; Field type, in (&#8216;string&#8217;, &#8216;int&#8217;, &#8216;float&#8217;, &#8216;boolean&#8217;, &#8216;date&#8217;, &#8216;datetime&#8217;,
@@ -247,6 +275,16 @@ modifications</li>
 <li><strong>index</strong> &#8211; Bool to know if indexing must be done =&gt; False by default</li>
 <li><strong>flush</strong> &#8211; Bool to know if the table classes must be updated (put False if in the middle of filling fields) =&gt; True by default</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<li>If the collection does not exist</li>
+<li>If the field already exists</li>
+<li>If the field name is invalid</li>
+<li>If the field type is invalid</li>
+<li>If the field description is invalid</li>
+</ul>
+</p>
 </td>
 </tr>
 </tbody>
@@ -275,13 +313,23 @@ modifications</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
 <li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
 <li><strong>field</strong> &#8211; Field name (str, must be existing)</li>
 <li><strong>value</strong> &#8211; Value to add</li>
 <li><strong>checks</strong> &#8211; Bool to know if flush to do and value check (Put False in the middle of adding values) =&gt; True by default</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<li>If the collection does not exist</li>
+<li>If the field does not exist</li>
+<li>If the document does not exist</li>
+<li>If the value is invalid</li>
+<li>If &lt;collection, document, field&gt; already has a value</li>
+</ul>
+</p>
 </td>
 </tr>
 </tbody>
@@ -537,6 +585,8 @@ False otherwise</td>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; Collection to remove (str, must be existing)</td>
 </tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><strong>ValueError</strong> &#8211; If the collection does not exist</td>
+</tr>
 </tbody>
 </table>
 </dd></dl>
@@ -549,10 +599,17 @@ False otherwise</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
 <li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<li>If the collection does not exist</li>
+<li>If the document does not exist</li>
+</ul>
+</p>
 </td>
 </tr>
 </tbody>
@@ -567,10 +624,17 @@ False otherwise</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>collection</strong> &#8211; Field collection (str, must be existing)</li>
 <li><strong>field</strong> &#8211; Field name (str, must be existing), or list of fields (list of str, must all be existing)</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<li>If the collection does not exist</li>
+<li>If the field does not exist</li>
+</ul>
+</p>
 </td>
 </tr>
 </tbody>
@@ -585,12 +649,20 @@ False otherwise</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
 <li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
 <li><strong>field</strong> &#8211; Field name (str, must be existing)</li>
 <li><strong>flush</strong> &#8211; Bool to know if flush to do (put False in the middle of removing values) =&gt; True by default</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<li>If the collection does not exist</li>
+<li>If the field does not exist</li>
+<li>If the document does not exist</li>
+</ul>
+</p>
 </td>
 </tr>
 </tbody>
@@ -611,13 +683,23 @@ False otherwise</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
 <li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
 <li><strong>field</strong> &#8211; Field name (str, must be existing)</li>
 <li><strong>new_value</strong> &#8211; New value</li>
 <li><strong>flush</strong> &#8211; Bool to know if flush to do =&gt; True by default</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<li>If the collection does not exist</li>
+<li>If the field does not exist</li>
+<li>If the document does not exist</li>
+<li>If the value is invalid</li>
+<li>If trying to set the primary_key</li>
+</ul>
+</p>
 </td>
 </tr>
 </tbody>
@@ -632,12 +714,22 @@ False otherwise</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
 <li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
 <li><strong>values</strong> &#8211; Dict of values (key=field, value=value)</li>
 <li><strong>flush</strong> &#8211; Bool to know if flush to do =&gt; True by default</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<li>If the collection does not exist</li>
+<li>If the field does not exist</li>
+<li>If the document does not exist</li>
+<li>If the values are invalid</li>
+<li>If trying to set the primary_key</li>
+</ul>
+</p>
 </td>
 </tr>
 </tbody>
@@ -790,7 +882,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'!=': &lt;built-in function ne&gt;, '&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '&gt;=': &lt;built-in function ge&gt;, '&lt;': &lt;built-in function lt&gt;, 'like': &lt;staticmethod object at 0x7fbed00a0908&gt;, 'and': &lt;built-in function and_&gt;, '==': &lt;built-in function eq&gt;, '&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;staticmethod object at 0x7fbed00a09b0&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'&gt;': &lt;built-in function gt&gt;, 'and': &lt;built-in function and_&gt;, '&lt;': &lt;built-in function lt&gt;, '!=': &lt;built-in function ne&gt;, 'ilike': &lt;staticmethod object at 0x7fb89f605a58&gt;, 'or': &lt;built-in function or_&gt;, '&gt;=': &lt;built-in function ge&gt;, '&lt;=': &lt;built-in function le&gt;, 'like': &lt;staticmethod object at 0x7fb89f6059e8&gt;, '==': &lt;built-in function eq&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -869,7 +961,7 @@ two elements.</li>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToQuery.keyword_literals">
-<code class="descname">keyword_literals</code><em class="property"> = {'false': False, 'true': True, 'null': None}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<code class="descname">keyword_literals</code><em class="property"> = {'true': True, 'null': None, 'false': False}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -984,7 +1076,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'!=': &lt;function sql_differ at 0x7fbecffddd08&gt;, '&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '&gt;=': &lt;built-in function ge&gt;, '&lt;': &lt;built-in function lt&gt;, 'like': &lt;function like_op at 0x7fbed0b49bf8&gt;, 'and': &lt;built-in function and_&gt;, '==': &lt;function sql_equal at 0x7fbecffcc400&gt;, '&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;function ilike_op at 0x7fbed0b49d08&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'&gt;': &lt;built-in function gt&gt;, 'and': &lt;built-in function and_&gt;, '&lt;': &lt;built-in function lt&gt;, '!=': &lt;function sql_differ at 0x7fb89f5b6bf8&gt;, 'ilike': &lt;function ilike_op at 0x7fb8a0120b70&gt;, 'or': &lt;built-in function or_&gt;, '&gt;=': &lt;built-in function ge&gt;, '&lt;=': &lt;built-in function le&gt;, 'like': &lt;function like_op at 0x7fb8a0120a60&gt;, '==': &lt;function sql_equal at 0x7fb89f5a22f0&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
