@@ -72,32 +72,12 @@
 <p>Database API</p>
 <dl class="docutils">
 <dt>attributes:</dt>
-<dd><ul class="first last">
-<li><p class="first">string_engine: String engine of the database</p>
-</li>
-<li><p class="first">caches: Bool to know if the caches must be used</p>
-</li>
-<li><dl class="first docutils">
-<dt>list_tables: Bool to know if list tables must be used</dt>
 <dd><ul class="first last simple">
-<li>True if tables are created to store values of list fields and have a pure SQL version of IN operator in filters</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>query_type: Default query implementation for filter_query()</dt>
-<dd><blockquote class="first">
-<div><p>and filter_documents()</p>
-</div></blockquote>
-<ul class="last simple">
-<li>Can be &#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;guess&#8217;</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><p class="first">engine: SQLAlchemy database engine</p>
-</li>
+<li>string_engine: String engine of the database</li>
+<li>caches: Bool to know if the caches must be used</li>
+<li>list_tables: Bool to know if list tables must be used</li>
+<li>query_type: Default query implementation for applying the filters</li>
+<li>engine: SQLAlchemy database engine</li>
 </ul>
 </dd>
 <dt>methods:</dt>
@@ -114,7 +94,7 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>string_engine</strong> &#8211; <p>database engine</p>
+<li><strong>string_engine</strong> &#8211; <p>Database engine</p>
 <p>The engine is constructed this way: dialect[+driver]://user:password&#64;host/dbname[?key=value..]</p>
 <p>The dialect can be mysql, oracle, postgresql, mssql, or sqlite</p>
 <p>The driver is the name of a DBAPI, such as psycopg2, pyodbc, or cx_oracle</p>
@@ -132,8 +112,8 @@
 </dl>
 <p>See sqlalchemy documentation for more precisions about the engine: <a class="reference external" href="http://docs.sqlalchemy.org/en/latest/core/engines.html">http://docs.sqlalchemy.org/en/latest/core/engines.html</a></p>
 </li>
-<li><strong>caches</strong> &#8211; Bool to know if the caches must be used =&gt; False by default</li>
-<li><strong>list_tables</strong> &#8211; Bool to know if tables must be created to store list values =&gt; True by default</li>
+<li><strong>caches</strong> &#8211; Bool to know if the caches (the rows of the database are stored in dictionaries) must be used (Put True if you count on having a lot of data) =&gt; False by default</li>
+<li><strong>list_tables</strong> &#8211; Bool to know if tables must be created to store list values (Put True to have a pure SQL version of IN operator in filters) =&gt; True by default</li>
 <li><strong>query_type</strong> &#8211; Type of query to use for the filters (&#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;guess&#8217;) =&gt; &#8216;mixed&#8217; by default</li>
 </ul>
 </td>
@@ -156,42 +136,42 @@
 <dl class="docutils">
 <dt>attributes:</dt>
 <dd><ul class="first last simple">
-<li>database: database</li>
-<li>session: session related to the database</li>
-<li>table_classes: list of table classes, generated automatically</li>
-<li>base: database base</li>
-<li>metadata: database metadata</li>
+<li>database: Database instance</li>
+<li>session: Session related to the database</li>
+<li>table_classes: List of all table classes, generated automatically</li>
+<li>base: Database base</li>
+<li>metadata: Database metadata</li>
 </ul>
 </dd>
 <dt>methods:</dt>
 <dd><ul class="first last simple">
-<li>add_collection: adds a collection</li>
-<li>remove_collection: removes a collection</li>
-<li>get_collection: gives the collection row</li>
-<li>get_collections: gives all collection rows</li>
-<li>get_collections_names: gives all collection names</li>
-<li>add_field: adds a field</li>
-<li>add_fields: adds a list of fields</li>
-<li>remove_field: removes a field</li>
-<li>get_field: Gives all fields rows</li>
-<li>get_fields_names: gives all fields names</li>
-<li>name_to_valid_column_name: gives the valid table/column name corresponding
+<li>add_collection: Adds a collection</li>
+<li>remove_collection: Removes a collection</li>
+<li>get_collection: Gives the collection row</li>
+<li>get_collections: Gives all collection rows</li>
+<li>get_collections_names: Gives all collection names</li>
+<li>add_field: Adds a field to a collection</li>
+<li>add_fields: Adds a list of fields to a collection</li>
+<li>remove_field: Removes a field from a collection</li>
+<li>get_field: Gives all fields rows given a collection</li>
+<li>get_fields_names: Gives all fields names given a collection</li>
+<li>name_to_valid_column_name: Gives the valid table/column name corresponding
 to the name</li>
-<li>get_value: gives the value of &lt;document, field&gt;</li>
-<li>set_value: sets the value of &lt;document, field&gt;</li>
-<li>set_values: sets several values of a collection document</li>
-<li>remove_value: removes the value of &lt;document, field&gt;</li>
-<li>add_value: adds a value to &lt;document, field&gt;</li>
-<li>get_document: gives the document row given a document name</li>
-<li>get_documents: gives all document rows</li>
-<li>get_documents_names: gives all document names</li>
-<li>add_document: adds a document</li>
-<li>remove_document: removes a document</li>
-<li>save_modifications: saves the pending modifications</li>
-<li>unsave_modifications: unsaves the pending modifications</li>
-<li>has_unsaved_modifications: to know if there are unsaved
+<li>get_value: Gives the value of &lt;collection, document, field&gt;</li>
+<li>set_value: Sets the value of &lt;collection, document, field&gt;</li>
+<li>set_values: Sets several values of &lt;collection, document, field&gt;</li>
+<li>remove_value: Removes the value of &lt;collection, document, field&gt;</li>
+<li>add_value: Adds a value to &lt;collection, document, field&gt;</li>
+<li>get_document: Gives the document row given a document name and a collection</li>
+<li>get_documents: Gives all document rows given a collection</li>
+<li>get_documents_names: Gives all document names given a collection</li>
+<li>add_document: Adds a document to a collection</li>
+<li>remove_document: Removes a document from a collection</li>
+<li>save_modifications: Saves the pending modifications</li>
+<li>unsave_modifications: Unsaves the pending modifications</li>
+<li>has_unsaved_modifications: To know if there are unsaved
 modifications</li>
-<li>filter_documents: gives the list of documents matching the filter</li>
+<li>filter_documents: Gives the list of documents matching the filter</li>
 </ul>
 </dd>
 </dl>
@@ -238,7 +218,7 @@ modifications</li>
 <li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
 <li><strong>document</strong> &#8211; <p>Dictionary of document values (dict), or document primary_key (str)</p>
 <ul>
-<li>The primary_key must not be existing.</li>
+<li>The primary_key must not be existing</li>
 </ul>
 </li>
 <li><strong>flush</strong> &#8211; Bool to know if flush to do, put False in the middle of filling the table =&gt; True by default</li>
@@ -810,7 +790,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '!=': &lt;built-in function ne&gt;, '&lt;': &lt;built-in function lt&gt;, 'ilike': &lt;staticmethod object at 0x7f9dd73198d0&gt;, '&gt;=': &lt;built-in function ge&gt;, '&gt;': &lt;built-in function gt&gt;, 'like': &lt;staticmethod object at 0x7f9dd7319828&gt;, '==': &lt;built-in function eq&gt;, 'and': &lt;built-in function and_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'!=': &lt;built-in function ne&gt;, '&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '&gt;=': &lt;built-in function ge&gt;, '&lt;': &lt;built-in function lt&gt;, 'like': &lt;staticmethod object at 0x7fbed00a0908&gt;, 'and': &lt;built-in function and_&gt;, '==': &lt;built-in function eq&gt;, '&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;staticmethod object at 0x7fbed00a09b0&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -819,7 +799,7 @@ list field value</p>
 <dt id="populse_db.filter.FilterToQuery">
 <em class="property">class </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterToQuery</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">lark.tree.Transformer</span></code></p>
-<p>Transform the parsing of a filter expression into object(s) that can
+<p>Transforms the parsing of a filter expression into object(s) that can
 be used ot select items from a database.</p>
 <p>The produced object is one of the three following items :</p>
 <ul class="simple">
@@ -889,7 +869,7 @@ two elements.</li>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToQuery.keyword_literals">
-<code class="descname">keyword_literals</code><em class="property"> = {'false': False, 'null': None, 'true': True}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<code class="descname">keyword_literals</code><em class="property"> = {'false': False, 'true': True, 'null': None}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -1004,7 +984,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '!=': &lt;function sql_differ at 0x7f9dd7255d08&gt;, '&lt;': &lt;built-in function lt&gt;, 'ilike': &lt;function ilike_op at 0x7f9dd7dc1d08&gt;, '&gt;=': &lt;built-in function ge&gt;, '&gt;': &lt;built-in function gt&gt;, 'like': &lt;function like_op at 0x7f9dd7dc1bf8&gt;, '==': &lt;function sql_equal at 0x7f9dd7241400&gt;, 'and': &lt;built-in function and_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'!=': &lt;function sql_differ at 0x7fbecffddd08&gt;, '&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '&gt;=': &lt;built-in function ge&gt;, '&lt;': &lt;built-in function lt&gt;, 'like': &lt;function like_op at 0x7fbed0b49bf8&gt;, 'and': &lt;built-in function and_&gt;, '==': &lt;function sql_equal at 0x7fbecffcc400&gt;, '&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;function ilike_op at 0x7fbed0b49d08&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>

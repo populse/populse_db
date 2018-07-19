@@ -113,7 +113,7 @@ def filter_parser():
 def literal_parser():
     '''
     This is used to test literals parsing
-    
+
     :return: An instance of Lark grammar parser for parsing only a literal value (int, string, list, date, etc.) from a filter expression.
 
     '''
@@ -131,7 +131,7 @@ class FilterImplementationLimit(NotImplementedError):
 
 class FilterToQuery(Transformer):
     '''
-    Transform the parsing of a filter expression into object(s) that can
+    Transforms the parsing of a filter expression into object(s) that can
     be used ot select items from a database.
 
     The produced object is one of the three following items :

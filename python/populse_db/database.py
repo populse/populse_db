@@ -84,12 +84,7 @@ class Database:
         - string_engine: String engine of the database
         - caches: Bool to know if the caches must be used
         - list_tables: Bool to know if list tables must be used
-            - True if tables are created to store values of list fields and have a pure SQL version of IN operator in filters
-
-        - query_type: Default query implementation for filter_query()
-                      and filter_documents()
-            - Can be 'sql', 'python', 'mixed', or 'guess'
-
+        - query_type: Default query implementation for applying the filters
         - engine: SQLAlchemy database engine
 
     methods:
@@ -103,7 +98,7 @@ class Database:
                  query_type='mixed'):
         """Initialization of the database
 
-        :param string_engine: database engine
+        :param string_engine: Database engine
 
                               The engine is constructed this way: dialect[+driver]://user:password@host/dbname[?key=value..]
 
@@ -122,9 +117,9 @@ class Database:
 
                               See sqlalchemy documentation for more precisions about the engine: http://docs.sqlalchemy.org/en/latest/core/engines.html
 
-        :param caches: Bool to know if the caches must be used => False by default
+        :param caches: Bool to know if the caches (the rows of the database are stored in dictionaries) must be used (Put True if you count on having a lot of data) => False by default
 
-        :param list_tables: Bool to know if tables must be created to store list values => True by default
+        :param list_tables: Bool to know if tables must be created to store list values (Put True to have a pure SQL version of IN operator in filters) => True by default
 
         :param query_type: Type of query to use for the filters ('sql', 'python', 'mixed', or 'guess') => 'mixed' by default
         """
@@ -223,7 +218,7 @@ class Database:
     def __enter__(self):
         '''
         Return a DatabaseSession instance for using the database. This is
-        supossed to be called using a "with" statement:
+        supposed to be called using a "with" statement:
         
         with database as session:
            session.add_document(...)
@@ -305,40 +300,40 @@ class DatabaseSession:
     DatabaseSession API
 
     attributes:
-        - database: database
-        - session: session related to the database
-        - table_classes: list of table classes, generated automatically
-        - base: database base
-        - metadata: database metadata
+        - database: Database instance
+        - session: Session related to the database
+        - table_classes: List of all table classes, generated automatically
+        - base: Database base
+        - metadata: Database metadata
 
     methods:
-        - add_collection: adds a collection
-        - remove_collection: removes a collection
-        - get_collection: gives the collection row
-        - get_collections: gives all collection rows
-        - get_collections_names: gives all collection names
-        - add_field: adds a field
-        - add_fields: adds a list of fields
-        - remove_field: removes a field
-        - get_field: Gives all fields rows
-        - get_fields_names: gives all fields names
-        - name_to_valid_column_name: gives the valid table/column name corresponding
+        - add_collection: Adds a collection
+        - remove_collection: Removes a collection
+        - get_collection: Gives the collection row
+        - get_collections: Gives all collection rows
+        - get_collections_names: Gives all collection names
+        - add_field: Adds a field to a collection
+        - add_fields: Adds a list of fields to a collection
+        - remove_field: Removes a field from a collection
+        - get_field: Gives all fields rows given a collection
+        - get_fields_names: Gives all fields names given a collection
+        - name_to_valid_column_name: Gives the valid table/column name corresponding
           to the name
-        - get_value: gives the value of <document, field>
-        - set_value: sets the value of <document, field>
-        - set_values: sets several values of a collection document
-        - remove_value: removes the value of <document, field>
-        - add_value: adds a value to <document, field>
-        - get_document: gives the document row given a document name
-        - get_documents: gives all document rows
-        - get_documents_names: gives all document names
-        - add_document: adds a document
-        - remove_document: removes a document
-        - save_modifications: saves the pending modifications
-        - unsave_modifications: unsaves the pending modifications
-        - has_unsaved_modifications: to know if there are unsaved
+        - get_value: Gives the value of <collection, document, field>
+        - set_value: Sets the value of <collection, document, field>
+        - set_values: Sets several values of <collection, document, field>
+        - remove_value: Removes the value of <collection, document, field>
+        - add_value: Adds a value to <collection, document, field>
+        - get_document: Gives the document row given a document name and a collection
+        - get_documents: Gives all document rows given a collection
+        - get_documents_names: Gives all document names given a collection
+        - add_document: Adds a document to a collection
+        - remove_document: Removes a document from a collection
+        - save_modifications: Saves the pending modifications
+        - unsave_modifications: Unsaves the pending modifications
+        - has_unsaved_modifications: To know if there are unsaved
           modifications
-        - filter_documents: gives the list of documents matching the filter
+        - filter_documents: Gives the list of documents matching the filter
     """
 
     # Some types (e.g. time, date and datetime) cannot be
@@ -1282,7 +1277,7 @@ class DatabaseSession:
 
         :param document: Dictionary of document values (dict), or document primary_key (str)
 
-                            - The primary_key must not be existing.
+                            - The primary_key must not be existing
 
         :param flush: Bool to know if flush to do, put False in the middle of filling the table => True by default
         """
