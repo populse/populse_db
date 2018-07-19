@@ -1412,6 +1412,11 @@ class DatabaseSession:
 
         :param collection: Filter collection (str, must be existing)
         :param filter_query: Filter query (str)
+
+                                - A filter row must be written this way: {<field>} <operator> "<value>"
+                                - The operator must be in ('==', '!=', '<=', '>=', '<', '>', 'IN', 'ILIKE', 'LIKE')
+                                - The filter rows can be linked with ' AND ' or ' OR '
+                                - Example: "((({BandWidth} == "50000")) AND (({FileName} LIKE "%G1%")))"
         """
 
         if isinstance(filter_query, six.string_types):
@@ -1547,7 +1552,6 @@ class DatabaseSession:
 
 class Undefined:
     pass
-
 
 class FieldRow:
     '''

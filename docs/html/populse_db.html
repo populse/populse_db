@@ -321,7 +321,14 @@ modifications</li>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>collection</strong> &#8211; Filter collection (str, must be existing)</li>
-<li><strong>filter_query</strong> &#8211; Filter query (str)</li>
+<li><strong>filter_query</strong> &#8211; <p>Filter query (str)</p>
+<ul>
+<li>A filter row must be written this way: {&lt;field&gt;} &lt;operator&gt; &#8220;&lt;value&gt;&#8221;</li>
+<li>The operator must be in (&#8216;==&#8217;, &#8216;!=&#8217;, &#8216;&lt;=&#8217;, &#8216;&gt;=&#8217;, &#8216;&lt;&#8217;, &#8216;&gt;&#8217;, &#8216;IN&#8217;, &#8216;ILIKE&#8217;, &#8216;LIKE&#8217;)</li>
+<li>The filter rows can be linked with &#8216; AND &#8216; or &#8216; OR &#8216;</li>
+<li>Example: &#8220;((({BandWidth} == &#8220;50000&#8221;)) AND (({FileName} LIKE &#8220;%G1%&#8221;)))&#8221;</li>
+</ul>
+</li>
 </ul>
 </td>
 </tr>
@@ -803,7 +810,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;staticmethod object at 0x7f1e004047f0&gt;, '&lt;': &lt;built-in function lt&gt;, '&lt;=': &lt;built-in function le&gt;, '&gt;=': &lt;built-in function ge&gt;, 'or': &lt;built-in function or_&gt;, 'and': &lt;built-in function and_&gt;, 'like': &lt;staticmethod object at 0x7f1e00404780&gt;, '==': &lt;built-in function eq&gt;, '!=': &lt;built-in function ne&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'like': &lt;staticmethod object at 0x7f9efb9f5ac8&gt;, '&lt;=': &lt;built-in function le&gt;, '&gt;=': &lt;built-in function ge&gt;, '&gt;': &lt;built-in function gt&gt;, 'or': &lt;built-in function or_&gt;, '&lt;': &lt;built-in function lt&gt;, 'and': &lt;built-in function and_&gt;, 'ilike': &lt;staticmethod object at 0x7f9efb9f5b38&gt;, '==': &lt;built-in function eq&gt;, '!=': &lt;built-in function ne&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -882,7 +889,7 @@ two elements.</li>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToQuery.keyword_literals">
-<code class="descname">keyword_literals</code><em class="property"> = {'null': None, 'true': True, 'false': False}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<code class="descname">keyword_literals</code><em class="property"> = {'true': True, 'false': False, 'null': None}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -991,7 +998,7 @@ a populse_db field object.</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;function ilike_op at 0x7f1e00ea3d08&gt;, '&lt;': &lt;built-in function lt&gt;, '&lt;=': &lt;built-in function le&gt;, '&gt;=': &lt;built-in function ge&gt;, 'or': &lt;built-in function or_&gt;, 'and': &lt;built-in function and_&gt;, 'like': &lt;function like_op at 0x7f1e00ea3bf8&gt;, '==': &lt;function sql_equal at 0x7f1e003a0400&gt;, '!=': &lt;function sql_differ at 0x7f1e003b2d08&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'like': &lt;function like_op at 0x7f9efc412bf8&gt;, '&lt;=': &lt;built-in function le&gt;, '&gt;=': &lt;built-in function ge&gt;, '&gt;': &lt;built-in function gt&gt;, 'or': &lt;built-in function or_&gt;, '&lt;': &lt;built-in function lt&gt;, 'and': &lt;built-in function and_&gt;, 'ilike': &lt;function ilike_op at 0x7f9efc412d08&gt;, '==': &lt;function sql_equal at 0x7f9efb993400&gt;, '!=': &lt;function sql_differ at 0x7f9efb9a6d08&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
