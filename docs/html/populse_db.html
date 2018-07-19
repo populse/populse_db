@@ -756,14 +756,14 @@ used in SQL)</p>
 <dl class="method">
 <dt id="populse_db.filter.FilterToPythonQuery.build_condition_field_in_list">
 <code class="descname">build_condition_field_in_list</code><span class="sig-paren">(</span><em>field</em>, <em>list_value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.build_condition_field_in_list" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build an condition checking if a field value is a
+<dd><p>Builds a condition checking if a field value is a
 constant list value</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.filter.FilterToPythonQuery.build_condition_field_in_list_field">
 <code class="descname">build_condition_field_in_list_field</code><span class="sig-paren">(</span><em>field</em>, <em>list_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.build_condition_field_in_list_field" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build an condition checking if a field value is in another
+<dd><p>Builds a condition checking if a field value is in another
 list field value</p>
 </dd></dl>
 
@@ -780,7 +780,7 @@ list field value</p>
 <dl class="method">
 <dt id="populse_db.filter.FilterToPythonQuery.build_condition_literal_in_list_field">
 <code class="descname">build_condition_literal_in_list_field</code><span class="sig-paren">(</span><em>value</em>, <em>list_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.build_condition_literal_in_list_field" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build an condition checking if a constant value is in a list field</p>
+<dd><p>Builds a condition checking if a constant value is in a list field</p>
 </dd></dl>
 
 <dl class="method">
@@ -810,7 +810,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'like': &lt;staticmethod object at 0x7f9efb9f5ac8&gt;, '&lt;=': &lt;built-in function le&gt;, '&gt;=': &lt;built-in function ge&gt;, '&gt;': &lt;built-in function gt&gt;, 'or': &lt;built-in function or_&gt;, '&lt;': &lt;built-in function lt&gt;, 'and': &lt;built-in function and_&gt;, 'ilike': &lt;staticmethod object at 0x7f9efb9f5b38&gt;, '==': &lt;built-in function eq&gt;, '!=': &lt;built-in function ne&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '!=': &lt;built-in function ne&gt;, '&lt;': &lt;built-in function lt&gt;, 'ilike': &lt;staticmethod object at 0x7f9dd73198d0&gt;, '&gt;=': &lt;built-in function ge&gt;, '&gt;': &lt;built-in function gt&gt;, 'like': &lt;staticmethod object at 0x7f9dd7319828&gt;, '==': &lt;built-in function eq&gt;, 'and': &lt;built-in function and_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -874,7 +874,7 @@ two elements.</li>
 <dl class="staticmethod">
 <dt id="populse_db.filter.FilterToQuery.is_field">
 <em class="property">static </em><code class="descname">is_field</code><span class="sig-paren">(</span><em>object</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.is_field" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if an object is an SqlAlchemy column object</p>
+<dd><p>Checks if an object is an SqlAlchemy column object</p>
 </dd></dl>
 
 <dl class="staticmethod">
@@ -889,7 +889,7 @@ two elements.</li>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToQuery.keyword_literals">
-<code class="descname">keyword_literals</code><em class="property"> = {'true': True, 'false': False, 'null': None}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<code class="descname">keyword_literals</code><em class="property"> = {'false': False, 'null': None, 'true': True}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -946,14 +946,14 @@ two elements.</li>
 <dl class="method">
 <dt id="populse_db.filter.FilterToSqlQuery.build_condition_field_in_list">
 <code class="descname">build_condition_field_in_list</code><span class="sig-paren">(</span><em>field</em>, <em>list_value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.build_condition_field_in_list" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build an condition checking if a field value is a
+<dd><p>Builds a condition checking if a field value is a
 constant list value</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.filter.FilterToSqlQuery.build_condition_field_in_list_field">
 <code class="descname">build_condition_field_in_list_field</code><span class="sig-paren">(</span><em>field</em>, <em>list_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.build_condition_field_in_list_field" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build an condition checking if a field value is in another
+<dd><p>Builds a condition checking if a field value is in another
 list field value</p>
 </dd></dl>
 
@@ -970,7 +970,7 @@ list field value</p>
 <dl class="method">
 <dt id="populse_db.filter.FilterToSqlQuery.build_condition_literal_in_list_field">
 <code class="descname">build_condition_literal_in_list_field</code><span class="sig-paren">(</span><em>value</em>, <em>list_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.build_condition_literal_in_list_field" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build an condition checking if a constant value is in a list field</p>
+<dd><p>Builds an condition checking if a constant value is in a list field</p>
 </dd></dl>
 
 <dl class="method">
@@ -986,19 +986,25 @@ list field value</p>
 <dl class="method">
 <dt id="populse_db.filter.FilterToSqlQuery.get_column">
 <code class="descname">get_column</code><span class="sig-paren">(</span><em>column</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.get_column" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the SqlAlchemy Column object corresponding to
-a populse_db field object.</p>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The SqlAlchemy Column object corresponding to a populse_db field object.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="populse_db.filter.FilterToSqlQuery.get_column_value">
 <code class="descname">get_column_value</code><span class="sig-paren">(</span><em>python_value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.get_column_value" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a Python value to a value suitable to put in a database column</p>
+<dd><p>Converts a Python value to a value suitable to put in a database column</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'like': &lt;function like_op at 0x7f9efc412bf8&gt;, '&lt;=': &lt;built-in function le&gt;, '&gt;=': &lt;built-in function ge&gt;, '&gt;': &lt;built-in function gt&gt;, 'or': &lt;built-in function or_&gt;, '&lt;': &lt;built-in function lt&gt;, 'and': &lt;built-in function and_&gt;, 'ilike': &lt;function ilike_op at 0x7f9efc412d08&gt;, '==': &lt;function sql_equal at 0x7f9efb993400&gt;, '!=': &lt;function sql_differ at 0x7f9efb9a6d08&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '!=': &lt;function sql_differ at 0x7f9dd7255d08&gt;, '&lt;': &lt;built-in function lt&gt;, 'ilike': &lt;function ilike_op at 0x7f9dd7dc1d08&gt;, '&gt;=': &lt;built-in function ge&gt;, '&gt;': &lt;built-in function gt&gt;, 'like': &lt;function like_op at 0x7f9dd7dc1bf8&gt;, '==': &lt;function sql_equal at 0x7f9dd7241400&gt;, 'and': &lt;built-in function and_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1006,15 +1012,28 @@ a populse_db field object.</p>
 <dl class="function">
 <dt id="populse_db.filter.filter_parser">
 <code class="descclassname">populse_db.filter.</code><code class="descname">filter_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.filter_parser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a singleton instance of Lark grammar parser for filter expression</p>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A singleton instance of Lark grammar parser for filter expression</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
 <dt id="populse_db.filter.literal_parser">
 <code class="descclassname">populse_db.filter.</code><code class="descname">literal_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.literal_parser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return an instance of Lark grammar parser for parsing only a literal
-value (int, string, list, date, etc.) from a filter expression.</p>
-<p>This is used for testing the parsing of literals.</p>
+<dd><p>This is used to test literals parsing</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An instance of Lark grammar parser for parsing only a literal value (int, string, list, date, etc.) from a filter expression.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">

@@ -102,7 +102,7 @@ _grammar_parser = None
 
 def filter_parser():
     '''
-    Return a singleton instance of Lark grammar parser for filter expression
+    :return: A singleton instance of Lark grammar parser for filter expression
     '''
     global _grammar_parser
     if _grammar_parser is None:
@@ -112,10 +112,10 @@ def filter_parser():
 
 def literal_parser():
     '''
-    Return an instance of Lark grammar parser for parsing only a literal
-    value (int, string, list, date, etc.) from a filter expression.
+    This is used to test literals parsing
+    
+    :return: An instance of Lark grammar parser for parsing only a literal value (int, string, list, date, etc.) from a filter expression.
 
-    This is used for testing the parsing of literals.
     '''
     return Lark(filter_grammar, start='literal')
 
@@ -176,7 +176,7 @@ class FilterToQuery(Transformer):
     @staticmethod
     def is_field(object):
         '''
-        Check if an object is an SqlAlchemy column object
+        Checks if an object is an SqlAlchemy column object
         '''
         return isinstance(object, AutomapBase)
 
@@ -278,7 +278,7 @@ class FilterToQuery(Transformer):
 
     def field_name(self, items):
         field = items[0]
-        # Check for literal due to a bug in Lark
+        # Checks for literal due to a bug in Lark
         literal = self.keyword_literals.get(field.lower(), self)
         if literal is not self:
             return literal
@@ -333,15 +333,14 @@ class FilterToSqlQuery(FilterToQuery):
 
     def get_column(self, column):
         '''
-        Return the SqlAlchemy Column object corresponding to
-        a populse_db field object.
+        :return: The SqlAlchemy Column object corresponding to a populse_db field object.
         '''
         return getattr(self.database.metadata.tables[self.database.name_to_valid_column_name(self.collection)].c,
                        self.database.name_to_valid_column_name(column.name))
 
     def get_column_value(self, python_value):
         '''
-        Convert a Python value to a value suitable to put in a database column
+        Converts a Python value to a value suitable to put in a database column
         '''
         tag_type = self.find_field_type(python_value)
         column_value = DatabaseSession._DatabaseSession__python_to_column(tag_type, python_value)
@@ -352,7 +351,7 @@ class FilterToSqlQuery(FilterToQuery):
 
     def build_condition_literal_in_list_field(self, value, list_field):
         '''
-        Build an condition checking if a constant value is in a list field
+        Builds an condition checking if a constant value is in a list field
         '''
         if not self.database.list_tables:
             raise FilterImplementationLimit(
@@ -368,7 +367,7 @@ class FilterToSqlQuery(FilterToQuery):
 
     def build_condition_field_in_list_field(self, field, list_field):
         '''
-        Build an condition checking if a field value is in another
+        Builds a condition checking if a field value is in another
         list field value
         '''
         if not self.database.list_tables:
@@ -384,7 +383,7 @@ class FilterToSqlQuery(FilterToQuery):
 
     def build_condition_field_in_list(self, field, list_value):
         '''
-        Build an condition checking if a field value is a
+        Builds a condition checking if a field value is a
         constant list value
         '''
         column = self.get_column(field)
@@ -407,8 +406,8 @@ class FilterToSqlQuery(FilterToQuery):
         return operator(self.get_column_value(value), self.get_column(field))
 
     def build_condition_negation(self, condition):
-        # Workaround what seems to be a bug in SqlAlchemy,
-        # an "is" condition is not inverted by "not"
+        # Workaround of what seems to be a bug in SqlAlchemy,
+        # a "is" condition is not inverted by "not"
         if isinstance(condition, BinaryExpression):
             if condition.operator is sql_operators.is_:
                 return condition.left.isnot(condition.right)
@@ -454,14 +453,14 @@ class FilterToPythonQuery(FilterToQuery):
 
     def build_condition_literal_in_list_field(self, value, list_field):
         '''
-        Build an condition checking if a constant value is in a list field
+        Builds a condition checking if a constant value is in a list field
         '''
         return (lambda x, lf=list_field.name, v=value:
                 x[lf] is not None and v in x[lf])
 
     def build_condition_field_in_list_field(self, field, list_field):
         '''
-        Build an condition checking if a field value is in another
+        Builds a condition checking if a field value is in another
         list field value
         '''
         return (lambda x, lf=list_field.name, f=field.name:
@@ -469,7 +468,7 @@ class FilterToPythonQuery(FilterToQuery):
 
     def build_condition_field_in_list(self, field, list_value):
         '''
-        Build an condition checking if a field value is a
+        Builds a condition checking if a field value is a
         constant list value
         '''
         return (lambda x, l=list_value, f=field.name:
