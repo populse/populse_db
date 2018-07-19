@@ -310,8 +310,6 @@ class DatabaseSession:
         - table_classes: list of table classes, generated automatically
         - base: database base
         - metadata: database metadata
-        - unsaved_modifications: bool to know if there are unsaved
-          modifications in the database
 
     methods:
         - add_collection: adds a collection
@@ -330,8 +328,7 @@ class DatabaseSession:
         - set_value: sets the value of <document, field>
         - set_values: sets several values of a collection document
         - remove_value: removes the value of <document, field>
-        - check_type_value: checks the type of a value
-        - new_value: adds a value to <document, field>
+        - add_value: adds a value to <document, field>
         - get_document: gives the document row given a document name
         - get_documents: gives all document rows
         - get_documents_names: gives all document names
@@ -379,7 +376,7 @@ class DatabaseSession:
         self.metadata = MetaData()
         self.metadata.reflect(self.database.engine)
 
-        self.unsaved_modifications = False
+        self.__unsaved_modifications = False
 
         self.__update_table_classes()
 
@@ -636,7 +633,7 @@ class DatabaseSession:
 
         :param collection: Field collection (str, must be existing)
 
-        :param name: Field name (str)
+        :param name: Field name (str, must not be existing)
 
         :param field_type: Field type, in ('string', 'int', 'float', 'boolean', 'date', 'datetime',
                      'time', 'json', 'list_string', 'list_int', 'list_float', 'list_boolean', 'list_date',
@@ -717,7 +714,7 @@ class DatabaseSession:
             if self.__caches:
                 self.__refresh_cache_documents(collection)
 
-        self.unsaved_modifications = True
+        self.__unsaved_modifications = True
 
     def name_to_valid_column_name(self, name):
         """
@@ -743,9 +740,9 @@ class DatabaseSession:
         """
         Removes a field in the collection
 
-        :param collection: Field collection
+        :param collection: Field collection (str, must be existing)
 
-        :param field: Field name (str), or list of fields (str)
+        :param field: Field name (str, must be existing), or list of fields (list of str, must all be existing)
         """
 
         collection_row = self.get_collection(collection)
@@ -851,17 +848,17 @@ class DatabaseSession:
             else:
                 self.__fields[collection].pop(field, None)
 
-        self.unsaved_modifications = True
+        self.__unsaved_modifications = True
 
     def get_field(self, collection, name):
         """
-        Gives the column row given a column name and a collection
+        Gives the field row, given a field name and a collection
 
-        :param collection: Document collection
+        :param collection: Document collection (str, must be existing)
 
-        :param name: Column name
+        :param name: Field name (str, must be existing)
 
-        :return: The column row if the column exists, None otherwise
+        :return: The field row if the field exists, None otherwise
         """
 
         if self.__caches:
@@ -879,11 +876,11 @@ class DatabaseSession:
 
     def get_fields_names(self, collection):
         """
-        Gives the list of fields, given a collection
+        Gives the list of all fields, given a collection
 
-        :param collection: Fields collection
+        :param collection: Fields collection (str, must be existing)
 
-        :return: List of fields names of the collection
+        :return: List of all fields names of the collection
         """
 
         fields = self.session.query(self.table_classes[FIELD_TABLE].name).filter(
@@ -895,11 +892,11 @@ class DatabaseSession:
 
     def get_fields(self, collection):
         """
-        Gives the list of fields rows, given a collection
+        Gives the list of all fields rows, given a collection
 
-        :param collection: Fields collection
+        :param collection: Fields collection (str, must be existing)
 
-        :return: List of fields rows of the colletion
+        :return: List of all fields rows of the collection
         """
 
         fields = self.session.query(self.table_classes[FIELD_TABLE]).filter(
@@ -910,15 +907,15 @@ class DatabaseSession:
 
     def get_value(self, collection, document, field):
         """
-        Gives the current value of <document, field> in the collection
+        Gives the current value of <collection, document, field>
 
-        :param collection: Document collection (str)
+        :param collection: Document collection (str, must be existing)
 
-        :param document: Document name (str)
+        :param document: Document name (str, must be existing)
 
-        :param field: Field name (str)
+        :param field: Field name (str, must be existing)
 
-        :return: The current value of <document, field> in the collection if it exists, None otherwise
+        :return: The current value of <collection, document, field> if it exists, None otherwise
         """
 
         collection_row = self.get_collection(collection)
@@ -935,17 +932,17 @@ class DatabaseSession:
 
     def set_value(self, collection, document, field, new_value, flush=True):
         """
-        Sets the value associated to <document, field>
+        Sets the value associated to <collection, document, field> if it exists
 
-        :param collection: Document collection (str)
+        :param collection: Document collection (str, must be existing)
 
-        :param document: Document name (str)
+        :param document: Document name (str, must be existing)
 
-        :param field: Field name (str)
+        :param field: Field name (str, must be existing)
 
         :param new_value: New value
 
-        :param flush: Bool to know if flush to do
+        :param flush: Bool to know if flush to do => True by default
         """
 
         # Checks
@@ -993,19 +990,19 @@ class DatabaseSession:
         if flush:
             self.session.flush()
 
-        self.unsaved_modifications = True
+        self.__unsaved_modifications = True
 
     def set_values(self, collection, document, values, flush=True):
         """
-        Sets the values of a collection document
+        Sets the values of a <collection, document, field> if it exists
 
-        :param collection: Document collection (str)
+        :param collection: Document collection (str, must be existing)
 
-        :param document: Document name (str)
+        :param document: Document name (str, must be existing)
 
-        :param values: Dictionary of values (key=field, value=value)
+        :param values: Dict of values (key=field, value=value)
 
-        :param flush: Bool to know if flush to do
+        :param flush: Bool to know if flush to do => True by default
         """
 
         collection_row = self.get_collection(collection)
@@ -1064,17 +1061,17 @@ class DatabaseSession:
         if flush:
             self.session.flush()
 
-        self.unsaved_modifications = True
+        self.__unsaved_modifications = True
 
     def remove_value(self, collection, document, field, flush=True):
         """
-        Removes the value associated to <document, field> in the collection
+        Removes the value <collection, document, field> if it exists
 
-        :param collection: Focument collection (str)
+        :param collection: Document collection (str, must be existing)
 
-        :param document: Document name (str)
+        :param document: Document name (str, must be existing)
 
-        :param field: Field name (str)
+        :param field: Field name (str, must be existing)
 
         :param flush: Bool to know if flush to do (put False in the middle of removing values) => True by default
         """
@@ -1106,21 +1103,21 @@ class DatabaseSession:
 
         if flush:
             self.session.flush()
-        self.unsaved_modifications = True
+        self.__unsaved_modifications = True
 
-    def new_value(self, collection, document, field, value, checks=True):
+    def add_value(self, collection, document, field, value, checks=True):
         """
-        Adds a value for <document, field>
+        Adds a value for <collection, document, field>
 
-        :param collection: Document collection
+        :param collection: Document collection (str, must be existing)
 
-        :param document: Document name
+        :param document: Document name (str, must be existing)
 
-        :param field: Field name
+        :param field: Field name (str, must be existing)
 
         :param value: Value to add
 
-        :param checks: Bool to know if flush to do and value check (Put False in the middle of adding values, during import)
+        :param checks: Bool to know if flush to do and value check (Put False in the middle of adding values) => True by default
         """
 
         collection_row = self.get_collection(collection)
@@ -1167,7 +1164,7 @@ class DatabaseSession:
 
             if checks:
                 self.session.flush()
-            self.unsaved_modifications = True
+            self.__unsaved_modifications = True
 
         else:
             raise ValueError(
@@ -1275,7 +1272,7 @@ class DatabaseSession:
             self.__documents[collection].pop(document, None)
 
         self.session.flush()
-        self.unsaved_modifications = True
+        self.__unsaved_modifications = True
 
     def add_document(self, collection, document, flush=True):
         """
@@ -1285,7 +1282,7 @@ class DatabaseSession:
 
         :param document: Dictionary of document values (dict), or document primary_key (str)
 
-        The primary_key must not be existing.
+                            - The primary_key must not be existing.
 
         :param flush: Bool to know if flush to do, put False in the middle of filling the table => True by default
         """
@@ -1348,7 +1345,7 @@ class DatabaseSession:
         if flush:
             self.session.flush()
 
-        self.unsaved_modifications = True
+        self.__unsaved_modifications = True
 
     """ MODIFICATIONS """
 
@@ -1357,7 +1354,7 @@ class DatabaseSession:
         Saves the modifications by committing the session
         """
         self.session.commit()
-        self.unsaved_modifications = False
+        self.__unsaved_modifications = False
 
     def unsave_modifications(self):
         """
@@ -1365,7 +1362,7 @@ class DatabaseSession:
         """
 
         self.session.rollback()
-        self.unsaved_modifications = False
+        self.__unsaved_modifications = False
         self.metadata = MetaData()
         self.metadata.reflect(self.database.engine)
         self.__update_table_classes()
@@ -1379,11 +1376,11 @@ class DatabaseSession:
                  False otherwise
         """
 
-        return self.unsaved_modifications
+        return self.__unsaved_modifications
 
     """ FILTERS """
 
-    def filter_query(self, collection, filter, query_type=None):
+    def __filter_query(self, collection, filter, query_type=None):
         """
         Given a filter string, return a query that can be used with
         filter_documents() to select documents
@@ -1418,7 +1415,7 @@ class DatabaseSession:
         """
 
         if isinstance(filter_query, six.string_types):
-            filter_query = self.filter_query(collection, filter_query)
+            filter_query = self.__filter_query(collection, filter_query)
         if filter_query is None:
             select = self.metadata.tables[self.name_to_valid_column_name(collection)].select()
             python_filter = None
