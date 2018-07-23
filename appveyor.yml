@@ -26,8 +26,8 @@ build_script:
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "SET PYTHONPATH=C:\\projects\\populse-db\\python\\;%PYTHONPATH%"
-  - "python setup.py install"
   - "pip install -e .[postgres]"
+  - "pip install codecov"
 
 test_script:
   - "python -m populse_db.test"
