@@ -31,3 +31,6 @@ install:
 
 test_script:
   - "python -m populse_db.test"
+
+after_test:
+  - codecov
