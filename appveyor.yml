@@ -1,4 +1,13 @@
 environment:
+
+  # postgres
+  POSTGRES_PORT: tcp://localhost:5432
+  POSTGRES_ENV_POSTGRES_USER: postgres
+  POSTGRES_ENV_POSTGRES_PASSWORD: Password12!
+  POSTGRES_ENV_POSTGRES_DB: testdb
+  POSTGRES_PATH: C:\Program Files\PostgreSQL\9.6
+  PGUSER: postgres
+  PGPASSWORD: Password12!
   
   matrix:
   
@@ -7,16 +16,16 @@ environment:
     - PYTHON: "C:\\Python35"
     - PYTHON: "C:\\Python36"
 
-build: off
-
 services:
   - postgresql96
 
-install:
+build_script:
   - "SET PATH=C:\\Program Files\\PostgreSQL\\9.6\\bin\\;%PATH%"
+  - psql -c "create database populse_db_tests;" -U postgres
+
+install:
   - "SET PYTHONPATH=C:\\projects\\populse-db\\python\\;%PYTHONPATH%"
   - "%PYTHON%\\python.exe setup.py install"
-  - psql -c "create database populse_db_tests;" -U postgres
 
 test_script:
   - "%PYTHON%\\python.exe -m populse_db.test"
