@@ -24,6 +24,7 @@ build_script:
   - psql -c "create database populse_db_tests;" -U postgres
 
 install:
+  -"SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "SET PYTHONPATH=C:\\projects\\populse-db\\python\\;%PYTHONPATH%"
   - "%PYTHON%\\python.exe setup.py install"
   - "pip3 install -e .[postgres]"
