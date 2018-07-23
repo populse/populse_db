@@ -9,6 +9,9 @@ environment:
 
 build: off
 
+services:
+  - postgresql
+
 install:
   - "SET PYTHONPATH=C:\\projects\\populse-db\\python\\;%PYTHONPATH%"
   - "%PYTHON%\\python.exe setup.py install"
