@@ -9,5 +9,9 @@ environment:
 
 build: off
 
+install:
+  - "echo %cd%"
+  - "SET PYTHONPATH=???;%PYTHONPATH%"
+
 test_script:
   - "%PYTHON%\\python.exe -m populse_db.test"
