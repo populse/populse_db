@@ -12,6 +12,7 @@ build: off
 install:
   - "SET PYTHONPATH=C:\\projects\\populse-db\\python\\;%PYTHONPATH%"
   - "%PYTHON%\\python.exe setup.py install"
+  - "psql -c 'create database populse_db_tests;' -U postgres"
 
 test_script:
   - "%PYTHON%\\python.exe -m populse_db.test"
