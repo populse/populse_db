@@ -10,8 +10,7 @@ environment:
 build: off
 
 install:
-  - "echo %cd%"
-  - "SET PYTHONPATH=???;%PYTHONPATH%"
+  - "SET PYTHONPATH=C:\projects\populse-db\python\;%PYTHONPATH%"
 
 test_script:
   - "%PYTHON%\\python.exe -m populse_db.test"
