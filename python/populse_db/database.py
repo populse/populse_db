@@ -416,7 +416,6 @@ class DatabaseSession:
         self.base = automap_base(metadata=self.metadata)
         self.base.prepare(engine=self.database.engine) # Blocking here in MIA tests with Python3.7 OSX (test_add_tag)
         for table in self.metadata.tables.keys():
-            print(table)
             self.table_classes[table] = getattr(
                 self.base.classes, table)
 
