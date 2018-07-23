@@ -26,8 +26,8 @@ build_script:
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "SET PYTHONPATH=C:\\projects\\populse-db\\python\\;%PYTHONPATH%"
-  - "python3 setup.py install"
-  - "pip3 install -e .[postgres]"
+  - "python setup.py install"
+  - "pip install -e .[postgres]"
 
 test_script:
-  - "python3 -m populse_db.test"
+  - "python -m populse_db.test"
