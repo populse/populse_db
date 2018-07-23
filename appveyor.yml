@@ -1,9 +1,11 @@
-matrix:
+environment:
   
-  - PYTHON: "C:\\Python33"
-  - PYTHON: "C:\\Python34"
-  - PYTHON: "C:\\Python35"
-  - PYTHON: "C:\\Python36"
+  matrix:
+  
+    - PYTHON: "C:\\Python33"
+    - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python36"
 
 test_script:
   - python3 -m populse_db.test
