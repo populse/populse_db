@@ -34,10 +34,8 @@ before_script:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew services start postgresql; fi
 
 install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install -e .[postgres]; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install -e .[postgres]; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install codecov; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install codecov; fi
+  - pip3 install -e .[postgres]
+  - pip3 install codecov
 
 script: 
   - python3 -V
