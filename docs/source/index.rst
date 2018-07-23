@@ -5,7 +5,9 @@
 
 .. toctree::
 
-   documentation
+=======================  =======================================
+`Index <./index.html>`_  `Documentation <./documentation.html>`_
+=======================  =======================================
 
 Generalities
 ============
