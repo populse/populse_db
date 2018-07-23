@@ -38,7 +38,7 @@ Tests
 -----
 
 * Unit tests have been written with the package unittest
-* Continuous integration has been deployed with Travis
+* Continuous integration has been deployed with Travis (Linux, OSX), and AppVeyor (Windows)
 * The code coverage is generated with the package codecov
 * The script of tests is python/populse_db/test.py, so the following command launches the tests:
 
