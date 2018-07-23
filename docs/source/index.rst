@@ -14,7 +14,7 @@ Overview
 --------
 
 * SQLAlchemy based database API for Populse
-* It can support every database type, it takes an engine as entry
+* It can support every database type, as it takes an engine as entry
 * Populse_db is ensured to work with Python >= 3.3
 * Populse_db is ensured to work on the platforms Linux and OSX (It is supposed to work on Windows, hasn't been tested yet)
 
@@ -59,6 +59,12 @@ Exact call: session.add_field("collection_test", "field", populse_db.database.FI
 
 .. image:: ../pictures/database_field.jpg
 
+When a value is added to <collection, field, document>, the corresponding cell is set.
+
+Exact call: session.new_value("collection_test", "document", "field", "value_test")
+
+.. image:: ../pictures/database_value.jpg
+
 Requirements
 ------------
 
@@ -88,7 +94,8 @@ The other packages used by populse_db are the following ones:
 Documentation
 -------------
 
-* This documentation website has been generated with Sphinx
+* This documentation website has been generated with Sphinx (See Sphinx website for more informations `here <http://www.sphinx-doc.org/en/master/>`_)
+
 * The source code of this website is in docs/ directory (The website is actually in docs/html/ directory, but docs/index.html is redirecting to the website)
 
 * Generate the website (from populse_db root directory):
@@ -96,12 +103,16 @@ Documentation
 .. code-block:: python
    
    cd docs/
-   make html
-   cp -R build/doctrees/ ./doctrees/
+   make html # The website generated will be in build/ directory
+   cp -R build/doctrees/ ./doctrees/ 
    cp -R build/html/ ./html/
    rm -d -r build/html/
    rm -d -r build/doctrees/
    cd ..
+
+* The website is deployed automatically thanks to GitHub pages (More informations are available on their website `here <https://pages.github.com/>`_)
+
+* The option is available in the GitHub repository populse_db settings: See GitHub Pages subsection in Options section, it is currently set to master branch /docs folder
 
 License
 -------
