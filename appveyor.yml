@@ -10,4 +10,4 @@ environment:
 build: off
 
 test_script:
-  - python3 -m populse_db.test
+  - %PYTHON%\\python.exe -m populse_db.test
