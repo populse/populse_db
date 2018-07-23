@@ -1,4 +1,4 @@
-# populse_db [![](https://travis-ci.org/populse/populse_db.svg?branch=master)](https://travis-ci.org/populse/populse_db) [![](https://codecov.io/github/populse/populse_db/coverage.svg?branch=master)](https://codecov.io/github/populse/populse_db) [![](https://img.shields.io/badge/license-CeCILL--B-blue.svg)](https://github.com/populse/populse_db/blob/master/LICENSE.en) [![](https://img.shields.io/pypi/v/populse_db.svg)](https://pypi.python.org/pypi/populse_db/) [![](https://img.shields.io/badge/python-3.3%2C%203.4%2C%203.5%2C%203.6%2C%203.7-yellow.svg)](#) [![](https://img.shields.io/badge/platform-Linux%2C%20OSX-orange.svg)](#)
+# populse_db [![](https://travis-ci.org/populse/populse_db.svg?branch=master)](https://travis-ci.org/populse/populse_db) [![](https://codecov.io/github/populse/populse_db/coverage.svg?branch=master)](https://codecov.io/github/populse/populse_db) [![](https://img.shields.io/badge/license-CeCILL--B-blue.svg)](https://github.com/populse/populse_db/blob/master/LICENSE.en) [![](https://img.shields.io/pypi/v/populse_db.svg)](https://pypi.python.org/pypi/populse_db/) [![](https://img.shields.io/badge/python-3.3%2C%203.4%2C%203.5%2C%203.6%2C%203.7-yellow.svg)](#) [![](https://img.shields.io/badge/platform-Linux%2C%20OSX%2C%20Windows-orange.svg)](#)
 
 SQLAlchemy based database API for Populse
 
@@ -29,13 +29,13 @@ python/ directory must be added to $PYTHONPATH
 
 Unit tests written thanks to the python module unittest
 
-Continuous integration made with Travis
+Continuous integration made with Travis (Linux, OSX), and AppVeyor (Windows)
 
 Code coverage calculated by the python module codecov
 
 The module is ensured to work with Python >= 3.3
 
-The module is ensured to work on the platforms Linux and OSX (It is supposed to work on Windows, hasn't been tested yet)
+The module is ensured to work on the platforms Linux, OSX and Windows
 
 The script of tests is python/populse_db/test.py, so the following command launches the tests:
 	
