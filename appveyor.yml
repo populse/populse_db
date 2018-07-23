@@ -10,7 +10,7 @@ environment:
 build: off
 
 services:
-  - postgresql
+  - postgresql96
 
 install:
   - "SET PATH=C:\\Program Files\\PostgreSQL\\9.6\\bin\\;%PATH%"
