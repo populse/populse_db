@@ -260,7 +260,7 @@ modifications</li>
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.add_field">
 <code class="descname">add_field</code><span class="sig-paren">(</span><em>collection</em>, <em>name</em>, <em>field_type</em>, <em>description=None</em>, <em>index=False</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_field" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds a field to the database, if it does not already exist</p>
+<dd><p>Adds a field to the database</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -299,7 +299,7 @@ modifications</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fields</strong> &#8211; List of fields (collection, name, type, description)</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fields</strong> &#8211; List of fields: [collection, name, type, description]</td>
 </tr>
 </tbody>
 </table>
@@ -416,15 +416,17 @@ modifications</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
 <li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
 </ul>
 </td>
 </tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The document row if the document exists, None otherwise</p>
+</td>
+</tr>
 </tbody>
 </table>
-<p>:return The document row if the document exists, None otherwise</p>
 </dd></dl>
 
 <dl class="method">
@@ -437,7 +439,7 @@ modifications</li>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Documents collection (str, must be existing)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all document rows of the collection</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all document rows of the collection if it exists, None otherwise</td>
 </tr>
 </tbody>
 </table>
@@ -453,7 +455,7 @@ modifications</li>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Documents collection (str, must be existing)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all document names of the collection</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all document names of the collection if it exists, None otherwise</td>
 </tr>
 </tbody>
 </table>
@@ -490,7 +492,7 @@ modifications</li>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Fields collection (str, must be existing)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all fields rows of the collection</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all fields rows of the collection if it exists, None otherwise</td>
 </tr>
 </tbody>
 </table>
@@ -506,7 +508,7 @@ modifications</li>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Fields collection (str, must be existing)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all fields names of the collection</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all fields names of the collection if it exists, None otherwise</td>
 </tr>
 </tbody>
 </table>
@@ -557,7 +559,7 @@ False otherwise</td>
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.name_to_valid_column_name">
 <code class="descname">name_to_valid_column_name</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.name_to_valid_column_name" title="Permalink to this definition">¶</a></dt>
-<dd><p>Transforms the name into a valid and unique table/column name, by hashing it</p>
+<dd><p>Transforms the name into a valid and unique table/column name, by hashing it with md5</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -882,7 +884,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'&gt;': &lt;built-in function gt&gt;, 'and': &lt;built-in function and_&gt;, '&lt;': &lt;built-in function lt&gt;, '!=': &lt;built-in function ne&gt;, 'ilike': &lt;staticmethod object at 0x7fb89f605a58&gt;, 'or': &lt;built-in function or_&gt;, '&gt;=': &lt;built-in function ge&gt;, '&lt;=': &lt;built-in function le&gt;, 'like': &lt;staticmethod object at 0x7fb89f6059e8&gt;, '==': &lt;built-in function eq&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'&gt;=': &lt;built-in function ge&gt;, 'like': &lt;staticmethod object at 0x7fa3dead09e8&gt;, '&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '==': &lt;built-in function eq&gt;, '&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;staticmethod object at 0x7fa3dead0a58&gt;, '&lt;': &lt;built-in function lt&gt;, 'and': &lt;built-in function and_&gt;, '!=': &lt;built-in function ne&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -961,7 +963,7 @@ two elements.</li>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToQuery.keyword_literals">
-<code class="descname">keyword_literals</code><em class="property"> = {'true': True, 'null': None, 'false': False}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<code class="descname">keyword_literals</code><em class="property"> = {'null': None, 'true': True, 'false': False}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -1076,7 +1078,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'&gt;': &lt;built-in function gt&gt;, 'and': &lt;built-in function and_&gt;, '&lt;': &lt;built-in function lt&gt;, '!=': &lt;function sql_differ at 0x7fb89f5b6bf8&gt;, 'ilike': &lt;function ilike_op at 0x7fb8a0120b70&gt;, 'or': &lt;built-in function or_&gt;, '&gt;=': &lt;built-in function ge&gt;, '&lt;=': &lt;built-in function le&gt;, 'like': &lt;function like_op at 0x7fb8a0120a60&gt;, '==': &lt;function sql_equal at 0x7fb89f5a22f0&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'&gt;=': &lt;built-in function ge&gt;, 'like': &lt;function like_op at 0x7fa3df5aca60&gt;, '&lt;=': &lt;built-in function le&gt;, 'or': &lt;built-in function or_&gt;, '==': &lt;function sql_equal at 0x7fa3dea6d2f0&gt;, '&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;function ilike_op at 0x7fa3df5acb70&gt;, '&lt;': &lt;built-in function lt&gt;, 'and': &lt;built-in function and_&gt;, '!=': &lt;function sql_differ at 0x7fa3de9f3bf8&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>

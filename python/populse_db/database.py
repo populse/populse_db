@@ -615,7 +615,7 @@ class DatabaseSession:
         """
         Adds the list of fields
 
-        :param fields: List of fields (collection, name, type, description)
+        :param fields: List of fields: [collection, name, type, description]
         """
 
         collections = []
@@ -640,7 +640,7 @@ class DatabaseSession:
     def add_field(self, collection, name, field_type, description=None,
                   index=False, flush=True):
         """
-        Adds a field to the database, if it does not already exist
+        Adds a field to the database
 
         :param collection: Field collection (str, must be existing)
 
@@ -735,7 +735,7 @@ class DatabaseSession:
 
     def name_to_valid_column_name(self, name):
         """
-        Transforms the name into a valid and unique table/column name, by hashing it
+        Transforms the name into a valid and unique table/column name, by hashing it with md5
 
         :param name: Name (str)
 
@@ -900,7 +900,7 @@ class DatabaseSession:
 
         :param collection: Fields collection (str, must be existing)
 
-        :return: List of all fields names of the collection
+        :return: List of all fields names of the collection if it exists, None otherwise
         """
 
         fields = self.session.query(self.table_classes[FIELD_TABLE].name).filter(
@@ -916,7 +916,7 @@ class DatabaseSession:
 
         :param collection: Fields collection (str, must be existing)
 
-        :return: List of all fields rows of the collection
+        :return: List of all fields rows of the collection if it exists, None otherwise
         """
 
         fields = self.session.query(self.table_classes[FIELD_TABLE]).filter(
@@ -1225,7 +1225,7 @@ class DatabaseSession:
 
         :param document: Document name (str, must be existing)
 
-        :return The document row if the document exists, None otherwise
+        :return: The document row if the document exists, None otherwise
         """
 
         collection_row = self.get_collection(collection)
@@ -1254,7 +1254,7 @@ class DatabaseSession:
 
         :param collection: Documents collection (str, must be existing)
 
-        :return: List of all document names of the collection
+        :return: List of all document names of the collection if it exists, None otherwise
         """
 
         collection_row = self.get_collection(collection)
@@ -1273,7 +1273,7 @@ class DatabaseSession:
 
         :param collection: Documents collection (str, must be existing)
 
-        :return: List of all document rows of the collection
+        :return: List of all document rows of the collection if it exists, None otherwise
         """
 
         collection_row = self.get_collection(collection)
