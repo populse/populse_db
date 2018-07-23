@@ -18,10 +18,6 @@ matrix:
       language: python  
       python:
         - "3.6"
-    - os: windows
-      language: python
-      python:
-        - "3.6"
 
 services:
   - postgresql
@@ -35,15 +31,12 @@ before_install:
 
 before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then psql -c 'create database populse_db_tests;' -U postgres; fi
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then psql -c 'create database populse_db_tests;' -U postgres; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew services start postgresql; fi
 
 install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install -e .[postgres]; fi
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then pip install -e .[postgres]; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install -e .[postgres]; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install codecov; fi
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then pip install codecov; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install codecov; fi
 
 script: 
