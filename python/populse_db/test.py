@@ -1147,6 +1147,29 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(list_datetime, session.get_value(
                     "collection1", "document1", "list_datetime"))
 
+        def test_filter_documents(self):
+            """
+            Tests the method applying the filter
+            """
+
+            database = self.create_database()
+            with database as session:
+
+                session.add_collection("collection_test")
+                session.add_field("collection_test", "field_test", FIELD_TYPE_STRING, None)
+                session.add_document("collection_test", "document_test")
+
+                # Checking with invalid collection
+                self.assertRaises(ValueError, lambda : set(document.index for document in session.filter_documents("collection_not_existing", "")))
+
+                # Checking that every document is returned if there is no filter
+                documents = set(document.index for document in session.filter_documents("collection_test", None))
+                self.assertEqual(documents, {'document_test'})
+
+                # Checking with invalid filter (every document must be returned)
+                documents = set(document.index for document in session.filter_documents("collection_test", True))
+                self.assertEqual(documents, {'document_test'})
+
         def test_filters(self):
             list_datetime = [datetime.datetime(2018, 5, 23, 12, 41, 33, 540),
                              datetime.datetime(1981, 5, 8, 20, 0),

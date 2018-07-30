@@ -1078,13 +1078,11 @@ class DatabaseSession:
         for field in values:
             field_row = self.get_field(collection, field)
             database_value = self.__python_to_column(field_row.type, values[field])
-            if self.list_tables and isinstance(database_value, list):
-                primary_key = self.get_collection(collection).primary_key
-                document_id = getattr(document_row.row, primary_key)
+            if self.list_tables and isinstance(values[field], list):
+                column = self.name_to_valid_column_name(field)
                 table_name = 'list_%s_%s' % (collection, column)
-
                 table = self.metadata.tables[table_name]
-                sql = table.delete(table.c.document_id == document_id)
+                sql = table.delete(table.c.document_id == document)
                 self.session.execute(sql)
 
                 sql = table.insert()
@@ -1092,7 +1090,7 @@ class DatabaseSession:
                 cvalues = [self.__python_to_column(field_row.type[5:], i) for i in database_value]
                 index = 0
                 for i in cvalues:
-                    sql_params.append({'document_id': document_id, 'i': index, 'value': i})
+                    sql_params.append({'document_id': document, 'i': index, 'value': i})
                     index += 1
                 if sql_params:
                     self.session.execute(sql, params=sql_params)
