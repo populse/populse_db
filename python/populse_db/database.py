@@ -620,9 +620,15 @@ class DatabaseSession:
 
         collections = []
 
+        if not isinstance(fields, list):
+            raise ValueError(
+                "The fields must be of type {0}, but fields of type {1} given".format(list, type(fields)))
+
         for field in fields:
 
             # Adding each field
+            if not isinstance(field, list) or len(field) != 4:
+                raise ValueError("Invalid field, it must be a list of four elements: [collection, name, type, description]")
             self.add_field(field[0], field[1], field[2], field[3], False)
             if field[0] not in collections:
                 collections.append(field[0])

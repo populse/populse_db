@@ -68,24 +68,18 @@ def create_test_case(**database_creation_parameters):
             Tests the parameters of the Database class constructor
             """
 
+            # Testing with wrong engine
+            self.assertRaises(ValueError, lambda: Database(1))
+
             # Testing with wrong query_type
-            try:
-                Database("engine", query_type="wrong_query_type")
-                self.fail()
-            except ValueError:
-                pass
-            try:
-                Database("engine", query_type=True)
-                self.fail()
-            except ValueError:
-                pass
+            self.assertRaises(ValueError, lambda : Database("engine", query_type="wrong_query_type"))
+            self.assertRaises(ValueError, lambda : Database("engine", query_type=True))
 
             # Testing with wrong caches
-            try:
-                Database("engine", caches="False")
-                self.fail()
-            except ValueError:
-                pass
+            self.assertRaises(ValueError, lambda : Database("engine", caches="False"))
+
+            # Testing with wrong list_tables
+            self.assertRaises(ValueError, lambda : Database("engine", list_tables="False"))
 
         def test_add_field(self):
             """
@@ -110,12 +104,8 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(field.collection_name, "collection1")
 
                 # Testing with a field that already exists
-                try:
-                    session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
-                                      "Name of the patient")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
+                                      "Name of the patient"))
 
                 # Testing with several field types
                 session.add_field("collection1", "BandWidth", FIELD_TYPE_FLOAT, None)
@@ -136,41 +126,45 @@ def create_test_case(**database_creation_parameters):
                     "collection1", "Bits per voxel").description, "with space")
 
                 # Testing with wrong parameters
-                try:
-                    session.add_field("collection_not_existing", "Field", FIELD_TYPE_LIST_INTEGER,
-                                      None)
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.add_field(True, "Field", FIELD_TYPE_LIST_INTEGER, None)
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.add_field("collection1", None, FIELD_TYPE_LIST_INTEGER, None)
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.add_field("collection1", "Patient Name", None, None)
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.add_field("collection1", "Patient Name", FIELD_TYPE_STRING, 1.5)
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_field("collection_not_existing", "Field", FIELD_TYPE_LIST_INTEGER,
+                                      None))
+                self.assertRaises(ValueError, lambda : session.add_field(True, "Field", FIELD_TYPE_LIST_INTEGER, None))
+                self.assertRaises(ValueError, lambda : session.add_field("collection1", None, FIELD_TYPE_LIST_INTEGER, None))
+                self.assertRaises(ValueError, lambda : session.add_field("collection1", "Patient Name", None, None))
+                self.assertRaises(ValueError, lambda : session.add_field("collection1", "Patient Name", FIELD_TYPE_STRING, 1.5))
 
                 # Testing that the document primary key field is taken
-                try:
-                    session.add_field("collection1", "name", FIELD_TYPE_STRING, None)
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_field("collection1", "name", FIELD_TYPE_STRING, None))
 
                 # TODO Testing column creation
+
+        def test_add_fields(self):
+            """
+            Tests the method adding several fields
+            """
+
+            database = self.create_database()
+            with database as session:
+
+                # Adding a collection
+                session.add_collection("collection1")
+
+                # Adding several fields
+                fields = []
+                fields.append(["collection1", "First name", FIELD_TYPE_STRING, ""])
+                fields.append(["collection1", "Last name", FIELD_TYPE_STRING, ""])
+                session.add_fields(fields)
+                self.assertEqual(session.get_fields_names("collection1"), ['First name', 'Last name', 'index'])
+
+                # Trying with invalid dictionary
+                fields = []
+                fields.append(["collection1", "Age", FIELD_TYPE_STRING, ""])
+                fields.append(["collection1", "Gender", FIELD_TYPE_STRING])
+                self.assertRaises(ValueError, lambda : session.add_fields(fields))
+                fields = []
+                fields.append("Field")
+                self.assertRaises(ValueError, lambda: session.add_fields(fields))
+                self.assertRaises(ValueError, lambda: session.add_fields(True))
 
         def test_remove_field(self):
             """
@@ -233,38 +227,15 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(session.get_field("current", "PatientName"))
 
                 # Testing with a field not existing
-                try:
-                    session.remove_field("not_existing", "document1")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.remove_field(1, "NotExisting")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.remove_field("current", "NotExisting")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.remove_field("current", "Dataset dimension")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.remove_field("not_existing", "document1"))
+                self.assertRaises(ValueError, lambda : session.remove_field(1, "NotExisting"))
+                self.assertRaises(ValueError, lambda : session.remove_field("current", "NotExisting"))
+                self.assertRaises(ValueError, lambda : session.remove_field("current", "Dataset dimension"))
+                self.assertRaises(ValueError, lambda : session.remove_field("current", ["SequenceName", "PatientName", "Not_Existing"]))
 
                 # Testing with wrong parameters
-                try:
-                    session.remove_field("current", 1)
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.remove_field("current", None)
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.remove_field("current", 1))
+                self.assertRaises(ValueError, lambda : session.remove_field("current", None))
 
                 # TODO Testing column removal
 
@@ -382,71 +353,27 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(session.get_value("collection1", "document1", "PatientName"))
 
                 # Testing when the value is not existing
-                try:
-                    session.set_value("collection_not_existing", "document3", "PatientName", None)
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.set_value("collection1", "document3", "PatientName", None)
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.set_value("collection1", "document1", "NotExisting", None)
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.set_value("collection1", "document3", "NotExisting", None)
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.set_value("collection_not_existing", "document3", "PatientName", None))
+                self.assertRaises(ValueError, lambda : session.set_value("collection1", "document3", "PatientName", None))
+                self.assertRaises(ValueError, lambda : session.set_value("collection1", "document1", "NotExisting", None))
+                self.assertRaises(ValueError, lambda : session.set_value("collection1", "document3", "NotExisting", None))
 
                 # Testing with wrong types
-                try:
-                    session.set_value("collection1", "document1", "Bits per voxel", "test")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.set_value("collection1", "document1", "Bits per voxel", "test"))
                 self.assertEqual(session.get_value("collection1",
                                                    "document1", "Bits per voxel"), 2)
-                try:
-                    session.set_value("collection1", "document1", "Bits per voxel", 35.8)
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.set_value("collection1", "document1", "Bits per voxel", 35.8))
                 self.assertEqual(session.get_value(
                     "collection1", "document1", "Bits per voxel"), 2)
 
                 # Testing with wrong parameters
-                try:
-                    session.set_value(False, "document1", "Bits per voxel", 35)
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.set_value("collection1", 1, "Bits per voxel", "2")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.set_value("collection1", "document1", None, "1")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.set_value("collection1", 1, None, True)
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.set_value(False, "document1", "Bits per voxel", 35))
+                self.assertRaises(ValueError, lambda : session.set_value("collection1", 1, "Bits per voxel", "2"))
+                self.assertRaises(ValueError, lambda : session.set_value("collection1", "document1", None, "1"))
+                self.assertRaises(ValueError, lambda : session.set_value("collection1", 1, None, True))
 
                 # Testing that setting a primary key value is impossible
-                try:
-                    session.set_value("collection1", "document1", "name", None)
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.set_value("collection1", "document1", "name", None))
 
         def test_set_values(self):
             """
@@ -486,34 +413,35 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing that the primary_key cannot be set
                 values = {}
-                values["name"] = "document3"
+                values["index"] = "document3"
                 values["BandWidth"] = 25000
-                try:
-                    session.set_values("collection1", "document1", values)
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.set_values("collection1", "document1", values))
 
                 # Trying with the field not existing
                 values = {}
                 values["PatientName"] = "Patient"
                 values["BandWidth"] = 25000
                 values["Field_not_existing"] = "value"
-                try:
-                    session.set_values("collection1", "document1", values)
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.set_values("collection1", "document1", values))
 
                 # Trying with invalid values
                 values = {}
                 values["PatientName"] = 50
                 values["BandWidth"] = 25000
-                try:
-                    session.set_values("collection1", "document1", values)
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.set_values("collection1", "document1", values))
+                self.assertRaises(ValueError, lambda: session.set_values("collection1", "document1", True))
+
+                # Trying with the collection not existing
+                values = {}
+                values["PatientName"] = "Guerbet"
+                values["BandWidth"] = 25000
+                self.assertRaises(ValueError, lambda : session.set_values("collection_not_existing", "document1", values))
+
+                # Trying with the document not existing
+                values = {}
+                values["PatientName"] = "Guerbet"
+                values["BandWidth"] = 25000
+                self.assertRaises(ValueError, lambda : session.set_values("collection1", "document_not_existing", values))
 
         def test_get_field_names(self):
             """
@@ -682,26 +610,11 @@ def create_test_case(**database_creation_parameters):
                 session.add_value("collection1", "document1", "Boolean", True)
 
                 # Testing when the cell is not existing
-                try:
-                    session.add_value("collection_not_existing", "document1", "PatientName", "test")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.add_value("collection1", "document1", "NotExisting", "none")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.add_value("collection1", "document3", "SequenceName", "none")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.add_value("collection1", "document3", "NotExisting", "none")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_value("collection_not_existing", "document1", "PatientName", "test"))
+                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document1", "NotExisting", "none"))
+                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document3", "SequenceName", "none"))
+                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document3", "NotExisting", "none"))
+
                 self.assertIsNone(session.add_value("collection1", "document1", "BandWidth", 45))
 
                 date = datetime.datetime(2014, 2, 11, 8, 5, 7)
@@ -728,70 +641,35 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(session.get_value("collection1", "document1", "Boolean"), True)
 
                 # Test value override
-                try:
-                    session.add_value("collection1", "document1", "PatientName", "test2", "test2")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document1", "PatientName", "test2", "test2"))
+
                 value = session.get_value("collection1", "document1", "PatientName")
                 self.assertEqual(value, "test")
 
                 # Testing with wrong types
-                try:
-                    session.add_value("collection1", "document2", "Bits per voxel",
-                                      "space_field", "space_field")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document2", "Bits per voxel",
+                                      "space_field", "space_field"))
+
                 self.assertIsNone(session.get_value(
                     "collection1", "document2", "Bits per voxel"))
-                try:
-                    session.add_value("collection1", "document2", "Bits per voxel", 35.5)
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document2", "Bits per voxel", 35.5))
+
                 self.assertIsNone(session.get_value(
                     "collection1", "document2", "Bits per voxel"))
-                try:
-                    session.add_value("collection1", "document1", "BandWidth", "test", "test")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document1", "BandWidth", "test", "test"))
+
                 self.assertEqual(session.get_value("collection1", "document1", "BandWidth"), 45)
 
                 # Testing with wrong parameters
-                try:
-                    session.add_value(5, "document1", "Grids spacing", "2", "2")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.add_value("collection1", 1, "Grids spacing", "2", "2")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.add_value("collection1", "document1", None, "1", "1")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.add_value("collection1", "document1", "PatientName", None, None)
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_value(5, "document1", "Grids spacing", "2", "2"))
+                self.assertRaises(ValueError, lambda : session.add_value("collection1", 1, "Grids spacing", "2", "2"))
+                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document1", None, "1", "1"))
+                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document1", "PatientName", None, None))
+
                 self.assertEqual(session.get_value(
                     "collection1", "document1", "PatientName"), "test")
-                try:
-                    session.add_value("collection1", 1, None, True)
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.add_value("collection1", "document2", "Boolean", "boolean")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_value("collection1", 1, None, True))
+                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document2", "Boolean", "boolean"))
 
         def test_get_document(self):
             """
@@ -859,19 +737,10 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(session.get_value("collection1", "document1", "PatientName"))
 
                 # Testing with a collection not existing
-                try:
-                    session.remove_document("collection_not_existing", "document1")
-                    self.fail()
-                except ValueError:
-
-                    pass
+                self.assertRaises(ValueError, lambda : session.remove_document("collection_not_existing", "document1"))
 
                 # Testing with a document not existing
-                try:
-                    session.remove_document("collection1", "NotExisting")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.remove_document("collection1", "NotExisting"))
 
                 # Removing a document
                 session.remove_document("collection1", "document2")
@@ -880,11 +749,7 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(session.get_document("collection1", "document2"))
 
                 # Trying to remove the document a second time
-                try:
-                    session.remove_document("collection1", "document1")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.remove_document("collection1", "document1"))
 
         def test_add_document(self):
             """
@@ -915,30 +780,15 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(document.name, "document1")
 
                 # Testing when trying to add a document that already exists
-                try:
+                with self.assertRaises(ValueError):
                     document = {}
                     document["name"] = "document1"
                     session.add_document("collection1", document)
-                    self.fail()
-                except ValueError:
-                    pass
 
                 # Testing with invalid parameters
-                try:
-                    session.add_document(15, "document1")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.add_document("collection_not_existing", "document1")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.add_document("collection1", True)
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_document(15, "document1"))
+                self.assertRaises(ValueError, lambda : session.add_document("collection_not_existing", "document1"))
+                self.assertRaises(ValueError, lambda : session.add_document("collection1", True))
 
                 # Testing the add of several documents
                 document = {}
@@ -946,13 +796,10 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding a document with a dictionary without the primary key
-                try:
+                with self.assertRaises(ValueError):
                     document = {}
                     document["no_primary_key"] = "document1"
                     session.add_document("collection1", document)
-                    self.fail()
-                except ValueError:
-                    pass
 
         def test_add_collection(self):
             """
@@ -979,24 +826,16 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(collection.primary_key, "id")
 
                 # Trying with a collection already existing
-                try:
-                    session.add_collection("collection1")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_collection("collection1"))
 
                 # Trying with table names already taken
-                try:
-                    session.add_collection("field")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_collection("field"))
 
-                try:
-                    session.add_collection("collection")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_collection("collection"))
+
+                # Trying with wrong types
+                self.assertRaises(ValueError, lambda: session.add_collection(True))
+                self.assertRaises(ValueError, lambda: session.add_collection("collection_valid", True))
 
         def test_remove_collection(self):
             """
@@ -1060,16 +899,8 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(session.get_document("collection1", "document"))
 
                 # Testing with a collection not existing
-                try:
-                    session.remove_collection("collection_not_existing")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.remove_collection(True)
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.remove_collection("collection_not_existing"))
+                self.assertRaises(ValueError, lambda : session.remove_collection(True))
 
         def test_get_collection(self):
             """
@@ -1237,11 +1068,7 @@ def create_test_case(**database_creation_parameters):
                 # Adding values
                 session.add_value("collection1", "document1", "PatientName", "test")
 
-                try:
-                    session.add_value("collection1", "document1", "Bits per voxel", "space_field")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document1", "Bits per voxel", "space_field"))
                 session.add_value("collection1", "document1", "Dataset dimensions", [3, 28, 28, 3])
                 value = session.get_value("collection1", "document1", "Dataset dimensions")
                 self.assertEqual(value, [3, 28, 28, 3])
@@ -1252,26 +1079,10 @@ def create_test_case(**database_creation_parameters):
                 session.remove_value("collection1", "document1", "Dataset dimensions")
 
                 # Testing when not existing
-                try:
-                    session.remove_value("collection_not_existing", "document1", "PatientName")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.remove_value("collection1", "document3", "PatientName")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.remove_value("collection1", "document1", "NotExisting")
-                    self.fail()
-                except ValueError:
-                    pass
-                try:
-                    session.remove_value("collection1", "document3", "NotExisting")
-                    self.fail()
-                except ValueError:
-                    pass
+                self.assertRaises(ValueError, lambda : session.remove_value("collection_not_existing", "document1", "PatientName"))
+                self.assertRaises(ValueError, lambda : session.remove_value("collection1", "document3", "PatientName"))
+                self.assertRaises(ValueError, lambda : session.remove_value("collection1", "document1", "NotExisting"))
+                self.assertRaises(ValueError, lambda : session.remove_value("collection1", "document3", "NotExisting"))
 
                 # Testing that the values are actually removed
                 self.assertIsNone(session.get_value("collection1", "document1", "PatientName"))
