@@ -16,7 +16,8 @@ from sqlalchemy.exc import OperationalError
 
 from populse_db.database import Database, FIELD_TYPE_STRING, FIELD_TYPE_FLOAT, FIELD_TYPE_TIME, FIELD_TYPE_DATETIME, \
     FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_BOOLEAN, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_INTEGER, FIELD_TYPE_LIST_DATE, \
-    FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_FLOAT, DatabaseSession
+    FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_FLOAT, DatabaseSession, \
+    FIELD_TYPE_JSON, FIELD_TYPE_LIST_JSON
 from populse_db.filter import literal_parser, FilterToQuery
 
 
@@ -241,6 +242,13 @@ def create_test_case(**database_creation_parameters):
                 self.assertRaises(ValueError, lambda : session.remove_field("current", 1))
                 self.assertRaises(ValueError, lambda : session.remove_field("current", None))
 
+                # Removing list of fields with list type
+                session.add_field("current", "list1", FIELD_TYPE_LIST_INTEGER, None)
+                session.add_field("current", "list2", FIELD_TYPE_LIST_STRING, None)
+                session.remove_field("current", ["list1", "list2"])
+                self.assertIsNone(session.get_field("current", "list1"))
+                self.assertIsNone(session.get_field("current", "list2"))
+
                 # TODO Testing column removal
 
         def test_get_field(self):
@@ -447,6 +455,18 @@ def create_test_case(**database_creation_parameters):
                 values["BandWidth"] = 25000
                 self.assertRaises(ValueError, lambda : session.set_values("collection1", "document_not_existing", values))
 
+                # Testing with list values
+                session.add_field("collection1", "list1", FIELD_TYPE_LIST_STRING)
+                session.add_field("collection1", "list2", FIELD_TYPE_LIST_INTEGER)
+                session.add_value("collection1", "document1", "list1", ["a", "b", "c"])
+                session.add_value("collection1", "document1", "list2", [1, 2, 3])
+                values = {}
+                values["list1"] = ["a", "a", "a"]
+                values["list2"] = [1, 1, 1]
+                session.set_values("collection1", "document1", values)
+                self.assertEqual(session.get_value("collection1", "document1", "list1"), ["a", "a", "a"])
+                self.assertEqual(session.get_value("collection1", "document1", "list2"), [1, 1, 1])
+
         def test_get_field_names(self):
             """
             Tests the method removing a value
@@ -548,27 +568,24 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                is_valid = DatabaseSession._DatabaseSession__check_type_value("string", FIELD_TYPE_STRING)
-                self.assertTrue(is_valid)
-                is_valid = DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_STRING)
-                self.assertFalse(is_valid)
-                is_valid = DatabaseSession._DatabaseSession__check_type_value(None, FIELD_TYPE_STRING)
-                self.assertTrue(is_valid)
-                is_valid = DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_INTEGER)
-                self.assertTrue(is_valid)
-                is_valid = DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_FLOAT)
-                self.assertTrue(is_valid)
-                is_valid = DatabaseSession._DatabaseSession__check_type_value(1.5, FIELD_TYPE_FLOAT)
-                self.assertTrue(is_valid)
-                is_valid = DatabaseSession._DatabaseSession__check_type_value(None, None)
-                self.assertFalse(is_valid)
-                is_valid = DatabaseSession._DatabaseSession__check_type_value([1.5], FIELD_TYPE_LIST_FLOAT)
-                self.assertTrue(is_valid)
-                is_valid = DatabaseSession._DatabaseSession__check_type_value(1.5, FIELD_TYPE_LIST_FLOAT)
-                self.assertFalse(is_valid)
-                is_valid = DatabaseSession._DatabaseSession__check_type_value(
-                    [1.5, "test"], FIELD_TYPE_LIST_FLOAT)
-                self.assertFalse(is_valid)
+                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value("string", FIELD_TYPE_STRING))
+                self.assertFalse(DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_STRING))
+                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(None, FIELD_TYPE_STRING))
+                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_INTEGER))
+                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_FLOAT))
+                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(1.5, FIELD_TYPE_FLOAT))
+                self.assertFalse(DatabaseSession._DatabaseSession__check_type_value(None, None))
+                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value([1.5], FIELD_TYPE_LIST_FLOAT))
+                self.assertFalse(DatabaseSession._DatabaseSession__check_type_value(1.5, FIELD_TYPE_LIST_FLOAT))
+                self.assertFalse(DatabaseSession._DatabaseSession__check_type_value([1.5, "test"], FIELD_TYPE_LIST_FLOAT))
+                value = {}
+                value["test1"] = 1
+                value["test2"] = 2
+                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(value, FIELD_TYPE_JSON))
+                value2 = {}
+                value2["test3"] = 1
+                value2["test4"] = 2
+                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value([value, value2], FIELD_TYPE_LIST_JSON))
 
         def test_add_value(self):
             """
@@ -727,9 +744,11 @@ def create_test_case(**database_creation_parameters):
                 # Adding a field
                 session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
                                   "Name of the patient")
+                session.add_field("collection1", "FOV", FIELD_TYPE_LIST_INTEGER, None)
 
                 # Adding a value
                 session.add_value("collection1", "document1", "PatientName", "test")
+                session.add_value("collection1", "document1", "FOV", [1, 2, 3])
 
                 # Removing a document
                 session.remove_document("collection1", "document1")

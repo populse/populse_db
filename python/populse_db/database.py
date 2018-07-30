@@ -1477,6 +1477,10 @@ class DatabaseSession:
                                 - Example: "((({BandWidth} == "50000")) AND (({FileName} LIKE "%G1%")))"
         """
 
+        collection_row = self.get_collection(collection)
+        if collection_row is None:
+            raise ValueError("The collection {0} does not exist".format(collection))
+
         if isinstance(filter_query, six.string_types):
             filter_query = self.__filter_query(collection, filter_query)
         if filter_query is None:
