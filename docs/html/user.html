@@ -117,28 +117,33 @@ python python/populse_db/test.py (from populse_db root directory)
 <span class="c1"># Creating the session and working with it</span>
 <span class="k">with</span> <span class="n">database</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
 
-  <span class="c1"># Creating a profile table</span>
-  <span class="n">session</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">)</span>
+ <span class="c1"># Creating a profile table</span>
+ <span class="n">session</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">)</span>
 
-  <span class="c1"># Adding several properties</span>
-  <span class="n">session</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;First name&quot;</span><span class="p">,</span> <span class="n">FIELD_TYPE_STRING</span><span class="p">)</span>
-  <span class="n">session</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;Last name&quot;</span><span class="p">,</span> <span class="n">FIELD_TYPE_STRING</span><span class="p">)</span>
-  <span class="n">session</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;Age&quot;</span><span class="p">,</span> <span class="n">FIELD_TYPE_INTEGER</span><span class="p">)</span>
+ <span class="c1"># Adding several properties</span>
+ <span class="n">session</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;First name&quot;</span><span class="p">,</span> <span class="n">FIELD_TYPE_STRING</span><span class="p">)</span>
+ <span class="n">session</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;Last name&quot;</span><span class="p">,</span> <span class="n">FIELD_TYPE_STRING</span><span class="p">)</span>
+ <span class="n">session</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;Age&quot;</span><span class="p">,</span> <span class="n">FIELD_TYPE_INTEGER</span><span class="p">)</span>
 
-  <span class="c1"># Filling the table</span>
-  <span class="n">profile1</span> <span class="o">=</span> <span class="p">{}</span>
-  <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;profile1&quot;</span>
-  <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;First name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Lucie&quot;</span>
-  <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;Last name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;OUVRIER-BUFFET&quot;</span>
-  <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;Age&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;23&quot;</span>
-  <span class="n">session</span><span class="o">.</span><span class="n">add_document</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="n">profile1</span><span class="p">)</span>
+ <span class="c1"># Filling the table</span>
+ <span class="n">profile1</span> <span class="o">=</span> <span class="p">{}</span>
+ <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;index&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;profile1&quot;</span>
+ <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;First name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Jules&quot;</span>
+ <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;Last name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CESAR&quot;</span>
+ <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;Age&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">55</span>
+ <span class="n">session</span><span class="o">.</span><span class="n">add_document</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="n">profile1</span><span class="p">)</span>
 
-  <span class="n">session</span><span class="o">.</span><span class="n">add_document</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">)</span>
-  <span class="n">session</span><span class="o">.</span><span class="n">new_value</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">,</span> <span class="s2">&quot;First name&quot;</span><span class="p">,</span> <span class="s2">&quot;David&quot;</span><span class="p">)</span>
-  <span class="n">session</span><span class="o">.</span><span class="n">new_value</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">,</span> <span class="s2">&quot;Last name&quot;</span><span class="p">,</span> <span class="s2">&quot;HARBINE&quot;</span><span class="p">)</span>
-  <span class="n">session</span><span class="o">.</span><span class="n">new_value</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">,</span> <span class="s2">&quot;Age&quot;</span><span class="p">,</span> <span class="mi">23</span><span class="p">)</span>
+ <span class="n">session</span><span class="o">.</span><span class="n">add_document</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">)</span>
+ <span class="n">session</span><span class="o">.</span><span class="n">add_value</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">,</span> <span class="s2">&quot;First name&quot;</span><span class="p">,</span> <span class="s2">&quot;Louis&quot;</span><span class="p">)</span>
+ <span class="n">session</span><span class="o">.</span><span class="n">add_value</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">,</span> <span class="s2">&quot;Last name&quot;</span><span class="p">,</span> <span class="s2">&quot;XIV&quot;</span><span class="p">)</span>
+ <span class="n">session</span><span class="o">.</span><span class="n">add_value</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">,</span> <span class="s2">&quot;Age&quot;</span><span class="p">,</span> <span class="mi">76</span><span class="p">)</span>
 
-  <span class="n">session</span><span class="o">.</span><span class="n">save_modifications</span><span class="p">()</span>
+ <span class="c1"># Setting a value</span>
+ <span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">filter_documents</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;({Age} &gt; 50) AND ({First name} == </span><span class="se">\&quot;</span><span class="s2">Jules</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="p">)</span>
+ <span class="k">for</span> <span class="n">document</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span> <span class="c1"># profile1 is displayed, as it&#39;s the only document with the value Age greater than 50, and the value First name being Jules</span>
+     <span class="k">print</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+ <span class="n">session</span><span class="o">.</span><span class="n">save_modifications</span><span class="p">()</span>
 
 <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">temp_folder</span><span class="p">)</span>
 </pre></div>

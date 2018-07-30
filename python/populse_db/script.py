@@ -32,16 +32,21 @@ with database as session:
 
     # Filling the table
     profile1 = {}
-    profile1["name"] = "profile1"
-    profile1["First name"] = "Lucie"
-    profile1["Last name"] = "OUVRIER-BUFFET"
-    profile1["Age"] = "23"
+    profile1["index"] = "profile1"
+    profile1["First name"] = "Jules"
+    profile1["Last name"] = "CESAR"
+    profile1["Age"] = 55
     session.add_document("Profile", profile1)
 
     session.add_document("Profile", "profile2")
-    session.add_value("Profile", "profile2", "First name", "David")
-    session.add_value("Profile", "profile2", "Last name", "HARBINE")
-    session.add_value("Profile", "profile2", "Age", 23)
+    session.add_value("Profile", "profile2", "First name", "Louis")
+    session.add_value("Profile", "profile2", "Last name", "XIV")
+    session.add_value("Profile", "profile2", "Age", 76)
+
+    # Setting a value
+    result = session.filter_documents("Profile", "({Age} > 50) AND ({First name} == \"Jules\")")
+    for document in result: # profile1 is displayed, as it's the only document with the value Age greater than 50, and the value First name being Jules
+        print(document.index)
 
     session.save_modifications()
 
