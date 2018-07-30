@@ -104,10 +104,10 @@ def create_test_case(**database_creation_parameters):
 
                 # Checking the field properties
                 field = session.get_field("collection1", "PatientName")
-                self.assertEqual(field.name, "PatientName")
+                self.assertEqual(field.field_name, "PatientName")
                 self.assertEqual(field.type, FIELD_TYPE_STRING)
                 self.assertEqual(field.description, "Name of the patient")
-                self.assertEqual(field.collection, "collection1")
+                self.assertEqual(field.collection_name, "collection1")
 
                 # Testing with a field that already exists
                 try:
@@ -863,6 +863,7 @@ def create_test_case(**database_creation_parameters):
                     session.remove_document("collection_not_existing", "document1")
                     self.fail()
                 except ValueError:
+
                     pass
 
                 # Testing with a document not existing
@@ -966,15 +967,15 @@ def create_test_case(**database_creation_parameters):
 
                 # Checking values
                 collection = session.get_collection("collection1")
-                self.assertEqual(collection.name, "collection1")
-                self.assertEqual(collection.primary_key, "name")
+                self.assertEqual(collection.collection_name, "collection1")
+                self.assertEqual(collection.primary_key, "index")
 
                 # Adding a second collection
                 session.add_collection("collection2", "id")
 
                 # Checking values
                 collection = session.get_collection("collection2")
-                self.assertEqual(collection.name, "collection2")
+                self.assertEqual(collection.collection_name, "collection2")
                 self.assertEqual(collection.primary_key, "id")
 
                 # Trying with a collection already existing
@@ -1010,8 +1011,8 @@ def create_test_case(**database_creation_parameters):
 
                 # Checking values
                 collection = session.get_collection("collection1")
-                self.assertEqual(collection.name, "collection1")
-                self.assertEqual(collection.primary_key, "name")
+                self.assertEqual(collection.collection_name, "collection1")
+                self.assertEqual(collection.primary_key, "index")
 
                 # Removing a collection
                 session.remove_collection("collection1")
@@ -1025,31 +1026,31 @@ def create_test_case(**database_creation_parameters):
 
                 # Checking values
                 collection = session.get_collection("collection1")
-                self.assertEqual(collection.name, "collection1")
-                self.assertEqual(collection.primary_key, "name")
+                self.assertEqual(collection.collection_name, "collection1")
+                self.assertEqual(collection.primary_key, "index")
                 collection = session.get_collection("collection2")
-                self.assertEqual(collection.name, "collection2")
-                self.assertEqual(collection.primary_key, "name")
+                self.assertEqual(collection.collection_name, "collection2")
+                self.assertEqual(collection.primary_key, "index")
 
                 # Removing one collection and testing that the other is unchanged
                 session.remove_collection("collection2")
                 collection = session.get_collection("collection1")
-                self.assertEqual(collection.name, "collection1")
-                self.assertEqual(collection.primary_key, "name")
+                self.assertEqual(collection.collection_name, "collection1")
+                self.assertEqual(collection.primary_key, "index")
                 self.assertIsNone(session.get_collection("collection2"))
 
                 # Adding a field
                 session.add_field("collection1", "Field", FIELD_TYPE_STRING)
                 field = session.get_field("collection1", "Field")
-                self.assertEqual(field.name, "Field")
-                self.assertEqual(field.collection, "collection1")
+                self.assertEqual(field.field_name, "Field")
+                self.assertEqual(field.collection_name, "collection1")
                 self.assertIsNone(field.description)
                 self.assertEqual(field.type, FIELD_TYPE_STRING)
 
                 # Adding a document
                 session.add_document("collection1", "document")
                 document = session.get_document("collection1", "document")
-                self.assertEqual(document.name, "document")
+                self.assertEqual(document.index, "document")
 
                 # Removing the collection containing the field and the document and testing that it is indeed removed
                 session.remove_collection("collection1")
@@ -1082,15 +1083,15 @@ def create_test_case(**database_creation_parameters):
 
                 # Checking values
                 collection = session.get_collection("collection1")
-                self.assertEqual(collection.name, "collection1")
-                self.assertEqual(collection.primary_key, "name")
+                self.assertEqual(collection.collection_name, "collection1")
+                self.assertEqual(collection.primary_key, "index")
 
                 # Adding a second collection
                 session.add_collection("collection2", "id")
 
                 # Checking values
                 collection = session.get_collection("collection2")
-                self.assertEqual(collection.name, "collection2")
+                self.assertEqual(collection.collection_name, "collection2")
                 self.assertEqual(collection.primary_key, "id")
 
                 # Trying with a collection not existing
@@ -1115,7 +1116,7 @@ def create_test_case(**database_creation_parameters):
 
                 collections = session.get_collections()
                 self.assertEqual(len(collections), 1)
-                self.assertEqual(collections[0].name, "collection1")
+                self.assertEqual(collections[0].collection_name, "collection1")
 
                 session.add_collection("collection2")
 
@@ -1126,7 +1127,7 @@ def create_test_case(**database_creation_parameters):
 
                 collections = session.get_collections()
                 self.assertEqual(len(collections), 1)
-                self.assertEqual(collections[0].name, "collection1")
+                self.assertEqual(collections[0].collection_name, "collection1")
 
         def test_get_collections_names(self):
             """
@@ -1882,7 +1883,7 @@ def create_test_case(**database_creation_parameters):
                         self.assertEqual(documents, expected)
                     except Exception as e:
                         session.unsave_modifications()
-                        query = session.filter_query('collection1', filter)
+                        query = session.__filter_query('collection1', filter)
                         e.message = 'While testing filter : %s\n%s' % (str(filter), e.message)
                         e.args = (e.message,)
                         raise

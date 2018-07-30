@@ -336,7 +336,7 @@ class FilterToSqlQuery(FilterToQuery):
         :return: The SqlAlchemy Column object corresponding to a populse_db field object.
         '''
         return getattr(self.database.metadata.tables[self.database.name_to_valid_column_name(self.collection)].c,
-                       self.database.name_to_valid_column_name(column.name))
+                       self.database.name_to_valid_column_name(column.field_name))
 
     def get_column_value(self, python_value):
         '''
@@ -455,7 +455,7 @@ class FilterToPythonQuery(FilterToQuery):
         '''
         Builds a condition checking if a constant value is in a list field
         '''
-        return (lambda x, lf=list_field.name, v=value:
+        return (lambda x, lf=list_field.field_name, v=value:
                 x[lf] is not None and v in x[lf])
 
     def build_condition_field_in_list_field(self, field, list_field):

@@ -204,8 +204,8 @@ class Database:
             return False
         else:
             Table(FIELD_TABLE, metadata,
-                  Column("name", String, primary_key=True),
-                  Column("collection", String, primary_key=True),
+                  Column("field_name", String, primary_key=True),
+                  Column("collection_name", String, primary_key=True),
                   Column(
                       "type", Enum(FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT, FIELD_TYPE_BOOLEAN,
                                    FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON,
@@ -217,7 +217,7 @@ class Database:
                   Column("description", String, nullable=True))
 
             Table(COLLECTION_TABLE, metadata,
-                  Column("name", String, primary_key=True),
+                  Column("collection_name", String, primary_key=True),
                   Column("primary_key", String, nullable=False))
 
             metadata.create_all(engine)
@@ -434,15 +434,15 @@ class DatabaseSession:
         # Collections
         collections_rows = self.session.query(self.table_classes[COLLECTION_TABLE]).all()
         for collection_row in collections_rows:
-            self.__collections[collection_row.name] = collection_row
+            self.__collections[collection_row.collection_name] = collection_row
 
         # Fields
         for collection in self.__collections:
             fields_rows = self.session.query(self.table_classes[FIELD_TABLE]).filter(
-                self.table_classes[FIELD_TABLE].collection == collection).all()
+                self.table_classes[FIELD_TABLE].collection_name == collection).all()
             self.__fields[collection] = {}
             for field_row in fields_rows:
-                self.__fields[collection][field_row.name] = field_row
+                self.__fields[collection][field_row.field_name] = field_row
 
         # Documents
         for collection in self.__collections:
@@ -472,13 +472,13 @@ class DatabaseSession:
 
     """ COLLECTIONS """
 
-    def add_collection(self, name, primary_key="name"):
+    def add_collection(self, name, primary_key="index"):
         """
         Adds a collection
 
         :param name: New collection name (str, must not be existing)
 
-        :param primary_key: New collection primary_key column (str) => "name" by default
+        :param primary_key: New collection primary_key column (str) => "index" by default
 
         :raise ValueError: - If the collection is already existing
                            - If the collection name is invalid
@@ -499,7 +499,7 @@ class DatabaseSession:
                     str, type(primary_key)))
 
         # Adding the collection row
-        collection_row = self.table_classes[COLLECTION_TABLE](name=name, primary_key=primary_key)
+        collection_row = self.table_classes[COLLECTION_TABLE](collection_name=name, primary_key=primary_key)
         self.session.add(collection_row)
 
         # Creating the collection document table
@@ -516,7 +516,7 @@ class DatabaseSession:
         self.table_classes[table_name] = collection_class
 
         # Adding the primary_key of the collection as field
-        primary_key_field = self.table_classes[FIELD_TABLE](name=primary_key, collection=name,
+        primary_key_field = self.table_classes[FIELD_TABLE](field_name=primary_key, collection_name=name,
                                                             type=FIELD_TYPE_STRING,
                                                             description="Primary_key of the document collection {0}".format(
                                                                 name))
@@ -546,9 +546,9 @@ class DatabaseSession:
 
         # Removing the collection row
         self.session.query(self.table_classes[COLLECTION_TABLE]).filter(
-            self.table_classes[COLLECTION_TABLE].name == name).delete()
+            self.table_classes[COLLECTION_TABLE].collection_name == name).delete()
         self.session.query(self.table_classes[FIELD_TABLE]).filter(
-            self.table_classes[FIELD_TABLE].collection == name).delete()
+            self.table_classes[FIELD_TABLE].collection_name == name).delete()
 
         # Removing the collection document table + metadata associated
         collection_query = DropTable(self.table_classes[self.name_to_valid_column_name(name)].__table__)
@@ -586,7 +586,7 @@ class DatabaseSession:
             if not isinstance(name, six.string_types):
                 return None
             collection_row = self.session.query(self.table_classes[COLLECTION_TABLE]).filter(
-                self.table_classes[COLLECTION_TABLE].name == name).first()
+                self.table_classes[COLLECTION_TABLE].collection_name == name).first()
             return collection_row
 
     def get_collections_names(self):
@@ -596,8 +596,8 @@ class DatabaseSession:
         :return: List of all collection names
         """
 
-        collections = self.session.query(self.table_classes[COLLECTION_TABLE].name).all()
-        collections_list = [collection.name for collection in collections]
+        collections = self.session.query(self.table_classes[COLLECTION_TABLE].collection_name).all()
+        collections_list = [collection.collection_name for collection in collections]
         return collections_list
 
     def get_collections(self):
@@ -682,7 +682,7 @@ class DatabaseSession:
                                                                                                                         description)))
 
         # Adding the field in the field table
-        field_row = self.table_classes[FIELD_TABLE](name=name, collection=collection, type=field_type,
+        field_row = self.table_classes[FIELD_TABLE](field_name=name, collection_name=collection, type=field_type,
                                                     description=description)
 
         if self.__caches:
@@ -890,8 +890,8 @@ class DatabaseSession:
             if not isinstance(collection, six.string_types) or not isinstance(name, six.string_types):
                 return None
             field_row = self.session.query(self.table_classes[FIELD_TABLE]).filter(
-                self.table_classes[FIELD_TABLE].name == name).filter(
-                self.table_classes[FIELD_TABLE].collection == collection).first()
+                self.table_classes[FIELD_TABLE].field_name == name).filter(
+                self.table_classes[FIELD_TABLE].collection_name == collection).first()
             return field_row
 
     def get_fields_names(self, collection):
@@ -903,10 +903,10 @@ class DatabaseSession:
         :return: List of all fields names of the collection if it exists, None otherwise
         """
 
-        fields = self.session.query(self.table_classes[FIELD_TABLE].name).filter(
-            self.table_classes[FIELD_TABLE].collection == collection).all()
+        fields = self.session.query(self.table_classes[FIELD_TABLE].field_name).filter(
+            self.table_classes[FIELD_TABLE].collection_name == collection).all()
 
-        fields_names = [field.name for field in fields]
+        fields_names = [field.field_name for field in fields]
 
         return fields_names
 
@@ -920,7 +920,7 @@ class DatabaseSession:
         """
 
         fields = self.session.query(self.table_classes[FIELD_TABLE]).filter(
-            self.table_classes[FIELD_TABLE].collection == collection).all()
+            self.table_classes[FIELD_TABLE].collection_name == collection).all()
         return fields
 
     """ VALUES """

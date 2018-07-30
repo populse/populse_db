@@ -199,7 +199,7 @@ modifications</li>
 </table>
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.add_collection">
-<code class="descname">add_collection</code><span class="sig-paren">(</span><em>name</em>, <em>primary_key='name'</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_collection" title="Permalink to this definition">¶</a></dt>
+<code class="descname">add_collection</code><span class="sig-paren">(</span><em>name</em>, <em>primary_key='index'</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_collection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds a collection</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -207,7 +207,7 @@ modifications</li>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>name</strong> &#8211; New collection name (str, must not be existing)</li>
-<li><strong>primary_key</strong> &#8211; New collection primary_key column (str) =&gt; &#8220;name&#8221; by default</li>
+<li><strong>primary_key</strong> &#8211; New collection primary_key column (str) =&gt; &#8220;index&#8221; by default</li>
 </ul>
 </td>
 </tr>
@@ -881,7 +881,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'!=': &lt;built-in function ne&gt;, 'or': &lt;built-in function or_&gt;, '&gt;': &lt;built-in function gt&gt;, '&lt;': &lt;built-in function lt&gt;, '==': &lt;built-in function eq&gt;, '&lt;=': &lt;built-in function le&gt;, '&gt;=': &lt;built-in function ge&gt;, 'like': &lt;staticmethod object at 0x7f1d55dcf278&gt;, 'ilike': &lt;staticmethod object at 0x7f1d55dcf2e8&gt;, 'and': &lt;built-in function and_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'&lt;': &lt;built-in function lt&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;staticmethod object at 0x7f4156e7d358&gt;, '&gt;': &lt;built-in function gt&gt;, '==': &lt;built-in function eq&gt;, '!=': &lt;built-in function ne&gt;, '&gt;=': &lt;built-in function ge&gt;, '&lt;=': &lt;built-in function le&gt;, 'ilike': &lt;staticmethod object at 0x7f4156e7d3c8&gt;, 'and': &lt;built-in function and_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -960,7 +960,7 @@ two elements.</li>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToQuery.keyword_literals">
-<code class="descname">keyword_literals</code><em class="property"> = {'true': True, 'false': False, 'null': None}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<code class="descname">keyword_literals</code><em class="property"> = {'null': None, 'true': True, 'false': False}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -1075,7 +1075,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'!=': &lt;function sql_differ at 0x7f1d55cecb70&gt;, 'or': &lt;built-in function or_&gt;, '&gt;': &lt;built-in function gt&gt;, '&lt;': &lt;built-in function lt&gt;, '==': &lt;function sql_equal at 0x7f1d55d65268&gt;, '&lt;=': &lt;built-in function le&gt;, '&gt;=': &lt;built-in function ge&gt;, 'like': &lt;function like_op at 0x7f1d568289d8&gt;, 'ilike': &lt;function ilike_op at 0x7f1d56828ae8&gt;, 'and': &lt;built-in function and_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'&lt;': &lt;built-in function lt&gt;, 'or': &lt;built-in function or_&gt;, 'like': &lt;function like_op at 0x7f4157913f28&gt;, '&gt;': &lt;built-in function gt&gt;, '==': &lt;function sql_equal at 0x7f4156e0dae8&gt;, '!=': &lt;function sql_differ at 0x7f4156da1488&gt;, '&gt;=': &lt;built-in function ge&gt;, '&lt;=': &lt;built-in function le&gt;, 'ilike': &lt;function ilike_op at 0x7f41579140d0&gt;, 'and': &lt;built-in function and_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
