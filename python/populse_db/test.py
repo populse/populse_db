@@ -154,7 +154,11 @@ def create_test_case(**database_creation_parameters):
                 fields.append(["collection1", "First name", FIELD_TYPE_STRING, ""])
                 fields.append(["collection1", "Last name", FIELD_TYPE_STRING, ""])
                 session.add_fields(fields)
-                self.assertEqual(session.get_fields_names("collection1"), ['First name', 'Last name', 'index'])
+                collection_fields = session.get_fields_names("collection1")
+                self.assertEqual(len(collection_fields), 3)
+                self.assertTrue("index" in collection_fields)
+                self.assertTrue("First name" in collection_fields)
+                self.assertTrue("Last name" in collection_fields)
 
                 # Trying with invalid dictionary
                 fields = []
