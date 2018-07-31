@@ -17,7 +17,7 @@ From source:
     cd /tmp
     sudo rm -r /tmp/populse_db
 
-python/ directory must be added to $PYTHONPATH 
+python/ directory must be added to $PYTHONPATH if the module is installed from source
 
 # Usage
 
