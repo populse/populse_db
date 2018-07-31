@@ -112,6 +112,8 @@ Documentation
 
 * The option is available in the GitHub repository populse_db settings: See GitHub Pages subsection in Options section, it is currently set to master branch /docs folder
 
+* The empty file docs/.nojekyll must be there in order to have CSS on the deployed GitHub website at https://populse.github.io/populse_db/ 
+
 * The structure of the website that can be modified is in docs/source/ directory (for example, docs/source/index.rst is this current page)
 
 * In order to install Sphinx, the following commands has been executed (from populse_db root directory):
