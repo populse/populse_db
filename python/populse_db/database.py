@@ -1077,7 +1077,6 @@ class DatabaseSession:
         # Updating list tables values
         for field in values:
             field_row = self.get_field(collection, field)
-            database_value = self.__python_to_column(field_row.type, values[field])
             if self.list_tables and isinstance(values[field], list):
                 column = self.name_to_valid_column_name(field)
                 table_name = 'list_%s_%s' % (collection, column)
@@ -1087,7 +1086,7 @@ class DatabaseSession:
 
                 sql = table.insert()
                 sql_params = []
-                cvalues = [self.__python_to_column(field_row.type[5:], i) for i in database_value]
+                cvalues = [self.__python_to_column(field_row.type[5:], i) for i in values[field]]
                 index = 0
                 for i in cvalues:
                     sql_params.append({'document_id': document, 'i': index, 'value': i})
