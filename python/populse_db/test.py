@@ -69,24 +69,29 @@ def create_test_case(**database_creation_parameters):
             Tests the parameters of the Database class constructor
             """
 
-            # Testing with wrong engine
-            self.assertRaises(ValueError, lambda: Database(1))
+            engine = 'sqlite:///' + self.path
+
+            # Testing with wrong engine type
+            self.assertRaises(ValueError, lambda : Database(1))
 
             # Testing with wrong query_type
-            self.assertRaises(ValueError, lambda : Database("engine", query_type="wrong_query_type"))
-            self.assertRaises(ValueError, lambda : Database("engine", query_type=True))
+            self.assertRaises(ValueError, lambda : Database(engine, query_type="wrong_query_type"))
+            self.assertRaises(ValueError, lambda : Database(engine, query_type=True))
 
             # Testing with wrong caches
-            self.assertRaises(ValueError, lambda : Database("engine", caches="False"))
+            self.assertRaises(ValueError, lambda : Database(engine, caches="False"))
 
             # Testing with wrong list_tables
-            self.assertRaises(ValueError, lambda : Database("engine", list_tables="False"))
+            self.assertRaises(ValueError, lambda : Database(engine, list_tables="False"))
 
             # Testing with wrong database schema
             with self.assertRaises(ValueError):
                 database_path = os.path.realpath(os.path.join("..", "..", "docs", "databases", "sample.db"))
                 database_engine = 'sqlite:///' + database_path
                 Database(database_engine)
+
+            # Testing with wrong engine
+            self.assertRaises(ValueError, lambda : Database("engine"))
 
         def test_add_field(self):
             """
@@ -1166,7 +1171,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection_test", "document_test")
 
                 # Checking with invalid collection
-                self.assertRaises(ValueError, lambda : set(document.index for document in session.filter_documents("collection_not_existing", "")))
+                self.assertRaises(ValueError, lambda : set(document.index for document in session.filter_documents("collection_not_existing", None)))
 
                 # Checking that every document is returned if there is no filter
                 documents = set(document.index for document in session.filter_documents("collection_test", None))

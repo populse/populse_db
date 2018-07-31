@@ -22,6 +22,7 @@ from sqlalchemy import (create_engine, Column, MetaData, Table, sql,
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session, mapper
 from sqlalchemy.schema import CreateTable, DropTable
+from sqlalchemy.exc import ArgumentError
 
 import populse_db
 
@@ -199,11 +200,13 @@ class Database:
         :param string_engine: String engine of the new database file (see Database class constructor for more details)
         """
 
-        engine = create_engine(string_engine)
+        try:
+            engine = create_engine(string_engine)
+        except ArgumentError:
+            raise ValueError("The string engine is invalid, please refer to the documentation for more details on how to write the string engine")
         metadata = MetaData()
         metadata.reflect(bind=engine)
         if FIELD_TABLE in metadata.tables and COLLECTION_TABLE in metadata.tables:
-            print("already populse_db database")
             return True
         elif len(metadata.tables) > 0:
             return False
