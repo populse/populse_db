@@ -82,6 +82,12 @@ def create_test_case(**database_creation_parameters):
             # Testing with wrong list_tables
             self.assertRaises(ValueError, lambda : Database("engine", list_tables="False"))
 
+            # Testing with wrong database schema
+            with self.assertRaises(ValueError):
+                database_path = os.path.realpath(os.path.join("..", "..", "docs", "databases", "sample.db"))
+                database_engine = 'sqlite:///' + database_path
+                Database(database_engine)
+
         def test_add_field(self):
             """
             Tests the method adding a field
@@ -1893,4 +1899,8 @@ def load_tests(loader, standard_tests, pattern):
 
 
 if __name__ == '__main__':
+
+    # Working from the scripts directory
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
     unittest.main()

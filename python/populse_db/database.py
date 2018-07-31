@@ -156,7 +156,9 @@ class Database:
                 if not os.path.exists(parent_dir):
                     os.makedirs(os.path.dirname(self.__db_file))
 
-        self.__create_empty_schema(self.string_engine)
+        if not self.__create_empty_schema(self.string_engine):
+            raise ValueError('The database schema is not coherent with the API')
+
         if string_engine.startswith('sqlite'):
             self.engine = create_engine(self.string_engine, connect_args={'check_same_thread': False})
         else:
@@ -200,7 +202,10 @@ class Database:
         engine = create_engine(string_engine)
         metadata = MetaData()
         metadata.reflect(bind=engine)
-        if FIELD_TABLE in metadata.tables:
+        if FIELD_TABLE in metadata.tables and COLLECTION_TABLE in metadata.tables:
+            print("already populse_db database")
+            return True
+        elif len(metadata.tables) > 0:
             return False
         else:
             Table(FIELD_TABLE, metadata,
@@ -384,12 +389,6 @@ class DatabaseSession:
         self.__unsaved_modifications = False
 
         self.__update_table_classes()
-
-        # Database schema checked
-        if (COLLECTION_TABLE not in self.table_classes.keys() or
-                FIELD_TABLE not in self.table_classes.keys()):
-            raise ValueError(
-                'The database schema is not coherent with the API')
 
         if self.__caches:
             self.__fill_caches()
