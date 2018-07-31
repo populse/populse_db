@@ -128,17 +128,42 @@
 <li>Generate the website (from populse_db root directory):</li>
 </ul>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">cd</span> <span class="n">docs</span><span class="o">/</span>
-<span class="n">make</span> <span class="n">html</span> <span class="c1"># The website generated will be in build/ directory</span>
-<span class="n">cp</span> <span class="o">-</span><span class="n">R</span> <span class="n">build</span><span class="o">/</span><span class="n">doctrees</span><span class="o">/</span> <span class="o">./</span><span class="n">doctrees</span><span class="o">/</span>
-<span class="n">cp</span> <span class="o">-</span><span class="n">R</span> <span class="n">build</span><span class="o">/</span><span class="n">html</span><span class="o">/</span> <span class="o">./</span><span class="n">html</span><span class="o">/</span>
-<span class="n">rm</span> <span class="o">-</span><span class="n">d</span> <span class="o">-</span><span class="n">r</span> <span class="n">build</span><span class="o">/</span><span class="n">html</span><span class="o">/</span>
-<span class="n">rm</span> <span class="o">-</span><span class="n">d</span> <span class="o">-</span><span class="n">r</span> <span class="n">build</span><span class="o">/</span><span class="n">doctrees</span><span class="o">/</span>
+<span class="n">make</span> <span class="n">html</span> <span class="c1"># The website generated will be in docs/html/ directory</span>
 <span class="n">cd</span> <span class="o">..</span>
 </pre></div>
 </div>
 <ul class="simple">
 <li>The website is deployed automatically thanks to GitHub pages (More informations are available on their website <a class="reference external" href="https://pages.github.com/">here</a>)</li>
 <li>The option is available in the GitHub repository populse_db settings: See GitHub Pages subsection in Options section, it is currently set to master branch /docs folder</li>
+<li>The structure of the website that can be modified is in docs/source/ directory (for example, docs/source/index.rst is this current page)</li>
+<li>In order to install Sphinx, the following commands has been executed (from populse_db root directory):</li>
+</ul>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">pip</span> <span class="n">install</span> <span class="n">sphinx</span>
+<span class="n">mkdir</span> <span class="n">docs</span><span class="o">/</span>
+<span class="n">cd</span> <span class="n">docs</span><span class="o">/</span>
+<span class="n">sphinx</span><span class="o">-</span><span class="n">quickstart</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Default values, except the following ones:</span>
+<span class="sd"> - Separate source and build directories (y/n) [n]: y</span>
+<span class="sd"> - Project name: populse_db</span>
+<span class="sd"> - Author name(s): populse</span>
+<span class="sd"> - Project version: 1</span>
+<span class="sd"> - Project release: 1.0.0</span>
+<span class="sd"> - autodoc: automatically insert docstrings from modules (y/n) [n]: y</span>
+<span class="sd"> - Create Windows command file? (y/n) [y]: n</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The following line (22) must be uncommented from docs/source/conf.py:</span>
+<span class="sd"> - sys.path.insert(0, os.path.abspath(&#39;../..&#39;))</span>
+<span class="sd">The following line (8) must be modified from docs/Makefile:</span>
+<span class="sd"> - BUILDDIR      = BUILD  =&gt;  BUILDDIR      = .</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">sphinx</span><span class="o">-</span><span class="n">apidoc</span> <span class="o">-</span><span class="n">f</span> <span class="o">-</span><span class="n">o</span> <span class="n">source</span><span class="o">/</span> <span class="o">../</span><span class="n">python</span><span class="o">/</span><span class="n">populse_db</span><span class="o">/</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>After that, the documentation can be modified in docs/source directory, and built with make html command in docs/ directory</li>
+<li>The documentation is directly using the docstring from the source code to automatically generate the API</li>
 </ul>
 </div>
 <div class="section" id="license">

@@ -128,6 +128,7 @@ class Database:
                            - If caches is invalid
                            - If list_tables is invalid
                            - If query_type is invalid
+                           - If the schema is not coherent with the API (the database is not a populse_db database)
         """
 
         self.string_engine = string_engine
@@ -198,6 +199,8 @@ class Database:
         Creates the database file with an empty schema
 
         :param string_engine: String engine of the new database file (see Database class constructor for more details)
+
+        :raise ValueError: If the string engine is invalid
         """
 
         try:
@@ -378,8 +381,6 @@ class DatabaseSession:
         :param database: Database instance to take into account
 
         :param session: Session instance attached to the Database instance
-
-        :raise ValueError: If the database isn't a populse_db database
         """
 
         self.database = database

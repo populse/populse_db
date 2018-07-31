@@ -105,16 +105,44 @@ Documentation
 .. code-block:: python
    
    cd docs/
-   make html # The website generated will be in build/ directory
-   cp -R build/doctrees/ ./doctrees/ 
-   cp -R build/html/ ./html/
-   rm -d -r build/html/
-   rm -d -r build/doctrees/
+   make html # The website generated will be in docs/html/ directory
    cd ..
 
 * The website is deployed automatically thanks to GitHub pages (More informations are available on their website `here <https://pages.github.com/>`_)
 
 * The option is available in the GitHub repository populse_db settings: See GitHub Pages subsection in Options section, it is currently set to master branch /docs folder
+
+* The structure of the website that can be modified is in docs/source/ directory (for example, docs/source/index.rst is this current page)
+
+* In order to install Sphinx, the following commands has been executed (from populse_db root directory):
+
+.. code-block:: python
+   
+   pip install sphinx
+   mkdir docs/
+   cd docs/
+   sphinx-quickstart
+   """
+   Default values, except the following ones:
+    - Separate source and build directories (y/n) [n]: y
+    - Project name: populse_db
+    - Author name(s): populse
+    - Project version: 1
+    - Project release: 1.0.0
+    - autodoc: automatically insert docstrings from modules (y/n) [n]: y
+    - Create Windows command file? (y/n) [y]: n
+   """
+   """
+   The following line (22) must be uncommented from docs/source/conf.py:
+    - sys.path.insert(0, os.path.abspath('../..'))
+   The following line (8) must be modified from docs/Makefile:
+    - BUILDDIR      = BUILD  =>  BUILDDIR      = .
+   """
+   sphinx-apidoc -f -o source/ ../python/populse_db/
+
+* After that, the documentation can be modified in docs/source directory, and built with make html command in docs/ directory
+
+* The documentation is directly using the docstring from the source code to automatically generate the API
 
 License
 -------
