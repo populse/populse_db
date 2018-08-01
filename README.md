@@ -13,11 +13,9 @@ From source:
     sudo apt-get install git
     git clone https://github.com/populse/populse_db.git /tmp/populse_db
     cd /tmp/populse_db
-    sudo python setup.py install
+    sudo python3 setup.py install
     cd /tmp
     sudo rm -r /tmp/populse_db
-
-python/ directory must be added to $PYTHONPATH if the module is installed from source
 
 # Usage
 
@@ -48,6 +46,8 @@ The script of tests is python/populse_db/test.py, so the following command launc
 * sqlalchemy
 * lark-parser
 * python-dateutil
+* sphinx
+* psycopg2
 
 # Other packages used
   * ast
