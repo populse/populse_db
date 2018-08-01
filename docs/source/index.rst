@@ -75,6 +75,8 @@ The modules required for populse_db are the following ones:
 * sqlalchemy
 * lark-parser
 * python-dateutil
+* sphinx
+* psycopg2
 
 Other packages used
 -------------------
