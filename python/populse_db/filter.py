@@ -166,6 +166,7 @@ class FilterToQuery(Transformer):
         datetime.datetime: populse_db.database.FIELD_TYPE_DATETIME,
         datetime.date: populse_db.database.FIELD_TYPE_DATE,
         bool: populse_db.database.FIELD_TYPE_BOOLEAN,
+        dict: populse_db.database.FIELD_TYPE_JSON,
     }
 
     def __init__(self, database, collection):
