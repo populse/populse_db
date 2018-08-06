@@ -38,12 +38,16 @@ before_script:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew services start postgresql; fi
 
 install:
-  - pip install -e .[postgres]
-  - pip install codecov
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install -e .[postgres]; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install -e .[postgres]; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install codecov; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install codecov; fi
 
 script: 
-  - python -V
-  - python -m populse_db.test
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python3 -V; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then python -V; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python3 -m populse_db.test; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then python -m populse_db.test; fi
   - coverage run python/populse_db/test.py
 
 after_success:
