@@ -10,7 +10,11 @@ environment:
   PGPASSWORD: Password12!
   
   matrix:
+    - PYTHON: "C:\\Python26"
     - PYTHON: "C:\\Python27"
+    - PYTHON: "C:\\Python30"
+    - PYTHON: "C:\\Python31"
+    - PYTHON: "C:\\Python32"
     - PYTHON: "C:\\Python33"
     - PYTHON: "C:\\Python34"
     - PYTHON: "C:\\Python35"
