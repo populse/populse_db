@@ -159,7 +159,6 @@ class FilterToQuery(Transformer):
     python_type_to_tag_type = {
         type(None): None,
         type(''): populse_db.database.FIELD_TYPE_STRING,
-        type(u''): populse_db.database.FIELD_TYPE_STRING,
         int: populse_db.database.FIELD_TYPE_INTEGER,
         float: populse_db.database.FIELD_TYPE_FLOAT,
         datetime.time: populse_db.database.FIELD_TYPE_TIME,
@@ -549,6 +548,7 @@ class FilterToMixedQuery(FilterToSqlQuery, FilterToPythonQuery):
                 return FilterToSqlQuery.build_condition_combine_conditions(self, left_condition, operator_str,
                                                                            right_condition)
 
+
 class FilterToGuessedQuery(FilterToMixedQuery):
     def transform(self, *args, **kwargs):
         try:
@@ -556,6 +556,7 @@ class FilterToGuessedQuery(FilterToMixedQuery):
         except FilterImplementationLimit:
             transformer = FilterToPythonQuery(self.database, self.collection)
             return transformer.transform(*args, **kwargs)
+
 
 # Query_types
 QUERY_SQL = "sql"
