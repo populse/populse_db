@@ -159,6 +159,7 @@ class FilterToQuery(Transformer):
     python_type_to_tag_type = {
         type(None): None,
         type(''): populse_db.database.FIELD_TYPE_STRING,
+        type(u''): populse_db.database.FIELD_TYPE_STRING,
         int: populse_db.database.FIELD_TYPE_INTEGER,
         float: populse_db.database.FIELD_TYPE_FLOAT,
         datetime.time: populse_db.database.FIELD_TYPE_TIME,
