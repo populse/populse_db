@@ -41,31 +41,31 @@ When a database is created, it is empty.
 
 Both tables are empty, as there is no collection yet.
 
-.. image:: ../pictures/empty_database.jpg
+.. image:: ../pictures/empty_database.png
 
 When a collection is added, it is added to the list of collections, and the collection table is created.
 
-Exact call: session.add_collection("collection_test", "index")
+Exact call: session.add_collection("collection_test")
 
-.. image:: ../pictures/database_collection.jpg
+.. image:: ../pictures/database_collection.png
 
 When a document is added to a collection, a row is inserted in the collection table.
 
 Exact call: session.add_document("collection_test", "document")
 
-.. image:: ../pictures/database_document.jpg
+.. image:: ../pictures/database_document.png
 
 When a field is added to a collection, it is added in the list of fields, and a column is created in the collection table.
 
 Exact call: session.add_field("collection_test", "field", populse_db.database.FIELD_TYPE_STRING, "field test")
 
-.. image:: ../pictures/database_field.jpg
+.. image:: ../pictures/database_field.png
 
 When a value is added to <collection, field, document>, the corresponding cell is set.
 
-Exact call: session.new_value("collection_test", "document", "field", "value_test")
+Exact call: session.new_value("collection_test", "document", "field", "new_value")
 
-.. image:: ../pictures/database_value.jpg
+.. image:: ../pictures/database_value.png
 
 Requirements
 ------------
