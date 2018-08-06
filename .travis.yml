@@ -5,7 +5,19 @@ matrix:
     - os: linux
       language: python  
       python:
+        - "2.6"
+    - os: linux
+      language: python  
+      python:
         - "2.7"
+   - os: linux
+      language: python  
+      python:
+        - "3.1"
+    - os: linux
+      language: python  
+      python:
+        - "3.2"
     - os: linux
       language: python  
       python:
