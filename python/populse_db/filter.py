@@ -549,15 +549,13 @@ class FilterToMixedQuery(FilterToSqlQuery, FilterToPythonQuery):
                 return FilterToSqlQuery.build_condition_combine_conditions(self, left_condition, operator_str,
                                                                            right_condition)
 
-
 class FilterToGuessedQuery(FilterToMixedQuery):
     def transform(self, *args, **kwargs):
         try:
-            return super(FilterToGuessedQuery, self).transform(*args, **kwargs)
+            return FilterToMixedQuery.transform(self, *args, **kwargs)
         except FilterImplementationLimit:
             transformer = FilterToPythonQuery(self.database, self.collection)
             return transformer.transform(*args, **kwargs)
-
 
 # Query_types
 QUERY_SQL = "sql"
