@@ -169,7 +169,7 @@ class FilterToQuery(Transformer):
     }
 
     def __init__(self, database, collection):
-        super(FilterToQuery, self).__init__()
+        Transformer.__init__(self)
         self.database = database
         self.collection = collection
 
