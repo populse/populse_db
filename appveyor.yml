@@ -15,6 +15,7 @@ environment:
     - PYTHON: "C:\\Python34"
     - PYTHON: "C:\\Python35"
     - PYTHON: "C:\\Python36"
+    - PYTHON: "C:\\Python37"
 
 services:
   - postgresql96
@@ -30,3 +31,10 @@ install:
 test_script:
   - "python -V"
   - "python -m populse_db.test"
+
+notifications:
+  - provider: Email
+  to:
+  - '{{commitAuthorEmail}}'
+  on_build_failure: true
+  on_build_status_changed: true
