@@ -11,9 +11,6 @@ environment:
   
   matrix:
     - PYTHON: "C:\\Python27"
-    - PYTHON: "C:\\Python30"
-    - PYTHON: "C:\\Python31"
-    - PYTHON: "C:\\Python32"
     - PYTHON: "C:\\Python33"
     - PYTHON: "C:\\Python34"
     - PYTHON: "C:\\Python35"
@@ -28,7 +25,6 @@ build_script:
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - "SET PYTHONPATH=C:\\projects\\populse-db-6gndf\\python\\;%PYTHONPATH%"
   - "pip install -e .[postgres]"
 
 test_script:
