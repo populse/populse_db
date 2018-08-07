@@ -947,18 +947,15 @@ class DatabaseSession:
 
         :return: The current value of <collection, document, field> if it exists, None otherwise
         """
-
-        collection_row = self.get_collection(collection)
-        if collection_row is None:
+        
+        document = self.get_document(collection, document)
+        if document is None:
             return None
-        field_row = self.get_field(collection, field)
-        if field_row is None:
+        try:
+            return getattr(document, field, None)
+        except TypeError:
+            # Raises if field is not a string
             return None
-        document_row = self.get_document(collection, document)
-        if document_row is None:
-            return None
-
-        return FieldRow(self, collection, document_row)[field]
 
     def set_value(self, collection, document, field, new_value, flush=True):
         """
