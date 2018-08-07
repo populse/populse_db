@@ -118,7 +118,7 @@ Documentation
 
 * The structure of the website that can be modified is in docs/source/ directory (for example, docs/source/index.rst is this current page)
 
-* In order to install Sphinx, the following commands has been executed (from populse_db root directory):
+* In order to install Sphinx, the following commands have been executed (from populse_db root directory):
 
 .. code-block:: python
    

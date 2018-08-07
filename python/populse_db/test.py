@@ -864,6 +864,20 @@ def create_test_case(**database_creation_parameters):
                     document["no_primary_key"] = "document1"
                     session.add_document("collection1", document)
 
+                # Adding a document with missing field, without the option to add missing fields
+                with self.assertRaises(ValueError):
+                    document = {}
+                    document["name"] = "document10"
+                    document["field_not_existing"] = "field"
+                    session.add_document("collection1", document, False)
+
+                # Adding a document with missing field, but wrong value type
+                with self.assertRaises(ValueError):
+                    document = {}
+                    document["name"] = "document10"
+                    document["field_not_existing"] = None
+                    session.add_document("collection1", document)
+
         def test_add_collection(self):
             """
             Tests the method adding a collection
@@ -1925,7 +1939,6 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(doc, stored_doc)
     
     return TestDatabaseMethods
-
 
 def load_tests(loader, standard_tests, pattern):
     """
