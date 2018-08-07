@@ -702,7 +702,7 @@ class DatabaseSession:
         # Fields creation
         if field_type in LIST_TYPES:
             if self.list_tables:
-                table = 'list_%s_%s' % (collection, self.name_to_valid_column_name(name))
+                table = 'list_%s_%s' % (self.name_to_valid_column_name(collection), self.name_to_valid_column_name(name))
                 list_table = Table(table, self.metadata, Column('document_id', String, primary_key=True),
                                    Column('i', Integer, primary_key=True),
                                    Column('value', TYPE_TO_COLUMN[field_type[5:]]))
@@ -848,14 +848,14 @@ class DatabaseSession:
             if isinstance(field, list):
                 for field_elem in field:
                     if self.get_field(collection, field_elem).type in LIST_TYPES:
-                        table = 'list_%s_%s' % (collection, self.name_to_valid_column_name(field_elem))
+                        table = 'list_%s_%s' % (self.name_to_valid_column_name(collection), self.name_to_valid_column_name(field_elem))
                         collection_query = DropTable(self.table_classes[table].__table__)
                         self.session.execute(collection_query)
                         self.metadata.remove(self.table_classes[table].__table__)
 
             else:
                 if self.get_field(collection, field).type in LIST_TYPES:
-                    table = 'list_%s_%s' % (collection, self.name_to_valid_column_name(field))
+                    table = 'list_%s_%s' % (self.name_to_valid_column_name(collection), self.name_to_valid_column_name(field))
                     collection_query = DropTable(self.table_classes[table].__table__)
                     self.session.execute(collection_query)
                     self.metadata.remove(self.table_classes[table].__table__)
@@ -1006,7 +1006,7 @@ class DatabaseSession:
         if self.list_tables and isinstance(new_value, list):
             primary_key = self.get_collection(collection).primary_key
             document_id = document_row[primary_key]
-            table_name = 'list_%s_%s' % (collection, column_name)
+            table_name = 'list_%s_%s' % (self.name_to_valid_column_name(collection), column_name)
 
             table = self.metadata.tables[table_name]
             sql = table.delete(table.c.document_id == document_id)
@@ -1082,7 +1082,8 @@ class DatabaseSession:
             field_row = self.get_field(collection, field)
             if self.list_tables and isinstance(values[field], list):
                 column = self.name_to_valid_column_name(field)
-                table_name = 'list_%s_%s' % (collection, column)
+                collection_name = self.name_to_valid_column_name(collection)
+                table_name = 'list_%s_%s' % (collection_name, column)
                 table = self.metadata.tables[table_name]
                 sql = table.delete(table.c.document_id == document)
                 self.session.execute(sql)
@@ -1135,13 +1136,14 @@ class DatabaseSession:
                 "The document with the name {0} does not exist in the collection {1}".format(document, collection))
 
         sql_column_name = self.name_to_valid_column_name(field)
+        collection_name = self.name_to_valid_column_name(collection)
         old_value = getattr(document_row.row, sql_column_name)
         setattr(document_row.row, sql_column_name, None)
 
         if self.list_tables and field_row.type.startswith('list_'):
             primary_key = self.get_collection(collection).primary_key
             document_id = document_row[primary_key]
-            table_name = 'list_%s_%s' % (collection, sql_column_name)
+            table_name = 'list_%s_%s' % (collection_name, sql_column_name)
             table = self.metadata.tables[table_name]
             sql = table.delete(table.c.document_id == document_id)
             self.session.execute(sql)
@@ -1190,6 +1192,7 @@ class DatabaseSession:
         field_name = self.name_to_valid_column_name(field)
         database_value = getattr(
             document_row, field_name)
+        collection_name = self.name_to_valid_column_name(collection)
 
         # We add the value only if it does not already exist
         if database_value is None:
@@ -1202,7 +1205,7 @@ class DatabaseSession:
                 if self.list_tables and isinstance(value, list):
                     primary_key = self.get_collection(collection).primary_key
                     document_id = document_row[primary_key]
-                    table = 'list_%s_%s' % (collection, field_name)
+                    table = 'list_%s_%s' % (collection_name, field_name)
                     sql = self.metadata.tables[table].insert()
                     sql_params = []
                     cvalues = [self.__python_to_column(field_row.type[5:], i) for i in value]
@@ -1377,7 +1380,7 @@ class DatabaseSession:
             column_value = self.__python_to_column(field_type, v)
             column_values[column_name] = column_value
             if self.list_tables and isinstance(v, list):
-                table = 'list_%s_%s' % (collection, column_name)
+                table = 'list_%s_%s' % (self.name_to_valid_column_name(collection), column_name)
                 # sql = sql_text('INSERT INTO %s (document_id, i, value) VALUES (:document_id, :i, :value)' % table)
                 sql = self.metadata.tables[table].insert()
                 sql_params = []

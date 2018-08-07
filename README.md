@@ -10,10 +10,11 @@ The documentation is available on populse_db's website here: [https://populse.gi
 
 From source:
 
+    # A compatible version of Python must be installed 
     sudo apt-get install git
     git clone https://github.com/populse/populse_db.git /tmp/populse_db
     cd /tmp/populse_db
-    sudo python3 setup.py install
+    sudo python setup.py install # Beware that it is the good Python version
     cd /tmp
     sudo rm -r /tmp/populse_db
 

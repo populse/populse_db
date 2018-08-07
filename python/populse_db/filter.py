@@ -360,7 +360,7 @@ class FilterToSqlQuery(FilterToQuery):
         collection_table = self.database.metadata.tables[self.database.name_to_valid_column_name(self.collection)]
         primary_key = list(collection_table.primary_key.columns.values())[0]
         list_column = self.get_column(list_field)
-        list_table = self.database.metadata.tables['list_%s_%s' % (self.collection, list_column.name)]
+        list_table = self.database.metadata.tables['list_%s_%s' % (self.database.name_to_valid_column_name(self.collection), list_column.name)]
         subquery = sqlalchemy.select([list_table.c.value], list_table.c.document_id == primary_key).correlate(
             collection_table)
         return list_column.isnot(None) & sqlalchemy.literal(value).in_(subquery)
