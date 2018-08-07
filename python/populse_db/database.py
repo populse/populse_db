@@ -1342,10 +1342,10 @@ class DatabaseSession:
 
                             - The primary_key must not be existing
 
-        :param create_missing_fields: if True, fields that are in the document
-            but not in the collection are created if the type can be guessed
-            from the value in the document (possible for all valid values 
-            except None and []).
+        :param create_missing_fields: Boolean to know if the missing fields must be created
+
+            - If True, fields that are in the document but not in the collection are created if the type can be guessed from the value in the document
+              (possible for all valid values except None and []).
             
         :param flush: Bool to know if flush to do, put False in the middle of filling the table => True by default
 
@@ -1536,13 +1536,17 @@ class DatabaseSession:
     }
 
     def python_value_type(self, value):
-        '''
-        Return the field type corresponding to a Python value.
-        This type can be used in add_field(s) method. For lists
-        values, only the first item is considered to get the type.
-        Type cannot be determined for empty list. If value is None
-        the result is None.
-        '''
+        """
+        Returns the field type corresponding to a Python value.
+
+        This type can be used in add_field(s) method.
+
+        For list values, only the first item is considered to get the type.
+
+        Type cannot be determined for empty list.
+
+        If value is None, the result is None.
+        """
         if isinstance(value, list):
             if value:
                 item_type = self.python_value_type(value[0])
@@ -1556,7 +1560,7 @@ class DatabaseSession:
     @staticmethod
     def __field_type_to_column_type(field_type):
         """
-        Gives the sqlalchemy column type corresponding to the field type
+        Gives the SQLAlchemy column type corresponding to the field type
 
         :param field_type: Column type
 
@@ -1572,7 +1576,7 @@ class DatabaseSession:
 
         :param value: Value
 
-        :param type: Type that the value is supposed to have
+        :param valid_type: Type that the value is supposed to have
 
         :return: True if the value is valid, False otherwise
         """
@@ -1611,7 +1615,7 @@ class DatabaseSession:
     @staticmethod
     def __python_to_column(column_type, value):
         """
-        Convert a python value into a suitable value to put in a
+        Converts a python value into a suitable value to put in a
         database column.
         """
         if isinstance(value, list):
@@ -1624,7 +1628,7 @@ class DatabaseSession:
     @staticmethod
     def __column_to_python(column_type, value):
         """
-        Convert a value of a database column into the corresponding
+        Converts a value of a database column into the corresponding
         Python value.
         """
         if column_type.startswith('list_'):
@@ -1637,7 +1641,7 @@ class DatabaseSession:
     @staticmethod
     def __list_to_column(column_type, value):
         """
-        Convert a python list value into a suitable value to put in a
+        Converts a python list value into a suitable value to put in a
         database column.
         """
         converter = DatabaseSession._list_item_to_string.get(column_type)
@@ -1650,7 +1654,7 @@ class DatabaseSession:
     @staticmethod
     def __column_to_list(column_type, value):
         """
-        Convert a value of a database column into the corresponding
+        Converts a value of a database column into the corresponding
         Python list value.
         """
         if value is None:
@@ -1676,8 +1680,7 @@ class FieldRow:
     '''
 
     def __init__(self, database, collection, row):
-        # The attributes below are not really private but
-        # we want to avoid name clashing with document fields
+        # The attributes below are not really private but we want to avoid name clashing with document fields
         self.__database = database
         self.__collection = collection
         self.__row = row

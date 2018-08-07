@@ -223,7 +223,7 @@ modifications</li>
 
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.add_document">
-<code class="descname">add_document</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_document" title="Permalink to this definition">¶</a></dt>
+<code class="descname">add_document</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>create_missing_fields=True</em>, <em>flush=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_document" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds a document to a collection</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -234,6 +234,12 @@ modifications</li>
 <li><strong>document</strong> &#8211; <p>Dictionary of document values (dict), or document primary_key (str)</p>
 <ul>
 <li>The primary_key must not be existing</li>
+</ul>
+</li>
+<li><strong>create_missing_fields</strong> &#8211; <p>Boolean to know if the missing fields must be created</p>
+<ul>
+<li>If True, fields that are in the document but not in the collection are created if the type can be guessed from the value in the document
+(possible for all valid values except None and []).</li>
 </ul>
 </li>
 <li><strong>flush</strong> &#8211; Bool to know if flush to do, put False in the middle of filling the table =&gt; True by default</li>
@@ -567,6 +573,16 @@ False otherwise</td>
 </table>
 </dd></dl>
 
+<dl class="method">
+<dt id="populse_db.database.DatabaseSession.python_value_type">
+<code class="descname">python_value_type</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.python_value_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the field type corresponding to a Python value.</p>
+<p>This type can be used in add_field(s) method.</p>
+<p>For list values, only the first item is considered to get the type.</p>
+<p>Type cannot be determined for empty list.</p>
+<p>If value is None, the result is None.</p>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="populse_db.database.DatabaseSession.query_type">
 <code class="descname">query_type</code><a class="headerlink" href="#populse_db.database.DatabaseSession.query_type" title="Permalink to this definition">¶</a></dt>
@@ -879,7 +895,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'&gt;=': &lt;built-in function ge&gt;, '!=': &lt;built-in function ne&gt;, 'and': &lt;built-in function and_&gt;, '&gt;': &lt;built-in function gt&gt;, '&lt;': &lt;built-in function lt&gt;, '==': &lt;built-in function eq&gt;, 'ilike': &lt;staticmethod object at 0x7f0f63377f98&gt;, '&lt;=': &lt;built-in function le&gt;, 'like': &lt;staticmethod object at 0x7f0f63377f28&gt;, 'or': &lt;built-in function or_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'&gt;=': &lt;built-in function ge&gt;, 'like': &lt;staticmethod object at 0x7f901e425160&gt;, '!=': &lt;built-in function ne&gt;, '&lt;': &lt;built-in function lt&gt;, '&lt;=': &lt;built-in function le&gt;, '==': &lt;built-in function eq&gt;, 'ilike': &lt;staticmethod object at 0x7f901e4251d0&gt;, 'and': &lt;built-in function and_&gt;, '&gt;': &lt;built-in function gt&gt;, 'or': &lt;built-in function or_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -930,11 +946,6 @@ two elements.</li>
 <code class="descname">field_name</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.field_name" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.find_field_type">
-<code class="descname">find_field_type</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.find_field_type" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToQuery.invalidCombinationMessage">
 <code class="descname">invalidCombinationMessage</code><em class="property"> = 'Invalid combination of conditions on simple fields and on list fields'</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.invalidCombinationMessage" title="Permalink to this definition">¶</a></dt>
@@ -958,7 +969,7 @@ two elements.</li>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToQuery.keyword_literals">
-<code class="descname">keyword_literals</code><em class="property"> = {'true': True, 'false': False, 'null': None}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<code class="descname">keyword_literals</code><em class="property"> = {'true': True, 'null': None, 'false': False}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -974,11 +985,6 @@ two elements.</li>
 <dl class="method">
 <dt id="populse_db.filter.FilterToQuery.number">
 <code class="descname">number</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.number" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="populse_db.filter.FilterToQuery.python_type_to_tag_type">
-<code class="descname">python_type_to_tag_type</code><em class="property"> = {&lt;class 'bool'&gt;: 'boolean', &lt;class 'int'&gt;: 'int', &lt;class 'dict'&gt;: 'json', &lt;class 'datetime.date'&gt;: 'date', &lt;class 'str'&gt;: 'string', &lt;class 'datetime.time'&gt;: 'time', &lt;class 'NoneType'&gt;: None, &lt;class 'datetime.datetime'&gt;: 'datetime', &lt;class 'float'&gt;: 'float'}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.python_type_to_tag_type" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -1073,7 +1079,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'&gt;=': &lt;built-in function ge&gt;, '!=': &lt;function sql_differ at 0x7f0f632a2488&gt;, 'and': &lt;built-in function and_&gt;, '&gt;': &lt;built-in function gt&gt;, '&lt;': &lt;built-in function lt&gt;, '==': &lt;function sql_equal at 0x7f0f63310ae8&gt;, 'ilike': &lt;function ilike_op at 0x7f0f63d950d0&gt;, '&lt;=': &lt;built-in function le&gt;, 'like': &lt;function like_op at 0x7f0f63d94f28&gt;, 'or': &lt;built-in function or_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'&gt;=': &lt;built-in function ge&gt;, 'like': &lt;function like_op at 0x7f901eec2e18&gt;, '!=': &lt;function sql_differ at 0x7f901e351400&gt;, '&lt;': &lt;built-in function lt&gt;, '&lt;=': &lt;built-in function le&gt;, '==': &lt;function sql_equal at 0x7f901e3beb70&gt;, 'ilike': &lt;function ilike_op at 0x7f901eec2f28&gt;, 'and': &lt;built-in function and_&gt;, '&gt;': &lt;built-in function gt&gt;, 'or': &lt;built-in function or_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1118,6 +1124,20 @@ list field value</p>
 </div>
 <div class="section" id="module-populse_db.test">
 <span id="populse-db-test-module"></span><h2>populse_db.test module<a class="headerlink" href="#module-populse_db.test" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="populse_db.test.TestsSQLiteInMemory">
+<em class="property">class </em><code class="descclassname">populse_db.test.</code><code class="descname">TestsSQLiteInMemory</code><span class="sig-paren">(</span><em>methodName='runTest'</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.TestsSQLiteInMemory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></code></p>
+<p>Create an instance of the class that will use the named test
+method when executed. Raises a ValueError if the instance does
+not have a method with the specified name.</p>
+<dl class="method">
+<dt id="populse_db.test.TestsSQLiteInMemory.test_add_get_document">
+<code class="descname">test_add_get_document</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.TestsSQLiteInMemory.test_add_get_document" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="function">
 <dt id="populse_db.test.create_test_case">
 <code class="descclassname">populse_db.test.</code><code class="descname">create_test_case</code><span class="sig-paren">(</span><em>**database_creation_parameters</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.create_test_case" title="Permalink to this definition">¶</a></dt>
