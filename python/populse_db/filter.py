@@ -156,19 +156,6 @@ class FilterToQuery(Transformer):
         'null': None,
     }
 
-    python_type_to_tag_type = {
-        type(None): None,
-        type(''): populse_db.database.FIELD_TYPE_STRING,
-        type(u''): populse_db.database.FIELD_TYPE_STRING,
-        int: populse_db.database.FIELD_TYPE_INTEGER,
-        float: populse_db.database.FIELD_TYPE_FLOAT,
-        datetime.time: populse_db.database.FIELD_TYPE_TIME,
-        datetime.datetime: populse_db.database.FIELD_TYPE_DATETIME,
-        datetime.date: populse_db.database.FIELD_TYPE_DATE,
-        bool: populse_db.database.FIELD_TYPE_BOOLEAN,
-        dict: populse_db.database.FIELD_TYPE_JSON,
-    }
-
     def __init__(self, database, collection):
         self.database = database
         self.collection = collection
@@ -184,16 +171,6 @@ class FilterToQuery(Transformer):
     def is_list_field(field):
         return (isinstance(field, AutomapBase) and
                 field.type.startswith('list_'))
-
-    def find_field_type(self, value):
-        if isinstance(value, list):
-            if value:
-                item_type = self.find_field_type(value[0])
-                return 'list_' + item_type
-            else:
-                return type(None)
-        else:
-            return self.python_type_to_tag_type[type(value)]
 
     def all(self, items):
         return self.build_condition_all()
@@ -342,7 +319,7 @@ class FilterToSqlQuery(FilterToQuery):
         '''
         Converts a Python value to a value suitable to put in a database column
         '''
-        tag_type = self.find_field_type(python_value)
+        tag_type = self.database.python_value_type(python_value)
         column_value = DatabaseSession._DatabaseSession__python_to_column(tag_type, python_value)
         return column_value
 

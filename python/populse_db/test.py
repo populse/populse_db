@@ -20,6 +20,35 @@ from populse_db.database import Database, FIELD_TYPE_STRING, FIELD_TYPE_FLOAT, F
     FIELD_TYPE_JSON, FIELD_TYPE_LIST_JSON
 from populse_db.filter import literal_parser, FilterToQuery
 
+class TestsSQLiteInMemory(unittest.TestCase):
+    def test_add_get_document(self):
+        now = datetime.datetime.now()
+        db = Database('sqlite:///:memory:')
+        with db as dbs:
+            dbs.add_collection('test')
+            base_doc = {
+                'string': 'string',
+                'int': 1,
+                'float': 1.4,
+                'boolean': True,
+                'datetime': now,
+                'date': now.date(),
+                'time': now.time(),
+                'dict': {
+                    'string': 'string',
+                    'int': 1,
+                    'float': 1.4,
+                    'boolean': True,
+                }
+            }
+            doc = base_doc.copy()
+            for k, v in base_doc.items():
+                lk = 'list_%s' % k
+                doc[lk] = [v]
+            doc['index'] = 'test'
+            dbs.add_document('test', doc)
+            stored_doc = dict(dbs.get_document('test', 'test'))
+            self.assertEqual(doc, stored_doc)
 
 def create_test_case(**database_creation_parameters):
     class TestDatabaseMethods(unittest.TestCase):
@@ -33,7 +62,7 @@ def create_test_case(**database_creation_parameters):
             Creates a temporary folder containing the database file that will be used for the test
             """
 
-            print(self._testMethodName)
+            #print(self._testMethodName)
             self.temp_folder = tempfile.mkdtemp()
             self.path = os.path.join(self.temp_folder, "test.db")
             if 'string_engine' not in database_creation_parameters:
@@ -720,7 +749,7 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing that a document is returned if it exists
                 self.assertIsInstance(session.get_document(
-                    "collection1", "document1").row,
+                    "collection1", "document1")._FieldRow__row,
                                       session.table_classes[session.name_to_valid_column_name("collection1")])
 
                 # Testing that None is returned if the document does not exist
@@ -809,7 +838,7 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing that the document has been added
                 document = session.get_document("collection1", "document1")
-                self.assertIsInstance(document.row,
+                self.assertIsInstance(document._FieldRow__row,
                                       session.table_classes[session.name_to_valid_column_name("collection1")])
                 self.assertEqual(document.name, "document1")
 
@@ -1751,7 +1780,7 @@ def create_test_case(**database_creation_parameters):
                         self.assertEqual(documents, expected)
                     except Exception as e:
                         session.unsave_modifications()
-                        query = session._DatabaseSession__filter_query('collection1', filter)
+                        #query = session._DatabaseSession__filter_query('collection1', filter)
                         e.message = 'While testing filter : %s\n%s' % (str(filter), e.message)
                         e.args = (e.message,)
                         raise
@@ -1862,7 +1891,39 @@ def create_test_case(**database_creation_parameters):
             # a new one is created.
             with database as session4:
                 self.assertIsNot(session, session4)
-
+        
+        def test_automatic_fields_creation(self):
+            """
+            Test automatic creation of fields with add_document
+            """
+            database = self.create_database()
+            with database as session:
+                now = datetime.datetime.now()
+                session.add_collection('test')
+                base_doc = {
+                    'string': 'string',
+                    'int': 1,
+                    'float': 1.4,
+                    'boolean': True,
+                    'datetime': now,
+                    'date': now.date(),
+                    'time': now.time(),
+                    'dict': {
+                        'string': 'string',
+                        'int': 1,
+                        'float': 1.4,
+                        'boolean': True,
+                    }
+                }
+                doc = base_doc.copy()
+                for k, v in base_doc.items():
+                    lk = 'list_%s' % k
+                    doc[lk] = [v]
+                doc['index'] = 'test'
+                session.add_document('test', doc)
+                stored_doc = dict(session.get_document('test', 'test'))
+                self.assertEqual(doc, stored_doc)
+    
     return TestDatabaseMethods
 
 
@@ -1879,7 +1940,7 @@ def load_tests(loader, standard_tests, pattern):
     :return: A test suite
     """
     suite = unittest.TestSuite()
-
+    suite.addTests(loader.loadTestsFromTestCase(TestsSQLiteInMemory))
     for params in (dict(caches=False, list_tables=True, query_type='mixed'),
                    dict(caches=True, list_tables=True, query_type='mixed'),
                    dict(caches=False, list_tables=False, query_type='mixed'),

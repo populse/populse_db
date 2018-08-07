@@ -8,6 +8,7 @@
 
 import ast
 import copy
+import json
 import hashlib
 import os
 import re
@@ -153,18 +154,15 @@ class Database:
         # SQLite database: It is created if it does not exist
         if string_engine.startswith('sqlite'):
             self.__db_file = re.sub("sqlite.*:///", "", string_engine)
-            if not os.path.exists(self.__db_file):
-                parent_dir = os.path.dirname(self.__db_file)
-                if not os.path.exists(parent_dir):
-                    os.makedirs(os.path.dirname(self.__db_file))
+            if self. __db_file != ':memory:':
+                if not os.path.exists(self.__db_file):
+                    parent_dir = os.path.dirname(self.__db_file)
+                    if not os.path.exists(parent_dir):
+                        os.makedirs(os.path.dirname(self.__db_file))
 
-        if not self.__create_empty_schema(self.string_engine):
+        self.engine = self.__create_empty_schema(self.string_engine)
+        if self.engine is None:
             raise ValueError('The database schema is not coherent with the API')
-
-        if string_engine.startswith('sqlite'):
-            self.engine = create_engine(self.string_engine, connect_args={'check_same_thread': False})
-        else:
-            self.engine = create_engine(self.string_engine)
 
         if string_engine.startswith('sqlite'):
             @event.listens_for(self.engine, "connect")
@@ -204,15 +202,18 @@ class Database:
         """
 
         try:
-            engine = create_engine(string_engine)
+            if string_engine.startswith('sqlite'):
+                engine = create_engine(string_engine, connect_args={'check_same_thread': False})
+            else:
+                engine = create_engine(string_engine)
         except ArgumentError:
             raise ValueError("The string engine is invalid, please refer to the documentation for more details on how to write the string engine")
         metadata = MetaData()
         metadata.reflect(bind=engine)
         if FIELD_TABLE in metadata.tables and COLLECTION_TABLE in metadata.tables:
-            return True
+            return engine
         elif len(metadata.tables) > 0:
-            return False
+            return None
         else:
             Table(FIELD_TABLE, metadata,
                   Column("field_name", String, primary_key=True),
@@ -232,7 +233,7 @@ class Database:
                   Column("primary_key", String, nullable=False))
 
             metadata.create_all(engine)
-            return True
+            return engine
 
     def __enter__(self):
         '''
@@ -999,7 +1000,7 @@ class DatabaseSession:
         new_column = self.__python_to_column(field_row.type, new_value)
 
         if field != collection_row.primary_key:
-            setattr(document_row.row, column_name, new_column)
+            setattr(document_row._FieldRow__row, column_name, new_column)
         else:
             raise ValueError("Impossible to set the primary_key value of a document")
 
@@ -1075,7 +1076,7 @@ class DatabaseSession:
 
         # Updating all values
         for column in database_values:
-            setattr(document_row.row, column, database_values[column])
+            setattr(document_row._FieldRow__row, column, database_values[column])
 
         # Updating list tables values
         for field in values:
@@ -1137,8 +1138,8 @@ class DatabaseSession:
 
         sql_column_name = self.name_to_valid_column_name(field)
         collection_name = self.name_to_valid_column_name(collection)
-        old_value = getattr(document_row.row, sql_column_name)
-        setattr(document_row.row, sql_column_name, None)
+        old_value = getattr(document_row._FieldRow__row, sql_column_name)
+        setattr(document_row._FieldRow__row, sql_column_name, None)
 
         if self.list_tables and field_row.type.startswith('list_'):
             primary_key = self.get_collection(collection).primary_key
@@ -1200,7 +1201,7 @@ class DatabaseSession:
                 current_value = self.__python_to_column(
                     field_row.type, value)
                 setattr(
-                    document_row.row, field_name,
+                    document_row._FieldRow__row, field_name,
                     current_value)
                 if self.list_tables and isinstance(value, list):
                     primary_key = self.get_collection(collection).primary_key
@@ -1331,7 +1332,7 @@ class DatabaseSession:
         self.session.flush()
         self.__unsaved_modifications = True
 
-    def add_document(self, collection, document, flush=True):
+    def add_document(self, collection, document, create_missing_fields=True, flush=True):
         """
         Adds a document to a collection
 
@@ -1341,6 +1342,11 @@ class DatabaseSession:
 
                             - The primary_key must not be existing
 
+        :param create_missing_fields: if True, fields that are in the document
+            but not in the collection are created if the type can be guessed
+            from the value in the document (possible for all valid values 
+            except None and []).
+            
         :param flush: Bool to know if flush to do, put False in the middle of filling the table => True by default
 
         :raise ValueError: - If the collection does not exist
@@ -1376,6 +1382,15 @@ class DatabaseSession:
         lists = []
         for k, v in document.items():
             column_name = self.name_to_valid_column_name(k)
+            field = self.get_field(collection, k)
+            if field is None:
+                if not create_missing_fields:
+                    raise ValueError('Collection {0} has no field {1}'.format(collection, k))
+                try:
+                    field_type = self.python_value_type(v)
+                except KeyError:
+                    raise ValueError('Collection {0} has no field {1} and it cannot be created from a value of type {2}'.format(collection, k, type(v)))
+                self.add_field(collection, k, field_type)
             field_type = self.get_field(collection, k).type
             column_value = self.__python_to_column(field_type, v)
             column_values[column_name] = column_value
@@ -1507,6 +1522,37 @@ class DatabaseSession:
 
     """ UTILS """
 
+    _python_type_to_tag_type = {
+        type(None): None,
+        type(''): FIELD_TYPE_STRING,
+        type(u''): FIELD_TYPE_STRING,
+        int: FIELD_TYPE_INTEGER,
+        float: FIELD_TYPE_FLOAT,
+        time: FIELD_TYPE_TIME,
+        datetime: FIELD_TYPE_DATETIME,
+        date: FIELD_TYPE_DATE,
+        bool: FIELD_TYPE_BOOLEAN,
+        dict: FIELD_TYPE_JSON,
+    }
+
+    def python_value_type(self, value):
+        '''
+        Return the field type corresponding to a Python value.
+        This type can be used in add_field(s) method. For lists
+        values, only the first item is considered to get the type.
+        Type cannot be determined for empty list. If value is None
+        the result is None.
+        '''
+        if isinstance(value, list):
+            if value:
+                item_type = self.python_value_type(value[0])
+                return 'list_' + item_type
+            else:
+                # Raises a KeyError for empty list
+                return self._python_type_to_tag_type[list]
+        else:
+            return self._python_type_to_tag_type[type(value)]
+    
     @staticmethod
     def __field_type_to_column_type(field_type):
         """
@@ -1571,7 +1617,7 @@ class DatabaseSession:
         if isinstance(value, list):
             return DatabaseSession.__list_to_column(column_type, value)
         elif isinstance(value, dict):
-            return str(value)
+            return json.dumps(value)
         else:
             return value
 
@@ -1584,7 +1630,7 @@ class DatabaseSession:
         if column_type.startswith('list_'):
             return DatabaseSession.__column_to_list(column_type, value)
         elif column_type == FIELD_TYPE_JSON:
-            return ast.literal_eval(value)
+            return json.loads(value)
         else:
             return value
 
@@ -1630,20 +1676,27 @@ class FieldRow:
     '''
 
     def __init__(self, database, collection, row):
-        self.database = database
-        self.collection = collection
-        self.row = row
+        # The attributes below are not really private but
+        # we want to avoid name clashing with document fields
+        self.__database = database
+        self.__collection = collection
+        self.__row = row
 
     def __getattr__(self, name):
         try:
-            return getattr(self.row, name)
+            return getattr(self._FieldRow__row, name)
         except AttributeError as e:
-            result = getattr(self.row, self.database.name_to_valid_column_name(name), Undefined)
+            result = getattr(self.__row, self.__database.name_to_valid_column_name(name), Undefined)
             if result is Undefined:
                 raise
             result = DatabaseSession._DatabaseSession__column_to_python(
-                self.database.get_field(self.collection, name).type, result)
+                self.__database.get_field(self.__collection, name).type, result)
             return result
 
     def __getitem__(self, name):
         return getattr(self, name)
+    
+    def __iter__(self):
+        for f in self.__database.get_fields_names(self.__collection):
+            v = getattr(self, f)
+            yield (f, v)
