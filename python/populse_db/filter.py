@@ -319,7 +319,7 @@ class FilterToSqlQuery(FilterToQuery):
         '''
         Converts a Python value to a value suitable to put in a database column
         '''
-        tag_type = self.database.python_value_type(python_value)
+        tag_type = self.database._DatabaseSession__python_value_type(python_value)
         column_value = DatabaseSession._DatabaseSession__python_to_column(tag_type, python_value)
         return column_value
 

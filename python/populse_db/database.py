@@ -1387,7 +1387,7 @@ class DatabaseSession:
                 if not create_missing_fields:
                     raise ValueError('Collection {0} has no field {1}'.format(collection, k))
                 try:
-                    field_type = self.python_value_type(v)
+                    field_type = self.__python_value_type(v)
                 except KeyError:
                     raise ValueError('Collection {0} has no field {1} and it cannot be created from a value of type {2}'.format(collection, k, type(v)))
                 self.add_field(collection, k, field_type)
@@ -1535,21 +1535,17 @@ class DatabaseSession:
         dict: FIELD_TYPE_JSON,
     }
 
-    def python_value_type(self, value):
+    def __python_value_type(self, value):
         """
         Returns the field type corresponding to a Python value.
-
         This type can be used in add_field(s) method.
-
         For list values, only the first item is considered to get the type.
-
         Type cannot be determined for empty list.
-
         If value is None, the result is None.
         """
         if isinstance(value, list):
             if value:
-                item_type = self.python_value_type(value[0])
+                item_type = self.__python_value_type(value[0])
                 return 'list_' + item_type
             else:
                 # Raises a KeyError for empty list
