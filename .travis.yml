@@ -23,9 +23,9 @@ matrix:
       python:
         - "3.6"
     - os: linux
-      language: python
+      language: python  
       python:
-        - "4.6"
+        - "3.7"
 
 services:
   - postgresql
