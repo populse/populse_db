@@ -455,9 +455,7 @@ class DatabaseSession:
             for document_row in documents_rows:
                 self.__documents[collection][
                     getattr(document_row,
-                            self.name_to_valid_column_name(self.__collections[collection].primary_key))] = FieldRow(
-                    self, collection,
-                    document_row)
+                            self.name_to_valid_column_name(self.__collections[collection].primary_key))] = document_row
 
     def __refresh_cache_documents(self, collection):
         """
@@ -471,8 +469,7 @@ class DatabaseSession:
         self.__documents[collection] = {}
         for document_row in documents_rows:
             self.__documents[collection][getattr(document_row, self.name_to_valid_column_name(
-                self.__collections[collection].primary_key))] = FieldRow(
-                self, collection, document_row)
+                self.__collections[collection].primary_key))] = document_row
 
     """ COLLECTIONS """
 
@@ -730,7 +727,7 @@ class DatabaseSession:
                              (self.name_to_valid_column_name(collection), column_name, column_str_type))
         self.session.execute(document_query)
         self.table_classes[self.name_to_valid_column_name(collection)].__table__.append_column(column)
-
+        
         # Redefinition of the table classes
         if flush:
             self.session.flush()
@@ -986,7 +983,7 @@ class DatabaseSession:
         if field_row is None:
             raise ValueError(
                 "The field with the name {0} does not exist in the collection {1}".format(field, collection))
-        document_row = self.get_document(collection, document)
+        document_row = self.__get_document_row(collection, document)
         if document_row is None:
             raise ValueError(
                 "The document with the name {0} does not exist in the collection {1}".format(document, collection))
@@ -997,13 +994,13 @@ class DatabaseSession:
         new_column = self.__python_to_column(field_row.type, new_value)
 
         if field != collection_row.primary_key:
-            setattr(document_row._FieldRow__row, column_name, new_column)
+            setattr(document_row, column_name, new_column)
         else:
             raise ValueError("Impossible to set the primary_key value of a document")
 
         if self.list_tables and isinstance(new_value, list):
             primary_key = self.get_collection(collection).primary_key
-            document_id = document_row[primary_key]
+            document_id = getattr(document_row, self.name_to_valid_column_name(primary_key))
             table_name = 'list_%s_%s' % (self.name_to_valid_column_name(collection), column_name)
 
             table = self.metadata.tables[table_name]
@@ -1047,7 +1044,7 @@ class DatabaseSession:
         collection_row = self.get_collection(collection)
         if collection_row is None:
             raise ValueError("The collection {0} does not exist".format(collection))
-        document_row = self.get_document(collection, document)
+        document_row = self.__get_document_row(collection, document)
         if document_row is None:
             raise ValueError(
                 "The document with the name {0} does not exist in the collection {1}".format(document, collection))
@@ -1073,7 +1070,7 @@ class DatabaseSession:
 
         # Updating all values
         for column in database_values:
-            setattr(document_row._FieldRow__row, column, database_values[column])
+            setattr(document_row, column, database_values[column])
 
         # Updating list tables values
         for field in values:
@@ -1128,19 +1125,19 @@ class DatabaseSession:
         if field_row is None:
             raise ValueError(
                 "The field with the name {0} does not exist in the collection {1}".format(field, collection))
-        document_row = self.get_document(collection, document)
+        document_row = self.__get_document_row(collection, document)
         if document_row is None:
             raise ValueError(
                 "The document with the name {0} does not exist in the collection {1}".format(document, collection))
 
         sql_column_name = self.name_to_valid_column_name(field)
         collection_name = self.name_to_valid_column_name(collection)
-        old_value = getattr(document_row._FieldRow__row, sql_column_name)
-        setattr(document_row._FieldRow__row, sql_column_name, None)
+        old_value = getattr(document_row, sql_column_name)
+        setattr(document_row, sql_column_name, None)
 
         if self.list_tables and field_row.type.startswith('list_'):
             primary_key = self.get_collection(collection).primary_key
-            document_id = document_row[primary_key]
+            document_id = getattr(document_row, self.name_to_valid_column_name(primary_key))
             table_name = 'list_%s_%s' % (collection_name, sql_column_name)
             table = self.metadata.tables[table_name]
             sql = table.delete(table.c.document_id == document_id)
@@ -1173,7 +1170,7 @@ class DatabaseSession:
 
         collection_row = self.get_collection(collection)
         field_row = self.get_field(collection, field)
-        document_row = self.get_document(collection, document)
+        document_row = self.__get_document_row(collection, document)
 
         if checks:
             if collection_row is None:
@@ -1198,11 +1195,11 @@ class DatabaseSession:
                 current_value = self.__python_to_column(
                     field_row.type, value)
                 setattr(
-                    document_row._FieldRow__row, field_name,
+                    document_row, field_name,
                     current_value)
                 if self.list_tables and isinstance(value, list):
                     primary_key = self.get_collection(collection).primary_key
-                    document_id = document_row[primary_key]
+                    document_id = getattr(document_row, self.name_to_valid_column_name(primary_key))
                     table = 'list_%s_%s' % (collection_name, field_name)
                     sql = self.metadata.tables[table].insert()
                     sql_params = []
@@ -1224,9 +1221,10 @@ class DatabaseSession:
 
     """ DOCUMENTS """
 
-    def get_document(self, collection, document):
+    def __get_document_row(self, collection, document):
         """
-        Gives the document row of a document, given a collection
+        Gives the SQLAchemy row of a document, given a collection and a
+        document identifier.
 
         :param collection: Document collection (str, must be existing)
 
@@ -1239,10 +1237,7 @@ class DatabaseSession:
         if collection_row is None:
             return None
         if self.__caches:
-            try:
-                return self.__documents[collection][document]
-            except KeyError:
-                return None
+            return self.__documents[collection].get(document)
         else:
             primary_key = collection_row.primary_key
             column = getattr(self.table_classes[self.name_to_valid_column_name(collection)],
@@ -1251,9 +1246,25 @@ class DatabaseSession:
             query = self.session.query(self.table_classes[self.name_to_valid_column_name(collection)]).filter(
                 column == value)
             document_row = query.first()
-            if document_row is not None:
-                document_row = FieldRow(self, collection, document_row)
             return document_row
+    
+    def get_document(self, collection, document):
+        """
+        Gives a Document instance given a collection and a document identifier
+
+        :param collection: Document collection (str, must be existing)
+
+        :param document: Document name (str, must be existing)
+
+        :return: The document row if the document exists, None otherwise
+        """
+
+        document_row = self.__get_document_row(collection, document)
+        if document_row is not None:
+            document = Document(self, collection, document_row)
+        else:
+            document = None
+        return document
 
     def get_documents_names(self, collection):
         """
@@ -1288,7 +1299,7 @@ class DatabaseSession:
             return []
         else:
             documents = self.session.query(self.table_classes[self.name_to_valid_column_name(collection)]).all()
-            documents_list = [FieldRow(self, collection, document) for document in documents]
+            documents_list = [Document(self, collection, document) for document in documents]
             return documents_list
 
     def remove_document(self, collection, document):
@@ -1412,7 +1423,6 @@ class DatabaseSession:
         self.session.add(document_row)
 
         if self.__caches:
-            document_row = FieldRow(self, collection, document_row)
             self.__documents[collection][document_id] = document_row
 
         if flush:
@@ -1513,7 +1523,7 @@ class DatabaseSession:
                 filter_query)
             python_filter = None
         for row in self.session.execute(select):
-            row = FieldRow(self, collection, row)
+            row = Document(self, collection, row)
             if python_filter is None or python_filter(row):
                 yield row
 
@@ -1661,44 +1671,22 @@ class DatabaseSession:
 class Undefined:
     pass
 
-class FieldRow:
+class Document(dict):
     '''
-    A FieldRow is an object that makes it possible to access to attributes of
-    a database row returned by sqlalchemy using the column name.
-
-    If the attribute with the field name is not found, it is hashed and search in the
-    actual row.
-
-    If found, it is stored in the FieldRow instance.
+    A Document is a Python dictionary containing a document field values.
+    It is build from the result of an SQL query and allow to access to the
+    fields via attribute syntax (e.g. doc.toto == doc['toto']).
     '''
 
-    def __init__(self, database, collection, row):
-        # The attributes below are not really private but we want to avoid name clashing with document fields
-        self.__database = database
-        self.__collection = collection
-        self.__row = row
+    def __init__(self, database_session, collection, row):
+        for field in database_session.get_fields_names(collection):
+            value = database_session._DatabaseSession__column_to_python(
+                database_session.get_field(collection,field).type,
+                getattr(row, database_session.name_to_valid_column_name(field)))
+            self[field] = value
 
     def __getattr__(self, name):
         try:
-            return getattr(self._FieldRow__row, name)
-        except AttributeError as e:
-            result = getattr(self.__row, self.__database.name_to_valid_column_name(name), Undefined)
-            if result is Undefined:
-                raise
-            result = DatabaseSession._DatabaseSession__column_to_python(
-                self.__database.get_field(self.__collection, name).type, result)
-            return result
-
-    def __getitem__(self, name):
-        return getattr(self, name)
-    
-    def __iter__(self):
-        for f in self.__database.get_fields_names(self.__collection):
-            v = getattr(self, f)
-            yield (f, v)
-    items = __iter__
-    
-    def keys(self):
-        for f in self.__database.get_fields_names(self.__collection):
-            yield f
-    
+            return self[name]
+        except KeyError:
+            raise AttributeError(name)

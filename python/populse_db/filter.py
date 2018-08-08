@@ -20,9 +20,9 @@ from sqlalchemy.ext.automap import AutomapBase
 from sqlalchemy.sql.elements import BinaryExpression
 
 import populse_db
-# The grammar (in Lark format) used to parse filter strings
 from populse_db.database import DatabaseSession
 
+# The grammar (in Lark format) used to parse filter strings
 filter_grammar = '''
 ?start : filter
 
