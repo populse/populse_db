@@ -8,13 +8,26 @@ The documentation is available on populse_db's website here: [https://populse.gi
 	
 # Installation
 
+From PyPI:
+
+    # A compatible version of Python and Pip must be installed
+   
+    To install pip:
+    sudo apt-get install python-pip # Python2
+    sudo apt-get install python3-pip # Python3
+   
+    # To install the module:
+    sudo pip install populse-db # Beware that it is the Pip version corresponding to the good Python version
+    sudo pipx.x install populse-db # With a precise Pip version
+    sudo pythonx.x -m pip install populse-db # With a precise Python version
+
 From source:
 
-    # A compatible version of Python must be installed 
+    # A compatible version of Python must be installed
     sudo apt-get install git
     git clone https://github.com/populse/populse_db.git /tmp/populse_db
     cd /tmp/populse_db
-    sudo python setup.py install # Beware that it is the good Python version
+    sudo python setup.py install # Beware that it is the good Python version (use pythonx.x to be sure)
     cd /tmp
     sudo rm -r /tmp/populse_db
 
