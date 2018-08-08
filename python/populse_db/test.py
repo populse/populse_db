@@ -114,10 +114,11 @@ def create_test_case(**database_creation_parameters):
             self.assertRaises(ValueError, lambda : Database(engine, list_tables="False"))
 
             # Testing with wrong database schema
-            with self.assertRaises(ValueError):
-                database_path = os.path.realpath(os.path.join("..", "..", "docs", "databases", "sample.db"))
-                database_engine = 'sqlite:///' + database_path
-                Database(database_engine)
+            if os.path.exists(os.path.join("..", "..", "docs", "databases", "sample.db")):
+                with self.assertRaises(ValueError):
+                    database_path = os.path.realpath(os.path.join("..", "..", "docs", "databases", "sample.db"))
+                    database_engine = 'sqlite:///' + database_path
+                    Database(database_engine)
 
             # Testing with wrong engine
             self.assertRaises(ValueError, lambda : Database("engine"))

@@ -44,7 +44,7 @@ brainvisa_build_model = 'pure_python'
 # Other values used in setup.py
 ORGANISATION = 'populse'
 AUTHOR = 'Populse'
-AUTHOR_EMAIL = 'https://github.com/populse/populse_db'
+AUTHOR_EMAIL = 'econdami@yahoo.fr'
 URL = 'http://populse.github.io/populse_db/'
 LICENSE = 'CeCILL-B'
 VERSION = __version__
