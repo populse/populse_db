@@ -1696,3 +1696,9 @@ class FieldRow:
         for f in self.__database.get_fields_names(self.__collection):
             v = getattr(self, f)
             yield (f, v)
+    items = __iter__
+    
+    def keys(self):
+        for f in self.__database.get_fields_names(self.__collection):
+            yield f
+    
