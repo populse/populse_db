@@ -8,7 +8,7 @@ The documentation is available on populse_db's website here: [https://populse.gi
 	
 # Installation
 
-From PyPI:
+From [PyPI](https://pypi.org/project/populse-db/):
 
     # A compatible version of Python and Pip must be installed
    
