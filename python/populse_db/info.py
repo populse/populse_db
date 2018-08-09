@@ -11,7 +11,7 @@ import sys
 # populse_db current version
 version_major = 1
 version_minor = 0
-version_micro = 0
+version_micro = 1
 version_extra = ""
 
 # Expected by setup.py: string of form "X.Y.Z"
@@ -21,7 +21,12 @@ __version__ = "{0}.{1}.{2}".format(version_major, version_minor, version_micro)
 CLASSIFIERS = ['Development Status :: 5 - Production/Stable',
                'Environment :: Console',
                'Operating System :: OS Independent',
-               'Programming Language :: Python',
+               'Programming Language :: Python :: 2.7',
+               'Programming Language :: Python :: 3.3',
+               'Programming Language :: Python :: 3.4',
+               'Programming Language :: Python :: 3.5',
+               'Programming Language :: Python :: 3.6',
+               'Programming Language :: Python :: 3.7',
                'Programming Language :: SQL',
                'Natural Language :: English',
                'Topic :: Database',

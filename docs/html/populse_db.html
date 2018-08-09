@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>populse_db package &mdash; populse_db 1.0.0 documentation</title>
+    <title>populse_db package &mdash; populse_db 1.0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.0.0',
+        VERSION:     '1.0.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,11 +23,11 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="populse_db 1.0.0 documentation" href="index.html" /> 
+    <link rel="top" title="populse_db 1.0.1 documentation" href="index.html" /> 
   </head>
   <body role="document">
       <div class="header" role="banner"><h1 class="heading"><a href="index.html">
-          <span>populse_db 1.0.0 documentation</span></a></h1>
+          <span>populse_db 1.0.1 documentation</span></a></h1>
         <h2 class="heading"><span>populse_db package</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -412,7 +412,7 @@ modifications</li>
 <dl class="method">
 <dt id="populse_db.database.DatabaseSession.get_document">
 <code class="descname">get_document</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_document" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gives the document row of a document, given a collection</p>
+<dd><p>Gives a Document instance given a collection and a document identifier</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -748,14 +748,12 @@ False otherwise</td>
 </dd></dl>
 
 <dl class="class">
-<dt id="populse_db.database.FieldRow">
-<em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">FieldRow</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em>, <em>row</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.FieldRow" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
-<p>A FieldRow is an object that makes it possible to access to attributes of
-a database row returned by sqlalchemy using the column name.</p>
-<p>If the attribute with the field name is not found, it is hashed and search in the
-actual row.</p>
-<p>If found, it is stored in the FieldRow instance.</p>
+<dt id="populse_db.database.Document">
+<em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">Document</code><span class="sig-paren">(</span><em>database_session</em>, <em>collection</em>, <em>row</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.Document" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">dict</span></code></p>
+<p>A Document is a Python dictionary containing a document field values.
+It is build from the result of an SQL query and allow to access to the
+fields via attribute syntax (e.g. doc.toto == doc[&#8216;toto&#8217;]).</p>
 </dd></dl>
 
 <dl class="class">
@@ -885,7 +883,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'&lt;=': &lt;built-in function le&gt;, '==': &lt;built-in function eq&gt;, 'like': &lt;staticmethod object at 0x7fb2f79fc9b0&gt;, '&gt;': &lt;built-in function gt&gt;, '&gt;=': &lt;built-in function ge&gt;, 'and': &lt;built-in function and_&gt;, '!=': &lt;built-in function ne&gt;, '&lt;': &lt;built-in function lt&gt;, 'or': &lt;built-in function or_&gt;, 'ilike': &lt;staticmethod object at 0x7fb2f79fca20&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'!=': &lt;built-in function ne&gt;, '==': &lt;built-in function eq&gt;, '&lt;': &lt;built-in function lt&gt;, 'or': &lt;built-in function or_&gt;, '&gt;=': &lt;built-in function ge&gt;, '&lt;=': &lt;built-in function le&gt;, '&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;staticmethod object at 0x7f6f303cd898&gt;, 'like': &lt;staticmethod object at 0x7f6f303cd828&gt;, 'and': &lt;built-in function and_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1069,7 +1067,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'&lt;=': &lt;built-in function le&gt;, '==': &lt;function sql_equal at 0x7fb2f798fd08&gt;, 'like': &lt;function like_op at 0x7fb2f8416048&gt;, '&gt;': &lt;built-in function gt&gt;, '&gt;=': &lt;built-in function ge&gt;, 'and': &lt;built-in function and_&gt;, '!=': &lt;function sql_differ at 0x7fb2f7925598&gt;, '&lt;': &lt;built-in function lt&gt;, 'or': &lt;built-in function or_&gt;, 'ilike': &lt;function ilike_op at 0x7fb2f8416158&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'!=': &lt;function sql_differ at 0x7f6f302f4400&gt;, '==': &lt;function sql_equal at 0x7f6f303e1ae8&gt;, '&lt;': &lt;built-in function lt&gt;, 'or': &lt;built-in function or_&gt;, '&gt;=': &lt;built-in function ge&gt;, '&lt;=': &lt;built-in function le&gt;, '&gt;': &lt;built-in function gt&gt;, 'ilike': &lt;function ilike_op at 0x7f6f30e6cf28&gt;, 'like': &lt;function like_op at 0x7f6f30e6ce18&gt;, 'and': &lt;built-in function and_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
