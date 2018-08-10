@@ -55,6 +55,8 @@ The script of tests is python/populse_db/test.py, so the following command launc
         
 	python python/populse_db/test.py (from populse_db root folder)
 	
+	python -m populse_db.test
+	
 # Requirements
 
 * sqlalchemy
