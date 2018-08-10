@@ -30,7 +30,7 @@ install:
 
 test_script:
   - "python -V"
-  - "python -m populse_db.test"
+  - "python -m populse_db.test -v"
 
 notifications:
   - provider: Email
