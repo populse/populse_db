@@ -135,7 +135,7 @@ class Database:
         self.string_engine = string_engine
         if not isinstance(string_engine, six.string_types):
             raise ValueError(
-                "Wrong string_engine, it must be of type {0}, but caches of type {1} given".format(str, type(string_engine)))
+                "Wrong string_engine, it must be of type {0}, but string_engine of type {1} given".format(str, type(string_engine)))
         if not isinstance(caches, bool):
             raise ValueError(
                 "Wrong caches, it must be of type {0}, but caches of type {1} given".format(bool, type(caches)))
