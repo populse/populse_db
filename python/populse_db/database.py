@@ -1637,6 +1637,8 @@ class DatabaseSession:
         if column_type.startswith('list_'):
             return DatabaseSession.__column_to_list(column_type, value)
         elif column_type == FIELD_TYPE_JSON:
+            if value is None:
+                return None
             return json.loads(value)
         else:
             return value
@@ -1680,9 +1682,11 @@ class Document(dict):
 
     def __init__(self, database_session, collection, row):
         for field in database_session.get_fields_names(collection):
+            column = database_session.name_to_valid_column_name(field)
+            db_value = getattr(row, column)
             value = database_session._DatabaseSession__column_to_python(
                 database_session.get_field(collection,field).type,
-                getattr(row, database_session.name_to_valid_column_name(field)))
+                db_value)
             self[field] = value
 
     def __getattr__(self, name):

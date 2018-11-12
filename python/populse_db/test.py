@@ -89,6 +89,11 @@ def create_test_case(**database_creation_parameters):
                 if database_creation_parameters['string_engine'].startswith('postgresql'):
                     raise unittest.SkipTest(str(e))
                 raise
+            except ImportError as e:
+                if ('psycopg2' in str(e) and 
+                    database_creation_parameters['string_engine'].startswith('postgresql')):
+                    raise unittest.SkipTest(str(e))
+                raise
             if clear:
                 db.clear()
             return db
@@ -1201,6 +1206,31 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(list_datetime, session.get_value(
                     "collection1", "document1", "list_datetime"))
 
+        def test_json_field(self):
+            """
+            Tests the storage and retrieval of fields of type JSON
+            """
+
+            database = self.create_database()
+            with database as session:
+                # Adding a collection
+                session.add_collection("collection1", "name")
+
+                # Adding fields
+                session.add_field("collection1", "json", FIELD_TYPE_JSON)
+                
+                doc = {"name": "the_name",
+                       "json": {"key": [1, 2, "three"]}}
+                session.add_document("collection1", doc)
+                self.assertEqual(doc, session.get_document("collection1", "the_name"))
+                self.assertIsNone(session.get_document("collection1", "not_a_valid_name"))
+
+            with database as session:
+                doc = {"name": "the_name",
+                       "json": {"key": [1, 2, "three"]}}
+                self.assertEqual(doc, session.get_document("collection1", "the_name"))
+                self.assertIsNone(session.get_document("collection1", "not_a_valid_name"))
+                
         def test_filter_documents(self):
             """
             Tests the method applying the filter
