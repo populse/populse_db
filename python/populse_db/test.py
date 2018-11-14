@@ -120,7 +120,7 @@ def create_test_case(**database_creation_parameters):
 
             # Testing with wrong database schema
             if os.path.exists(os.path.join("..", "..", "docs", "databases", "sample.db")):
-                with self.assertRaises(ValueError):
+                with self.assertRaises(Exception):
                     database_path = os.path.realpath(os.path.join("..", "..", "docs", "databases", "sample.db"))
                     database_engine = 'sqlite:///' + database_path
                     Database(database_engine)
