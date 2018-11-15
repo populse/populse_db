@@ -1248,11 +1248,11 @@ def create_test_case(**database_creation_parameters):
 
                 # Checking that every document is returned if there is no filter
                 documents = set(document.index for document in session.filter_documents("collection_test", None))
-                self.assertEqual(documents, {'document_test'})
+                self.assertEqual(documents, set(['document_test']))
 
                 # Checking with invalid filter (every document must be returned)
                 documents = set(document.index for document in session.filter_documents("collection_test", True))
-                self.assertEqual(documents, {'document_test'})
+                self.assertEqual(documents, set(['document_test']))
 
         def test_filters(self):
             list_datetime = [datetime.datetime(2018, 5, 23, 12, 41, 33, 540),
@@ -1292,7 +1292,7 @@ def create_test_case(**database_creation_parameters):
 
                 for filter, expected in (
                         ('format == "NIFTI"',
-                         {
+                         set([
                              '/xyz_1899.nii',
                              '/xyz_2018.nii',
                              '/abc_2018.nii',
@@ -1305,11 +1305,11 @@ def create_test_case(**database_creation_parameters):
                              '/bcd_1981.nii',
                              '/abc_1899.nii',
                              '/xyz_1981.nii'
-                         }
+                         ])
                          ),
 
                         ('"b" IN strings',
-                         {
+                         set([
                              '/bcd_2018.mgz',
                              '/abc_1899.mgz',
                              '/abc_1899.dcm',
@@ -1334,11 +1334,11 @@ def create_test_case(**database_creation_parameters):
                              '/abc_2018.none',
                              '/bcd_2018.none',
                              '/abc_1981.none'
-                         }
+                         ])
                          ),
 
                         ('(format == "NIFTI" OR NOT format == "DICOM")',
-                         {
+                         set([
                              '/xyz_1899.nii',
                              '/xyz_1899.mgz',
                              '/bcd_2018.mgz',
@@ -1375,11 +1375,11 @@ def create_test_case(**database_creation_parameters):
                              '/abc_2018.none',
                              '/def_1981.none',
                              '/bcd_2018.none'
-                         }
+                         ])
                          ),
 
                         ('"a" IN strings',
-                         {
+                         set([
                              '/abc_1899.none',
                              '/abc_1899.nii',
                              '/abc_2018.nii',
@@ -1392,11 +1392,11 @@ def create_test_case(**database_creation_parameters):
                              '/abc_2018.dcm',
                              '/abc_2018.none',
                              '/abc_1981.none'
-                         }
+                         ])
                          ),
 
                         ('NOT "b" IN strings',
-                         {
+                         set([
                              '/xyz_1899.nii',
                              '/xyz_2018.dcm',
                              '/def_1981.dcm',
@@ -1421,10 +1421,10 @@ def create_test_case(**database_creation_parameters):
                              '/xyz_1981.none',
                              '/def_2018.none',
                              '/def_1981.none'
-                         }
+                         ])
                          ),
                         ('("a" IN strings OR NOT "b" IN strings)',
-                         {
+                         set([
                              '/xyz_1899.nii',
                              '/xyz_1899.mgz',
                              '/def_1899.nii',
@@ -1461,11 +1461,11 @@ def create_test_case(**database_creation_parameters):
                              '/xyz_2018.none',
                              '/abc_2018.none',
                              '/def_1981.none'
-                         }
+                         ])
                          ),
 
                         ('format IN ["DICOM", "NIFTI"]',
-                         {
+                         set([
                              '/xyz_1899.nii',
                              '/xyz_2018.dcm',
                              '/bcd_1899.nii',
@@ -1490,11 +1490,11 @@ def create_test_case(**database_creation_parameters):
                              '/xyz_1981.dcm',
                              '/def_1981.nii',
                              '/bcd_1981.dcm',
-                         }
+                         ])
                          ),
 
                         ('(format == "NIFTI" OR NOT format == "DICOM") AND ("a" IN strings OR NOT "b" IN strings)',
-                         {
+                         set([
                              '/abc_1899.none',
                              '/xyz_1899.mgz',
                              '/abc_1981.mgz',
@@ -1522,11 +1522,11 @@ def create_test_case(**database_creation_parameters):
                              '/xyz_2018.none',
                              '/abc_2018.none',
                              '/def_1981.none'
-                         }
+                         ])
                          ),
 
                         ('format > "DICOM"',
-                         {
+                         set([
                              '/xyz_1899.nii',
                              '/xyz_1899.mgz',
                              '/bcd_2018.mgz',
@@ -1551,11 +1551,11 @@ def create_test_case(**database_creation_parameters):
                              '/def_1981.mgz',
                              '/bcd_1899.mgz',
                              '/xyz_2018.mgz'
-                         }
+                         ])
                          ),
 
                         ('format <= "DICOM"',
-                         {
+                         set([
                              '/abc_1981.dcm',
                              '/def_1899.dcm',
                              '/abc_2018.dcm',
@@ -1568,11 +1568,11 @@ def create_test_case(**database_creation_parameters):
                              '/abc_1899.dcm',
                              '/xyz_1981.dcm',
                              '/bcd_1981.dcm',
-                         }
+                         ])
                          ),
 
                         ('format > "DICOM" AND strings != ["b", "c", "d"]',
-                         {
+                         set([
                              '/xyz_1899.nii',
                              '/xyz_1899.mgz',
                              '/abc_1981.mgz',
@@ -1591,19 +1591,19 @@ def create_test_case(**database_creation_parameters):
                              '/xyz_2018.mgz',
                              '/def_2018.mgz',
                              '/xyz_1981.mgz'
-                         }
+                         ])
                          ),
 
                         ('format <= "DICOM" AND strings == ["b", "c", "d"]',
-                         {
+                         set([
                              '/bcd_2018.dcm',
                              '/bcd_1981.dcm',
                              '/bcd_1899.dcm',
-                         }
+                         ])
                          ),
 
                         ('has_format in [false, null]',
-                         {
+                         set([
                              '/def_1899.none',
                              '/abc_1899.none',
                              '/bcd_1899.none',
@@ -1616,11 +1616,11 @@ def create_test_case(**database_creation_parameters):
                              '/def_1981.none',
                              '/xyz_1981.none',
                              '/bcd_1981.none',
-                         }
+                         ])
                          ),
 
                         ('format == null',
-                         {
+                         set([
                              '/bcd_1981.none',
                              '/abc_1899.none',
                              '/def_1899.none',
@@ -1633,14 +1633,14 @@ def create_test_case(**database_creation_parameters):
                              '/bcd_1899.none',
                              '/xyz_1899.none',
                              '/xyz_1981.none'
-                         }
+                         ])
                          ),
 
                         ('strings == null',
                          set()),
 
                         ('strings != NULL',
-                         {
+                         set([
                              '/xyz_1899.nii',
                              '/xyz_2018.dcm',
                              '/xyz_1899.mgz',
@@ -1689,11 +1689,11 @@ def create_test_case(**database_creation_parameters):
                              '/def_1981.mgz',
                              '/bcd_1899.none',
                              '/xyz_2018.mgz'
-                         }
+                         ])
                          ),
 
                         ('format != NULL',
-                         {
+                         set([
                              '/xyz_1899.nii',
                              '/xyz_1899.mgz',
                              '/bcd_2018.mgz',
@@ -1730,11 +1730,11 @@ def create_test_case(**database_creation_parameters):
                              '/bcd_1981.dcm',
                              '/def_1981.mgz',
                              '/xyz_2018.mgz'
-                         }
+                         ])
                          ),
 
                         ('name like "%.nii"',
-                         {
+                         set([
                              '/xyz_1899.nii',
                              '/xyz_2018.nii',
                              '/abc_2018.nii',
@@ -1747,11 +1747,11 @@ def create_test_case(**database_creation_parameters):
                              '/bcd_1981.nii',
                              '/abc_1899.nii',
                              '/xyz_1981.nii'
-                         }
+                         ])
                          ),
 
                         ('name ilike "%A%"',
-                         {
+                         set([
                              '/abc_1899.none',
                              '/abc_1899.nii',
                              '/abc_2018.nii',
@@ -1764,11 +1764,11 @@ def create_test_case(**database_creation_parameters):
                              '/abc_2018.dcm',
                              '/abc_2018.none',
                              '/abc_1981.none'
-                         }
+                         ])
                          ),
 
                         ('all',
-                         {
+                         set([
                              '/xyz_1899.nii',
                              '/xyz_2018.dcm',
                              '/xyz_1899.mgz',
@@ -1817,7 +1817,7 @@ def create_test_case(**database_creation_parameters):
                              '/def_1981.mgz',
                              '/bcd_1899.none',
                              '/xyz_2018.mgz'
-                         }
+                         ])
                          )):
                     try:
                         documents = set(document.name for document in session.filter_documents("collection1", filter))
