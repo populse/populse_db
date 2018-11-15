@@ -6,11 +6,14 @@
 # for details.
 ##########################################################################
 
+from __future__ import print_function
+
 import datetime
 import os
 import shutil
 import tempfile
 import unittest
+import sys
 
 from sqlalchemy.exc import OperationalError
 
@@ -19,6 +22,19 @@ from populse_db.database import Database, FIELD_TYPE_STRING, FIELD_TYPE_FLOAT, F
     FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_FLOAT, DatabaseSession, \
     FIELD_TYPE_JSON, FIELD_TYPE_LIST_JSON, Document
 from populse_db.filter import literal_parser, FilterToQuery
+
+do_tests = True
+
+if not hasattr(unittest, 'skipTest'):
+    # python 2.6
+    try:
+        import unittest2 as unittest
+    except ImportError:
+        do_tests = False
+        print('A recent version of unittest is not available. All tests '
+              'will be skipped. Please consider using python >= 2.7 or '
+              'installing unittest2.', file=sys.stderr)
+
 
 class TestsSQLiteInMemory(unittest.TestCase):
     def test_add_get_document(self):
@@ -2012,4 +2028,5 @@ if __name__ == '__main__':
     # Working from the scripts directory
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-    unittest.main()
+    if do_tests:
+        unittest.main()
