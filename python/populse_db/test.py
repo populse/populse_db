@@ -25,7 +25,7 @@ from populse_db.filter import literal_parser, FilterToQuery
 
 do_tests = True
 
-if not hasattr(unittest, 'skipTest'):
+if not hasattr(unittest, 'SkipTest'):
     # python 2.6
     try:
         import unittest2 as unittest
