@@ -45,6 +45,8 @@ install:
   - if [[ $TRAVIS_PYTHON_VERSION == 3.3 ]]; then pip list --outdated; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 3.3 ]]; then pip install --upgrade wheel; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 3.3 ]]; then pip install --upgrade setuptools; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.3 ]]; then pip install --upgrade pip; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.3 ]]; then pip show pip wheel setuptools; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install -e .[postgres]; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install -e .[postgres]; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install codecov; fi
