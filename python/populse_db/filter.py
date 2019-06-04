@@ -24,7 +24,7 @@ from populse_db.database import DatabaseSession
 
 # The grammar (in Lark format) used to parse filter strings:
 
-# Grammar with weights on terminals (raising a ValueError exception with
+# Former. Grammar with weights on terminals (raising a ValueError exception with
 # lark_parser V>= 0.7.0 and Earley parser). Because the running time is very
 # long with Earley parser, we decide to keep this grammar and to use larl
 # parser (filter_parser() and literal_parser() below). Firts tests seems
@@ -102,7 +102,6 @@ list : "[" [literal ("," literal)*] "]"
 %import common.WS
 %ignore WS
 '''
-
 
 # Grammar without weights on terminals (for lark_parser V>= 0.7.0 and Earley
 # parser). With this grammar no ValueError exception is raised, but the runing
@@ -192,7 +191,8 @@ def filter_parser():
     '''
     global _grammar_parser
     if _grammar_parser is None:
-        _grammar_parser = Lark(filter_grammar, parser='lalr')
+        #_grammar_parser = Lark(filter_grammar, parser='lalr') # tests
+        _grammar_parser = Lark(filter_grammar) # former
     return _grammar_parser
 
 
@@ -203,7 +203,8 @@ def literal_parser():
     :return: An instance of Lark grammar parser for parsing only a literal value (int, string, list, date, etc.) from a filter expression.
 
     '''
-    return Lark(filter_grammar, parser='lalr', start='literal')
+    # return Lark(filter_grammar, parser='lalr', start='literal') # tests
+    return Lark(filter_grammar, start='literal') # former
 
 
 class FilterImplementationLimit(NotImplementedError):
