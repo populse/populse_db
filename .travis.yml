@@ -1,27 +1,27 @@
 matrix:
   include:
-    - os: osx
-      language: generic
-    - os: linux
-      language: python  
-      python:
-        - "2.7"
+    #- os: osx
+    #  language: generic
+    #- os: linux
+    #  language: python  
+    #  python:
+    #    - "2.7"
     - os: linux
       language: python  
       python:
         - "3.3"
-    - os: linux
-      language: python  
-      python:
-        - "3.4"
-    - os: linux
-      language: python  
-      python:
-        - "3.5"
-    - os: linux
-      language: python  
-      python:
-        - "3.6"
+    #- os: linux
+    #  language: python  
+    #  python:
+    #    - "3.4"
+    #- os: linux
+    #  language: python  
+    #  python:
+    #    - "3.5"
+    #- os: linux
+    #  language: python  
+    #  python:
+    #    - "3.6"
 
 services:
   - postgresql
@@ -34,7 +34,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip show pip; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip show setuptools; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip show wheel; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install --upgrade pip; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install --upgrade --force-reinstall pip; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip show pip; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install -- upgrade wheel; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip show wheel; fi
