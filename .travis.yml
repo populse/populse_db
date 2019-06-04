@@ -33,9 +33,12 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python3; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip show pip; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip show setuptools; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip show wheel; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install --upgrade pip; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install --upgrade setuptools; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip show pip; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install -- upgrade wheel; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip show wheel; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install --upgrade setuptools; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip show setuptools; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install --upgrade --force-reinstall psycopg2; fi
 
