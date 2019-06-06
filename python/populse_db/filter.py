@@ -23,14 +23,6 @@ import populse_db
 from populse_db.database import DatabaseSession
 
 # The grammar (in Lark format) used to parse filter strings:
-
-# Grammar with weights on terminals (raising a ValueError exception with
-# lark_parser V>= 0.7.0 and Earley parser). Because the running time is very
-# long with Earley parser, we decide to keep this grammar and to use larl
-# parser (filter_parser() and literal_parser() below). Firts tests seems
-# to indicate that this grammar give good result with this parser, and it is
-# much faster.
-
 filter_grammar = '''
 ?start : filter
 
@@ -38,9 +30,9 @@ filter_grammar = '''
         | conditions
         | negation
         | "(" filter ")"
-        | filter BOOLEAN_OPERATOR filter -> conditions
+        | "(" filter ")" BOOLEAN_OPERATOR filter -> conditions
 
-?conditions : condition (BOOLEAN_OPERATOR condition)*
+?conditions : condition (BOOLEAN_OPERATOR filter)*
 
                    
 negation : "NOT"i condition
@@ -72,94 +64,16 @@ quoted_field_name.1 : QUOTED_FIELD_NAME
 
          
 ?literal.2 : KEYWORD_LITERAL -> keyword_literal
-         | ESCAPED_STRING   -> string
-         | SIGNED_NUMBER    -> number
-         | DATE             -> date
-         | TIME             -> time
-         | DATETIME         -> datetime
-         | list
+           | DATE            -> date
+           | DATETIME        -> datetime
+           | TIME            -> time
+           | ESCAPED_STRING  -> string
+           | SIGNED_NUMBER   -> number
+           | list
 
-
-DATE : INT "-" INT "-" INT
-TIME : INT ":" INT (":" INT ("." INT)?)?
-DATETIME : DATE "T" TIME
-
-KEYWORD_LITERAL.2 : "NULL"i
-                  | "TRUE"i
-                  | "FALSE"i
-                  
-FIELD_NAME.1 : ("_"|LETTER) ("_"|LETTER|DIGIT)*
-QUOTED_FIELD_NAME.1 : "{" /[^}]/* "}"
-
-list : "[" [literal ("," literal)*] "]"
-
-%import common.INT
-%import common.ESCAPED_STRING
-%import common.SIGNED_NUMBER
-%import common.LETTER
-%import common.DIGIT
-
-%import common.WS
-%ignore WS
-'''
-
-
-# Grammar without weights on terminals (for lark_parser V>= 0.7.0 and Earley
-# parser). With this grammar no ValueError exception is raised, but the runing
-# times is too long with Earley parser.
-"""
-filter_grammar = '''
-?start : filter
-
-?filter : "ALL"i                         -> all
-        | conditions
-        | negation
-        | "(" filter ")"
-        | filter BOOLEAN_OPERATOR filter -> conditions
-
-?conditions : condition (BOOLEAN_OPERATOR condition)*
-
-                   
-negation : "NOT"i condition
-         | "NOT"i "(" filter ")"
-
-BOOLEAN_OPERATOR : "AND"i
-                 | "OR"i
-
-CONDITION_OPERATOR : "=="i
-                   | "!="i
-                   | "<="i
-                   | ">="i
-                   | ">"i
-                   | "<"i
-                   | "IN"i
-                   | "ILIKE"i
-                   | "LIKE"i
-
-condition : operand CONDITION_OPERATOR operand
-
-?operand : literal
-         | field_name
-
-field_name.1 : FIELD_NAME
-             | quoted_field_name
-
-quoted_field_name.1 : QUOTED_FIELD_NAME
-
-
-         
-?literal.2 : KEYWORD_LITERAL -> keyword_literal
-         | ESCAPED_STRING   -> string
-         | SIGNED_NUMBER    -> number
-         | DATE             -> date
-         | TIME             -> time
-         | DATETIME         -> datetime
-         | list
-
-
-DATE : INT "-" INT "-" INT
-TIME : INT ":" INT (":" INT ("." INT)?)?
-DATETIME : DATE "T" TIME
+DATE.2 : INT "-" INT "-" INT
+TIME.2 : INT ":" INT (":" INT ("." INT)?)?
+DATETIME.2 : DATE "T" TIME
 
 KEYWORD_LITERAL : "NULL"i
                 | "TRUE"i
@@ -170,8 +84,13 @@ QUOTED_FIELD_NAME : "{" /[^}]/* "}"
 
 list : "[" [literal ("," literal)*] "]"
 
+_STRING_INNER: /(.|\\n)*?/
+_STRING_ESC_INNER: _STRING_INNER /(?<!\\\\)(\\\\\\\\)*?/
+ESCAPED_STRING : "\\"" _STRING_ESC_INNER "\\""
+
+
+
 %import common.INT
-%import common.ESCAPED_STRING
 %import common.SIGNED_NUMBER
 %import common.LETTER
 %import common.DIGIT
@@ -179,7 +98,6 @@ list : "[" [literal ("," literal)*] "]"
 %import common.WS
 %ignore WS
 '''
-"""
 
 # The instance of the grammar parser is created only once
 # then stored in _grammar_parser for later reuse
