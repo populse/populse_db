@@ -288,14 +288,21 @@ class Database:
         if current_session._populse_db_counter == 0:
             # If there is no recursive call, commit or rollback
             # the session according to the presence of an exception
-            if exc_type is None:
-                current_session.commit()
-            else:
-                current_session.rollback()
-            # Delete the database session
-            del current_session._populse_db_session
-            del current_session._populse_db_counter
-            self.__scoped_session.remove()
+            try:
+                if exc_type is None:
+                    try:
+                        current_session.commit()
+                    except:
+                        current_session.rollback()
+                        raise
+                else:
+                    current_session.rollback()
+                    raise
+            finally:
+                # Delete the database session
+                del current_session._populse_db_session
+                del current_session._populse_db_counter
+                self.__scoped_session.remove()
 
     def clear(self):
         """
@@ -1436,7 +1443,12 @@ class DatabaseSession:
         """
         Saves the modifications by committing the session
         """
-        self.session.commit()
+        try:
+            self.session.commit()
+        except:
+            self.session.rollback()
+            raise
+
         self.__unsaved_modifications = False
 
     def unsave_modifications(self):
