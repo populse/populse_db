@@ -1,31 +1,22 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>populse_db package &mdash; populse_db 1.0.1 documentation</title>
-    
+    <title>populse_db package &#8212; populse_db 1.0.1 documentation</title>
     <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.0.1',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="populse_db 1.0.1 documentation" href="index.html" /> 
-  </head>
-  <body role="document">
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
       <div class="header" role="banner"><h1 class="heading"><a href="index.html">
           <span>populse_db 1.0.1 documentation</span></a></h1>
         <h2 class="heading"><span>populse_db package</span></h2>
@@ -40,25 +31,8 @@
       <div class="content">
         
         
-  <div class="toctree-wrapper compound">
-<ul class="simple">
-</ul>
-</div>
-<table border="1" class="docutils">
-<colgroup>
-<col width="20%" />
-<col width="44%" />
-<col width="36%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference external" href="./index.html">Index</a></td>
-<td><a class="reference external" href="./documentation.html">Documentation</a></td>
-<td><a class="reference external" href="https://github.com/populse/populse_db">GitHub</a></td>
-</tr>
-</tbody>
-</table>
-<div class="section" id="populse-db-package">
-<h1>populse_db package<a class="headerlink" href="#populse-db-package" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-populse_db">
+<span id="populse-db-package"></span><h1>populse_db package<a class="headerlink" href="#module-populse_db" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
@@ -67,7 +41,7 @@
 <dl class="class">
 <dt id="populse_db.database.Database">
 <em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">Database</code><span class="sig-paren">(</span><em>string_engine</em>, <em>caches=False</em>, <em>list_tables=True</em>, <em>query_type='mixed'</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.Database" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Database API</p>
 <dl class="docutils">
 <dt>attributes:</dt>
@@ -93,7 +67,7 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>string_engine</strong> &#8211; <p>Database engine</p>
+<li><strong>string_engine</strong> – <p>Database engine</p>
 <p>The engine is constructed this way: dialect[+driver]://user:password&#64;host/dbname[?key=value..]</p>
 <p>The dialect can be mysql, oracle, postgresql, mssql, or sqlite</p>
 <p>The driver is the name of a DBAPI, such as psycopg2, pyodbc, or cx_oracle</p>
@@ -101,23 +75,23 @@
 <dl class="docutils">
 <dt>Examples:</dt>
 <dd><ul class="first last">
-<li>&#8220;mysql://scott:tiger&#64;hostname/dbname&#8221;</li>
-<li>&#8220;postgresql://scott:tiger&#64;localhost/test&#8221;</li>
-<li>&#8220;sqlite:///foo.db&#8221;</li>
-<li>&#8220;oracle+cx_oracle://scott:tiger&#64;tnsname&#8221;</li>
-<li>&#8220;mssql+pyodbc://scott:tiger&#64;mydsn&#8221;</li>
+<li>”mysql://scott:tiger&#64;hostname/dbname”</li>
+<li>”postgresql://scott:tiger&#64;localhost/test”</li>
+<li>”sqlite:///foo.db”</li>
+<li>”oracle+cx_oracle://scott:tiger&#64;tnsname”</li>
+<li>”mssql+pyodbc://scott:tiger&#64;mydsn”</li>
 </ul>
 </dd>
 </dl>
 <p>See sqlalchemy documentation for more precisions about the engine: <a class="reference external" href="http://docs.sqlalchemy.org/en/latest/core/engines.html">http://docs.sqlalchemy.org/en/latest/core/engines.html</a></p>
 </li>
-<li><strong>caches</strong> &#8211; Bool to know if the caches (the rows of the database are stored in dictionaries) must be used (Put True if you count on having a lot of data) =&gt; False by default</li>
-<li><strong>list_tables</strong> &#8211; Bool to know if tables must be created to store list values (Put True to have a pure SQL version of IN operator in filters) =&gt; True by default</li>
-<li><strong>query_type</strong> &#8211; Type of query to use for the filters (&#8216;sql&#8217;, &#8216;python&#8217;, &#8216;mixed&#8217;, or &#8216;guess&#8217;) =&gt; &#8216;mixed&#8217; by default</li>
+<li><strong>caches</strong> – Bool to know if the caches (the rows of the database are stored in dictionaries) must be used (Put True if you count on having a lot of data) =&gt; False by default</li>
+<li><strong>list_tables</strong> – Bool to know if tables must be created to store list values (Put True to have a pure SQL version of IN operator in filters) =&gt; True by default</li>
+<li><strong>query_type</strong> – Type of query to use for the filters (‘sql’, ‘python’, ‘mixed’, or ‘guess’) =&gt; ‘mixed’ by default</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
 <li>If string_engine is invalid</li>
 <li>If caches is invalid</li>
 <li>If list_tables is invalid</li>
@@ -140,7 +114,7 @@
 <dl class="class">
 <dt id="populse_db.database.DatabaseSession">
 <em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">DatabaseSession</code><span class="sig-paren">(</span><em>database</em>, <em>session</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>DatabaseSession API</p>
 <dl class="docutils">
 <dt>attributes:</dt>
@@ -190,8 +164,8 @@ modifications</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>database</strong> &#8211; Database instance to take into account</li>
-<li><strong>session</strong> &#8211; Session instance attached to the Database instance</li>
+<li><strong>database</strong> – Database instance to take into account</li>
+<li><strong>session</strong> – Session instance attached to the Database instance</li>
 </ul>
 </td>
 </tr>
@@ -206,12 +180,12 @@ modifications</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>name</strong> &#8211; New collection name (str, must not be existing)</li>
-<li><strong>primary_key</strong> &#8211; New collection primary_key column (str) =&gt; &#8220;index&#8221; by default</li>
+<li><strong>name</strong> – New collection name (str, must not be existing)</li>
+<li><strong>primary_key</strong> – New collection primary_key column (str) =&gt; “index” by default</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
 <li>If the collection is already existing</li>
 <li>If the collection name is invalid</li>
 <li>If the primary_key is invalid</li>
@@ -232,23 +206,23 @@ modifications</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
-<li><strong>document</strong> &#8211; <p>Dictionary of document values (dict), or document primary_key (str)</p>
+<li><strong>collection</strong> – Document collection (str, must be existing)</li>
+<li><strong>document</strong> – <p>Dictionary of document values (dict), or document primary_key (str)</p>
 <ul>
 <li>The primary_key must not be existing</li>
 </ul>
 </li>
-<li><strong>create_missing_fields</strong> &#8211; <p>Boolean to know if the missing fields must be created</p>
+<li><strong>create_missing_fields</strong> – <p>Boolean to know if the missing fields must be created</p>
 <ul>
 <li>If True, fields that are in the document but not in the collection are created if the type can be guessed from the value in the document
 (possible for all valid values except None and []).</li>
 </ul>
 </li>
-<li><strong>flush</strong> &#8211; Bool to know if flush to do, put False in the middle of filling the table =&gt; True by default</li>
+<li><strong>flush</strong> – Bool to know if flush to do, put False in the middle of filling the table =&gt; True by default</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
 <li>If the collection does not exist</li>
 <li>If the document already exists</li>
 <li>If document is invalid (invalid name or no primary_key)</li>
@@ -269,18 +243,18 @@ modifications</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> &#8211; Field collection (str, must be existing)</li>
-<li><strong>name</strong> &#8211; Field name (str, must not be existing)</li>
-<li><strong>field_type</strong> &#8211; Field type, in (&#8216;string&#8217;, &#8216;int&#8217;, &#8216;float&#8217;, &#8216;boolean&#8217;, &#8216;date&#8217;, &#8216;datetime&#8217;,
-&#8216;time&#8217;, &#8216;json&#8217;, &#8216;list_string&#8217;, &#8216;list_int&#8217;, &#8216;list_float&#8217;, &#8216;list_boolean&#8217;, &#8216;list_date&#8217;,
-&#8216;list_datetime&#8217;, &#8216;list_time&#8217;, &#8216;list_json&#8217;)</li>
-<li><strong>description</strong> &#8211; Field description (str or None) =&gt; None by default</li>
-<li><strong>index</strong> &#8211; Bool to know if indexing must be done =&gt; False by default</li>
-<li><strong>flush</strong> &#8211; Bool to know if the table classes must be updated (put False if in the middle of filling fields) =&gt; True by default</li>
+<li><strong>collection</strong> – Field collection (str, must be existing)</li>
+<li><strong>name</strong> – Field name (str, must not be existing)</li>
+<li><strong>field_type</strong> – Field type, in (‘string’, ‘int’, ‘float’, ‘boolean’, ‘date’, ‘datetime’,
+‘time’, ‘json’, ‘list_string’, ‘list_int’, ‘list_float’, ‘list_boolean’, ‘list_date’,
+‘list_datetime’, ‘list_time’, ‘list_json’)</li>
+<li><strong>description</strong> – Field description (str or None) =&gt; None by default</li>
+<li><strong>index</strong> – Bool to know if indexing must be done =&gt; False by default</li>
+<li><strong>flush</strong> – Bool to know if the table classes must be updated (put False if in the middle of filling fields) =&gt; True by default</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
 <li>If the collection does not exist</li>
 <li>If the field already exists</li>
 <li>If the field name is invalid</li>
@@ -302,7 +276,7 @@ modifications</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fields</strong> &#8211; List of fields: [collection, name, type, description]</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fields</strong> – List of fields: [collection, name, type, description]</td>
 </tr>
 </tbody>
 </table>
@@ -317,15 +291,15 @@ modifications</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
-<li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
-<li><strong>field</strong> &#8211; Field name (str, must be existing)</li>
-<li><strong>value</strong> &#8211; Value to add</li>
-<li><strong>checks</strong> &#8211; Bool to know if flush to do and value check (Put False in the middle of adding values) =&gt; True by default</li>
+<li><strong>collection</strong> – Document collection (str, must be existing)</li>
+<li><strong>document</strong> – Document name (str, must be existing)</li>
+<li><strong>field</strong> – Field name (str, must be existing)</li>
+<li><strong>value</strong> – Value to add</li>
+<li><strong>checks</strong> – Bool to know if flush to do and value check (Put False in the middle of adding values) =&gt; True by default</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
 <li>If the collection does not exist</li>
 <li>If the field does not exist</li>
 <li>If the document does not exist</li>
@@ -351,13 +325,13 @@ modifications</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>collection</strong> &#8211; Filter collection (str, must be existing)</li>
-<li><strong>filter_query</strong> &#8211; <p>Filter query (str)</p>
+<li><strong>collection</strong> – Filter collection (str, must be existing)</li>
+<li><strong>filter_query</strong> – <p>Filter query (str)</p>
 <ul>
-<li>A filter row must be written this way: {&lt;field&gt;} &lt;operator&gt; &#8220;&lt;value&gt;&#8221;</li>
-<li>The operator must be in (&#8216;==&#8217;, &#8216;!=&#8217;, &#8216;&lt;=&#8217;, &#8216;&gt;=&#8217;, &#8216;&lt;&#8217;, &#8216;&gt;&#8217;, &#8216;IN&#8217;, &#8216;ILIKE&#8217;, &#8216;LIKE&#8217;)</li>
-<li>The filter rows can be linked with &#8216; AND &#8216; or &#8216; OR &#8216;</li>
-<li>Example: &#8220;((({BandWidth} == &#8220;50000&#8221;)) AND (({FileName} LIKE &#8220;%G1%&#8221;)))&#8221;</li>
+<li>A filter row must be written this way: {&lt;field&gt;} &lt;operator&gt; “&lt;value&gt;”</li>
+<li>The operator must be in (‘==’, ‘!=’, ‘&lt;=’, ‘&gt;=’, ‘&lt;’, ‘&gt;’, ‘IN’, ‘ILIKE’, ‘LIKE’)</li>
+<li>The filter rows can be linked with ‘ AND ‘ or ‘ OR ‘</li>
+<li>Example: “((({BandWidth} == “50000”)) AND (({FileName} LIKE “%G1%”)))”</li>
 </ul>
 </li>
 </ul>
@@ -375,7 +349,7 @@ modifications</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; Collection name (str, must be existing)</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> – Collection name (str, must be existing)</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The collection row if it exists, None otherwise</td>
 </tr>
@@ -420,8 +394,8 @@ modifications</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
-<li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
+<li><strong>collection</strong> – Document collection (str, must be existing)</li>
+<li><strong>document</strong> – Document name (str, must be existing)</li>
 </ul>
 </td>
 </tr>
@@ -440,7 +414,7 @@ modifications</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Documents collection (str, must be existing)</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> – Documents collection (str, must be existing)</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all document rows of the collection if it exists, None otherwise</td>
 </tr>
@@ -456,7 +430,7 @@ modifications</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Documents collection (str, must be existing)</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> – Documents collection (str, must be existing)</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all document names of the collection if it exists, None otherwise</td>
 </tr>
@@ -473,8 +447,8 @@ modifications</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
-<li><strong>name</strong> &#8211; Field name (str, must be existing)</li>
+<li><strong>collection</strong> – Document collection (str, must be existing)</li>
+<li><strong>name</strong> – Field name (str, must be existing)</li>
 </ul>
 </td>
 </tr>
@@ -493,7 +467,7 @@ modifications</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Fields collection (str, must be existing)</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> – Fields collection (str, must be existing)</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all fields rows of the collection if it exists, None otherwise</td>
 </tr>
@@ -509,7 +483,7 @@ modifications</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> &#8211; Fields collection (str, must be existing)</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> – Fields collection (str, must be existing)</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all fields names of the collection if it exists, None otherwise</td>
 </tr>
@@ -526,9 +500,9 @@ modifications</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
-<li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
-<li><strong>field</strong> &#8211; Field name (str, must be existing)</li>
+<li><strong>collection</strong> – Document collection (str, must be existing)</li>
+<li><strong>document</strong> – Document name (str, must be existing)</li>
+<li><strong>field</strong> – Field name (str, must be existing)</li>
 </ul>
 </td>
 </tr>
@@ -567,7 +541,7 @@ False otherwise</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; Name (str)</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> – Name (str)</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Valid and unique (hashed) table/column name</td>
 </tr>
@@ -588,9 +562,9 @@ False otherwise</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; Collection to remove (str, must be existing)</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> – Collection to remove (str, must be existing)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><strong>ValueError</strong> &#8211; If the collection does not exist</td>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><strong>ValueError</strong> – If the collection does not exist</td>
 </tr>
 </tbody>
 </table>
@@ -605,12 +579,12 @@ False otherwise</td>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
-<li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
+<li><strong>collection</strong> – Document collection (str, must be existing)</li>
+<li><strong>document</strong> – Document name (str, must be existing)</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
 <li>If the collection does not exist</li>
 <li>If the document does not exist</li>
 </ul>
@@ -630,12 +604,12 @@ False otherwise</td>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> &#8211; Field collection (str, must be existing)</li>
-<li><strong>field</strong> &#8211; Field name (str, must be existing), or list of fields (list of str, must all be existing)</li>
+<li><strong>collection</strong> – Field collection (str, must be existing)</li>
+<li><strong>field</strong> – Field name (str, must be existing), or list of fields (list of str, must all be existing)</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
 <li>If the collection does not exist</li>
 <li>If the field does not exist</li>
 </ul>
@@ -655,14 +629,14 @@ False otherwise</td>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
-<li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
-<li><strong>field</strong> &#8211; Field name (str, must be existing)</li>
-<li><strong>flush</strong> &#8211; Bool to know if flush to do (put False in the middle of removing values) =&gt; True by default</li>
+<li><strong>collection</strong> – Document collection (str, must be existing)</li>
+<li><strong>document</strong> – Document name (str, must be existing)</li>
+<li><strong>field</strong> – Field name (str, must be existing)</li>
+<li><strong>flush</strong> – Bool to know if flush to do (put False in the middle of removing values) =&gt; True by default</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
 <li>If the collection does not exist</li>
 <li>If the field does not exist</li>
 <li>If the document does not exist</li>
@@ -689,15 +663,15 @@ False otherwise</td>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
-<li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
-<li><strong>field</strong> &#8211; Field name (str, must be existing)</li>
-<li><strong>new_value</strong> &#8211; New value</li>
-<li><strong>flush</strong> &#8211; Bool to know if flush to do =&gt; True by default</li>
+<li><strong>collection</strong> – Document collection (str, must be existing)</li>
+<li><strong>document</strong> – Document name (str, must be existing)</li>
+<li><strong>field</strong> – Field name (str, must be existing)</li>
+<li><strong>new_value</strong> – New value</li>
+<li><strong>flush</strong> – Bool to know if flush to do =&gt; True by default</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
 <li>If the collection does not exist</li>
 <li>If the field does not exist</li>
 <li>If the document does not exist</li>
@@ -720,14 +694,14 @@ False otherwise</td>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> &#8211; Document collection (str, must be existing)</li>
-<li><strong>document</strong> &#8211; Document name (str, must be existing)</li>
-<li><strong>values</strong> &#8211; Dict of values (key=field, value=value)</li>
-<li><strong>flush</strong> &#8211; Bool to know if flush to do =&gt; True by default</li>
+<li><strong>collection</strong> – Document collection (str, must be existing)</li>
+<li><strong>document</strong> – Document name (str, must be existing)</li>
+<li><strong>values</strong> – Dict of values (key=field, value=value)</li>
+<li><strong>flush</strong> – Bool to know if flush to do =&gt; True by default</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> &#8211; <ul class="simple">
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
 <li>If the collection does not exist</li>
 <li>If the field does not exist</li>
 <li>If the document does not exist</li>
@@ -752,16 +726,16 @@ False otherwise</td>
 <dl class="class">
 <dt id="populse_db.database.Document">
 <em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">Document</code><span class="sig-paren">(</span><em>database_session</em>, <em>collection</em>, <em>row</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.Document" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">dict</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
 <p>A Document is a Python dictionary containing a document field values.
 It is build from the result of an SQL query and allow to access to the
-fields via attribute syntax (e.g. doc.toto == doc[&#8216;toto&#8217;]).</p>
+fields via attribute syntax (e.g. doc.toto == doc[‘toto’]).</p>
 </dd></dl>
 
 <dl class="class">
 <dt id="populse_db.database.Undefined">
 <em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">Undefined</code><a class="headerlink" href="#populse_db.database.Undefined" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 </dd></dl>
 
 </div>
@@ -770,7 +744,7 @@ fields via attribute syntax (e.g. doc.toto == doc[&#8216;toto&#8217;]).</p>
 <dl class="exception">
 <dt id="populse_db.filter.FilterImplementationLimit">
 <em class="property">exception </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterImplementationLimit</code><a class="headerlink" href="#populse_db.filter.FilterImplementationLimit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">NotImplementedError</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NotImplementedError</span></code></p>
 <p>This exception is raised when a valid filter cannot
 be converted to a query for a specific implementation
 (for instance some list comparison operators cannot be
@@ -780,7 +754,7 @@ used in SQL)</p>
 <dl class="class">
 <dt id="populse_db.filter.FilterToGuessedQuery">
 <em class="property">class </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterToGuessedQuery</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToGuessedQuery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#populse_db.filter.FilterToMixedQuery" title="populse_db.filter.FilterToMixedQuery"><code class="xref py py-class docutils literal"><span class="pre">populse_db.filter.FilterToMixedQuery</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#populse_db.filter.FilterToMixedQuery" title="populse_db.filter.FilterToMixedQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">populse_db.filter.FilterToMixedQuery</span></code></a></p>
 <dl class="method">
 <dt id="populse_db.filter.FilterToGuessedQuery.transform">
 <code class="descname">transform</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToGuessedQuery.transform" title="Permalink to this definition">¶</a></dt>
@@ -791,7 +765,7 @@ used in SQL)</p>
 <dl class="class">
 <dt id="populse_db.filter.FilterToMixedQuery">
 <em class="property">class </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterToMixedQuery</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToMixedQuery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#populse_db.filter.FilterToSqlQuery" title="populse_db.filter.FilterToSqlQuery"><code class="xref py py-class docutils literal"><span class="pre">populse_db.filter.FilterToSqlQuery</span></code></a>, <a class="reference internal" href="#populse_db.filter.FilterToPythonQuery" title="populse_db.filter.FilterToPythonQuery"><code class="xref py py-class docutils literal"><span class="pre">populse_db.filter.FilterToPythonQuery</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#populse_db.filter.FilterToSqlQuery" title="populse_db.filter.FilterToSqlQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">populse_db.filter.FilterToSqlQuery</span></code></a>, <a class="reference internal" href="#populse_db.filter.FilterToPythonQuery" title="populse_db.filter.FilterToPythonQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">populse_db.filter.FilterToPythonQuery</span></code></a></p>
 <dl class="method">
 <dt id="populse_db.filter.FilterToMixedQuery.build_condition_combine_conditions">
 <code class="descname">build_condition_combine_conditions</code><span class="sig-paren">(</span><em>left_condition</em>, <em>operator_str</em>, <em>right_condition</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToMixedQuery.build_condition_combine_conditions" title="Permalink to this definition">¶</a></dt>
@@ -800,12 +774,15 @@ used in SQL)</p>
 <dl class="method">
 <dt id="populse_db.filter.FilterToMixedQuery.build_condition_field_in_list_field">
 <code class="descname">build_condition_field_in_list_field</code><span class="sig-paren">(</span><em>field</em>, <em>list_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToMixedQuery.build_condition_field_in_list_field" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Builds a condition checking if a field value is in another
+list field value</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="populse_db.filter.FilterToMixedQuery.build_condition_literal_in_list_field">
 <code class="descname">build_condition_literal_in_list_field</code><span class="sig-paren">(</span><em>value</em>, <em>list_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToMixedQuery.build_condition_literal_in_list_field" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Builds an condition checking if a constant value is in a list field</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="populse_db.filter.FilterToMixedQuery.build_condition_negation">
@@ -817,7 +794,7 @@ used in SQL)</p>
 <dl class="class">
 <dt id="populse_db.filter.FilterToPythonQuery">
 <em class="property">class </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterToPythonQuery</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#populse_db.filter.FilterToQuery" title="populse_db.filter.FilterToQuery"><code class="xref py py-class docutils literal"><span class="pre">populse_db.filter.FilterToQuery</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#populse_db.filter.FilterToQuery" title="populse_db.filter.FilterToQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">populse_db.filter.FilterToQuery</span></code></a></p>
 <dl class="method">
 <dt id="populse_db.filter.FilterToPythonQuery.build_condition_all">
 <code class="descname">build_condition_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.build_condition_all" title="Permalink to this definition">¶</a></dt>
@@ -885,7 +862,7 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToPythonQuery.python_operators">
-<code class="descname">python_operators</code><em class="property"> = {'!=': &lt;built-in function ne&gt;, '&gt;=': &lt;built-in function ge&gt;, '==': &lt;built-in function eq&gt;, 'and': &lt;built-in function and_&gt;, '&lt;=': &lt;built-in function le&gt;, 'like': &lt;staticmethod object at 0x7f110a09c1d0&gt;, '&lt;': &lt;built-in function lt&gt;, 'ilike': &lt;staticmethod object at 0x7f110a09c240&gt;, 'or': &lt;built-in function or_&gt;, '&gt;': &lt;built-in function gt&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">python_operators</code><em class="property"> = {'!=': &lt;built-in function ne&gt;, '&lt;': &lt;built-in function lt&gt;, '&lt;=': &lt;built-in function le&gt;, '==': &lt;built-in function eq&gt;, '&gt;': &lt;built-in function gt&gt;, '&gt;=': &lt;built-in function ge&gt;, 'and': &lt;built-in function and_&gt;, 'ilike': &lt;staticmethod object&gt;, 'like': &lt;staticmethod object&gt;, 'or': &lt;built-in function or_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToPythonQuery.python_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -893,7 +870,7 @@ list field value</p>
 <dl class="class">
 <dt id="populse_db.filter.FilterToQuery">
 <em class="property">class </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterToQuery</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">lark.tree.Transformer</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">lark.visitors.Transformer</span></code></p>
 <p>Transforms the parsing of a filter expression into object(s) that can
 be used ot select items from a database.</p>
 <p>The produced object is one of the three following items :</p>
@@ -997,7 +974,7 @@ two elements.</li>
 <dl class="class">
 <dt id="populse_db.filter.FilterToSqlQuery">
 <em class="property">class </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterToSqlQuery</code><span class="sig-paren">(</span><em>database</em>, <em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#populse_db.filter.FilterToQuery" title="populse_db.filter.FilterToQuery"><code class="xref py py-class docutils literal"><span class="pre">populse_db.filter.FilterToQuery</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#populse_db.filter.FilterToQuery" title="populse_db.filter.FilterToQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">populse_db.filter.FilterToQuery</span></code></a></p>
 <dl class="method">
 <dt id="populse_db.filter.FilterToSqlQuery.build_condition_all">
 <code class="descname">build_condition_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.build_condition_all" title="Permalink to this definition">¶</a></dt>
@@ -1069,9 +1046,99 @@ list field value</p>
 
 <dl class="attribute">
 <dt id="populse_db.filter.FilterToSqlQuery.sql_operators">
-<code class="descname">sql_operators</code><em class="property"> = {'!=': &lt;function sql_differ at 0x7f1109ff7ea0&gt;, '&gt;=': &lt;built-in function ge&gt;, '==': &lt;function sql_equal at 0x7f110a0b0620&gt;, 'and': &lt;built-in function and_&gt;, '&lt;=': &lt;built-in function le&gt;, 'ilike': &lt;function ilike_op at 0x7f110ab2fa60&gt;, '&lt;': &lt;built-in function lt&gt;, 'like': &lt;function like_op at 0x7f110ab2f950&gt;, 'or': &lt;built-in function or_&gt;, '&gt;': &lt;built-in function gt&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sql_operators</code><em class="property"> = {'!=': &lt;function sql_differ&gt;, '&lt;': &lt;built-in function lt&gt;, '&lt;=': &lt;built-in function le&gt;, '==': &lt;function sql_equal&gt;, '&gt;': &lt;built-in function gt&gt;, '&gt;=': &lt;built-in function ge&gt;, 'and': &lt;built-in function and_&gt;, 'ilike': &lt;function ilike_op&gt;, 'like': &lt;function like_op&gt;, 'or': &lt;built-in function or_&gt;}</em><a class="headerlink" href="#populse_db.filter.FilterToSqlQuery.sql_operators" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+</dd></dl>
+
+<dl class="data">
+<dt id="populse_db.filter.filter_grammar">
+<code class="descclassname">populse_db.filter.</code><code class="descname">filter_grammar</code><em class="property"> = '\n?start : filter\n\n?filter : &quot;ALL&quot;i                         -&gt; all\n        | conditions\n        | negation\n        | &quot;(&quot; filter &quot;)&quot;\n        | filter BOOLEAN_OPERATOR filter -&gt; conditions\n\n?conditions : condition (BOOLEAN_OPERATOR condition)*\n\n                   \nnegation : &quot;NOT&quot;i condition\n         | &quot;NOT&quot;i &quot;(&quot; filter &quot;)&quot;\n\nBOOLEAN_OPERATOR : &quot;AND&quot;i\n                 | &quot;OR&quot;i\n\nCONDITION_OPERATOR : &quot;==&quot;i\n                   | &quot;!=&quot;i\n                   | &quot;&lt;=&quot;i\n                   | &quot;&gt;=&quot;i\n                   | &quot;&gt;&quot;i\n                   | &quot;&lt;&quot;i\n                   | &quot;IN&quot;i\n                   | &quot;ILIKE&quot;i\n                   | &quot;LIKE&quot;i\n\ncondition : operand CONDITION_OPERATOR operand\n\n?operand : literal\n         | field_name\n\nfield_name.1 : FIELD_NAME\n             | quoted_field_name\n\nquoted_field_name.1 : QUOTED_FIELD_NAME\n\n\n         \n?literal.2 : KEYWORD_LITERAL -&gt; keyword_literal\n         | ESCAPED_STRING   -&gt; string\n         | SIGNED_NUMBER    -&gt; number\n         | DATE             -&gt; date\n         | TIME             -&gt; time\n         | DATETIME         -&gt; datetime\n         | list\n\n\nDATE : INT &quot;-&quot; INT &quot;-&quot; INT\nTIME : INT &quot;:&quot; INT (&quot;:&quot; INT (&quot;.&quot; INT)?)?\nDATETIME : DATE &quot;T&quot; TIME\n\nKEYWORD_LITERAL.2 : &quot;NULL&quot;i\n                  | &quot;TRUE&quot;i\n                  | &quot;FALSE&quot;i\n                  \nFIELD_NAME.1 : (&quot;_&quot;|LETTER) (&quot;_&quot;|LETTER|DIGIT)*\nQUOTED_FIELD_NAME.1 : &quot;{&quot; /[^}]/* &quot;}&quot;\n\nlist : &quot;[&quot; [literal (&quot;,&quot; literal)*] &quot;]&quot;\n\n%import common.INT\n%import common.ESCAPED_STRING\n%import common.SIGNED_NUMBER\n%import common.LETTER\n%import common.DIGIT\n\n%import common.WS\n%ignore WS\n'</em><a class="headerlink" href="#populse_db.filter.filter_grammar" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_grammar = ‘’’
+?start : filter</p>
+<dl class="docutils">
+<dt>?filter <span class="classifier-delimiter">:</span> <span class="classifier">“ALL”i                         -&gt; all</span></dt>
+<dd><div class="first last line-block">
+<div class="line">conditions</div>
+<div class="line">negation</div>
+<div class="line">“(” filter “)”</div>
+<div class="line">filter BOOLEAN_OPERATOR filter -&gt; conditions</div>
+</div>
+</dd>
+</dl>
+<p>?conditions : condition (BOOLEAN_OPERATOR condition)*</p>
+<dl class="docutils">
+<dt>negation <span class="classifier-delimiter">:</span> <span class="classifier">“NOT”i condition</span></dt>
+<dd><div class="first last line-block">
+<div class="line">“NOT”i “(” filter “)”</div>
+</div>
+</dd>
+<dt>BOOLEAN_OPERATOR <span class="classifier-delimiter">:</span> <span class="classifier">“AND”i</span></dt>
+<dd><div class="first last line-block">
+<div class="line">“OR”i</div>
+</div>
+</dd>
+<dt>CONDITION_OPERATOR <span class="classifier-delimiter">:</span> <span class="classifier">“==”i</span></dt>
+<dd><div class="first last line-block">
+<div class="line">“!=”i</div>
+<div class="line">“&lt;=”i</div>
+<div class="line">“&gt;=”i</div>
+<div class="line">“&gt;”i</div>
+<div class="line">“&lt;”i</div>
+<div class="line">“IN”i</div>
+<div class="line">“ILIKE”i</div>
+<div class="line">“LIKE”i</div>
+</div>
+</dd>
+</dl>
+<p>condition : operand CONDITION_OPERATOR operand</p>
+<dl class="docutils">
+<dt>?operand <span class="classifier-delimiter">:</span> <span class="classifier">literal</span></dt>
+<dd><div class="first last line-block">
+<div class="line">field_name</div>
+</div>
+</dd>
+<dt>field_name.1 <span class="classifier-delimiter">:</span> <span class="classifier">FIELD_NAME</span></dt>
+<dd><div class="first last line-block">
+<div class="line">quoted_field_name</div>
+</div>
+</dd>
+</dl>
+<p>quoted_field_name.1 : QUOTED_FIELD_NAME</p>
+<dl class="docutils">
+<dt>?literal.2 <span class="classifier-delimiter">:</span> <span class="classifier">KEYWORD_LITERAL -&gt; keyword_literal</span></dt>
+<dd><div class="first last line-block">
+<div class="line">ESCAPED_STRING   -&gt; string</div>
+<div class="line">SIGNED_NUMBER    -&gt; number</div>
+<div class="line">DATE             -&gt; date</div>
+<div class="line">TIME             -&gt; time</div>
+<div class="line">DATETIME         -&gt; datetime</div>
+<div class="line">list</div>
+</div>
+</dd>
+</dl>
+<p>DATE : INT “-” INT “-” INT
+TIME : INT “:” INT (“:” INT (“.” INT)?)?
+DATETIME : DATE “T” TIME</p>
+<dl class="docutils">
+<dt>KEYWORD_LITERAL <span class="classifier-delimiter">:</span> <span class="classifier">“NULL”i</span></dt>
+<dd><div class="first last line-block">
+<div class="line">“TRUE”i</div>
+<div class="line">“FALSE”i</div>
+</div>
+</dd>
+</dl>
+<p>FIELD_NAME : (“_”<a href="#id1"><span class="problematic" id="id2">|</span></a>LETTER) (“_”<a href="#id3"><span class="problematic" id="id4">|</span></a>LETTER|DIGIT)*
+QUOTED_FIELD_NAME : “{” /[^}]/* “}”</p>
+<p>list : “[” [literal (“,” literal)*] “]”</p>
+<p>%import common.INT
+%import common.ESCAPED_STRING
+%import common.SIGNED_NUMBER
+%import common.LETTER
+%import common.DIGIT</p>
+<p>%import common.WS
+%ignore WS
+‘’‘</p>
 </dd></dl>
 
 <dl class="function">
@@ -1112,12 +1179,18 @@ list field value</p>
 <dd></dd></dl>
 
 </div>
+<div class="section" id="module-populse_db.info">
+<span id="populse-db-info-module"></span><h2>populse_db.info module<a class="headerlink" href="#module-populse_db.info" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-populse_db.script">
+<span id="populse-db-script-module"></span><h2>populse_db.script module<a class="headerlink" href="#module-populse_db.script" title="Permalink to this headline">¶</a></h2>
+</div>
 <div class="section" id="module-populse_db.test">
 <span id="populse-db-test-module"></span><h2>populse_db.test module<a class="headerlink" href="#module-populse_db.test" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="populse_db.test.TestsSQLiteInMemory">
 <em class="property">class </em><code class="descclassname">populse_db.test.</code><code class="descname">TestsSQLiteInMemory</code><span class="sig-paren">(</span><em>methodName='runTest'</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.TestsSQLiteInMemory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">unittest.case.TestCase</span></code></p>
 <p>Create an instance of the class that will use the named test
 method when executed. Raises a ValueError if the instance does
 not have a method with the specified name.</p>
@@ -1142,9 +1215,9 @@ not have a method with the specified name.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>loader</strong> &#8211; </li>
-<li><strong>standard_tests</strong> &#8211; </li>
-<li><strong>pattern</strong> &#8211; </li>
+<li><strong>loader</strong> – </li>
+<li><strong>standard_tests</strong> – </li>
+<li><strong>pattern</strong> – </li>
 </ul>
 </td>
 </tr>
@@ -1155,9 +1228,6 @@ not have a method with the specified name.</p>
 </table>
 </dd></dl>
 
-</div>
-<div class="section" id="module-populse_db">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-populse_db" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -1172,8 +1242,8 @@ not have a method with the specified name.</p>
       </div>
 
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2018, populse.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+        &#169; Copyright 2018, populse.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
     </div>
   </body>
 </html>

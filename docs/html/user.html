@@ -1,31 +1,22 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>User documentation &mdash; populse_db 1.0.1 documentation</title>
-    
+    <title>User documentation &#8212; populse_db 1.0.1 documentation</title>
     <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.0.1',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="populse_db 1.0.1 documentation" href="index.html" /> 
-  </head>
-  <body role="document">
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
       <div class="header" role="banner"><h1 class="heading"><a href="index.html">
           <span>populse_db 1.0.1 documentation</span></a></h1>
         <h2 class="heading"><span>User documentation</span></h2>
@@ -41,8 +32,6 @@
         
         
   <div class="toctree-wrapper compound">
-<ul class="simple">
-</ul>
 </div>
 <table border="1" class="docutils">
 <colgroup>
@@ -64,7 +53,7 @@
 <ul class="simple">
 <li>From <a class="reference external" href="https://pypi.org/project/populse-db/">PyPI</a>:</li>
 </ul>
-<div class="highlight-python"><div class="highlight"><pre><span class="c1"># A compatible version of Python and Pip must be installed</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># A compatible version of Python and Pip must be installed</span>
 
 <span class="n">To</span> <span class="n">install</span> <span class="n">pip</span><span class="p">:</span>
 <span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python</span><span class="o">-</span><span class="n">pip</span> <span class="c1"># Python2</span>
@@ -79,7 +68,7 @@
 <ul class="simple">
 <li>From source:</li>
 </ul>
-<div class="highlight-python"><div class="highlight"><pre><span class="c1"># A compatible version of Python must be installed</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># A compatible version of Python must be installed</span>
 <span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">git</span>
 <span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">populse</span><span class="o">/</span><span class="n">populse_db</span><span class="o">.</span><span class="n">git</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">populse_db</span>
 <span class="n">cd</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">populse_db</span>
@@ -92,7 +81,7 @@
 <div class="section" id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
 <p>Import examples:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">populse_db</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">populse_db</span>
 <span class="kn">from</span> <span class="nn">populse_db.database</span> <span class="kn">import</span> <span class="n">Database</span>
 <span class="kn">import</span> <span class="nn">populse_db.database</span>
 </pre></div>
@@ -106,7 +95,7 @@
 <li>The code coverage is generated with the package codecov</li>
 <li>The script of tests is python/populse_db/test.py, so the following command launches the tests:</li>
 </ul>
-<div class="highlight-python"><div class="highlight"><pre>python test.py (if python/populse_db/ directory has been added to $PATH, or if $PWD in the terminal)
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>python test.py (if python/populse_db/ directory has been added to $PATH, or if $PWD in the terminal)
 python python/populse_db/test.py (from populse_db root directory)
 python -m populse_db.test
 </pre></div>
@@ -117,7 +106,7 @@ python -m populse_db.test
 <ul class="simple">
 <li>Small script to show the initialization and some examples of calls:</li>
 </ul>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">os</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 
 <span class="kn">import</span> <span class="nn">shutil</span>
@@ -186,8 +175,8 @@ python -m populse_db.test
       </div>
 
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2018, populse.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.6.
+        &#169; Copyright 2018, populse.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
     </div>
   </body>
 </html>

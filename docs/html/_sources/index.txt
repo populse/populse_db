@@ -19,7 +19,7 @@ Overview
 
 * SQLAlchemy based database API for Populse
 * It can support every database type, as it takes an engine as entry
-* Populse_db is ensured to work with Python 2.7 and Python >= 3.3
+* Populse_db is ensured to work with Python 2.7 and Python >= 3.4
 * Populse_db is ensured to work on the platforms Linux, OSX, and Windows
 
 Relational schema

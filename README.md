@@ -4,7 +4,7 @@
 [![](https://codecov.io/github/populse/populse_db/coverage.svg?branch=master)](https://codecov.io/github/populse/populse_db)
 [![](https://img.shields.io/badge/license-CeCILL--B-blue.svg)](https://github.com/populse/populse_db/blob/master/LICENSE.en)
 [![](https://img.shields.io/pypi/v/populse_db.svg)](https://pypi.python.org/pypi/populse_db/)
-[![](https://img.shields.io/badge/python-2.7%2C%203.3%2C%203.4%2C%203.5%2C%203.6%2C%203.7-yellow.svg)](#)
+[![](https://img.shields.io/badge/python-2.7%2C%203.4%2C%203.5%2C%203.6%2C%203.7-yellow.svg)](#)
 [![](https://img.shields.io/badge/platform-Linux%2C%20OSX%2C%20Windows-orange.svg)](#)
 
 SQLAlchemy based database API for Populse
@@ -52,7 +52,7 @@ Continuous integration made with Travis (Linux, OSX), and AppVeyor (Windows)
 
 Code coverage calculated by the python module codecov
 
-The module is ensured to work with Python 2.7 and Python >= 3.3
+The module is ensured to work with Python 2.7 and Python >= 3.4
 
 The module is ensured to work on the platforms Linux, OSX and Windows
 
