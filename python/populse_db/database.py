@@ -297,7 +297,7 @@ class Database:
                         raise
                 else:
                     current_session.rollback()
-                    raise
+                    six.reraise(exc_type, exc_val, exc_tb)
             finally:
                 # Delete the database session
                 del current_session._populse_db_session
