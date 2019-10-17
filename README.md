@@ -11,7 +11,7 @@ SQLAlchemy based database API for Populse
 
 # Documentation
 
-The documentation is available on populse_db's website here: [https://populse.github.io/populse_db](https://populse.github.io/populse_db)
+[The documentation is available on populse_db's website](https://populse.github.io/populse_db)
 	
 # Installation
 
