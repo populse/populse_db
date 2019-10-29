@@ -1397,15 +1397,7 @@ class DatabaseSession:
         lists = []
         for k, v in document.items():
             column_name = self.name_to_valid_column_name(k)
-            field = self.get_field(collection, k)
-            if field is None:
-                if not create_missing_fields:
-                    raise ValueError('Collection {0} has no field {1}'.format(collection, k))
-                try:
-                    field_type = self.__python_value_type(v)
-                except KeyError:
-                    raise ValueError('Collection {0} has no field {1} and it cannot be created from a value of type {2}'.format(collection, k, type(v)))
-                self.add_field(collection, k, field_type)
+            self.ensure_field_for_value(collection, k, v, create=create_missing_fields)
             field_type = self.get_field(collection, k).type
             column_value = self.__python_to_column(field_type, v)
             column_values[column_name] = column_value
@@ -1436,6 +1428,35 @@ class DatabaseSession:
             self.session.flush()
 
         self.__unsaved_modifications = True
+
+    def ensure_field_for_value(self, collection, field , value, create=True):
+        """
+        Check that a field exists otherwise create with an appropriate type
+        corresponding to a Python value.
+
+        :param collection: Document collection (str, must be existing)
+
+        :param field: field name to check
+
+        :param value: value whose type is used to determine the field type
+            
+        :param create: if False, raises an error if the field does not exist
+        """
+        
+        if self.get_field(collection, field) is None:
+            if not create:
+                raise ValueError('Collection {0} has no field {1}'
+                                 .format(collection, field))
+            try:
+                field_type = self.__python_value_type(value)
+            except KeyError:
+                raise ValueError('Collection {0} has no field {1} and it '
+                                 'cannot be created from a value of type {2}'
+                                 .format(collection,
+                                         field,
+                                         type(value)))
+            self.add_field(collection, field, field_type)
+
 
     """ MODIFICATIONS """
 
