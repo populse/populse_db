@@ -17,13 +17,14 @@ from datetime import date, time, datetime
 
 import dateutil.parser
 import six
-from sqlalchemy import (create_engine, Column, MetaData, Table, sql,
-                        String, Integer, Float, Boolean, Date, DateTime,
-                        Time, Enum, event)
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.orm import sessionmaker, scoped_session, mapper
-from sqlalchemy.schema import CreateTable, DropTable
-from sqlalchemy.exc import ArgumentError
+
+#from sqlalchemy import (create_engine, Column, MetaData, Table, sql,
+                        #String, Integer, Float, Boolean, Date, DateTime,
+                        #Time, Enum, event)
+#from sqlalchemy.ext.automap import automap_base
+#from sqlalchemy.orm import sessionmaker, scoped_session, mapper
+#from sqlalchemy.schema import CreateTable, DropTable
+#from sqlalchemy.exc import ArgumentError
 
 import populse_db
 
@@ -152,88 +153,12 @@ class Database:
         self.query_type = query_type
 
         # SQLite database: It is created if it does not exist
-        if string_engine.startswith('sqlite'):
-            self.__db_file = re.sub("sqlite.*:///", "", string_engine)
-            if self. __db_file != ':memory:':
-                if not os.path.exists(self.__db_file):
-                    parent_dir = os.path.dirname(self.__db_file)
-                    if not os.path.exists(parent_dir):
-                        os.makedirs(os.path.dirname(self.__db_file))
+        if string_engine.startswith('sqlite:///'):
+            self.sqlite_location = re.sub("sqlite.*:///", "", string_engine)
+            self.init_sqlite()
+        
+        self.engine = None
 
-        self.engine = self.__create_empty_schema(self.string_engine)
-        if self.engine is None:
-            raise ValueError('The database schema is not coherent with the API')
-
-        if string_engine.startswith('sqlite'):
-            @event.listens_for(self.engine, "connect")
-            def do_connect(dbapi_connection, connection_record):
-                # disable pysqlite's emitting of the BEGIN statement entirely.
-                # also stops it from emitting COMMIT before any DDL.
-                dbapi_connection.isolation_level = None
-
-            @event.listens_for(self.engine, "connect")
-            def set_sqlite_pragma(dbapi_connection, connection_record):
-                """
-                Manages the pragmas during the database opening
-
-                :param dbapi_connection:
-
-                :param connection_record:
-                """
-                dbapi_connection.execute('pragma case_sensitive_like=ON')
-                dbapi_connection.execute('pragma foreign_keys=ON')
-
-            @event.listens_for(self.engine, "begin")
-            def do_begin(conn):
-                # emit our own BEGIN
-                conn.execute("BEGIN")
-
-        self.__scoped_session = scoped_session(sessionmaker(
-            bind=self.engine, autocommit=False, autoflush=False))
-
-    @staticmethod
-    def __create_empty_schema(string_engine):
-        """
-        Creates the database file with an empty schema
-
-        :param string_engine: String engine of the new database file (see Database class constructor for more details)
-
-        :raise ValueError: If the string engine is invalid
-        """
-
-        try:
-            if string_engine.startswith('sqlite'):
-                engine = create_engine(string_engine, connect_args={'check_same_thread': False})
-            else:
-                engine = create_engine(string_engine)
-        except ArgumentError:
-            raise ValueError("The string engine is invalid, please refer to the documentation for more details on how to write the string engine")
-        metadata = MetaData()
-        metadata.reflect(bind=engine)
-        if FIELD_TABLE in metadata.tables and COLLECTION_TABLE in metadata.tables:
-            return engine
-        elif len(metadata.tables) > 0:
-            return None
-        else:
-            Table(FIELD_TABLE, metadata,
-                  Column("field_name", String, primary_key=True),
-                  Column("collection_name", String, primary_key=True),
-                  Column(
-                      "type", Enum(FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT, FIELD_TYPE_BOOLEAN,
-                                   FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON,
-                                   FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER,
-                                   FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_LIST_DATE,
-                                   FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON,
-                                   name='field_type'),
-                      nullable=False),
-                  Column("description", String, nullable=True))
-
-            Table(COLLECTION_TABLE, metadata,
-                  Column("collection_name", String, primary_key=True),
-                  Column("primary_key", String, nullable=False))
-
-            metadata.create_all(engine)
-            return engine
 
     def __enter__(self):
         '''
@@ -249,29 +174,14 @@ class Database:
         outermost __enter__/__exit__ pair (i.e. by the outermost with
         statement).
         '''
-        # Create the session object
-        new_session = self.__scoped_session()
-        # Check if it is a brain new session object or if __enter__ already
-        # added a DatabaseSession instance to it (meaning recursive call)
-        db_session = getattr(new_session, '_populse_db_session', None)
-        if db_session is None:
-            # No recursive call. Create a new DatabaseSession
-            # and attach it to the session. Doing this way allow
-            # to be thread safe because scoped_session automatically
-            # creates a new session per thread. Therefore we also
-            # create a new DatabaseSession per thread.
-            db_session = DatabaseSession(self, new_session)
-            new_session._populse_db_session = db_session
-            # Attache a counter to the session object to count
-            # the recursion depth of __enter__ calls
-            new_session._populse_db_counter = 1
+        if self.engine is None:
+            self.engine = SQLiteEngine(self.sqlite_location)
+            self.engine_count = 1
         else:
-            # __enter__ is called recursively. Simply increment
-            # the recusive depth counter previously attached to
-            # the session object
-            new_session._populse_db_counter += 1
-        return db_session
-
+            self.engine_count += 1
+    
+        return DatabaseSession(self)
+    
     def __exit__(self, exc_type, exc_val, exc_tb):
         '''
         Release a DatabaseSession previously created by __enter__.
@@ -279,47 +189,27 @@ class Database:
         is commited if no error is reported (e.g. exc_type is None)
         otherwise it is rolled back. Nothing is done 
         '''
-        # Get the current session. SqlAlchemy scoped_session returns
-        # the same object (per thread) on each call until remove()
-        # is called.
-        current_session = self.__scoped_session()
-        # Decrement recursive depth counter
-        current_session._populse_db_counter -= 1
-        if current_session._populse_db_counter == 0:
+        self.engine_count -= 1
+        if self.engine_count == 0:
             # If there is no recursive call, commit or rollback
             # the session according to the presence of an exception
-            try:
-                if exc_type is None:
-                    try:
-                        current_session.commit()
-                    except:
-                        current_session.rollback()
-                        raise
-                else:
-                    current_session.rollback()
-                    six.reraise(exc_type, exc_val, exc_tb)
-            finally:
-                # Delete the database session
-                del current_session._populse_db_session
-                del current_session._populse_db_counter
-                self.__scoped_session.remove()
-
+            if exc_type is None:
+                try:
+                    self.engine.commit()
+                except:
+                    self.engine.rollback()
+                    raise
+            else:
+                self.engine.rollback()
+                #six.reraise(exc_type, exc_val, exc_tb)
+            self.sqlite_delete_engine(self)
+            
     def clear(self):
         """
         Removes all documents and collections in the database
         """
-
-        metadata = MetaData()
-        metadata.reflect(bind=self.engine)
-        if FIELD_TABLE in metadata.tables:
-            for table in reversed(metadata.sorted_tables):
-                if table.name in (FIELD_TABLE, COLLECTION_TABLE):
-                    self.engine.execute(table.delete())
-                else:
-                    self.engine.execute(DropTable(table))
-            return True
-        else:
-            return False
+        with self as cursor:
+            cursor.delete_tables()
 
 
 class DatabaseSession:
@@ -382,33 +272,19 @@ class DatabaseSession:
         FIELD_TYPE_LIST_TIME: lambda x: dateutil.parser.parse(x).time(),
     }
 
-    def __init__(self, database, session):
+    def __init__(self, database):
         """
         Creates a session API of the Database instance
 
         :param database: Database instance to take into account
-
-        :param session: Session instance attached to the Database instance
         """
 
         self.database = database
-        self.session = session
-
-        # Database opened
-        self.metadata = MetaData()
-        self.metadata.reflect(self.database.engine)
-
-        self.__unsaved_modifications = False
-
-        self.__update_table_classes()
-
-        if self.__caches:
-            self.__fill_caches()
 
     # Shortcuts to access Database attributes
     @property
-    def __caches(self):
-        return self.database.caches
+    def engine(self):
+        return self.database.engine
 
     @property
     def list_tables(self):
@@ -418,65 +294,7 @@ class DatabaseSession:
     def query_type(self):
         return self.database.query_type
 
-    def __update_table_classes(self):
-        """
-        Redefines the model after an update of the schema
-        """
 
-        self.table_classes = {}
-        self.base = automap_base(metadata=self.metadata)
-        self.base.prepare(engine=self.database.engine)
-        for table in self.metadata.tables.keys():
-            self.table_classes[table] = getattr(
-                self.base.classes, table)
-
-    """ CACHES """
-
-    def __fill_caches(self):
-        """
-        Fills the caches at database opening if they are used
-        """
-
-        self.__documents = {}
-        self.__fields = {}
-        self.__names = {}
-        self.__collections = {}
-
-        # Collections
-        collections_rows = self.session.query(self.table_classes[COLLECTION_TABLE]).all()
-        for collection_row in collections_rows:
-            self.__collections[collection_row.collection_name] = collection_row
-
-        # Fields
-        for collection in self.__collections:
-            fields_rows = self.session.query(self.table_classes[FIELD_TABLE]).filter(
-                self.table_classes[FIELD_TABLE].collection_name == collection).all()
-            self.__fields[collection] = {}
-            for field_row in fields_rows:
-                self.__fields[collection][field_row.field_name] = field_row
-
-        # Documents
-        for collection in self.__collections:
-            documents_rows = self.session.query(self.table_classes[self.name_to_valid_column_name(collection)]).all()
-            self.__documents[collection] = {}
-            for document_row in documents_rows:
-                self.__documents[collection][
-                    getattr(document_row,
-                            self.name_to_valid_column_name(self.__collections[collection].primary_key))] = document_row
-
-    def __refresh_cache_documents(self, collection):
-        """
-        Refreshes the document cache after a field added or removed
-
-        :param collection: Collection to refresh (str, must be existing)
-        """
-
-        self.__documents[collection].clear()
-        documents_rows = self.session.query(self.table_classes[self.name_to_valid_column_name(collection)]).all()
-        self.__documents[collection] = {}
-        for document_row in documents_rows:
-            self.__documents[collection][getattr(document_row, self.name_to_valid_column_name(
-                self.__collections[collection].primary_key))] = document_row
 
     """ COLLECTIONS """
 
@@ -494,49 +312,22 @@ class DatabaseSession:
         """
 
         # Checks
-        collection_row = self.get_collection(name)
-        if collection_row is not None or name in self.table_classes:
-            raise ValueError("A collection/table with the name {0} already exists".format(name))
         if not isinstance(name, str):
             raise ValueError(
                 "The collection name must be of type {0}, but collection name of type {1} given".format(str,
-                                                                                                        type(name)))
         if not isinstance(primary_key, str):
             raise ValueError(
                 "The collection primary_key must be of type {0}, but collection primary_key of type {1} given".format(
                     str, type(primary_key)))
+        collection_row = self.get_collection(name)
+        if collection_row is not None:
+            raise ValueError("A collection/table with the name {0} already exists".format(name))
 
-        # Adding the collection row
-        collection_row = self.table_classes[COLLECTION_TABLE](collection_name=name, primary_key=primary_key)
-        self.session.add(collection_row)
-
-        # Creating the collection document table
         pk_name = self.name_to_valid_column_name(primary_key)
         table_name = self.name_to_valid_column_name(name)
-        collection_table = Table(table_name, self.metadata, Column(pk_name, String, primary_key=True))
-        collection_query = CreateTable(collection_table)
-        self.session.execute(collection_query)
+        with self.engine.cursor() as c:
+            c.add_collection(name, primary_key, table_name, pk_name)
 
-        # Creating the class associated
-        collection_dict = {'__tablename__': table_name, '__table__': collection_table}
-        collection_class = type(table_name, (self.base,), collection_dict)
-        mapper(collection_class, collection_table)
-        self.table_classes[table_name] = collection_class
-
-        # Adding the primary_key of the collection as field
-        primary_key_field = self.table_classes[FIELD_TABLE](field_name=primary_key, collection_name=name,
-                                                            type=FIELD_TYPE_STRING,
-                                                            description="Primary_key of the document collection {0}".format(
-                                                                name))
-        self.session.add(primary_key_field)
-
-        if self.__caches:
-            self.__documents[name] = {}
-            self.__fields[name] = {}
-            self.__fields[name][primary_key] = primary_key_field
-            self.__collections[name] = collection_row
-
-        self.session.flush()
 
     def remove_collection(self, name):
         """
