@@ -1069,11 +1069,12 @@ class DatabaseSession:
         if value is None:
             return True
         if field_type.startswith('list_'):
-            item_type = field_type[5:]
-            for v in value:
-                if not cls.check_value_type(v, item_type):
-                    return False
-            return True
+            if isinstance(value, list):
+                item_type = field_type[5:]
+                for v in value:
+                    if not cls.check_value_type(v, item_type):
+                        return False
+                return True
         else:
             return cls._value_type_checker[field_type](value)
 

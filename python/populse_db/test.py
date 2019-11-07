@@ -637,24 +637,24 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value("string", FIELD_TYPE_STRING))
-                self.assertFalse(DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_STRING))
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(None, FIELD_TYPE_STRING))
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_INTEGER))
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_FLOAT))
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(1.5, FIELD_TYPE_FLOAT))
-                self.assertFalse(DatabaseSession._DatabaseSession__check_type_value(None, None))
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value([1.5], FIELD_TYPE_LIST_FLOAT))
-                self.assertFalse(DatabaseSession._DatabaseSession__check_type_value(1.5, FIELD_TYPE_LIST_FLOAT))
-                self.assertFalse(DatabaseSession._DatabaseSession__check_type_value([1.5, "test"], FIELD_TYPE_LIST_FLOAT))
+                self.assertTrue(DatabaseSession.check_value_type("string", FIELD_TYPE_STRING))
+                self.assertFalse(DatabaseSession.check_value_type(1, FIELD_TYPE_STRING))
+                self.assertTrue(DatabaseSession.check_value_type(None, FIELD_TYPE_STRING))
+                self.assertTrue(DatabaseSession.check_value_type(1, FIELD_TYPE_INTEGER))
+                self.assertTrue(DatabaseSession.check_value_type(1, FIELD_TYPE_FLOAT))
+                self.assertTrue(DatabaseSession.check_value_type(1.5, FIELD_TYPE_FLOAT))
+                self.assertFalse(DatabaseSession.check_value_type(None, None))
+                self.assertTrue(DatabaseSession.check_value_type([1.5], FIELD_TYPE_LIST_FLOAT))
+                self.assertFalse(DatabaseSession.check_value_type(1.5, FIELD_TYPE_LIST_FLOAT))
+                self.assertFalse(DatabaseSession.check_value_type([1.5, "test"], FIELD_TYPE_LIST_FLOAT))
                 value = {}
                 value["test1"] = 1
                 value["test2"] = 2
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(value, FIELD_TYPE_JSON))
+                self.assertTrue(DatabaseSession.check_value_type(value, FIELD_TYPE_JSON))
                 value2 = {}
                 value2["test3"] = 1
                 value2["test4"] = 2
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value([value, value2], FIELD_TYPE_LIST_JSON))
+                self.assertTrue(DatabaseSession.check_value_type([value, value2], FIELD_TYPE_LIST_JSON))
 
         def test_add_value(self):
             """
