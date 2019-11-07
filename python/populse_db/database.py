@@ -9,7 +9,6 @@
 import ast
 import copy
 import json
-import hashlib
 import os
 import re
 import types
@@ -56,27 +55,6 @@ ALL_TYPES = [FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FL
              FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON, FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT,
              FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON]
 
-TYPE_TO_COLUMN = {}
-TYPE_TO_COLUMN[FIELD_TYPE_INTEGER] = Integer
-TYPE_TO_COLUMN[FIELD_TYPE_LIST_INTEGER] = Integer
-TYPE_TO_COLUMN[FIELD_TYPE_FLOAT] = Float
-TYPE_TO_COLUMN[FIELD_TYPE_LIST_FLOAT] = Float
-TYPE_TO_COLUMN[FIELD_TYPE_BOOLEAN] = Boolean
-TYPE_TO_COLUMN[FIELD_TYPE_LIST_BOOLEAN] = Boolean
-TYPE_TO_COLUMN[FIELD_TYPE_DATE] = Date
-TYPE_TO_COLUMN[FIELD_TYPE_LIST_DATE] = Date
-TYPE_TO_COLUMN[FIELD_TYPE_DATETIME] = DateTime
-TYPE_TO_COLUMN[FIELD_TYPE_LIST_DATETIME] = DateTime
-TYPE_TO_COLUMN[FIELD_TYPE_TIME] = Time
-TYPE_TO_COLUMN[FIELD_TYPE_LIST_TIME] = Time
-TYPE_TO_COLUMN[FIELD_TYPE_STRING] = String
-TYPE_TO_COLUMN[FIELD_TYPE_LIST_STRING] = String
-TYPE_TO_COLUMN[FIELD_TYPE_JSON] = String
-TYPE_TO_COLUMN[FIELD_TYPE_LIST_JSON] = String
-
-# Table names
-FIELD_TABLE = "field"
-COLLECTION_TABLE = "collection"
 
 
 class Database:
@@ -155,9 +133,10 @@ class Database:
         # SQLite database: It is created if it does not exist
         if string_engine.startswith('sqlite:///'):
             self.sqlite_location = re.sub("sqlite.*:///", "", string_engine)
-            self.init_sqlite()
+        else:
+            raise ValueError('Invalid database URL: %s' % string_engine)
         
-        self.engine = None
+        self.__session = None
 
 
     def __enter__(self):
@@ -174,13 +153,13 @@ class Database:
         outermost __enter__/__exit__ pair (i.e. by the outermost with
         statement).
         '''
-        if self.engine is None:
-            self.engine = SQLiteEngine(self.sqlite_location)
-            self.engine_count = 1
+        if self.__session is None:            
+            self.__session = DatabaseSession(self)
+            self.__session.engine.__enter__()
+            self.__session_count = 1
         else:
-            self.engine_count += 1
-    
-        return DatabaseSession(self)
+            self.__session_count += 1
+        return self.__session
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         '''
@@ -189,27 +168,50 @@ class Database:
         is commited if no error is reported (e.g. exc_type is None)
         otherwise it is rolled back. Nothing is done 
         '''
-        self.engine_count -= 1
-        if self.engine_count == 0:
+        self.__session_count -= 1
+        if self.__session_count == 0:
             # If there is no recursive call, commit or rollback
             # the session according to the presence of an exception
-            if exc_type is None:
-                try:
-                    self.engine.commit()
-                except:
-                    self.engine.rollback()
-                    raise
-            else:
-                self.engine.rollback()
-                #six.reraise(exc_type, exc_val, exc_tb)
-            self.sqlite_delete_engine(self)
+            self.__session.engine.__exit__(exc_type, exc_val, exc_tb)
+            self.__session = None
             
     def clear(self):
         """
         Removes all documents and collections in the database
         """
-        with self as cursor:
-            cursor.delete_tables()
+        with self as session:
+            session.delete_tables()
+
+_python_type_to_field_type = {
+    type(None): None,
+    type(''): FIELD_TYPE_STRING,
+    type(u''): FIELD_TYPE_STRING,
+    int: FIELD_TYPE_INTEGER,
+    float: FIELD_TYPE_FLOAT,
+    time: FIELD_TYPE_TIME,
+    datetime: FIELD_TYPE_DATETIME,
+    date: FIELD_TYPE_DATE,
+    bool: FIELD_TYPE_BOOLEAN,
+    dict: FIELD_TYPE_JSON,
+}
+
+def python_value_type(value):
+    """
+    Returns the field type corresponding to a Python value.
+    This type can be used in add_field(s) method.
+    For list values, only the first item is considered to get the type.
+    Type cannot be determined for empty list.
+    If value is None, the result is None.
+    """
+    if isinstance(value, list):
+        if value:
+            item_type = python_value_type(value[0])
+            return 'list_' + item_type
+        else:
+            # Raises a KeyError for empty list
+            return _python_type_to_field_type[list]
+    else:
+        return _python_type_to_field_type[type(value)]
 
 
 class DatabaseSession:
@@ -234,7 +236,7 @@ class DatabaseSession:
         - remove_field: Removes a field from a collection
         - get_field: Gives all fields rows given a collection
         - get_fields_names: Gives all fields names given a collection
-        - name_to_valid_column_name: Gives the valid table/column name corresponding
+        - name_to_sql: Gives the valid table/column name corresponding
           to the name
         - get_value: Gives the value of <collection, document, field>
         - set_value: Sets the value of <collection, document, field>
@@ -253,48 +255,21 @@ class DatabaseSession:
         - filter_documents: Gives the list of documents matching the filter
     """
 
-    # Some types (e.g. time, date and datetime) cannot be
-    # serialized/deserialized into string with repr/ast.literal_eval.
-    # This is a problem for storing the corresponding list_columns in
-    # database. For the list types with this problem, we record in the
-    # following dictionaries the functions that must be used to serialize
-    # (in _list_item_to_string) and deserialize (in _string_to_list_item)
-    # the list items.
-    _list_item_to_string = {
-        FIELD_TYPE_LIST_DATE: lambda x: x.isoformat(),
-        FIELD_TYPE_LIST_DATETIME: lambda x: x.isoformat(),
-        FIELD_TYPE_LIST_TIME: lambda x: x.isoformat()
-    }
-
-    _string_to_list_item = {
-        FIELD_TYPE_LIST_DATE: lambda x: dateutil.parser.parse(x).date(),
-        FIELD_TYPE_LIST_DATETIME: lambda x: dateutil.parser.parse(x),
-        FIELD_TYPE_LIST_TIME: lambda x: dateutil.parser.parse(x).time(),
-    }
-
     def __init__(self, database):
         """
         Creates a session API of the Database instance
 
         :param database: Database instance to take into account
         """
-
-        self.database = database
-
-    # Shortcuts to access Database attributes
-    @property
-    def engine(self):
-        return self.database.engine
-
-    @property
-    def list_tables(self):
-        return self.database.list_tables
-
-    @property
-    def query_type(self):
-        return self.database.query_type
-
-
+        
+        # Import is here due to circular references but a factory of engines
+        # will have to be created
+        from .sqlite_engine import SQLiteEngine
+        
+        self.list_tables = database.list_tables
+        self.query_type = database.query_type
+        self.engine = SQLiteEngine(database.sqlite_location)
+        self.__names = {}
 
     """ COLLECTIONS """
 
@@ -314,19 +289,15 @@ class DatabaseSession:
         # Checks
         if not isinstance(name, str):
             raise ValueError(
-                "The collection name must be of type {0}, but collection name of type {1} given".format(str,
+                "The collection name must be of type {0}, but collection name of type {1} given".format(str,type(name)))
         if not isinstance(primary_key, str):
             raise ValueError(
                 "The collection primary_key must be of type {0}, but collection primary_key of type {1} given".format(
                     str, type(primary_key)))
-        collection_row = self.get_collection(name)
-        if collection_row is not None:
+        if self.engine.has_collection(name):
             raise ValueError("A collection/table with the name {0} already exists".format(name))
 
-        pk_name = self.name_to_valid_column_name(primary_key)
-        table_name = self.name_to_valid_column_name(name)
-        with self.engine.cursor() as c:
-            c.add_collection(name, primary_key, table_name, pk_name)
+        self.engine.add_collection(name, primary_key)
 
 
     def remove_collection(self, name):
@@ -339,33 +310,12 @@ class DatabaseSession:
         """
 
         # Checks
-        collection_row = self.get_collection(name)
-        if collection_row is None:
+        collection = self.get_collection(name)
+        if collection is None:
             raise ValueError("The collection {0} does not exist".format(name))
 
-        # Removing the collection row
-        self.session.query(self.table_classes[COLLECTION_TABLE]).filter(
-            self.table_classes[COLLECTION_TABLE].collection_name == name).delete()
-        self.session.query(self.table_classes[FIELD_TABLE]).filter(
-            self.table_classes[FIELD_TABLE].collection_name == name).delete()
-
-        # Removing the collection document table + metadata associated
-        collection_query = DropTable(self.table_classes[self.name_to_valid_column_name(name)].__table__)
-        self.session.execute(collection_query)
-        self.metadata.remove(self.table_classes[self.name_to_valid_column_name(name)].__table__)
-
-        # Removing the class associated
-        self.table_classes.pop(name, None)
-
-        if self.__caches:
-            self.__documents.pop(name, None)
-            self.__fields.pop(name, None)
-            self.__collections.pop(name, None)
-
-        self.session.flush()
-
-        # Base updated to remove the document table of the collection
-        self.__update_table_classes()
+        table_name = self.name_to_sql(name)
+        self.engine.remove_collection(name, table_name)
 
     def get_collection(self, name):
         """
@@ -375,18 +325,7 @@ class DatabaseSession:
 
         :return: The collection row if it exists, None otherwise
         """
-
-        if self.__caches:
-            try:
-                return self.__collections[name]
-            except KeyError:
-                return None
-        else:
-            if not isinstance(name, six.string_types):
-                return None
-            collection_row = self.session.query(self.table_classes[COLLECTION_TABLE]).filter(
-                self.table_classes[COLLECTION_TABLE].collection_name == name).first()
-            return collection_row
+        return self.engine.collection(name)
 
     def get_collections_names(self):
         """
@@ -394,10 +333,7 @@ class DatabaseSession:
 
         :return: List of all collection names
         """
-
-        collections = self.session.query(self.table_classes[COLLECTION_TABLE].collection_name).all()
-        collections_list = [collection.collection_name for collection in collections]
-        return collections_list
+        return [i[0] for i in self.engine.collections()]
 
     def get_collections(self):
         """
@@ -406,7 +342,7 @@ class DatabaseSession:
         :return: List of all collection rows
         """
 
-        return self.session.query(self.table_classes[COLLECTION_TABLE]).all()
+        return self.engine.collections()
 
     """ FIELDS """
 
@@ -416,9 +352,6 @@ class DatabaseSession:
 
         :param fields: List of fields: [collection, name, type, description]
         """
-
-        collections = []
-
         if not isinstance(fields, list):
             raise ValueError(
                 "The fields must be of type {0}, but fields of type {1} given".format(list, type(fields)))
@@ -428,19 +361,12 @@ class DatabaseSession:
             # Adding each field
             if not isinstance(field, list) or len(field) != 4:
                 raise ValueError("Invalid field, it must be a list of four elements: [collection, name, type, description]")
-            self.add_field(field[0], field[1], field[2], field[3], False)
+            self.add_field(collection=field[0], 
+                           name=field[1],
+                           type=field[2],
+                           description=field[3])
             if field[0] not in collections:
                 collections.append(field[0])
-
-        # Updating the table classes
-        self.session.flush()
-
-        # Classes reloaded in order to add the new column attribute
-        self.__update_table_classes()
-
-        if self.__caches:
-            for collection in collections:
-                self.__refresh_cache_documents(collection)
 
     def add_field(self, collection, name, field_type, description=None,
                   index=False, flush=True):
@@ -459,7 +385,7 @@ class DatabaseSession:
 
         :param index: Bool to know if indexing must be done => False by default
 
-        :param flush: Bool to know if the table classes must be updated (put False if in the middle of filling fields) => True by default
+        :param flush: obsolet ignored parameter
 
         :raise ValueError: - If the collection does not exist
                            - If the field already exists
@@ -486,77 +412,7 @@ class DatabaseSession:
                                                                                                                     type(
                                                                                                                         description)))
 
-        # Adding the field in the field table
-        field_row = self.table_classes[FIELD_TABLE](field_name=name, collection_name=collection, type=field_type,
-                                                    description=description)
-
-        if self.__caches:
-            self.__fields[collection][name] = field_row
-
-        self.session.add(field_row)
-
-        # Fields creation
-        if field_type in LIST_TYPES:
-            if self.list_tables:
-                table = 'list_%s_%s' % (self.name_to_valid_column_name(collection), self.name_to_valid_column_name(name))
-                list_table = Table(table, self.metadata, Column('document_id', String, primary_key=True),
-                                   Column('i', Integer, primary_key=True),
-                                   Column('value', TYPE_TO_COLUMN[field_type[5:]]))
-                list_query = CreateTable(list_table)
-                self.session.execute(list_query)
-
-                # Creating the class associated
-                collection_dict = {'__tablename__': table, '__table__': list_table}
-                collection_class = type(table, (self.base,), collection_dict)
-                mapper(collection_class, list_table)
-                self.table_classes[table] = collection_class
-            # String columns if it list type, as the str representation of the lists will be stored
-            field_type = String
-        else:
-            field_type = self.__field_type_to_column_type(field_type)
-
-        column = Column(self.name_to_valid_column_name(name), field_type, index=index)
-        column_str_type = column.type.compile(self.database.engine.dialect)
-        column_name = column.compile(dialect=self.database.engine.dialect)
-
-        # Column created in document table, and in initial table if initial values are used
-
-        document_query = str('ALTER TABLE "%s" ADD COLUMN %s %s' %
-                             (self.name_to_valid_column_name(collection), column_name, column_str_type))
-        self.session.execute(document_query)
-        self.table_classes[self.name_to_valid_column_name(collection)].__table__.append_column(column)
-        
-        # Redefinition of the table classes
-        if flush:
-            self.session.flush()
-
-            # Classes reloaded in order to add the new column attribute
-            self.__update_table_classes()
-
-            if self.__caches:
-                self.__refresh_cache_documents(collection)
-
-        self.__unsaved_modifications = True
-
-    def name_to_valid_column_name(self, name):
-        """
-        Transforms the name into a valid and unique table/column name, by hashing it with md5
-
-        :param name: Name (str)
-
-        :return: Valid and unique (hashed) table/column name
-        """
-
-        if self.__caches:
-            try:
-                return self.__names[name]
-            except KeyError:
-                valid_name = hashlib.md5(name.encode('utf-8')).hexdigest()
-                self.__names[name] = valid_name
-                return valid_name
-        else:
-            valid_name = hashlib.md5(name.encode('utf-8')).hexdigest()
-            return valid_name
+        self.engine.add_field(collection, name, type, description, index, self.name_to_sql(name))
 
     def remove_field(self, collection, field):
         """
@@ -1019,33 +875,6 @@ class DatabaseSession:
 
     """ DOCUMENTS """
 
-    def __get_document_row(self, collection, document):
-        """
-        Gives the SQLAchemy row of a document, given a collection and a
-        document identifier.
-
-        :param collection: Document collection (str, must be existing)
-
-        :param document: Document name (str, must be existing)
-
-        :return: The document row if the document exists, None otherwise
-        """
-
-        collection_row = self.get_collection(collection)
-        if collection_row is None:
-            return None
-        if self.__caches:
-            return self.__documents[collection].get(document)
-        else:
-            primary_key = collection_row.primary_key
-            column = getattr(self.table_classes[self.name_to_valid_column_name(collection)],
-                             self.name_to_valid_column_name(primary_key))
-            value = column.type.python_type(document)
-            query = self.session.query(self.table_classes[self.name_to_valid_column_name(collection)]).filter(
-                column == value)
-            document_row = query.first()
-            return document_row
-    
     def get_document(self, collection, document):
         """
         Gives a Document instance given a collection and a document identifier
@@ -1056,14 +885,12 @@ class DatabaseSession:
 
         :return: The document row if the document exists, None otherwise
         """
-
-        document_row = self.__get_document_row(collection, document)
-        if document_row is not None:
-            document = Document(self, collection, document_row)
-        else:
-            document = None
-        return document
-
+        try:
+            result = self.engine.document(collection, document)
+        except KeyError:
+            result = None
+        return result
+    
     def get_documents_names(self, collection):
         """
         Gives the list of all document names, given a collection
@@ -1153,7 +980,7 @@ class DatabaseSession:
             - If True, fields that are in the document but not in the collection are created if the type can be guessed from the value in the document
               (possible for all valid values except None and []).
             
-        :param flush: Bool to know if flush to do, put False in the middle of filling the table => True by default
+        :param flush: ignored obsolete parameter
 
         :raise ValueError: - If the collection does not exist
                            - If the document already exists
@@ -1164,7 +991,7 @@ class DatabaseSession:
         collection_row = self.get_collection(collection)
         if collection_row is None:
             raise ValueError("The collection {0} does not exist".format(collection))
-        primary_key = self.get_collection(collection).primary_key
+        primary_key = collection_row[1]
         if not isinstance(document, dict) and not isinstance(document, str):
             raise ValueError(
                 "The document must be of type {0} or {1}, but document of type {2} given".format(dict, str, document))
@@ -1172,53 +999,14 @@ class DatabaseSession:
             raise ValueError(
                 "The primary_key {0} of the collection {1} is missing from the document dictionary".format(primary_key,
                                                                                                            collection))
-        if isinstance(document, dict):
-            document_row = self.get_document(collection, document[primary_key])
-        else:
-            document_row = self.get_document(collection, document)
-        if document_row is not None:
-            raise ValueError(
-                "A document with the name {0} already exists in the collection {1}".format(document, collection))
-
         if not isinstance(document, dict):
             document = {primary_key: document}
+        self.engine.add_document(collection, document, create_missing_fields)
+        
+        #if document_row is not None:
+            #raise ValueError(
+                #"A document with the name {0} already exists in the collection {1}".format(document, collection))
 
-        document_id = document[primary_key]
-        column_values = {self.name_to_valid_column_name(primary_key): document_id}
-        lists = []
-        for k, v in document.items():
-            column_name = self.name_to_valid_column_name(k)
-            self.ensure_field_for_value(collection, k, v, create=create_missing_fields)
-            field_type = self.get_field(collection, k).type
-            column_value = self.__python_to_column(field_type, v)
-            column_values[column_name] = column_value
-            if self.list_tables and isinstance(v, list):
-                table = 'list_%s_%s' % (self.name_to_valid_column_name(collection), column_name)
-                # sql = sql_text('INSERT INTO %s (document_id, i, value) VALUES (:document_id, :i, :value)' % table)
-                sql = self.metadata.tables[table].insert()
-                sql_params = []
-                cvalues = [self.__python_to_column(field_type[5:], i) for i in v]
-                index = 0
-                for i in cvalues:
-                    sql_params.append({'document_id': document_id, 'i': index, 'value': i})
-                    index += 1
-                lists.append((sql, sql_params))
-
-        if self.list_tables:
-            for sql, sql_params in lists:
-                if sql_params:
-                    self.session.execute(sql, params=sql_params)
-
-        document_row = self.table_classes[self.name_to_valid_column_name(collection)](**column_values)
-        self.session.add(document_row)
-
-        if self.__caches:
-            self.__documents[collection][document_id] = document_row
-
-        if flush:
-            self.session.flush()
-
-        self.__unsaved_modifications = True
 
     def ensure_field_for_value(self, collection, field , value, create=True):
         """
@@ -1233,57 +1021,8 @@ class DatabaseSession:
             
         :param create: if False, raises an error if the field does not exist
         """
-        
-        if self.get_field(collection, field) is None:
-            if not create:
-                raise ValueError('Collection {0} has no field {1}'
-                                 .format(collection, field))
-            try:
-                field_type = self.__python_value_type(value)
-            except KeyError:
-                raise ValueError('Collection {0} has no field {1} and it '
-                                 'cannot be created from a value of type {2}'
-                                 .format(collection,
-                                         field,
-                                         type(value)))
-            self.add_field(collection, field, field_type)
+        return self.engine.ensure_field_for_value(collection, field, value, create)
 
-
-    """ MODIFICATIONS """
-
-    def save_modifications(self):
-        """
-        Saves the modifications by committing the session
-        """
-        try:
-            self.session.commit()
-        except:
-            self.session.rollback()
-            raise
-
-        self.__unsaved_modifications = False
-
-    def unsave_modifications(self):
-        """
-        Unsaves the modifications by rolling back the session
-        """
-
-        self.session.rollback()
-        self.__unsaved_modifications = False
-        self.metadata = MetaData()
-        self.metadata.reflect(self.database.engine)
-        self.__update_table_classes()
-        self.__fill_caches()
-
-    def has_unsaved_modifications(self):
-        """
-        Knowing if the database has pending modifications that are unsaved
-
-        :return: True if there are pending modifications to save,
-                 False otherwise
-        """
-
-        return self.__unsaved_modifications
 
     """ FILTERS """
 
@@ -1353,49 +1092,6 @@ class DatabaseSession:
 
     """ UTILS """
 
-    _python_type_to_tag_type = {
-        type(None): None,
-        type(''): FIELD_TYPE_STRING,
-        type(u''): FIELD_TYPE_STRING,
-        int: FIELD_TYPE_INTEGER,
-        float: FIELD_TYPE_FLOAT,
-        time: FIELD_TYPE_TIME,
-        datetime: FIELD_TYPE_DATETIME,
-        date: FIELD_TYPE_DATE,
-        bool: FIELD_TYPE_BOOLEAN,
-        dict: FIELD_TYPE_JSON,
-    }
-
-    def __python_value_type(self, value):
-        """
-        Returns the field type corresponding to a Python value.
-        This type can be used in add_field(s) method.
-        For list values, only the first item is considered to get the type.
-        Type cannot be determined for empty list.
-        If value is None, the result is None.
-        """
-        if isinstance(value, list):
-            if value:
-                item_type = self.__python_value_type(value[0])
-                return 'list_' + item_type
-            else:
-                # Raises a KeyError for empty list
-                return self._python_type_to_tag_type[list]
-        else:
-            return self._python_type_to_tag_type[type(value)]
-    
-    @staticmethod
-    def __field_type_to_column_type(field_type):
-        """
-        Gives the SQLAlchemy column type corresponding to the field type
-
-        :param field_type: Column type
-
-        :return: The sql column type given the field type
-        """
-
-        return TYPE_TO_COLUMN[field_type]
-
     @staticmethod
     def __check_type_value(value, valid_type):
         """
@@ -1408,11 +1104,11 @@ class DatabaseSession:
         :return: True if the value is valid, False otherwise
         """
 
-        value_type = type(value)
         if valid_type is None:
             return False
         if value is None:
             return True
+        value_type = type(value)
         if valid_type == FIELD_TYPE_INTEGER and value_type == int:
             return True
         if valid_type == FIELD_TYPE_FLOAT and value_type == int:
@@ -1440,19 +1136,6 @@ class DatabaseSession:
         return False
 
     @staticmethod
-    def __python_to_column(column_type, value):
-        """
-        Converts a python value into a suitable value to put in a
-        database column.
-        """
-        if isinstance(value, list):
-            return DatabaseSession.__list_to_column(column_type, value)
-        elif isinstance(value, dict):
-            return json.dumps(value)
-        else:
-            return value
-
-    @staticmethod
     def __column_to_python(column_type, value):
         """
         Converts a value of a database column into the corresponding
@@ -1466,19 +1149,6 @@ class DatabaseSession:
             return json.loads(value)
         else:
             return value
-
-    @staticmethod
-    def __list_to_column(column_type, value):
-        """
-        Converts a python list value into a suitable value to put in a
-        database column.
-        """
-        converter = DatabaseSession._list_item_to_string.get(column_type)
-        if converter is None:
-            list_value = value
-        else:
-            list_value = [converter(i) for i in value]
-        return repr(list_value)
 
     @staticmethod
     def __column_to_list(column_type, value):

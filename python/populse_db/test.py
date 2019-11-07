@@ -63,7 +63,7 @@ class TestsSQLiteInMemory(unittest.TestCase):
                 doc[lk] = [v]
             doc['index'] = 'test'
             dbs.add_document('test', doc)
-            stored_doc = dict(dbs.get_document('test', 'test'))
+            stored_doc = dbs.get_document('test', 'test')._dict()
             self.maxDiff = None
             self.assertEqual(doc, stored_doc)
 
