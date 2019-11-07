@@ -272,6 +272,8 @@ class SQLiteEngine:
                                     .format(collection, field))
                 try:
                     field_type = pdb.python_value_type(value)
+                    if field_type is None:
+                        raise KeyError
                 except KeyError:
                     raise ValueError('Collection {0} has no field {1} and it '
                                     'cannot be created from a value of type {2}'
@@ -305,7 +307,10 @@ class SQLiteEngine:
             table,
             ','.join('[%s]' % i for i in column_values.keys()),
             ','.join('?' for i in column_values))
-        self.cursor.execute(sql, list(column_values.values()))
+        try:
+            self.cursor.execute(sql, list(column_values.values()))
+        except sqlite3.IntegrityError as e:
+            raise ValueError(str(e))
         for sql, sql_params in lists:
             for params in sql_params:
                 self.cursor.execute(sql, params)

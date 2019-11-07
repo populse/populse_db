@@ -412,7 +412,7 @@ class DatabaseSession:
                                                                                                                     type(
                                                                                                                         description)))
 
-        self.engine.add_field(collection, name, type, description, index, self.name_to_sql(name))
+        self.engine.add_field(collection, name, field_type, description, index)
 
     def remove_field(self, collection, field):
         """
@@ -542,19 +542,8 @@ class DatabaseSession:
         :return: The field row if the field exists, None otherwise
         """
 
-        if self.__caches:
-            try:
-                return self.__fields[collection][name]
-            except KeyError:
-                return None
-        else:
-            if not isinstance(collection, six.string_types) or not isinstance(name, six.string_types):
-                return None
-            field_row = self.session.query(self.table_classes[FIELD_TABLE]).filter(
-                self.table_classes[FIELD_TABLE].field_name == name).filter(
-                self.table_classes[FIELD_TABLE].collection_name == collection).first()
-            return field_row
-
+        return self.engine.field(collection, name)
+    
     def get_fields_names(self, collection):
         """
         Gives the list of all fields, given a collection
@@ -1166,25 +1155,3 @@ class DatabaseSession:
 
 class Undefined:
     pass
-
-class Document(dict):
-    '''
-    A Document is a Python dictionary containing a document field values.
-    It is build from the result of an SQL query and allow to access to the
-    fields via attribute syntax (e.g. doc.toto == doc['toto']).
-    '''
-
-    def __init__(self, database_session, collection, row):
-        for field in database_session.get_fields_names(collection):
-            column = database_session.name_to_valid_column_name(field)
-            db_value = getattr(row, column)
-            value = database_session._DatabaseSession__column_to_python(
-                database_session.get_field(collection,field).type,
-                db_value)
-            self[field] = value
-
-    def __getattr__(self, name):
-        try:
-            return self[name]
-        except KeyError:
-            raise AttributeError(name)

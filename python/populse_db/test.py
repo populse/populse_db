@@ -20,7 +20,7 @@ from sqlalchemy.exc import OperationalError
 from populse_db.database import Database, FIELD_TYPE_STRING, FIELD_TYPE_FLOAT, FIELD_TYPE_TIME, FIELD_TYPE_DATETIME, \
     FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_BOOLEAN, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_INTEGER, FIELD_TYPE_LIST_DATE, \
     FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_FLOAT, DatabaseSession, \
-    FIELD_TYPE_JSON, FIELD_TYPE_LIST_JSON, Document
+    FIELD_TYPE_JSON, FIELD_TYPE_LIST_JSON
 from populse_db.filter import literal_parser, FilterToQuery
 
 do_tests = True
@@ -78,11 +78,12 @@ def create_test_case(**database_creation_parameters):
             Called before every unit test
             Creates a temporary folder containing the database file that will be used for the test
             """
-
-            self.temp_folder = tempfile.mkdtemp()
-            self.path = os.path.join(self.temp_folder, "test.db")
             if 'string_engine' not in database_creation_parameters:
-                database_creation_parameters['string_engine'] = 'sqlite:///' + self.path
+                self.temp_folder = tempfile.mkdtemp()
+                path = os.path.join(self.temp_folder, "test.db")
+                database_creation_parameters['string_engine'] = 'sqlite:///' + path
+            else:
+                self.temp_folder = None
             self.string_engine = database_creation_parameters['string_engine']
 
         def tearDown(self):
@@ -90,9 +91,10 @@ def create_test_case(**database_creation_parameters):
             Called after every unit test
             Deletes the temporary folder created for the test
             """
-
-            shutil.rmtree(self.temp_folder)
-
+            if self.temp_folder:
+                shutil.rmtree(self.temp_folder)
+                del database_creation_parameters['string_engine']
+            
         def create_database(self, clear=True):
             """
             Opens the database
@@ -118,31 +120,36 @@ def create_test_case(**database_creation_parameters):
             """
             Tests the parameters of the Database class constructor
             """
+            temp_folder = tempfile.mkdtemp()
+            try:
+                path = os.path.join(self.temp_folder, "test.db")
 
-            engine = 'sqlite:///' + self.path
+                engine = 'sqlite:///' + path
 
-            # Testing with wrong engine type
-            self.assertRaises(ValueError, lambda : Database(1))
+                # Testing with wrong engine type
+                self.assertRaises(ValueError, lambda : Database(1))
 
-            # Testing with wrong query_type
-            self.assertRaises(ValueError, lambda : Database(engine, query_type="wrong_query_type"))
-            self.assertRaises(ValueError, lambda : Database(engine, query_type=True))
+                # Testing with wrong query_type
+                self.assertRaises(ValueError, lambda : Database(engine, query_type="wrong_query_type"))
+                self.assertRaises(ValueError, lambda : Database(engine, query_type=True))
 
-            # Testing with wrong caches
-            self.assertRaises(ValueError, lambda : Database(engine, caches="False"))
+                # Testing with wrong caches
+                self.assertRaises(ValueError, lambda : Database(engine, caches="False"))
 
-            # Testing with wrong list_tables
-            self.assertRaises(ValueError, lambda : Database(engine, list_tables="False"))
+                # Testing with wrong list_tables
+                self.assertRaises(ValueError, lambda : Database(engine, list_tables="False"))
 
-            # Testing with wrong database schema
-            if os.path.exists(os.path.join("..", "..", "docs", "databases", "sample.db")):
-                with self.assertRaises(Exception):
-                    database_path = os.path.realpath(os.path.join("..", "..", "docs", "databases", "sample.db"))
-                    database_engine = 'sqlite:///' + database_path
-                    Database(database_engine)
+                # Testing with wrong database schema
+                if os.path.exists(os.path.join("..", "..", "docs", "databases", "sample.db")):
+                    with self.assertRaises(Exception):
+                        database_path = os.path.realpath(os.path.join("..", "..", "docs", "databases", "sample.db"))
+                        database_engine = 'sqlite:///' + database_path
+                        Database(database_engine)
 
-            # Testing with wrong engine
-            self.assertRaises(ValueError, lambda : Database("engine"))
+                # Testing with wrong engine
+                self.assertRaises(ValueError, lambda : Database("engine"))
+            finally:
+                shutil.rmtree(temp_folder)
 
         def test_add_field(self):
             """
@@ -770,8 +777,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Testing that a document is returned if it exists
-                self.assertIsInstance(session.get_document("collection1", "document1"),
-                                      Document)                
+                self.assertIsNotNone(session.get_document("collection1", "document1"))
                 
                 # Testing that None is returned if the document does not exist
                 self.assertIsNone(session.get_document("collection1", "document3"))
@@ -859,8 +865,6 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing that the document has been added
                 document = session.get_document("collection1", "document1")
-                self.assertIsInstance(document,
-                                      Document)
                 self.assertEqual(document.name, "document1")
 
                 # Testing when trying to add a document that already exists
