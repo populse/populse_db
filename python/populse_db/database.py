@@ -180,7 +180,7 @@ class Database:
         Removes all documents and collections in the database
         """
         with self as session:
-            session.delete_tables()
+            session.engine.clear()
 
 _python_type_to_field_type = {
     type(None): None,

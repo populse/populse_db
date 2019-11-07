@@ -166,8 +166,13 @@ class SQLiteEngine:
             return self.type_to_sql[type]
     
     
-    def delete_tables(self):
-        for table in [FIELD_TABLE, COLLECTION_TABLE] + [i[5] for i in self.collections()]:
+    def clear(self):
+        tables = [FIELD_TABLE, COLLECTION_TABLE]
+        tables += [i.table_name for i in self.collections()]
+        tables += ['list_%s_%s' % (self.collection_table[i.collection_name],
+                                   self.field_column[i.collection_name][i.name])
+                   for i in self.fields() if i.field_type.startswith('list_')]
+        for table in tables:
             sql = 'DROP TABLE [%s]' % table
             self.cursor.execute(sql)
         
@@ -182,7 +187,10 @@ class SQLiteEngine:
         table_name = self.name_to_sql(name)
         pk_column = self.name_to_sql(primary_key)
         sql = 'CREATE TABLE [%s] ([%s] TEXT PRIMARY KEY)' % (table_name, pk_column)
-        self.cursor.execute(sql)
+        try:
+            self.cursor.execute(sql)
+        except sqlite3.OperationalError as e:
+            raise ValueError(str(e))
         self.table_row[table_name] = row_class(table_name, [pk_column])
         
         sql = 'INSERT INTO [%s] (collection_name, primary_key, table_name) VALUES (?, ?, ?)' % COLLECTION_TABLE
@@ -330,9 +338,14 @@ class SQLiteEngine:
             return self.table_row[FIELD_TABLE](*row)
         return None
 
-    def fields(self, collection):
-        sql = 'SELECT * FROM [%s] WHERE collection_name = ?' % FIELD_TABLE
-        self.cursor.execute(sql, [collection])
+    def fields(self, collection=None):
+        sql = 'SELECT * FROM [%s]' % FIELD_TABLE
+        if collection is None:
+            data = []
+        else:
+            sql += ' WHERE collection_name = ?'
+            data = [collection]
+        self.cursor.execute(sql, data)
         row_class = self.table_row[FIELD_TABLE]
         for row in self.cursor:
             yield row_class(*row)
