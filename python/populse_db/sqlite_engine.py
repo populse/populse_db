@@ -120,11 +120,13 @@ class SQLiteEngine:
         self.collection_primary_key = dict(self.cursor)
         self.collection_table = {}
         self.table_row = {}
+        self.table_document = {}
         for table in (COLLECTION_TABLE, FIELD_TABLE):
             sql = 'PRAGMA table_info([%s])' % table
             self.cursor.execute(sql)
             columns = [i[1] for i in self.cursor]
             self.table_row[table] = row_class(table, columns)
+            # TODO self.table_document
         for i in self.cursor:
             collection, table = i
             self.collection_table[collection] = table
@@ -132,12 +134,15 @@ class SQLiteEngine:
             self.cursor.execute(sql)
             columns = [i[1] for i in self.cursor()]
             self.table_row[table] = row_class(table, columns)
+            # TODO self.table_document
         
-        sql = 'SELECT collection_name, field_name, column FROM [%s]' % FIELD_TABLE
+        sql = 'SELECT collection_name, field_name, field_type, column FROM [%s]' % FIELD_TABLE
         self.cursor.execute(sql)
         self.field_column = {}
-        for collection, field, column in self.cursor:
+        self.field_type = {}
+        for collection, field, field_type, column in self.cursor:
             self.field_column.setdefault(collection, {})[field] = column
+            self.field_type.setdefault(collection, {})[field] = field_type
         
         return self
     
@@ -175,6 +180,11 @@ class SQLiteEngine:
         for table in tables:
             sql = 'DROP TABLE [%s]' % table
             self.cursor.execute(sql)
+        self.collection_table = {}
+        self.table_row = {}
+        self.table_document = {}
+        self.field_column = {}
+        self.field_type = {}
         
     def has_table(self, table):
         self.cursor.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='%s'" % table)
@@ -192,6 +202,7 @@ class SQLiteEngine:
         except sqlite3.OperationalError as e:
             raise ValueError(str(e))
         self.table_row[table_name] = row_class(table_name, [pk_column])
+        self.table_document[table_name] = row_class(table_name, [primary_key])
         
         sql = 'INSERT INTO [%s] (collection_name, primary_key, table_name) VALUES (?, ?, ?)' % COLLECTION_TABLE
         self.cursor.execute(sql, [name, primary_key, table_name])
@@ -203,6 +214,7 @@ class SQLiteEngine:
                                   'Primary_key of the document collection %s' % name,
                                   pk_column])
         self.field_column[name] = {primary_key: pk_column}
+        self.field_type[name] = {primary_key: pdb.FIELD_TYPE_STRING}
         
     def collection(self, name):
         sql = 'SELECT * FROM [%s] WHERE collection_name = ?' % COLLECTION_TABLE
@@ -223,6 +235,9 @@ class SQLiteEngine:
         del self.collection_table[name]
         del self.collection_primary_key[name]
         del self.table_row[table]
+        del self.table_document[table]
+        del self.field_column[name]
+        del self.field_type[name]
         
         sql = 'DROP TABLE [%s]' % table
         self.cursor.execute(sql)
@@ -237,6 +252,8 @@ class SQLiteEngine:
         sql = 'ALTER TABLE [%s] ADD COLUMN [%s] %s' % (table, column, self.sql_type(type))
         table_row = self.table_row[table]
         table_row._append_key(column)
+        table_doc = self.table_document[table]
+        table_doc._append_key(field)
         
         self.cursor.execute(sql)
         sql = 'INSERT INTO [%s] (field_name, collection_name, field_type, description, has_index, column) VALUES (?, ?, ?, ?, ?, ?)' % FIELD_TABLE
@@ -247,6 +264,7 @@ class SQLiteEngine:
                                   (1 if index else 0),
                                   column])
         self.field_column.setdefault(collection, {})[field] = column
+        self.field_type.setdefault(collection, {})[field] = type
         if index:
             sql = 'CREATE INDEX [%s] ([%s])'% (table, column)
             cursor.execute(sql)
@@ -262,10 +280,8 @@ class SQLiteEngine:
         table = self.collection_table[collection]
         lists = []
         column_values = {}
-        field_types = dict((field.field_name, field.field_type) 
-                           for field in self.fields(collection))
         for field, value in document.items():
-            field_type = field_types.get(field)
+            field_type = self.field_type[collection].get(field)
             if field_type is None:
                 if not create_missing_fields:
                     raise ValueError('Collection {0} has no field {1}'
@@ -335,6 +351,9 @@ class SQLiteEngine:
             #return field_type
         #return field_row.field_type
     
+    def has_field(self, collection, field):
+        return self.field_column.get(collection, {}).get(field) is not None
+    
     def field(self, collection, field):
         sql = 'SELECT * FROM [%s] WHERE collection_name = ? AND field_name = ?' % FIELD_TABLE
         self.cursor.execute(sql, [collection, field])
@@ -393,12 +412,21 @@ class SQLiteEngine:
 
     @staticmethod
     def column_to_python(field_type, value):
+        if value is None:
+            return None
         converter = SQLiteEngine._sql_to_python.get(field_type)
         if converter is not None:
             return converter(value)
         else:
             return value
 
+    def has_document(self, collection, document):
+        table = self.collection_table[collection]
+        primary_key = self.collection_primary_key[collection]
+        sql = 'SELECT COUNT(*) FROM [%s] WHERE [%s] = ?' % (table, primary_key)
+        self.cursor.execute(sql, [document])
+        return bool(self.cursor.fetchone()[0])
+    
     def document(self, collection, document):
         table = self.collection_table[collection]
         primary_key = self.collection_primary_key[collection]
@@ -406,12 +434,10 @@ class SQLiteEngine:
         self.cursor.execute(sql, [document])
         row = self.cursor.fetchone()
         if row is not None:
-            field_types = dict((field.field_name, field.field_type) 
-                            for field in self.fields(collection))
-            result = self.table_row[table](*row)
+            result = self.table_document[table](*row)
             values = []
             for field in result:
-                field_type = field_types[field]
+                field_type = self.field_type[collection][field]
                 if field_type.startswith('list_'):
                     item_type = field_type[5:]
                     column = self.field_column[collection][field]
@@ -428,3 +454,50 @@ class SQLiteEngine:
             return result
         return None
     
+    def has_value(self, collection, document_id, field):
+        table = self.collection_table.get(collection)
+        if table is not None:
+            primary_key = self.collection_primary_key[collection]
+            column = self.field_column[collection].get(field)
+            if column is not None:
+                sql = 'SELECT [%s] FROM [%s] WHERE [%s] = ?' % (column, table, primary_key)
+                self.cursor.execute(sql, [document_id])
+                row = self.cursor.fetchone()
+                if row:
+                    return row[0] is not None
+        return False
+        
+    def set_value(self, collection, document_id, field, value):
+        table = self.collection_table[collection]
+        column = self.field_column[collection][field]
+        primary_key = self.collection_primary_key[collection]
+        field_type = self.field_type[collection][field]
+        if isinstance(value, list):
+            list_table = 'list_%s_%s' % (table, column)
+            sql = 'SELECT max(list_id) FROM [%s]' % list_table
+            self.cursor.execute(sql)
+            list_id = self.cursor.fetchone()[0]
+            if list_id is None:
+                list_id = 0
+            else:
+                list_id += 1
+            column_value = list_id
+            sql = 'INSERT INTO [%s] (list_id, i, value) VALUES (?, ?, ?)' % list_table
+            sql_params = [[list_id, 
+                          i,
+                          self.python_to_column(field_type[5:], value[i])]
+                          for i in range(len(value))]
+            for p in sql_params:
+                self.cursor.execute(sql, p)
+        else:
+            column_value = self.python_to_column(field_type, value)
+        
+        sql = 'UPDATE [%s] SET [%s] = ? WHERE [%s] = ?' % (
+            table,
+            column,
+            primary_key)
+        try:
+            self.cursor.execute(sql, [column_value, document_id])
+        except sqlite3.IntegrityError as e:
+            raise ValueError(str(e))
+       

@@ -1985,7 +1985,7 @@ def create_test_case(**database_creation_parameters):
                     doc[lk] = [v]
                 doc['index'] = 'test'
                 session.add_document('test', doc)
-                stored_doc = dict(session.get_document('test', 'test'))
+                stored_doc = session.get_document('test', 'test')._dict()
                 self.assertEqual(doc, stored_doc)
     
     return TestDatabaseMethods

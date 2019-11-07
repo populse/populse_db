@@ -568,20 +568,20 @@ class DatabaseSession:
 
     """ VALUES """
 
-    def get_value(self, collection, document, field):
+    def get_value(self, collection, document_id, field):
         """
         Gives the current value of <collection, document, field>
 
         :param collection: Document collection (str, must be existing)
 
-        :param document: Document name (str, must be existing)
+        :param document_id: Document name (str, must be existing)
 
         :param field: Field name (str, must be existing)
 
         :return: The current value of <collection, document, field> if it exists, None otherwise
         """
         
-        document = self.get_document(collection, document)
+        document = self.get_document(collection, document_id)
         if document is None:
             return None
         try:
@@ -795,7 +795,7 @@ class DatabaseSession:
 
         :param value: Value to add
 
-        :param checks: Bool to know if flush to do and value check (Put False in the middle of adding values) => True by default
+        :param checks: if False, do not perform any type or value checking
 
         :raise ValueError: - If the collection does not exist
                            - If the field does not exist
@@ -803,58 +803,24 @@ class DatabaseSession:
                            - If the value is invalid
                            - If <collection, document, field> already has a value
         """
-
-        collection_row = self.get_collection(collection)
-        field_row = self.get_field(collection, field)
-        document_row = self.__get_document_row(collection, document)
-
+        if self.engine.has_value(collection, document, field):
+            raise ValueError(
+                "The document with the name {1} already have a value for field {2} in the collection {1}".format(collection, document, field))
         if checks:
-            if collection_row is None:
+            if not self.engine.has_collection(collection):
                 raise ValueError("The collection {0} does not exist".format(collection))
-            if field_row is None:
+            field_row = self.engine.field(collection, field)
+            if not field_row:
                 raise ValueError(
                     "The field with the name {0} does not exist in the collection {1}".format(field, collection))
-            if document_row is None:
+            if not self.engine.has_document(collection, document):
                 raise ValueError(
                     "The document with the name {0} does not exist in the collection {1}".format(document, collection))
-            if not self.__check_type_value(value, field_row.type):
-                raise ValueError("The value {0} is invalid for the type {1}".format(value, field_row.type))
-
-        field_name = self.name_to_valid_column_name(field)
-        database_value = getattr(
-            document_row, field_name)
-        collection_name = self.name_to_valid_column_name(collection)
-
-        # We add the value only if it does not already exist
-        if database_value is None:
-            if value is not None:
-                current_value = self.__python_to_column(
-                    field_row.type, value)
-                setattr(
-                    document_row, field_name,
-                    current_value)
-                if self.list_tables and isinstance(value, list):
-                    primary_key = self.get_collection(collection).primary_key
-                    document_id = getattr(document_row, self.name_to_valid_column_name(primary_key))
-                    table = 'list_%s_%s' % (collection_name, field_name)
-                    sql = self.metadata.tables[table].insert()
-                    sql_params = []
-                    cvalues = [self.__python_to_column(field_row.type[5:], i) for i in value]
-                    index = 0
-                    for i in cvalues:
-                        sql_params.append({'document_id': document_id, 'i': index, 'value': i})
-                        index += 1
-                    if sql_params:
-                        self.session.execute(sql, params=sql_params)
-
-            if checks:
-                self.session.flush()
-            self.__unsaved_modifications = True
-
-        else:
-            raise ValueError(
-                "The tuple <{0}, {1}> already has a value in the collection {2}".format(field, document, collection))
-
+            if not self.check_value_type(value, field_row.field_type):
+                raise ValueError("The value {0} is invalid for the type {1}".format(value, field_row.field_type))
+        
+        self.engine.set_value(collection, document, field, value)
+        
     """ DOCUMENTS """
 
     def get_document(self, collection, document):
@@ -1074,48 +1040,42 @@ class DatabaseSession:
 
     """ UTILS """
 
-    @staticmethod
-    def __check_type_value(value, valid_type):
+
+    _value_type_checker = {
+        FIELD_TYPE_INTEGER: lambda v: isinstance(v, int),
+        FIELD_TYPE_FLOAT: lambda v: isinstance(v, (int, float)),
+        FIELD_TYPE_BOOLEAN: lambda v: isinstance(v, bool),
+        FIELD_TYPE_STRING: lambda v: isinstance(v, six.string_types),
+        FIELD_TYPE_JSON: lambda v: isinstance(v, dict),
+        FIELD_TYPE_DATETIME: lambda v: isinstance(v, datetime),
+        FIELD_TYPE_DATE: lambda v: isinstance(v, date),
+        FIELD_TYPE_TIME: lambda v: isinstance(v, time),
+    }
+    
+    @classmethod
+    def check_value_type(cls, value, field_type):
         """
         Checks the type of the value
 
         :param value: Value
 
-        :param valid_type: Type that the value is supposed to have
+        :param field_type: Type that the value is supposed to have
 
-        :return: True if the value is valid, False otherwise
+        :return: True if the value is None or has a valid type, False otherwise
         """
 
-        if valid_type is None:
+        if field_type is None:
             return False
         if value is None:
             return True
-        value_type = type(value)
-        if valid_type == FIELD_TYPE_INTEGER and value_type == int:
-            return True
-        if valid_type == FIELD_TYPE_FLOAT and value_type == int:
-            return True
-        if valid_type == FIELD_TYPE_FLOAT and value_type == float:
-            return True
-        if valid_type == FIELD_TYPE_BOOLEAN and value_type == bool:
-            return True
-        if valid_type == FIELD_TYPE_STRING and value_type == str:
-            return True
-        if valid_type == FIELD_TYPE_JSON and value_type == dict:
-            return True
-        if valid_type == FIELD_TYPE_DATETIME and value_type == datetime:
-            return True
-        if valid_type == FIELD_TYPE_TIME and value_type == time:
-            return True
-        if valid_type == FIELD_TYPE_DATE and value_type == date:
-            return True
-        if (valid_type in LIST_TYPES
-                and value_type == list):
-            for value_element in value:
-                if not DatabaseSession.__check_type_value(value_element, valid_type.replace("list_", "")):
+        if field_type.startswith('list_'):
+            item_type = field_type[5:]
+            for v in value:
+                if not cls.check_value_type(v, item_type):
                     return False
             return True
-        return False
+        else:
+            return cls._value_type_checker[field_type](value)
 
     @staticmethod
     def __column_to_python(column_type, value):
