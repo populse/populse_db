@@ -363,10 +363,8 @@ class DatabaseSession:
                 raise ValueError("Invalid field, it must be a list of four elements: [collection, name, type, description]")
             self.add_field(collection=field[0], 
                            name=field[1],
-                           type=field[2],
+                           field_type=field[2],
                            description=field[3])
-            if field[0] not in collections:
-                collections.append(field[0])
 
     def add_field(self, collection, name, field_type, description=None,
                   index=False, flush=True):
@@ -553,12 +551,7 @@ class DatabaseSession:
         :return: List of all fields names of the collection if it exists, None otherwise
         """
 
-        fields = self.session.query(self.table_classes[FIELD_TABLE].field_name).filter(
-            self.table_classes[FIELD_TABLE].collection_name == collection).all()
-
-        fields_names = [field.field_name for field in fields]
-
-        return fields_names
+        return [i.field_name for i in self.engine.fields(collection)]
 
     def get_fields(self, collection):
         """
