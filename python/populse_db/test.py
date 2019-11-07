@@ -169,7 +169,7 @@ def create_test_case(**database_creation_parameters):
                 # Checking the field properties
                 field = session.get_field("collection1", "PatientName")
                 self.assertEqual(field.field_name, "PatientName")
-                self.assertEqual(field.type, FIELD_TYPE_STRING)
+                self.assertEqual(field.field_type, FIELD_TYPE_STRING)
                 self.assertEqual(field.description, "Name of the patient")
                 self.assertEqual(field.collection_name, "collection1")
 
