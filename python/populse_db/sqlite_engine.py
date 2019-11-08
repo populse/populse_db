@@ -6,53 +6,11 @@ import sqlite3
 import dateutil
 
 import populse_db.database as pdb
+from populse_db.filter import FilterToQuery, filter_parser
 
 # Table names
 FIELD_TABLE = "field"
 COLLECTION_TABLE = "collection"
-
-
-
-class Row:
-    _key_indices = {}
-    
-    def __init__(self, *args, **kwargs):
-        self._values = [None] * len(self._key_indices)
-        i = 0
-        for value in args:
-            self._values[i] = value
-            i += 1
-        for key, value in kwargs.items():
-            self._values[self._key_indices[key]] = value
-    
-    def __iter__(self):
-        return iter(self._key_indices)
-    
-    def __getattr__(self, name):
-        try:
-            return self._values[self._key_indices[name]]
-        except KeyError:
-            raise AttributeError(repr(name))
-
-    def __getitem__(self, name_or_index):
-        if isinstance(name_or_index, str):
-            return self._values[self._key_indices[name_or_index]]
-        else:
-            return self._values[name_or_index]
-    
-    @classmethod
-    def _append_key(cls, key):
-        cls._key_indices[key] = len(cls._key_indices)
-    
-    def __repr__(self):
-        return '<%s: %s>' % (self.__class__.__name__, ','.join('%s = %s' % (k, repr(self._values[i])) for k, i in self._key_indices.items()))
-    
-    def _dict(self):
-        return dict((i, self[i]) for i in self._key_indices if self[i] is not None)
-
-def row_class(name, keys):
-    return type(name, (Row,), {'_key_indices': dict(zip(keys, 
-                                                    range(len(keys))))})        
                 
 class SQLiteEngine:
     def __init__(self, database):
@@ -125,7 +83,7 @@ class SQLiteEngine:
             sql = 'PRAGMA table_info([%s])' % table
             self.cursor.execute(sql)
             columns = [i[1] for i in self.cursor]
-            self.table_row[table] = row_class(table, columns)
+            self.table_row[table] = pdb.row_class(table, columns)
             # TODO self.table_document
         for i in self.cursor:
             collection, table = i
@@ -133,7 +91,7 @@ class SQLiteEngine:
             sql = 'PRAGMA table_info([%s])' % table
             self.cursor.execute(sql)
             columns = [i[1] for i in self.cursor()]
-            self.table_row[table] = row_class(table, columns)
+            self.table_row[table] = pdb.row_class(table, columns)
             # TODO self.table_document
         
         sql = 'SELECT collection_name, field_name, field_type, column FROM [%s]' % FIELD_TABLE
@@ -201,8 +159,8 @@ class SQLiteEngine:
             self.cursor.execute(sql)
         except sqlite3.OperationalError as e:
             raise ValueError(str(e))
-        self.table_row[table_name] = row_class(table_name, [pk_column])
-        self.table_document[table_name] = row_class(table_name, [primary_key])
+        self.table_row[table_name] = pdb.row_class(table_name, [pk_column])
+        self.table_document[table_name] = pdb.row_class(table_name, [primary_key])
         
         sql = 'INSERT INTO [%s] (collection_name, primary_key, table_name) VALUES (?, ?, ?)' % COLLECTION_TABLE
         self.cursor.execute(sql, [name, primary_key, table_name])
@@ -266,8 +224,8 @@ class SQLiteEngine:
         self.field_column.setdefault(collection, {})[field] = column
         self.field_type.setdefault(collection, {})[field] = type
         if index:
-            sql = 'CREATE INDEX [%s] ([%s])'% (table, column)
-            cursor.execute(sql)
+            sql = 'CREATE INDEX [{0}_{1}] ON [{0}] ([{1}])'.format(table, column)
+            self.cursor.execute(sql)
         if type.startswith('list_'):
             sql = 'CREATE TABLE [list_{0}_{1}] (list_id INT, i INT, value {2})'.format(table, column, self.sql_type(type[5:]))
             self.cursor.execute(sql)
@@ -426,14 +384,17 @@ class SQLiteEngine:
         sql = 'SELECT COUNT(*) FROM [%s] WHERE [%s] = ?' % (table, primary_key)
         self.cursor.execute(sql, [document])
         return bool(self.cursor.fetchone()[0])
-    
-    def document(self, collection, document):
+
+
+    def _select_documents(self, collection, where, where_data):
         table = self.collection_table[collection]
         primary_key = self.collection_primary_key[collection]
-        sql = 'SELECT * FROM [%s] WHERE [%s] = ?' % (table, primary_key)
-        self.cursor.execute(sql, [document])
-        row = self.cursor.fetchone()
-        if row is not None:
+        sql = 'SELECT * FROM [%s]' % table
+        if where:
+            sql += ' WHERE %s' % where
+        print('!!!', sql)
+        self.cursor.execute(sql, where_data)
+        for row in self.cursor:
             result = self.table_document[table](*row)
             values = []
             for field in result:
@@ -451,8 +412,17 @@ class SQLiteEngine:
                 else:
                     values.append(self.column_to_python(field_type, result[field]))
             result._values = values
-            return result
-        return None
+            yield result
+    
+    def document(self, collection, document):
+        primary_key = self.collection_primary_key[collection]
+        where = '[%s] = ?' % primary_key
+        where_data = [document]
+        
+        try:
+            return self._select_documents(collection, where, where_data).__next__()
+        except StopIteration:
+            return None
     
     def has_value(self, collection, document_id, field):
         table = self.collection_table.get(collection)
@@ -500,4 +470,145 @@ class SQLiteEngine:
             self.cursor.execute(sql, [column_value, document_id])
         except sqlite3.IntegrityError as e:
             raise ValueError(str(e))
-       
+
+    def parse_filter(self, collection, filter):
+        """
+        Given a filter string, return a internal query representation that
+        can be used with filter_documents() to select documents
+
+
+        :param collection: the collection for which the filter is intended 
+               (str, must be existing)
+        
+        :param filter: the selection string using the populse_db selection
+                       language.
+
+        """
+        tree = filter_parser().parse(filter)
+        query = FilterToSqliteQuery(self, collection).transform(tree)
+        return query
+
+    def filter_documents(self, collection, where_filter):
+        if where_filter is None:
+            where = None
+        else:
+            where = ' '.join(where_filter)
+        where_data = []
+        for doc in self._select_documents(collection, where, where_data):
+            yield doc
+
+#def sql_equal(a, b):
+    #if FilterToQuery.is_field(a):
+        #if FilterToQuery.is_field(b):
+            #r = ((a == b) | (sql_operators.is_(a, None) & sql_operators.is_(b, None)))
+        #else:
+            #if b is not None:
+                #r = ((a == b) | sql_operators.eq(a, None))
+            #else:
+                #r = sql_operators.eq(a, None)
+    #else:
+        #if FilterToQuery.is_field(b):
+            #if a is not None:
+                #r = ((a == b) | sql_operators.eq(b, None))
+            #else:
+                #sql_operators.eq(b, None)
+        #else:
+            #r = (a == b)
+    #return r
+
+
+#def sql_differ(a, b):
+    #r = ((a != b) | (sql_operators.eq(a, None) & sql_operators.ne(b, None))) | (
+            #sql_operators.ne(a, None) & sql_operators.eq(b, None))
+    #return r
+
+class FilterToSqliteQuery(FilterToQuery):
+    def __init__(self, engine, collection):
+        super(FilterToSqliteQuery, self).__init__(engine, collection)
+        self.table = self.engine.collection_table[collection]
+
+    def get_column(self, field):
+        '''
+        :return: The SQL representation of a field object.
+        '''
+        return self.engine.field_column[self.collection][field.field_name]
+
+    def get_column_value(self, python_value):
+        '''
+        Converts a Python value to a value suitable to put in a database column
+        '''
+        field_type = pdb.python_value_type(python_value)
+        return self.engine.python_to_column(field_type, python_value)
+
+    def build_condition_all(self):
+        return None
+
+    def build_condition_literal_in_list_field(self, value, list_field):
+        '''
+        Builds a condition checking if a constant value is in a list field
+        '''
+        cvalue = self.get_column_value(value)
+        list_column = self.get_column(list_field)
+        list_table = 'list_%s_%s' % (self.table, list_column)
+    
+        where = ('[{0}] is not None AND '
+                 '{1} IN (SELECT value FROM {2} '
+                 'WHERE list_id = [{0}])').format(list_column,
+                                                  cvalue,
+                                                  list_table)
+        return [where]
+
+    def build_condition_field_in_list_field(self, field, list_field):
+        '''
+        Builds a condition checking if a field value is in another
+        list field value
+        '''
+        column = self.get_column(field)
+        list_column = self.get_column(list_field)
+        list_table = 'list_%s_%s' % (self.table, list_column)
+    
+        where = ('[{0}] is not None AND '
+                 '[{1}] IN (SELECT value FROM {2} '
+                 'WHERE list_id = [{0}])').format(list_column,
+                                                  column,
+                                                  list_table)
+        return [where]
+
+    def build_condition_field_in_list(self, field, list_value):
+        '''
+        Builds a condition checking if a field value is a
+        constant list value
+        '''
+        column = self.get_column(field)
+        if None in list_value:
+            list_value.remove(None)
+            where = '[{0}] IS NULL OR [{0}] IN ({1})'.format(column,
+                ','.join("'%s'" % i for i in list_value))
+        else:
+            where = '[{0}] IN ({1})'.format(column,
+                ','.join("'%s'" % i for i in list_value))
+        return [where]
+
+    def build_condition_field_op_field(self, left_field, operator_str, right_field):
+        where = '[%s] %s [%s]' % (self.get_column(left_field),
+                                  operator_str,
+                                  self.get_column(right_field))
+        return [where]
+    
+    def build_condition_field_op_value(self, field, operator_str, value):
+        where = '[%s] %s %s' % (self.get_column(field),
+                                operator_str,
+                                self.get_column_value(value))
+        return [where]
+
+    def build_condition_value_op_field(self, value, operator_str, field):
+        where = '%s %s [%s]' % (self.get_column_value(value),
+                                operator_str,
+                                self.get_column(field))
+        return [where]
+
+    def build_condition_negation(self, condition):
+        return ['NOT', '(' ] + condition + [')']
+    
+    def build_condition_combine_conditions(self, left_condition, operator_str, right_condition):
+        return ['('] + left_condition + [')', operator, '('] + right_condition + [')']

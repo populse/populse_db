@@ -55,6 +55,46 @@ ALL_TYPES = [FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FL
              FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON, FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT,
              FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON]
 
+class Row:
+    _key_indices = {}
+    
+    def __init__(self, *args, **kwargs):
+        self._values = [None] * len(self._key_indices)
+        i = 0
+        for value in args:
+            self._values[i] = value
+            i += 1
+        for key, value in kwargs.items():
+            self._values[self._key_indices[key]] = value
+    
+    def __iter__(self):
+        return iter(self._key_indices)
+    
+    def __getattr__(self, name):
+        try:
+            return self._values[self._key_indices[name]]
+        except KeyError:
+            raise AttributeError(repr(name))
+
+    def __getitem__(self, name_or_index):
+        if isinstance(name_or_index, str):
+            return self._values[self._key_indices[name_or_index]]
+        else:
+            return self._values[name_or_index]
+    
+    @classmethod
+    def _append_key(cls, key):
+        cls._key_indices[key] = len(cls._key_indices)
+    
+    def __repr__(self):
+        return '<%s: %s>' % (self.__class__.__name__, ','.join('%s = %s' % (k, repr(self._values[i])) for k, i in self._key_indices.items()))
+    
+    def _dict(self):
+        return dict((i, self[i]) for i in self._key_indices if self[i] is not None)
+
+def row_class(name, keys):
+    return type(name, (Row,), {'_key_indices': dict(zip(keys, 
+                                                    range(len(keys))))})        
 
 
 class Database:
@@ -63,10 +103,7 @@ class Database:
 
     attributes:
         - string_engine: String engine of the database
-        - caches: Bool to know if the caches must be used
-        - list_tables: Bool to know if list tables must be used
-        - query_type: Default query implementation for applying the filters
-        - engine: SQLAlchemy database engine
+        - engine: database engine
 
     methods:
         - __enter__: Creates or gets a DatabaseSession instance
@@ -75,8 +112,8 @@ class Database:
 
     """
 
-    def __init__(self, string_engine, caches=False, list_tables=True,
-                 query_type='mixed'):
+    def __init__(self, string_engine, caches=None, list_tables=None,
+                 query_type=None):
         """Initialization of the database
 
         :param string_engine: Database engine
@@ -98,16 +135,13 @@ class Database:
 
                               See sqlalchemy documentation for more precisions about the engine: http://docs.sqlalchemy.org/en/latest/core/engines.html
 
-        :param caches: Bool to know if the caches (the rows of the database are stored in dictionaries) must be used (Put True if you count on having a lot of data) => False by default
+        :param caches: obsolete parameter kept for backward compatibility
 
-        :param list_tables: Bool to know if tables must be created to store list values (Put True to have a pure SQL version of IN operator in filters) => True by default
+        :param list_tables: obsolete parameter kept for backward compatibility
 
-        :param query_type: Type of query to use for the filters ('sql', 'python', 'mixed', or 'guess') => 'mixed' by default
+        :param query_type: obsolete parameter kept for backward compatibility
 
         :raise ValueError: - If string_engine is invalid
-                           - If caches is invalid
-                           - If list_tables is invalid
-                           - If query_type is invalid
                            - If the schema is not coherent with the API (the database is not a populse_db database)
         """
 
@@ -115,20 +149,6 @@ class Database:
         if not isinstance(string_engine, six.string_types):
             raise ValueError(
                 "Wrong string_engine, it must be of type {0}, but string_engine of type {1} given".format(str, type(string_engine)))
-        if not isinstance(caches, bool):
-            raise ValueError(
-                "Wrong caches, it must be of type {0}, but caches of type {1} given".format(bool, type(caches)))
-        self.caches = caches
-        if not isinstance(list_tables, bool):
-            raise ValueError("Wrong list_tables, it must be of type {0}, but list_tables of type {1} given".format(bool,
-                                                                                                                   type(
-                                                                                                                       list_tables)))
-        self.list_tables = list_tables
-        query_list = [populse_db.filter.QUERY_MIXED, populse_db.filter.QUERY_GUESS, populse_db.filter.QUERY_PYTHON,
-                      populse_db.filter.QUERY_SQL]
-        if query_type not in query_list:
-            raise ValueError("Wrong query_type, it must be in {0}, but {1} given".format(query_list, query_type))
-        self.query_type = query_type
 
         # SQLite database: It is created if it does not exist
         if string_engine.startswith('sqlite:///'):
@@ -266,8 +286,6 @@ class DatabaseSession:
         # will have to be created
         from .sqlite_engine import SQLiteEngine
         
-        self.list_tables = database.list_tables
-        self.query_type = database.query_type
         self.engine = SQLiteEngine(database.sqlite_location)
         self.__names = {}
 
@@ -974,27 +992,6 @@ class DatabaseSession:
 
     """ FILTERS """
 
-    def __filter_query(self, collection, filter, query_type=None):
-        """
-        Given a filter string, return a query that can be used with
-        filter_documents() to select documents
-
-        :param query_type: Type of query to build, in ('mixed', 'sql', 'python', 'guess') => None by default
-
-                                - If None, the default query_type is used.
-
-        :param filter:
-
-        :param collection: Filter collection (str, must be existing)
-        """
-
-        if query_type is None:
-            query_type = self.query_type
-        filter_to_query_class = populse_db.filter._filter_to_query_classes[query_type]
-        tree = populse_db.filter.filter_parser().parse(filter)
-        query = filter_to_query_class(self, collection).transform(tree)
-        return query
-
     def filter_documents(self, collection, filter_query):
         """
         Iterates over the collection documents selected by filter_query
@@ -1013,31 +1010,16 @@ class DatabaseSession:
                                 - Example: "((({BandWidth} == "50000")) AND (({FileName} LIKE "%G1%")))"
         """
 
-        collection_row = self.get_collection(collection)
-        if collection_row is None:
+        if not self.engine.has_collection(collection):
             raise ValueError("The collection {0} does not exist".format(collection))
-
-        if isinstance(filter_query, six.string_types):
-            filter_query = self.__filter_query(collection, filter_query)
         if filter_query is None:
-            select = self.metadata.tables[self.name_to_valid_column_name(collection)].select()
-            python_filter = None
-        elif isinstance(filter_query, types.FunctionType):
-            select = self.metadata.tables[self.name_to_valid_column_name(collection)].select()
-            python_filter = filter_query
-        elif isinstance(filter_query, tuple):
-            sql_condition, python_filter = filter_query
-            select = select = self.metadata.tables[self.name_to_valid_column_name(collection)].select(
-                sql_condition)
+            parsed_filter = None
         else:
-            select = self.metadata.tables[self.name_to_valid_column_name(collection)].select(
-                filter_query)
-            python_filter = None
-        for row in self.session.execute(select):
-            row = Document(self, collection, row)
-            if python_filter is None or python_filter(row):
-                yield row
-
+            parsed_filter = self.engine.parse_filter(collection, filter_query)
+        for doc in self.engine.filter_documents(collection, parsed_filter):
+            yield doc
+            
+    
     """ UTILS """
 
 
@@ -1077,35 +1059,3 @@ class DatabaseSession:
                 return True
         else:
             return cls._value_type_checker[field_type](value)
-
-    @staticmethod
-    def __column_to_python(column_type, value):
-        """
-        Converts a value of a database column into the corresponding
-        Python value.
-        """
-        if column_type.startswith('list_'):
-            return DatabaseSession.__column_to_list(column_type, value)
-        elif column_type == FIELD_TYPE_JSON:
-            if value is None:
-                return None
-            return json.loads(value)
-        else:
-            return value
-
-    @staticmethod
-    def __column_to_list(column_type, value):
-        """
-        Converts a value of a database column into the corresponding
-        Python list value.
-        """
-        if value is None:
-            return None
-        list_value = ast.literal_eval(value)
-        converter = DatabaseSession._string_to_list_item.get(column_type)
-        if converter is None:
-            return list_value
-        return [converter(i) for i in list_value]
-
-class Undefined:
-    pass

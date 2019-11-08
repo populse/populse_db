@@ -1270,10 +1270,6 @@ def create_test_case(**database_creation_parameters):
                 documents = set(document.index for document in session.filter_documents("collection_test", None))
                 self.assertEqual(documents, set(['document_test']))
 
-                # Checking with invalid filter (every document must be returned)
-                documents = set(document.index for document in session.filter_documents("collection_test", True))
-                self.assertEqual(documents, set(['document_test']))
-
         def test_filters(self):
             list_datetime = [datetime.datetime(2018, 5, 23, 12, 41, 33, 540),
                              datetime.datetime(1981, 5, 8, 20, 0),
@@ -1292,7 +1288,6 @@ def create_test_case(**database_creation_parameters):
                 session.add_field("collection1", 'has_format', field_type=FIELD_TYPE_BOOLEAN,
                                   description=None)
 
-                session.save_modifications()
                 files = ('abc', 'bcd', 'def', 'xyz')
                 for file in files:
                     for date in list_datetime:
@@ -1843,9 +1838,7 @@ def create_test_case(**database_creation_parameters):
                         documents = set(document.name for document in session.filter_documents("collection1", filter))
                         self.assertEqual(documents, expected)
                     except Exception as e:
-                        session.unsave_modifications()
-                        #query = session._DatabaseSession__filter_query('collection1', filter)
-                        e.message = 'While testing filter : %s\n%s' % (str(filter), e.message)
+                        e.message = 'While testing filter : %s\n%s' % (str(filter), str(e))
                         e.args = (e.message,)
                         raise
 
