@@ -493,7 +493,7 @@ def create_test_case(**database_creation_parameters):
                 values["PatientName"] = 50
                 values["BandWidth"] = 25000
                 self.assertRaises(ValueError, lambda : session.set_values("collection1", "document1", values))
-                self.assertRaises(ValueError, lambda: session.set_values("collection1", "document1", True))
+                self.assertRaises(Exception, lambda: session.set_values("collection1", "document1", True))
 
                 # Trying with the collection not existing
                 values = {}

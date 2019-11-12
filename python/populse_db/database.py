@@ -570,9 +570,6 @@ class DatabaseSession:
             field_row = self.engine.field(collection, field)
             if not self.check_value_type(value, field_row.field_type):
                 raise ValueError("The value {0} is invalid for the type {1}".format(value, field_row.field_type))
-
-            if self.engine.has_value(collection, document_id, field):
-                self.engine.remove_value(collection, document_id, field)
         self.engine.set_values(collection, document_id, values)
     
     
@@ -602,7 +599,7 @@ class DatabaseSession:
         if not self.engine.has_document(collection, document_id):
             raise ValueError(
                 "The document with the name {0} does not exist in the collection {1}".format(document_id, collection))
-        if self.engine.has_value(collection, document_id, field):
+        if self.engine.get_value(collection, document_id, field) is not None:
             self.engine.remove_value(collection, document_id, field)
 
     def add_value(self, collection, document, field, value, checks=True):
@@ -625,7 +622,7 @@ class DatabaseSession:
                            - If the value is invalid
                            - If <collection, document, field> already has a value
         """
-        if self.engine.has_value(collection, document, field):
+        if self.engine.get_value(collection, document, field) is not None:
             raise ValueError(
                 "The document with the name {1} already have a value for field {2} in the collection {1}".format(collection, document, field))
         if checks:

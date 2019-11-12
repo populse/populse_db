@@ -423,7 +423,8 @@ class SQLiteEngine:
         primary_key = self.collection_primary_key[collection]
         sql = 'SELECT COUNT(*) FROM [%s] WHERE [%s] = ?' % (table, primary_key)
         self.cursor.execute(sql, [document])
-        return bool(self.cursor.fetchone()[0])
+        r = self.cursor.fetchone()
+        return bool(r[0])
 
 
     def _select_documents(self, collection, where, where_data):
@@ -464,7 +465,7 @@ class SQLiteEngine:
         except StopIteration:
             return None
     
-    def has_value(self, collection, document_id, field):
+    def get_value(self, collection, document_id, field):
         table = self.collection_table.get(collection)
         if table is not None:
             primary_key = self.collection_primary_key[collection]
@@ -474,20 +475,22 @@ class SQLiteEngine:
                 self.cursor.execute(sql, [document_id])
                 row = self.cursor.fetchone()
                 if row:
-                    return row[0] is not None
-        return False
+                    return row[0]
+        return None
         
     def set_values(self, collection, document_id, values):
         table = self.collection_table[collection]
         primary_key = self.collection_primary_key[collection]
+        if primary_key in values:
+            raise ValueError('Cannot modify document id "%s" of collection %s' % (primary_key, collection))
         for field, value in values.items():
-            if field == primary_key:
-                raise ValueError('Cannot modify document id "%s" of collection %s' % (field, collection))
             column = self.field_column[collection][field]
             field_type = self.field_type[collection][field]
             if field_type.startswith('list_'):
                 list_table = 'list_%s_%s' % (table, column)
                 column_value = self.list_hash(value)
+                sql = 'DELETE FROM [%s] WHERE list_id = ?' % list_table
+                self.cursor.execute(sql, [document_id])
                 sql = 'INSERT INTO [%s] (list_id, i, value) VALUES (?, ?, ?)' % list_table
                 sql_params = [[document_id, 
                             i,
@@ -502,10 +505,7 @@ class SQLiteEngine:
                 table,
                 column,
                 primary_key)
-            try:
-                self.cursor.execute(sql, [column_value, document_id])
-            except sqlite3.IntegrityError as e:
-                raise ValueError(str(e))
+            self.cursor.execute(sql, [column_value, document_id])
 
     def remove_value(self, collection, document_id, field):
         table = self.collection_table[collection]
