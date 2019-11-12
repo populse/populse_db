@@ -328,12 +328,11 @@ class DatabaseSession:
         """
 
         # Checks
-        collection = self.get_collection(name)
-        if collection is None:
+        
+        if not self.engine.has_collection(name):
             raise ValueError("The collection {0} does not exist".format(name))
 
-        table_name = self.name_to_sql(name)
-        self.engine.remove_collection(name, table_name)
+        self.engine.remove_collection(name)
 
     def get_collection(self, name):
         """
