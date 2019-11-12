@@ -579,9 +579,7 @@ class DatabaseSession:
         :return: List of all fields rows of the collection if it exists, None otherwise
         """
 
-        fields = self.session.query(self.table_classes[FIELD_TABLE]).filter(
-            self.table_classes[FIELD_TABLE].collection_name == collection).all()
-        return fields
+        return list(self.engine.fields(collection))
 
     """ VALUES """
 
@@ -619,7 +617,7 @@ class DatabaseSession:
 
         :param new_value: New value
 
-        :param flush: Bool to know if flush to do => True by default
+        :param flush: obsolete parmeter
 
         :raise ValueError: - If the collection does not exist
                            - If the field does not exist
@@ -629,51 +627,22 @@ class DatabaseSession:
         """
 
         # Checks
-        collection_row = self.get_collection(collection)
-        if collection_row is None:
+        if not self.engine.has_collection(collection):
             raise ValueError("The collection {0} does not exist".format(collection))
-        field_row = self.get_field(collection, field)
-        if field_row is None:
+        if not self.engine.has_field(collection, field):
             raise ValueError(
                 "The field with the name {0} does not exist in the collection {1}".format(field, collection))
-        document_row = self.__get_document_row(collection, document)
-        if document_row is None:
-            raise ValueError(
-                "The document with the name {0} does not exist in the collection {1}".format(document, collection))
-        if not self.__check_type_value(new_value, field_row.type):
-            raise ValueError("The value {0} is invalid for the type {1}".format(new_value, field_row.type))
+        #document_row = self.__get_document_row(collection, document)
+        #if document_row is None:
+            #raise ValueError(
+                #"The document with the name {0} does not exist in the collection {1}".format(document, collection))
+        #if not self.__check_type_value(new_value, field_row.type):
+            #raise ValueError("The value {0} is invalid for the type {1}".format(new_value, field_row.type))
 
-        column_name = self.name_to_valid_column_name(field)
-        new_column = self.__python_to_column(field_row.type, new_value)
+        if self.engine.has_value(collection, document, field):
+            self.engine.remove_value(collection, document, field)
+        self.engine.set_value(collection, document, field, new_value)
 
-        if field != collection_row.primary_key:
-            setattr(document_row, column_name, new_column)
-        else:
-            raise ValueError("Impossible to set the primary_key value of a document")
-
-        if self.list_tables and isinstance(new_value, list):
-            primary_key = self.get_collection(collection).primary_key
-            document_id = getattr(document_row, self.name_to_valid_column_name(primary_key))
-            table_name = 'list_%s_%s' % (self.name_to_valid_column_name(collection), column_name)
-
-            table = self.metadata.tables[table_name]
-            sql = table.delete(table.c.document_id == document_id)
-            self.session.execute(sql)
-
-            sql = table.insert()
-            sql_params = []
-            cvalues = [self.__python_to_column(field_row.type[5:], i) for i in new_value]
-            index = 0
-            for i in cvalues:
-                sql_params.append({'document_id': document_id, 'i': index, 'value': i})
-                index += 1
-            if sql_params:
-                self.session.execute(sql, params=sql_params)
-
-        if flush:
-            self.session.flush()
-
-        self.__unsaved_modifications = True
 
     def set_values(self, collection, document, values, flush=True):
         """
@@ -763,7 +732,7 @@ class DatabaseSession:
 
         :param field: Field name (str, must be existing)
 
-        :param flush: Bool to know if flush to do (put False in the middle of removing values) => True by default
+        :param flush: unused obsolete parameter
 
         :raise ValueError: - If the collection does not exist
                            - If the field does not exist
@@ -771,34 +740,17 @@ class DatabaseSession:
         """
 
         # Checks
-        collection_row = self.get_collection(collection)
-        if collection_row is None:
+        if not self.engine.has_collection(collection):
             raise ValueError("The collection {0} does not exist".format(collection))
-        field_row = self.get_field(collection, field)
-        if field_row is None:
+        if not self.engine.has_field(collection, field):
             raise ValueError(
                 "The field with the name {0} does not exist in the collection {1}".format(field, collection))
-        document_row = self.__get_document_row(collection, document)
-        if document_row is None:
-            raise ValueError(
-                "The document with the name {0} does not exist in the collection {1}".format(document, collection))
-
-        sql_column_name = self.name_to_valid_column_name(field)
-        collection_name = self.name_to_valid_column_name(collection)
-        old_value = getattr(document_row, sql_column_name)
-        setattr(document_row, sql_column_name, None)
-
-        if self.list_tables and field_row.type.startswith('list_'):
-            primary_key = self.get_collection(collection).primary_key
-            document_id = getattr(document_row, self.name_to_valid_column_name(primary_key))
-            table_name = 'list_%s_%s' % (collection_name, sql_column_name)
-            table = self.metadata.tables[table_name]
-            sql = table.delete(table.c.document_id == document_id)
-            self.session.execute(sql)
-
-        if flush:
-            self.session.flush()
-        self.__unsaved_modifications = True
+        #document_row = self.__get_document_row(collection, document)
+        #if document_row is None:
+            #raise ValueError(
+                #"The document with the name {0} does not exist in the collection {1}".format(document, collection))
+        if self.engine.has_value(collection, document, field):
+            self.engine.remove_value(collection, document, field)
 
     def add_value(self, collection, document, field, value, checks=True):
         """
@@ -884,44 +836,26 @@ class DatabaseSession:
             return []
         return list(self.engine.filter_documents(collection, None))
 
-    #def remove_document(self, collection, document):
-        #"""
-        #Removes a document in the collection
+    def remove_document(self, collection, document_id):
+        """
+        Removes a document in the collection
 
-        #:param collection: Document collection (str, must be existing)
+        :param collection: Document collection (str, must be existing)
 
-        #:param document: Document name (str, must be existing)
+        :param document_id: Document name (str, must be existing)
 
-        #:raise ValueError: - If the collection does not exist
-                           #- If the document does not exist
-        #"""
+        :raise ValueError: - If the collection does not exist
+                           - If the document does not exist
+        """
 
-        #collection_row = self.get_collection(collection)
-        #if collection_row is None:
-            #raise ValueError("The collection {0} does not exist".format(collection))
-        #document_row = self.get_document(collection, document)
-        #if document_row is None:
-            #raise ValueError(
-                #"The document with the name {0} does not exist in the collection {1}".format(document, collection))
-        #primary_key = collection_row.primary_key
-
-        #self.session.query(self.table_classes[self.name_to_valid_column_name(collection)]).filter(
-            #getattr(self.table_classes[self.name_to_valid_column_name(collection)],
-                    #self.name_to_valid_column_name(primary_key)) == document).delete()
-
-        ## Removing document from list tables
-        #if self.list_tables:
-            #for table in self.table_classes:
-                #if "list" in table:
-                    #self.session.query(self.table_classes[table]).filter(
-                        #self.table_classes[table].document_id == document).delete()
-
-        #if self.__caches:
-            #self.__documents[collection].pop(document, None)
-
-        #self.session.flush()
-        #self.__unsaved_modifications = True
-
+        if not self.engine.has_collection(collection):
+            raise ValueError("The collection {0} does not exist".format(collection))
+        if not self.engine.has_document(collection, document_id):
+            raise ValueError(
+                "The document with the name {0} does not exist in the collection {1}".format(document_id, collection))
+        self.engine.remove_document(collection, document_id)
+    
+    
     def add_document(self, collection, document, create_missing_fields=True, flush=True):
         """
         Adds a document to a collection
@@ -945,13 +879,12 @@ class DatabaseSession:
         """
 
         # Checks
-        collection_row = self.get_collection(collection)
-        if collection_row is None:
+        if not self.engine.has_collection(collection):
             raise ValueError("The collection {0} does not exist".format(collection))
-        primary_key = collection_row[1]
         if not isinstance(document, dict) and not isinstance(document, str):
             raise ValueError(
                 "The document must be of type {0} or {1}, but document of type {2} given".format(dict, str, document))
+        primary_key = self.engine.primary_key(collection)
         if isinstance(document, dict) and primary_key not in document:
             raise ValueError(
                 "The primary_key {0} of the collection {1} is missing from the document dictionary".format(primary_key,
@@ -960,27 +893,6 @@ class DatabaseSession:
             document = {primary_key: document}
         self.engine.add_document(collection, document, create_missing_fields)
         
-        #if document_row is not None:
-            #raise ValueError(
-                #"A document with the name {0} already exists in the collection {1}".format(document, collection))
-
-
-    #def ensure_field_for_value(self, collection, field , value, create=True):
-        #"""
-        #Check that a field exists otherwise create with an appropriate type
-        #corresponding to a Python value.
-
-        #:param collection: Document collection (str, must be existing)
-
-        #:param field: field name to check
-
-        #:param value: value whose type is used to determine the field type
-            
-        #:param create: if False, raises an error if the field does not exist
-        #"""
-        #return self.engine.ensure_field_for_value(collection, field, value, create)
-
-
     """ FILTERS """
 
     def filter_documents(self, collection, filter_query):

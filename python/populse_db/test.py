@@ -986,7 +986,7 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(field.field_name, "Field")
                 self.assertEqual(field.collection_name, "collection1")
                 self.assertIsNone(field.description)
-                self.assertEqual(field.type, FIELD_TYPE_STRING)
+                self.assertEqual(field.field_type, FIELD_TYPE_STRING)
 
                 # Adding a document
                 session.add_document("collection1", "document")
@@ -1231,6 +1231,8 @@ def create_test_case(**database_creation_parameters):
             Tests the storage and retrieval of fields of type JSON
             """
 
+            doc = {"name": "the_name",
+                    "json": {"key": [1, 2, "three"]}}
             database = self.create_database()
             with database as session:
                 # Adding a collection
@@ -1239,16 +1241,12 @@ def create_test_case(**database_creation_parameters):
                 # Adding fields
                 session.add_field("collection1", "json", FIELD_TYPE_JSON)
                 
-                doc = {"name": "the_name",
-                       "json": {"key": [1, 2, "three"]}}
                 session.add_document("collection1", doc)
-                self.assertEqual(doc, session.get_document("collection1", "the_name"))
+                self.assertEqual(doc, session.get_document("collection1", "the_name")._dict())
                 self.assertIsNone(session.get_document("collection1", "not_a_valid_name"))
 
             with database as session:
-                doc = {"name": "the_name",
-                       "json": {"key": [1, 2, "three"]}}
-                self.assertEqual(doc, session.get_document("collection1", "the_name"))
+                self.assertEqual(doc, session.get_document("collection1", "the_name")._dict())
                 self.assertIsNone(session.get_document("collection1", "not_a_valid_name"))
                 
         def test_filter_documents(self):
@@ -1851,19 +1849,16 @@ def create_test_case(**database_creation_parameters):
                                   description=None)
                 session.add_document("collection1", 'test')
                 session.add_value("collection1", 'test', 'strings', ['a', 'b', 'c'])
-                session.save_modifications()
                 names = list(document.name for document in session.filter_documents("collection1", '"b" IN strings'))
                 self.assertEqual(names, ['test'])
 
                 session.set_value("collection1", 'test', 'strings', ['x', 'y', 'z'])
-                session.save_modifications()
                 names = list(document.name for document in session.filter_documents("collection1", '"b" IN strings'))
                 self.assertEqual(names, [])
                 names = list(document.name for document in session.filter_documents("collection1", '"z" IN strings'))
                 self.assertEqual(names, ['test'])
 
                 session.remove_value("collection1", 'test', 'strings')
-                session.save_modifications()
                 names = list(document.name for document in session.filter_documents("collection1", '"y" IN strings'))
                 self.assertEqual(names, [])
 
@@ -2003,12 +1998,12 @@ def load_tests(loader, standard_tests, pattern):
 
     # Tests with postgresql. All the tests will be skiped if
     # it is not possible to connect to populse_db_tests database.
-    tests = loader.loadTestsFromTestCase(create_test_case(
-        string_engine='postgresql:///populse_db_tests',
-        caches=False,
-        list_tables=True,
-        query_type='mixed'))
-    suite.addTests(tests)
+    #tests = loader.loadTestsFromTestCase(create_test_case(
+        #string_engine='postgresql:///populse_db_tests',
+        #caches=False,
+        #list_tables=True,
+        #query_type='mixed'))
+    #suite.addTests(tests)
 
     return suite
 

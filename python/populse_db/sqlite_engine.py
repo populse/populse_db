@@ -75,9 +75,7 @@ class SQLiteEngine:
             self.cursor.execute(sql)
         
         
-        sql = 'SELECT collection_name, primary_key FROM [%s]' % COLLECTION_TABLE
-        self.cursor.execute(sql)
-        self.collection_primary_key = dict(self.cursor)
+        self.collection_primary_key = {}
         self.collection_table = {}
         self.table_row = {}
         self.table_document = {}
@@ -86,15 +84,19 @@ class SQLiteEngine:
             self.cursor.execute(sql)
             columns = [i[1] for i in self.cursor]
             self.table_row[table] = pdb.row_class(table, columns)
-            # TODO self.table_document
-        for i in self.cursor:
-            collection, table = i
+        sql = 'SELECT collection_name, table_name, primary_key FROM [%s]' % COLLECTION_TABLE
+        self.cursor.execute(sql)
+        for i in self.cursor.fetchall():
+            collection, table, primary_key = i
+            self.collection_primary_key[collection] = primary_key
             self.collection_table[collection] = table
-            sql = 'PRAGMA table_info([%s])' % table
+            sql = "SELECT field_name, column FROM [%s] WHERE collection_name = '%s'" % (FIELD_TABLE, collection)
             self.cursor.execute(sql)
-            columns = [i[1] for i in self.cursor()]
+            rows = self.cursor.fetchall()
+            fields = [i[0] for i in rows]
+            columns = [i[1] for i in rows]
             self.table_row[table] = pdb.row_class(table, columns)
-            # TODO self.table_document
+            self.table_document[table] = pdb.row_class(table, fields)
         
         sql = 'SELECT collection_name, field_name, field_type, column FROM [%s]' % FIELD_TABLE
         self.cursor.execute(sql)
@@ -431,15 +433,9 @@ class SQLiteEngine:
         column = self.field_column[collection][field]
         primary_key = self.collection_primary_key[collection]
         field_type = self.field_type[collection][field]
-        if isinstance(value, list):
+        if field_type.startswith('list_'):
             list_table = 'list_%s_%s' % (table, column)
-            sql = 'SELECT max(list_id) FROM [%s]' % list_table
-            self.cursor.execute(sql)
-            list_id = self.cursor.fetchone()[0]
-            if list_id is None:
-                list_id = 0
-            else:
-                list_id += 1
+            list_id = self.list_hash(value)
             column_value = list_id
             sql = 'INSERT INTO [%s] (list_id, i, value) VALUES (?, ?, ?)' % list_table
             sql_params = [[list_id, 
@@ -460,6 +456,27 @@ class SQLiteEngine:
         except sqlite3.IntegrityError as e:
             raise ValueError(str(e))
 
+    def remove_value(self, collection, document_id, field):
+        table = self.collection_table[collection]
+        column = self.field_column[collection][field]
+        primary_key = self.collection_primary_key[collection]
+        field_type = self.field_type[collection][field]
+        if field_type.startswith('list_'):
+            list_table = 'list_%s_%s' % (table, column)
+            sql = 'SELECT [%s] FROM [%s] WHERE [%s] = ?' % (column, table, primary_key)
+            self.cursor.execute(sql, [document_id])
+            list_id = self.cursor.fetchone()
+            if list_id:
+                list_id = list_id[0]
+                sql = 'DELETE FROM [%s] WHERE list_id = ? LIMIT 1' % list_table
+                self.cursor.execute(sql, [list_id])
+        
+        sql = 'UPDATE [%s] SET [%s] = NULL WHERE [%s] = ?' % (
+            table,
+            column,
+            primary_key)
+        self.cursor.execute(sql, [document_id])
+        
     def parse_filter(self, collection, filter):
         """
         Given a filter string, return a internal query representation that
