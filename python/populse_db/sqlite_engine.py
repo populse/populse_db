@@ -194,7 +194,10 @@ class SQLiteEngine:
         if row is not None:
             return self.table_row[COLLECTION_TABLE](*row)
         return None
-        
+    
+    def primary_key(self, collection):
+        return self.collection_primary_key[collection]
+    
     def remove_collection(self, name):
         table = self.collection_table[name]
         

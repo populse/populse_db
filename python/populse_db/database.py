@@ -856,23 +856,20 @@ class DatabaseSession:
             result = None
         return result
     
-    #def get_documents_names(self, collection):
-        #"""
-        #Gives the list of all document names, given a collection
+    def get_documents_names(self, collection):
+        """
+        Gives the list of all document names, given a collection
 
-        #:param collection: Documents collection (str, must be existing)
+        :param collection: Documents collection (str, must be existing)
 
-        #:return: List of all document names of the collection if it exists, None otherwise
-        #"""
+        :return: List of all document names of the collection if it exists, None otherwise
+        """
 
-        #if not self.engine.has_collection(collection):
-            #return []
-        
-        #documents = self.session.query(getattr(self.table_classes[self.name_to_valid_column_name(collection)],
-                                                #self.name_to_valid_column_name(collection_row.primary_key))).all()
-        #documents_list = [getattr(document, self.name_to_valid_column_name(collection_row.primary_key)) for document
-                            #in documents]
-        #return documents_list
+        if not self.engine.has_collection(collection):
+            return []
+        primary_key = self.engine.primary_key(collection)
+        return [i[primary_key] for i in self.get_documents(collection)]
+     
 
     def get_documents(self, collection):
         """

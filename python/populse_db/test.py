@@ -1998,16 +1998,8 @@ def load_tests(loader, standard_tests, pattern):
     """
     suite = unittest.TestSuite()
     suite.addTests(loader.loadTestsFromTestCase(TestsSQLiteInMemory))
-    for params in (dict(caches=False, list_tables=True, query_type='mixed'),
-                   dict(caches=True, list_tables=True, query_type='mixed'),
-                   dict(caches=False, list_tables=False, query_type='mixed'),
-                   dict(caches=True, list_tables=False, query_type='mixed'),
-                   dict(caches=False, list_tables=True, query_type='guess'),
-                   dict(caches=True, list_tables=True, query_type='guess'),
-                   dict(caches=False, list_tables=False, query_type='guess'),
-                   dict(caches=True, list_tables=False, query_type='guess')):
-        tests = loader.loadTestsFromTestCase(create_test_case(**params))
-        suite.addTests(tests)
+    tests = loader.loadTestsFromTestCase(create_test_case())
+    suite.addTests(tests)
 
     # Tests with postgresql. All the tests will be skiped if
     # it is not possible to connect to populse_db_tests database.
