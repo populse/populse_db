@@ -1303,7 +1303,8 @@ def create_test_case(**database_creation_parameters):
                             )
                             session.add_document("collection1", document)
                         document = '/%s_%d.none' % (file, date.year)
-                        session.add_document("collection1", dict(name=document, strings=list(file)))
+                        d = dict(name=document, strings=list(file))
+                        session.add_document("collection1", d)
 
                 for filter, expected in (
                         ('format == "NIFTI"',

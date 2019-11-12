@@ -1,16 +1,18 @@
+import datetime
 import hashlib
 import json
 import re
+import six
 import sqlite3
-
-import dateutil
 
 import populse_db.database as pdb
 from populse_db.filter import FilterToQuery, filter_parser
 
+import dateutil
+
 # Table names
-FIELD_TABLE = "field"
-COLLECTION_TABLE = "collection"
+FIELD_TABLE = 'field'
+COLLECTION_TABLE = 'collection'
                 
 class SQLiteEngine:
     def __init__(self, database):
@@ -128,6 +130,17 @@ class SQLiteEngine:
         else:
             return self.type_to_sql[type]
     
+    @staticmethod
+    def list_hash(list):
+        if list is None:
+            return None
+        if not list:
+            return ''
+        m = hashlib.md5()
+        for i in list:
+            m.update(six.text_type(i).encode('utf8'))
+        hash = m.hexdigest()
+        return hash
     
     def clear(self):
         tables = [FIELD_TABLE, COLLECTION_TABLE]
@@ -227,7 +240,7 @@ class SQLiteEngine:
             sql = 'CREATE INDEX [{0}_{1}] ON [{0}] ([{1}])'.format(table, column)
             self.cursor.execute(sql)
         if type.startswith('list_'):
-            sql = 'CREATE TABLE [list_{0}_{1}] (list_id INT, i INT, value {2})'.format(table, column, self.sql_type(type[5:]))
+            sql = 'CREATE TABLE [list_{0}_{1}] (list_id TEXT, i INT, value {2})'.format(table, column, self.sql_type(type[5:]))
             self.cursor.execute(sql)
             sql = 'CREATE INDEX [list_{0}_{1}_id] ON [list_{0}_{1}] (list_id)'.format(table, column)
             self.cursor.execute(sql)
@@ -259,13 +272,7 @@ class SQLiteEngine:
             column = self.field_column[collection][field]
             if isinstance(value, list):
                 list_table = 'list_%s_%s' % (table, column)
-                sql = 'SELECT max(list_id) FROM [%s]' % list_table
-                self.cursor.execute(sql)
-                list_id = self.cursor.fetchone()[0]
-                if list_id is None:
-                    list_id = 0
-                else:
-                    list_id += 1
+                list_id = self.list_hash(value)
                 column_values[column] = list_id
                 sql = 'INSERT INTO [%s] (list_id, i, value) VALUES (?, ?, ?)' % list_table
                 sql_params = [
@@ -288,27 +295,7 @@ class SQLiteEngine:
         for sql, sql_params in lists:
             for params in sql_params:
                 self.cursor.execute(sql, params)
-        
-        
-    #def ensure_field_for_value(self, collection, field , value, create):
-        #field_row = self.field(collection, field)
-        #if field_row is None:
-            #if not create:
-                #raise ValueError('Collection {0} has no field {1}'
-                                 #.format(collection, field))
-            #try:
-                #field_type = pdb.python_value_type(value)
-            #except KeyError:
-                #raise ValueError('Collection {0} has no field {1} and it '
-                                 #'cannot be created from a value of type {2}'
-                                 #.format(collection,
-                                         #field,
-                                         #type(value)))
-            #self.add_field(collection, field, field_type,
-                           #description=None, index=False)
-            #return field_type
-        #return field_row.field_type
-    
+            
     def has_field(self, collection, field):
         return self.field_column.get(collection, {}).get(field) is not None
     
@@ -339,7 +326,7 @@ class SQLiteEngine:
     # following dictionaries the functions that must be used to serialize
     # (in _list_item_to_string) and deserialize (in _string_to_list_item)
     # the list items.
-    _python_to_sql = {
+    _python_to_sql_data = {
         pdb.FIELD_TYPE_DATE: lambda x: x.isoformat(),
         pdb.FIELD_TYPE_DATETIME: lambda x: x.isoformat(),
         pdb.FIELD_TYPE_TIME: lambda x: x.isoformat(),
@@ -360,7 +347,7 @@ class SQLiteEngine:
         Converts a python value into a suitable value to put in a
         database column.
         """
-        converter = SQLiteEngine._python_to_sql.get(field_type)
+        converter = SQLiteEngine._python_to_sql_data.get(field_type)
         if converter is not None:
             return converter(value)
         elif isinstance(value, dict):
@@ -392,9 +379,8 @@ class SQLiteEngine:
         sql = 'SELECT * FROM [%s]' % table
         if where:
             sql += ' WHERE %s' % where
-        print('!!!', sql)
         self.cursor.execute(sql, where_data)
-        for row in self.cursor:
+        for row in self.cursor.fetchall():
             result = self.table_document[table](*row)
             values = []
             for field in result:
@@ -497,30 +483,6 @@ class SQLiteEngine:
         for doc in self._select_documents(collection, where, where_data):
             yield doc
 
-#def sql_equal(a, b):
-    #if FilterToQuery.is_field(a):
-        #if FilterToQuery.is_field(b):
-            #r = ((a == b) | (sql_operators.is_(a, None) & sql_operators.is_(b, None)))
-        #else:
-            #if b is not None:
-                #r = ((a == b) | sql_operators.eq(a, None))
-            #else:
-                #r = sql_operators.eq(a, None)
-    #else:
-        #if FilterToQuery.is_field(b):
-            #if a is not None:
-                #r = ((a == b) | sql_operators.eq(b, None))
-            #else:
-                #sql_operators.eq(b, None)
-        #else:
-            #r = (a == b)
-    #return r
-
-
-#def sql_differ(a, b):
-    #r = ((a != b) | (sql_operators.eq(a, None) & sql_operators.ne(b, None))) | (
-            #sql_operators.ne(a, None) & sql_operators.eq(b, None))
-    #return r
 
 class FilterToSqliteQuery(FilterToQuery):
     def __init__(self, engine, collection):
@@ -533,12 +495,32 @@ class FilterToSqliteQuery(FilterToQuery):
         '''
         return self.engine.field_column[self.collection][field.field_name]
 
+    _python_to_sql = {
+        pdb.FIELD_TYPE_DATE: lambda x: x.isoformat(),
+        pdb.FIELD_TYPE_DATETIME: lambda x: x.isoformat(),
+        pdb.FIELD_TYPE_TIME: lambda x: x.isoformat(),
+        pdb.FIELD_TYPE_BOOLEAN: lambda x: (1 if x else 0),
+    }
+    _python_to_sql = {
+        type(None): lambda x: 'NULL',
+        type(''): lambda x: "'{0}'".format(x),
+        type(u''): lambda x: "'{0}'".format(x),
+        int: lambda x: str(x),
+        float: lambda x: str(x),
+        datetime.time: lambda x: "'{0}'".format(x.isoformat()),
+        datetime.datetime: lambda x: "'{0}'".format(x.isoformat()),
+        datetime.date: lambda x: "'{0}'".format(x.isoformat()),
+        bool: lambda x: ('1' if x else '0'),
+    }
+
     def get_column_value(self, python_value):
         '''
         Converts a Python value to a value suitable to put in a database column
         '''
-        field_type = pdb.python_value_type(python_value)
-        return self.engine.python_to_column(field_type, python_value)
+        if isinstance(python_value, list):
+            c = '(%s)' % ','.join(self.get_column_value(i) for i in python_value)
+            return c
+        return self._python_to_sql[type(python_value)](python_value)
 
     def build_condition_all(self):
         return None
@@ -551,7 +533,7 @@ class FilterToSqliteQuery(FilterToQuery):
         list_column = self.get_column(list_field)
         list_table = 'list_%s_%s' % (self.table, list_column)
     
-        where = ('[{0}] is not None AND '
+        where = ('[{0}] IS NOT NULL AND '
                  '{1} IN (SELECT value FROM {2} '
                  'WHERE list_id = [{0}])').format(list_column,
                                                   cvalue,
@@ -567,7 +549,7 @@ class FilterToSqliteQuery(FilterToQuery):
         list_column = self.get_column(list_field)
         list_table = 'list_%s_%s' % (self.table, list_column)
     
-        where = ('[{0}] is not None AND '
+        where = ('[{0}] IS NOT NULL AND '
                  '[{1}] IN (SELECT value FROM {2} '
                  'WHERE list_id = [{0}])').format(list_column,
                                                   column,
@@ -582,33 +564,69 @@ class FilterToSqliteQuery(FilterToQuery):
         column = self.get_column(field)
         if None in list_value:
             list_value.remove(None)
-            where = '[{0}] IS NULL OR [{0}] IN ({1})'.format(column,
-                ','.join("'%s'" % i for i in list_value))
+            where = '[{0}] IS NULL OR [{0}] IN {1}'.format(column,
+                self.get_column_value(list_value))
         else:
-            where = '[{0}] IN ({1})'.format(column,
-                ','.join("'%s'" % i for i in list_value))
+            where = '[{0}] IN {1}'.format(column,
+                self.get_column_value(list_value))
         return [where]
 
+    sql_operators = {
+        '==': 'IS',
+        '!=': 'IS NOT',
+        'ilike': 'LIKE',
+    }    
+    
+    no_list_operator = {'>', '<', '>=', '<=', 'like', 'ilike'}
+    
     def build_condition_field_op_field(self, left_field, operator_str, right_field):
-        where = '[%s] %s [%s]' % (self.get_column(left_field),
-                                  operator_str,
-                                  self.get_column(right_field))
+        if operator_str == 'ilike':
+            field_pattern = 'UPPER([%s])'
+        else:
+            field_pattern = '[%s]'
+        sql_operator = self.sql_operators.get(operator_str, operator_str)
+        where = '%s %s %s' % (field_pattern % self.get_column(left_field),
+                              sql_operator,
+                              field_pattern % self.get_column(right_field))
         return [where]
     
     def build_condition_field_op_value(self, field, operator_str, value):
-        where = '[%s] %s %s' % (self.get_column(field),
-                                operator_str,
-                                self.get_column_value(value))
+        if isinstance(value, list):
+            if operator_str in self.no_list_operator:
+                raise ValueError('operator %s cannot be used with value of list type' % operator_str)
+            value = self.engine.list_hash(value)
+        if operator_str == 'ilike':
+            field_pattern = 'UPPER([%s])'
+            if isinstance(value, six.string_types):
+                value = value.upper()
+        else:
+            field_pattern = '[%s]'
+        sql_operator = self.sql_operators.get(operator_str, operator_str)
+        where = '%s %s %s' % (field_pattern % self.get_column(field),
+                              sql_operator,
+                              self.get_column_value(value))
         return [where]
 
+    
     def build_condition_value_op_field(self, value, operator_str, field):
-        where = '%s %s [%s]' % (self.get_column_value(value),
-                                operator_str,
-                                self.get_column(field))
+        if isinstance(value, list):
+            if operator_str in self.no_list_operator:
+                raise ValueError('operator %s cannot be used with value of list type' % operator_str)
+            value = self.list_hash(value)
+        if operator_str == 'ilike':
+            field_pattern = 'UPPER([%s])'
+            if isinstance(value, six.string_types):
+                value = value.upper()
+        else:
+            field_pattern = '[%s]'
+        sql_operator = self.sql_operators.get(operator_str, operator_str)
+        where = '%s %s %s' % (self.get_column_value(value),
+                              sql_operator,
+                              field_pattern % self.get_column(field))
         return [where]
 
     def build_condition_negation(self, condition):
         return ['NOT', '(' ] + condition + [')']
     
     def build_condition_combine_conditions(self, left_condition, operator_str, right_condition):
-        return ['('] + left_condition + [')', operator, '('] + right_condition + [')']
+        return ['('] + left_condition + [')', operator_str, '('] + right_condition + [')']
