@@ -477,6 +477,19 @@ class SQLiteEngine:
             primary_key)
         self.cursor.execute(sql, [document_id])
         
+
+    def remove_document(self, collection, document_id):
+        table = self.collection_table[collection]
+        primary_key = self.collection_primary_key[collection]
+        document = self.document(collection, document_id)
+        for field in self.fields(collection):
+            if field.field_type.startswith('list_') and document[field.field_name]:
+                self.remove_value(collection, document_id, field.field_name)
+        sql = 'DELETE FROM [%s] WHERE [%s] = ?' % (
+            table,
+            primary_key)
+        self.cursor.execute(sql, [document_id])
+        
     def parse_filter(self, collection, filter):
         """
         Given a filter string, return a internal query representation that
