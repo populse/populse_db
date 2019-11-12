@@ -4,6 +4,7 @@ import json
 import re
 import six
 import sqlite3
+import uuid
 
 import populse_db.database as pdb
 from populse_db.filter import FilterToQuery, filter_parser
@@ -16,7 +17,7 @@ COLLECTION_TABLE = 'collection'
                 
 class SQLiteEngine:
     def __init__(self, database):
-        self.connection = sqlite3.connect(database)
+        self.connection = sqlite3.connect(database, isolation_level=None)
         self.cursor = None
            
     _valid_identifier = re.compile(r'^[_A-Za-z][a-zA-Z0-9_]*$')
@@ -38,6 +39,7 @@ class SQLiteEngine:
         self.cursor = self.connection.cursor()
         self.cursor.execute('PRAGMA case_sensitive_like=ON')
         self.cursor.execute('PRAGMA foreign_keys=ON')
+        self.cursor.execute('BEGIN')
         
         if not self.has_table(COLLECTION_TABLE):
             sql = '''CREATE TABLE [{0}] (
@@ -109,11 +111,11 @@ class SQLiteEngine:
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.cursor = None
         if exc_type is None:
-            self.connection.commit()
+            self.cursor.execute('COMMIT')
         else:
-            self.connection.rollback()
+            self.cursor.execute('ROLLBACK')
+        self.cursor = None
     
     type_to_sql = {
         pdb.FIELD_TYPE_INTEGER: 'INT',
@@ -128,7 +130,7 @@ class SQLiteEngine:
     
     def sql_type(self, type):
         if type.startswith('list_'):
-            return 'INT'
+            return 'TEXT'
         else:
             return self.type_to_sql[type]
     
@@ -245,7 +247,7 @@ class SQLiteEngine:
             sql = 'CREATE INDEX [{0}_{1}] ON [{0}] ([{1}])'.format(table, column)
             self.cursor.execute(sql)
         if type.startswith('list_'):
-            sql = 'CREATE TABLE [list_{0}_{1}] (list_id TEXT, i INT, value {2})'.format(table, column, self.sql_type(type[5:]))
+            sql = 'CREATE TABLE [list_{0}_{1}] (list_id TEXT NOT NULL, i INT, value {2})'.format(table, column, self.sql_type(type[5:]))
             self.cursor.execute(sql)
             sql = 'CREATE INDEX [list_{0}_{1}_id] ON [list_{0}_{1}] (list_id)'.format(table, column)
             self.cursor.execute(sql)
@@ -254,6 +256,8 @@ class SQLiteEngine:
     
     def add_document(self, collection, document, create_missing_fields):
         table = self.collection_table[collection]
+        primary_key = self.collection_primary_key[collection]
+        document_id = document[primary_key]
         lists = []
         column_values = {}
         for field, value in document.items():
@@ -277,8 +281,8 @@ class SQLiteEngine:
             column = self.field_column[collection][field]
             if isinstance(value, list):
                 list_table = 'list_%s_%s' % (table, column)
-                list_id = self.list_hash(value)
-                column_values[column] = list_id
+                list_id = document_id
+                column_values[column] = self.list_hash(value)
                 sql = 'INSERT INTO [%s] (list_id, i, value) VALUES (?, ?, ?)' % list_table
                 sql_params = [
                     [list_id,
@@ -321,8 +325,52 @@ class SQLiteEngine:
             data = [collection]
         self.cursor.execute(sql, data)
         row_class = self.table_row[FIELD_TABLE]
-        for row in self.cursor:
+        for row in self.cursor.fetchall():
             yield row_class(*row)
+    
+    def remove_fields(self, collection ,fields):
+        table = self.collection_table[collection]
+        exclude_fields = set(fields)
+        new_columns = []
+        indices = []
+        for field in self.fields(collection):
+            if field.field_name not in exclude_fields:
+                new_columns.append((field.column,
+                                    self.sql_type(field.field_type)))
+                if field.has_index:
+                    indices.append(field.column)
+            else:
+                self.table_row[table]._delete_column(field.column)
+                self.table_document[table]._delete_column(field.field_name)
+                del self.field_column[collection][field.field_name]
+                sql = 'DELETE FROM [%s] WHERE collection_name = ? AND field_name = ?' % FIELD_TABLE
+                self.cursor.execute(sql, [collection, field.field_name])
+                if field.field_type.startswith('list_'):
+                    column = field.column
+                    list_table = 'list_%s_%s' % (table, column)
+                    sql = 'DROP TABLE [%s]' % list_table
+                    self.cursor.execute(sql)
+        tmp_table = '_' + str(uuid.uuid4())
+        sql = 'CREATE TABLE [%s] (%s)' % (tmp_table,
+                                          ','.join('[%s] %s' % (i, j) for i, j in new_columns))
+        self.cursor.execute(sql)
+        for column in indices:
+            sql = 'CREATE INDEX [{0}_{1}] ON [{0}] ([{1}])'.format(tmp_table, column)
+            self.cursor.execute(sql)
+        self.cursor.execute('PRAGMA table_info([%s])' % table)
+        sql = 'INSERT INTO [%s] SELECT %s FROM [%s]' % (
+            tmp_table,
+            ','.join('[%s]' % i[0] for i in new_columns),
+            table)
+        self.cursor.execute(sql)
+        sql = 'PRAGMA foreign_keys=OFF'
+        self.cursor.execute(sql)
+        sql = 'DROP TABLE [%s]' % table
+        self.cursor.execute(sql)
+        sql = 'ALTER TABLE [%s] RENAME TO [%s]' % (tmp_table, table)
+        self.cursor.execute(sql)
+        sql = 'PRAGMA foreign_keys=ON'
+        self.cursor.execute(sql)
     
     # Some types (e.g. time, date and datetime) cannot be
     # serialized/deserialized into string with repr/ast.literal_eval.
@@ -387,18 +435,19 @@ class SQLiteEngine:
         self.cursor.execute(sql, where_data)
         for row in self.cursor.fetchall():
             result = self.table_document[table](*row)
+            document_id = result[primary_key]
             values = []
             for field in result:
                 field_type = self.field_type[collection][field]
                 if field_type.startswith('list_'):
                     item_type = field_type[5:]
                     column = self.field_column[collection][field]
-                    list_index = result[field]
-                    if list_index is None:
+                    list_hash = result[field]
+                    if list_hash is None:
                         values.append(None)
                     else:
                         sql = 'SELECT value FROM list_{0}_{1} WHERE list_id = ? ORDER BY i'.format(table, column)
-                        self.cursor.execute(sql, [list_index])
+                        self.cursor.execute(sql, [document_id])
                         values.append([self.column_to_python(item_type,i[0]) for i in self.cursor])
                 else:
                     values.append(self.column_to_python(field_type, result[field]))
@@ -428,33 +477,35 @@ class SQLiteEngine:
                     return row[0] is not None
         return False
         
-    def set_value(self, collection, document_id, field, value):
+    def set_values(self, collection, document_id, values):
         table = self.collection_table[collection]
-        column = self.field_column[collection][field]
         primary_key = self.collection_primary_key[collection]
-        field_type = self.field_type[collection][field]
-        if field_type.startswith('list_'):
-            list_table = 'list_%s_%s' % (table, column)
-            list_id = self.list_hash(value)
-            column_value = list_id
-            sql = 'INSERT INTO [%s] (list_id, i, value) VALUES (?, ?, ?)' % list_table
-            sql_params = [[list_id, 
-                          i,
-                          self.python_to_column(field_type[5:], value[i])]
-                          for i in range(len(value))]
-            for p in sql_params:
-                self.cursor.execute(sql, p)
-        else:
-            column_value = self.python_to_column(field_type, value)
-        
-        sql = 'UPDATE [%s] SET [%s] = ? WHERE [%s] = ?' % (
-            table,
-            column,
-            primary_key)
-        try:
-            self.cursor.execute(sql, [column_value, document_id])
-        except sqlite3.IntegrityError as e:
-            raise ValueError(str(e))
+        for field, value in values.items():
+            if field == primary_key:
+                raise ValueError('Cannot modify document id "%s" of collection %s' % (field, collection))
+            column = self.field_column[collection][field]
+            field_type = self.field_type[collection][field]
+            if field_type.startswith('list_'):
+                list_table = 'list_%s_%s' % (table, column)
+                column_value = self.list_hash(value)
+                sql = 'INSERT INTO [%s] (list_id, i, value) VALUES (?, ?, ?)' % list_table
+                sql_params = [[document_id, 
+                            i,
+                            self.python_to_column(field_type[5:], value[i])]
+                            for i in range(len(value))]
+                for p in sql_params:
+                    self.cursor.execute(sql, p)
+            else:
+                column_value = self.python_to_column(field_type, value)
+            
+            sql = 'UPDATE [%s] SET [%s] = ? WHERE [%s] = ?' % (
+                table,
+                column,
+                primary_key)
+            try:
+                self.cursor.execute(sql, [column_value, document_id])
+            except sqlite3.IntegrityError as e:
+                raise ValueError(str(e))
 
     def remove_value(self, collection, document_id, field):
         table = self.collection_table[collection]
@@ -463,13 +514,8 @@ class SQLiteEngine:
         field_type = self.field_type[collection][field]
         if field_type.startswith('list_'):
             list_table = 'list_%s_%s' % (table, column)
-            sql = 'SELECT [%s] FROM [%s] WHERE [%s] = ?' % (column, table, primary_key)
+            sql = 'DELETE FROM [%s] WHERE list_id = ?' % list_table
             self.cursor.execute(sql, [document_id])
-            list_id = self.cursor.fetchone()
-            if list_id:
-                list_id = list_id[0]
-                sql = 'DELETE FROM [%s] WHERE list_id = ? LIMIT 1' % list_table
-                self.cursor.execute(sql, [list_id])
         
         sql = 'UPDATE [%s] SET [%s] = NULL WHERE [%s] = ?' % (
             table,
@@ -565,12 +611,14 @@ class FilterToSqliteQuery(FilterToQuery):
         cvalue = self.get_column_value(value)
         list_column = self.get_column(list_field)
         list_table = 'list_%s_%s' % (self.table, list_column)
+        primary_key_column = self.engine.primary_key(self.collection)
     
         where = ('[{0}] IS NOT NULL AND '
                  '{1} IN (SELECT value FROM {2} '
-                 'WHERE list_id = [{0}])').format(list_column,
+                 'WHERE list_id = [{3}])').format(list_column,
                                                   cvalue,
-                                                  list_table)
+                                                  list_table,
+                                                  primary_key_column)
         return [where]
 
     def build_condition_field_in_list_field(self, field, list_field):
@@ -581,12 +629,14 @@ class FilterToSqliteQuery(FilterToQuery):
         column = self.get_column(field)
         list_column = self.get_column(list_field)
         list_table = 'list_%s_%s' % (self.table, list_column)
+        primary_key_column = self.engine.primary_key(self.collection)
     
         where = ('[{0}] IS NOT NULL AND '
                  '[{1}] IN (SELECT value FROM {2} '
-                 'WHERE list_id = [{0}])').format(list_column,
+                 'WHERE list_id = [{3}])').format(list_column,
                                                   column,
-                                                  list_table)
+                                                  list_table,
+                                                  primary_key_column)
         return [where]
 
     def build_condition_field_in_list(self, field, list_value):

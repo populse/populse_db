@@ -129,23 +129,6 @@ def create_test_case(**database_creation_parameters):
                 # Testing with wrong engine type
                 self.assertRaises(ValueError, lambda : Database(1))
 
-                # Testing with wrong query_type
-                self.assertRaises(ValueError, lambda : Database(engine, query_type="wrong_query_type"))
-                self.assertRaises(ValueError, lambda : Database(engine, query_type=True))
-
-                # Testing with wrong caches
-                self.assertRaises(ValueError, lambda : Database(engine, caches="False"))
-
-                # Testing with wrong list_tables
-                self.assertRaises(ValueError, lambda : Database(engine, list_tables="False"))
-
-                # Testing with wrong database schema
-                if os.path.exists(os.path.join("..", "..", "docs", "databases", "sample.db")):
-                    with self.assertRaises(Exception):
-                        database_path = os.path.realpath(os.path.join("..", "..", "docs", "databases", "sample.db"))
-                        database_engine = 'sqlite:///' + database_path
-                        Database(database_engine)
-
                 # Testing with wrong engine
                 self.assertRaises(ValueError, lambda : Database("engine"))
             finally:
@@ -308,8 +291,8 @@ def create_test_case(**database_creation_parameters):
                 self.assertRaises(ValueError, lambda : session.remove_field("current", ["SequenceName", "PatientName", "Not_Existing"]))
 
                 # Testing with wrong parameters
-                self.assertRaises(ValueError, lambda : session.remove_field("current", 1))
-                self.assertRaises(ValueError, lambda : session.remove_field("current", None))
+                self.assertRaises(Exception, lambda : session.remove_field("current", 1))
+                self.assertRaises(Exception, lambda : session.remove_field("current", None))
 
                 # Removing list of fields with list type
                 session.add_field("current", "list1", FIELD_TYPE_LIST_INTEGER, None)
