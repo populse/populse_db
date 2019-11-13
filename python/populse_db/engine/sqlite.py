@@ -7,6 +7,7 @@ import sqlite3
 import uuid
 
 import populse_db.database as pdb
+from populse_db.engine import Engine
 from populse_db.filter import FilterToQuery, filter_parser
 
 import dateutil
@@ -15,7 +16,7 @@ import dateutil
 FIELD_TABLE = 'field'
 COLLECTION_TABLE = 'collection'
                 
-class SQLiteEngine:
+class SQLiteEngine(Engine):
     def __init__(self, database):
         self.connection = sqlite3.connect(database, isolation_level=None)
         self.cursor = None
@@ -168,8 +169,8 @@ class SQLiteEngine:
     def has_collection(self, collection):
         return collection in self.collection_table
 
-    def add_collection(self, name, primary_key):
-        table_name = self.name_to_sql(name)
+    def add_collection(self, collection, primary_key):
+        table_name = self.name_to_sql(collection)
         pk_column = self.name_to_sql(primary_key)
         sql = 'CREATE TABLE [%s] ([%s] TEXT PRIMARY KEY)' % (table_name, pk_column)
         try:
@@ -180,20 +181,20 @@ class SQLiteEngine:
         self.table_document[table_name] = pdb.row_class(table_name, [primary_key])
         
         sql = 'INSERT INTO [%s] (collection_name, primary_key, table_name) VALUES (?, ?, ?)' % COLLECTION_TABLE
-        self.cursor.execute(sql, [name, primary_key, table_name])
-        self.collection_table[name] = table_name
-        self.collection_primary_key[name] = primary_key
+        self.cursor.execute(sql, [collection, primary_key, table_name])
+        self.collection_table[collection] = table_name
+        self.collection_primary_key[collection] = primary_key
         
         sql = 'INSERT INTO [%s] (field_name, collection_name, field_type, description, has_index, column) VALUES (?, ?, ?, ?, 1, ?)' % FIELD_TABLE
-        self.cursor.execute(sql, [primary_key, name, pdb.FIELD_TYPE_STRING,
-                                  'Primary_key of the document collection %s' % name,
+        self.cursor.execute(sql, [primary_key, collection, pdb.FIELD_TYPE_STRING,
+                                  'Primary_key of the document collection %s' % collection,
                                   pk_column])
-        self.field_column[name] = {primary_key: pk_column}
-        self.field_type[name] = {primary_key: pdb.FIELD_TYPE_STRING}
+        self.field_column[collection] = {primary_key: pk_column}
+        self.field_type[collection] = {primary_key: pdb.FIELD_TYPE_STRING}
         
-    def collection(self, name):
+    def collection(self, collection):
         sql = 'SELECT * FROM [%s] WHERE collection_name = ?' % COLLECTION_TABLE
-        self.cursor.execute(sql, [name])
+        self.cursor.execute(sql, [collection])
         row = self.cursor.fetchone()
         if row is not None:
             return self.table_row[COLLECTION_TABLE](*row)
@@ -202,20 +203,20 @@ class SQLiteEngine:
     def primary_key(self, collection):
         return self.collection_primary_key[collection]
     
-    def remove_collection(self, name):
-        table = self.collection_table[name]
+    def remove_collection(self, collection):
+        table = self.collection_table[collection]
         
         sql = 'DELETE FROM [%s] WHERE collection_name = ?' % FIELD_TABLE
-        self.cursor.execute(sql, [name])
+        self.cursor.execute(sql, [collection])
 
         sql = 'DELETE FROM [%s] WHERE collection_name = ?' % COLLECTION_TABLE
-        self.cursor.execute(sql, [name])
-        del self.collection_table[name]
-        del self.collection_primary_key[name]
+        self.cursor.execute(sql, [collection])
+        del self.collection_table[collection]
+        del self.collection_primary_key[collection]
         del self.table_row[table]
         del self.table_document[table]
-        del self.field_column[name]
-        del self.field_type[name]
+        del self.field_column[collection]
+        del self.field_type[collection]
         
         sql = 'DROP TABLE [%s]' % table
         self.cursor.execute(sql)
@@ -549,11 +550,16 @@ class SQLiteEngine:
                        language.
 
         """
-        tree = filter_parser().parse(filter)
-        query = FilterToSqliteQuery(self, collection).transform(tree)
-        return query
+        if filter is None:
+            query = None
+        else:
+            tree = filter_parser().parse(filter)
+            query = FilterToSqliteQuery(self, collection).transform(tree)
+        return (collection, query)
 
-    def filter_documents(self, collection, where_filter):
+
+    def filter_documents(self, parsed_filter):
+        collection, where_filter = parsed_filter
         if where_filter is None:
             where = None
         else:

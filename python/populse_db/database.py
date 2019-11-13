@@ -1,31 +1,9 @@
-##########################################################################
-# Populse_db - Copyright (C) IRMaGe/CEA, 2018
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-##########################################################################
-
-import ast
-import copy
-import json
+from datetime import date, time, datetime
 import os
 import re
-import types
-from datetime import date, time, datetime
-
-import dateutil.parser
 import six
 
-#from sqlalchemy import (create_engine, Column, MetaData, Table, sql,
-                        #String, Integer, Float, Boolean, Date, DateTime,
-                        #Time, Enum, event)
-#from sqlalchemy.ext.automap import automap_base
-#from sqlalchemy.orm import sessionmaker, scoped_session, mapper
-#from sqlalchemy.schema import CreateTable, DropTable
-#from sqlalchemy.exc import ArgumentError
-
-import populse_db
+from  populse_db.engine import engine_factory
 
 # Field types
 FIELD_TYPE_STRING = "string"
@@ -45,15 +23,10 @@ FIELD_TYPE_LIST_DATETIME = "list_datetime"
 FIELD_TYPE_LIST_TIME = "list_time"
 FIELD_TYPE_LIST_JSON = "list_json"
 
-LIST_TYPES = [FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FLOAT,
-              FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_LIST_DATE, FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_TIME,
-              FIELD_TYPE_LIST_JSON]
-SIMPLE_TYPES = [FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT,
-                FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON]
-ALL_TYPES = [FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN,
+ALL_TYPES = {FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN,
              FIELD_TYPE_LIST_DATE, FIELD_TYPE_LIST_DATETIME,
              FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON, FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT,
-             FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON]
+             FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON}
 
 class Row:
     _key_indices = {}
@@ -119,28 +92,21 @@ class Database:
 
     """
 
-    def __init__(self, string_engine, caches=None, list_tables=None,
+    def __init__(self, database_url, caches=None, list_tables=None,
                  query_type=None):
         """Initialization of the database
 
-        :param string_engine: Database engine
+        :param database_url: Database engine
 
-                              The engine is constructed this way: dialect[+driver]://user:password@host/dbname[?key=value..]
+                              The engine is constructed this way: dialect://user:password@host/dbname[?key=value..]
 
-                              The dialect can be mysql, oracle, postgresql, mssql, or sqlite
-
-                              The driver is the name of a DBAPI, such as psycopg2, pyodbc, or cx_oracle
+                              The dialect can be sqlite or postgresql
 
                               For sqlite databases, the file can be not existing yet, it will be created in this case
 
                               Examples:
-                                        - "mysql://scott:tiger@hostname/dbname"
-                                        - "postgresql://scott:tiger@localhost/test"
                                         - "sqlite:///foo.db"
-                                        - "oracle+cx_oracle://scott:tiger@tnsname"
-                                        - "mssql+pyodbc://scott:tiger@mydsn"
-
-                              See sqlalchemy documentation for more precisions about the engine: http://docs.sqlalchemy.org/en/latest/core/engines.html
+                                        - "postgresql://scott:tiger@localhost/test"
 
         :param caches: obsolete parameter kept for backward compatibility
 
@@ -148,26 +114,16 @@ class Database:
 
         :param query_type: obsolete parameter kept for backward compatibility
 
-        :raise ValueError: - If string_engine is invalid
+        :raise ValueError: - If database_url is invalid
                            - If the schema is not coherent with the API (the database is not a populse_db database)
         """
 
-        self.string_engine = string_engine
-        if not isinstance(string_engine, six.string_types):
-            raise ValueError(
-                "Wrong string_engine, it must be of type {0}, but string_engine of type {1} given".format(str, type(string_engine)))
-
-        # SQLite database: It is created if it does not exist
-        if string_engine.startswith('sqlite:///'):
-            self.sqlite_location = re.sub("sqlite.*:///", "", string_engine)
-        else:
-            raise ValueError('Invalid database URL: %s' % string_engine)
-        
+        self.database_url = database_url
         self.__session = None
 
 
     def __enter__(self):
-        '''
+        """
         Return a DatabaseSession instance for using the database. This is
         supposed to be called using a "with" statement:
         
@@ -179,7 +135,7 @@ class Database:
         is the same. The commit/rollback of the session is done only by the
         outermost __enter__/__exit__ pair (i.e. by the outermost with
         statement).
-        '''
+        """
         if self.__session is None:            
             self.__session = DatabaseSession(self)
             self.__session.engine.__enter__()
@@ -189,12 +145,12 @@ class Database:
         return self.__session
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        '''
+        """
         Release a DatabaseSession previously created by __enter__.
         If no recursive call of __enter__ was done, the session
         is commited if no error is reported (e.g. exc_type is None)
         otherwise it is rolled back. Nothing is done 
-        '''
+        """
         self.__session_count -= 1
         if self.__session_count == 0:
             # If there is no recursive call, commit or rollback
@@ -263,7 +219,6 @@ class DatabaseSession:
         - remove_field: Removes a field from a collection
         - get_field: Gives all fields rows given a collection
         - get_fields_names: Gives all fields names given a collection
-        - name_to_sql: Gives the valid table/column name corresponding
           to the name
         - get_value: Gives the value of <collection, document, field>
         - set_value: Sets the value of <collection, document, field>
@@ -289,11 +244,7 @@ class DatabaseSession:
         :param database: Database instance to take into account
         """
         
-        # Import is here due to circular references but a factory of engines
-        # will have to be created
-        from .sqlite_engine import SQLiteEngine
-        
-        self.engine = SQLiteEngine(database.sqlite_location)
+        self.engine = engine_factory(database.database_url)
         self.__names = {}
 
     """ COLLECTIONS """
@@ -391,7 +342,7 @@ class DatabaseSession:
                            description=field[3])
 
     def add_field(self, collection, name, field_type, description=None,
-                  index=False, flush=True):
+                  index=False, flush=None):
         """
         Adds a field to the database
 
@@ -407,7 +358,7 @@ class DatabaseSession:
 
         :param index: Bool to know if indexing must be done => False by default
 
-        :param flush: obsolet ignored parameter
+        :param flush: obsolete parameter kept for backward compatibility
 
         :raise ValueError: - If the collection does not exist
                            - If the field already exists
@@ -516,19 +467,19 @@ class DatabaseSession:
             # Raises if field is not a string
             return None
 
-    def set_value(self, collection, document_id, field, new_value, flush=True):
+    def set_value(self, collection, document_id, field, new_value, flush=None):
         """
         Sets the value associated to <collection, document, field> if it exists
 
         :param collection: Document collection (str, must be existing)
 
-        :param document: Document name (str, must be existing)
+        :param document_id: Document name (str, must be existing)
 
         :param field: Field name (str, must be existing)
 
         :param new_value: New value
 
-        :param flush: obsolete parmeter
+        :param flush: unused obsolete parmeter
 
         :raise ValueError: - If the collection does not exist
                            - If the field does not exist
@@ -540,7 +491,7 @@ class DatabaseSession:
         self.set_values(collection, document_id, {field: new_value})
 
 
-    def set_values(self, collection, document_id, values):
+    def set_values(self, collection, document_id, values, flush=None):
         """
         Sets the values of a <collection, document, field> if it exists
 
@@ -549,6 +500,8 @@ class DatabaseSession:
         :param document_id: Document name (str, must be existing)
 
         :param values: Dict of values (key=field, value=value)
+
+        :param flush: unused obsolete parmeter
 
         :raise ValueError: - If the collection does not exist
                            - If the field does not exist
@@ -573,7 +526,7 @@ class DatabaseSession:
         self.engine.set_values(collection, document_id, values)
     
     
-    def remove_value(self, collection, document_id, field, flush=True):
+    def remove_value(self, collection, document_id, field, flush=None):
         """
         Removes the value <collection, document, field> if it exists
 
@@ -602,13 +555,13 @@ class DatabaseSession:
         if self.engine.get_value(collection, document_id, field) is not None:
             self.engine.remove_value(collection, document_id, field)
 
-    def add_value(self, collection, document, field, value, checks=True):
+    def add_value(self, collection, document_id, field, value, checks=True):
         """
-        Adds a value for <collection, document, field>
+        Adds a value for <collection, document_id, field>
 
         :param collection: Document collection (str, must be existing)
 
-        :param document: Document name (str, must be existing)
+        :param document_id: Document name (str, must be existing)
 
         :param field: Field name (str, must be existing)
 
@@ -620,11 +573,11 @@ class DatabaseSession:
                            - If the field does not exist
                            - If the document does not exist
                            - If the value is invalid
-                           - If <collection, document, field> already has a value
+                           - If <collection, document_id, field> already has a value
         """
-        if self.engine.get_value(collection, document, field) is not None:
+        if self.engine.get_value(collection, document_id, field) is not None:
             raise ValueError(
-                "The document with the name {1} already have a value for field {2} in the collection {1}".format(collection, document, field))
+                "The document with the name {1} already have a value for field {2} in the collection {1}".format(collection, document_id, field))
         if checks:
             if not self.engine.has_collection(collection):
                 raise ValueError("The collection {0} does not exist".format(collection))
@@ -632,28 +585,28 @@ class DatabaseSession:
             if not field_row:
                 raise ValueError(
                     "The field with the name {0} does not exist in the collection {1}".format(field, collection))
-            if not self.engine.has_document(collection, document):
+            if not self.engine.has_document(collection, document_id):
                 raise ValueError(
-                    "The document with the name {0} does not exist in the collection {1}".format(document, collection))
+                    "The document with the name {0} does not exist in the collection {1}".format(document_id, collection))
             if not self.check_value_type(value, field_row.field_type):
                 raise ValueError("The value {0} is invalid for the type {1}".format(value, field_row.field_type))
         
-        self.engine.set_values(collection, document, {field: value})
+        self.engine.set_values(collection, document_id, {field: value})
         
     """ DOCUMENTS """
 
-    def get_document(self, collection, document):
+    def get_document(self, collection, document_id):
         """
         Gives a Document instance given a collection and a document identifier
 
         :param collection: Document collection (str, must be existing)
 
-        :param document: Document name (str, must be existing)
+        :param document_id: Document name (str, must be existing)
 
         :return: The document row if the document exists, None otherwise
         """
         try:
-            result = self.engine.document(collection, document)
+            result = self.engine.document(collection, document_id)
         except KeyError:
             result = None
         return result
@@ -684,7 +637,7 @@ class DatabaseSession:
 
         if not self.engine.has_collection(collection):
             return []
-        return list(self.engine.filter_documents(collection, None))
+        return list(self.filter_documents(collection, None))
 
     def remove_document(self, collection, document_id):
         """
@@ -706,7 +659,7 @@ class DatabaseSession:
         self.engine.remove_document(collection, document_id)
     
     
-    def add_document(self, collection, document, create_missing_fields=True, flush=True):
+    def add_document(self, collection, document, create_missing_fields=True, flush=None):
         """
         Adds a document to a collection
 
@@ -765,11 +718,8 @@ class DatabaseSession:
 
         if not self.engine.has_collection(collection):
             raise ValueError("The collection {0} does not exist".format(collection))
-        if filter_query is None:
-            parsed_filter = None
-        else:
-            parsed_filter = self.engine.parse_filter(collection, filter_query)
-        for doc in self.engine.filter_documents(collection, parsed_filter):
+        parsed_filter = self.engine.parse_filter(collection, filter_query)
+        for doc in self.engine.filter_documents(parsed_filter):
             yield doc
             
     

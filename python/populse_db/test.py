@@ -78,13 +78,13 @@ def create_test_case(**database_creation_parameters):
             Called before every unit test
             Creates a temporary folder containing the database file that will be used for the test
             """
-            if 'string_engine' not in database_creation_parameters:
+            if 'database_url' not in database_creation_parameters:
                 self.temp_folder = tempfile.mkdtemp()
                 path = os.path.join(self.temp_folder, "test.db")
-                database_creation_parameters['string_engine'] = 'sqlite:///' + path
+                database_creation_parameters['database_url'] = 'sqlite:///' + path
             else:
                 self.temp_folder = None
-            self.string_engine = database_creation_parameters['string_engine']
+            self.database_url = database_creation_parameters['database_url']
 
         def tearDown(self):
             """
@@ -93,7 +93,7 @@ def create_test_case(**database_creation_parameters):
             """
             if self.temp_folder:
                 shutil.rmtree(self.temp_folder)
-                del database_creation_parameters['string_engine']
+                del database_creation_parameters['database_url']
             
         def create_database(self, clear=True):
             """
@@ -104,12 +104,12 @@ def create_test_case(**database_creation_parameters):
             try:
                 db = Database(**database_creation_parameters)
             except OperationalError as e:
-                if database_creation_parameters['string_engine'].startswith('postgresql'):
+                if database_creation_parameters['database_url'].startswith('postgresql'):
                     raise unittest.SkipTest(str(e))
                 raise
             except ImportError as e:
                 if ('psycopg2' in str(e) and 
-                    database_creation_parameters['string_engine'].startswith('postgresql')):
+                    database_creation_parameters['database_url'].startswith('postgresql')):
                     raise unittest.SkipTest(str(e))
                 raise
             if clear:
@@ -120,19 +120,8 @@ def create_test_case(**database_creation_parameters):
             """
             Tests the parameters of the Database class constructor
             """
-            temp_folder = tempfile.mkdtemp()
-            try:
-                path = os.path.join(self.temp_folder, "test.db")
-
-                engine = 'sqlite:///' + path
-
-                # Testing with wrong engine type
-                self.assertRaises(ValueError, lambda : Database(1))
-
-                # Testing with wrong engine
-                self.assertRaises(ValueError, lambda : Database("engine"))
-            finally:
-                shutil.rmtree(temp_folder)
+            # Testing with wrong engine
+            self.assertRaises(ValueError, lambda : Database("engine").__enter__())
 
         def test_add_field(self):
             """
@@ -1982,7 +1971,7 @@ def load_tests(loader, standard_tests, pattern):
     # Tests with postgresql. All the tests will be skiped if
     # it is not possible to connect to populse_db_tests database.
     #tests = loader.loadTestsFromTestCase(create_test_case(
-        #string_engine='postgresql:///populse_db_tests',
+        #database_url='postgresql:///populse_db_tests',
         #caches=False,
         #list_tables=True,
         #query_type='mixed'))
