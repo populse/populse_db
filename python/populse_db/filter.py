@@ -5,8 +5,6 @@ import types
 
 import dateutil.parser
 import six
-import sqlalchemy
-import sqlalchemy.sql.operators as sql_operators
 from lark import Lark, Transformer
 
 import populse_db
