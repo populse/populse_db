@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from datetime import date, time, datetime
 import os
 import re
@@ -28,7 +29,7 @@ ALL_TYPES = {FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FL
              FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON, FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT,
              FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON}
 
-class ListWithKeys:
+class ListWithKeys(object):
     '''
     Reprsents a list of value of fixed size with a key string for each value.
     It allows to access to values with their index or with their key.
@@ -70,7 +71,7 @@ class ListWithKeys:
         '''
         Get a value given its index or key
         '''
-        if isinstance(name_or_index, str):
+        if isinstance(name_or_index, six.string_types):
             return self._values[self._key_indices[name_or_index]]
         else:
             return self._values[name_or_index]
@@ -106,7 +107,7 @@ def list_with_keys(name, keys):
     Return a new instance of ListWithNames with
     a given list of keys
     '''
-    return type(name, (ListWithKeys,), {'_key_indices': dict(zip(keys, 
+    return type(str(name), (ListWithKeys,), {'_key_indices': OrderedDict(zip(keys, 
                                                         range(len(keys))))})        
 
 

@@ -193,11 +193,14 @@ class SQLiteEngine(Engine):
         self.field_type[collection] = {primary_key: pdb.FIELD_TYPE_STRING}
         
     def collection(self, collection):
-        sql = 'SELECT * FROM [%s] WHERE collection_name = ?' % COLLECTION_TABLE
+        row_class = self.table_row[COLLECTION_TABLE]
+        sql = 'SELECT %s FROM [%s] WHERE collection_name = ?' % (
+            ','.join('[%s]' % i for i in row_class._key_indices),
+            COLLECTION_TABLE)
         self.cursor.execute(sql, [collection])
         row = self.cursor.fetchone()
         if row is not None:
-            return self.table_row[COLLECTION_TABLE](*row)
+            return row_class(*row)
         return None
     
     def primary_key(self, collection):
@@ -221,8 +224,11 @@ class SQLiteEngine(Engine):
         sql = 'DROP TABLE [%s]' % table
         self.cursor.execute(sql)
 
-    def collections(self):        
-        sql = 'SELECT * FROM [%s]' % COLLECTION_TABLE
+    def collections(self):
+        row_class = self.table_row[COLLECTION_TABLE]
+        sql = 'SELECT %s FROM [%s]' % (
+            ','.join('[%s]' % i for i in row_class._key_indices),
+            COLLECTION_TABLE)
         return [self.table_row[COLLECTION_TABLE](*i) for i in self.cursor.execute(sql)]
 
     def add_field(self, collection, field, type, description, index):
@@ -310,22 +316,27 @@ class SQLiteEngine(Engine):
         return self.field_column.get(collection, {}).get(field) is not None
     
     def field(self, collection, field):
-        sql = 'SELECT * FROM [%s] WHERE collection_name = ? AND field_name = ?' % FIELD_TABLE
+        row_class = self.table_row[FIELD_TABLE]
+        sql = 'SELECT %s FROM [%s] WHERE collection_name = ? AND field_name = ?' % (
+            ','.join('[%s]' % i for i in row_class._key_indices),
+            FIELD_TABLE)
         self.cursor.execute(sql, [collection, field])
         row = self.cursor.fetchone()
         if row is not None:
-            return self.table_row[FIELD_TABLE](*row)
+            return row_class(*row)
         return None
 
     def fields(self, collection=None):
-        sql = 'SELECT * FROM [%s]' % FIELD_TABLE
+        row_class = self.table_row[FIELD_TABLE]
+        sql = 'SELECT %s FROM [%s]' % (
+            ','.join('[%s]' % i for i in row_class._key_indices),
+            FIELD_TABLE)
         if collection is None:
             data = []
         else:
             sql += ' WHERE collection_name = ?'
             data = [collection]
         self.cursor.execute(sql, data)
-        row_class = self.table_row[FIELD_TABLE]
         for row in self.cursor.fetchall():
             yield row_class(*row)
     
@@ -431,7 +442,10 @@ class SQLiteEngine(Engine):
     def _select_documents(self, collection, where, where_data):
         table = self.collection_table[collection]
         primary_key = self.collection_primary_key[collection]
-        sql = 'SELECT * FROM [%s]' % table
+        row_class = self.table_row[table]
+        sql = 'SELECT %s FROM [%s]' % (
+            ','.join('[%s]' % i for i in row_class._key_indices),
+            table)
         if where:
             sql += ' WHERE %s' % where
         self.cursor.execute(sql, where_data)
@@ -462,7 +476,7 @@ class SQLiteEngine(Engine):
         where_data = [document]
         
         try:
-            return self._select_documents(collection, where, where_data).__next__()
+            return next(self._select_documents(collection, where, where_data))
         except StopIteration:
             return None
     
@@ -584,7 +598,7 @@ class FilterToSqliteQuery(FilterToQuery):
         '''
         Create a parser for a givent engine and collection
         '''
-        super(FilterToSqliteQuery, self).__init__(engine, collection)
+        FilterToQuery.__init__(self, engine, collection)
         self.table = self.engine.collection_table[collection]
 
     def get_column(self, field):
