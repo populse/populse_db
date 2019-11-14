@@ -7,8 +7,6 @@ import tempfile
 import unittest
 import sys
 
-from sqlalchemy.exc import OperationalError
-
 from populse_db.database import Database, FIELD_TYPE_STRING, FIELD_TYPE_FLOAT, FIELD_TYPE_TIME, FIELD_TYPE_DATETIME, \
     FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_BOOLEAN, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_INTEGER, FIELD_TYPE_LIST_DATE, \
     FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_FLOAT, DatabaseSession, \
@@ -95,7 +93,7 @@ def create_test_case(**database_creation_parameters):
 
             try:
                 db = Database(**database_creation_parameters)
-            except OperationalError as e:
+            except Exception as e:
                 if database_creation_parameters['database_url'].startswith('postgresql'):
                     raise unittest.SkipTest(str(e))
                 raise
