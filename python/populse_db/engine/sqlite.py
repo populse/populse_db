@@ -151,7 +151,7 @@ class SQLiteEngine(Engine):
         tables = [FIELD_TABLE, COLLECTION_TABLE]
         tables += [i.table_name for i in self.collections()]
         tables += ['list_%s_%s' % (self.collection_table[i.collection_name],
-                                   self.field_column[i.collection_name][i.name])
+                                   self.field_column[i.collection_name][i.field_name])
                    for i in self.fields() if i.field_type.startswith('list_')]
         for table in tables:
             sql = 'DROP TABLE [%s]' % table
