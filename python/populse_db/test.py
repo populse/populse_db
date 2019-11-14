@@ -1,11 +1,3 @@
-##########################################################################
-# Populse_db - Copyright (C) IRMaGe/CEA, 2018
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-##########################################################################
-
 from __future__ import print_function
 
 import datetime
@@ -162,10 +154,14 @@ def create_test_case(**database_creation_parameters):
                 session.add_field("collection1", "Bits per voxel", FIELD_TYPE_INTEGER, "with space")
                 session.add_field("collection1", "Bitspervoxel", FIELD_TYPE_INTEGER,
                                   "without space")
+                session.add_field("collection1", "bitspervoxel", FIELD_TYPE_INTEGER,
+                                  "lower case")
                 self.assertEqual(session.get_field(
                     "collection1", "Bitspervoxel").description, "without space")
                 self.assertEqual(session.get_field(
                     "collection1", "Bits per voxel").description, "with space")
+                self.assertEqual(session.get_field(
+                    "collection1", "bitspervoxel").description, "lower case")
 
                 # Testing with wrong parameters
                 self.assertRaises(ValueError, lambda : session.add_field("collection_not_existing", "Field", FIELD_TYPE_LIST_INTEGER,
@@ -369,6 +365,8 @@ def create_test_case(**database_creation_parameters):
                 session.add_field(
                     "collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
                 session.add_field(
+                    "collection1", "bits per voxel", FIELD_TYPE_INTEGER, None)
+                session.add_field(
                     "collection1", "AcquisitionDate", FIELD_TYPE_DATETIME, None)
                 session.add_field(
                     "collection1", "AcquisitionTime", FIELD_TYPE_TIME, None)
@@ -379,6 +377,7 @@ def create_test_case(**database_creation_parameters):
 
                 session.add_value("collection1", "document1", "Bits per voxel", 1, 1)
                 session.set_value("collection1", "document1", "Bits per voxel", 2)
+                session.set_value("collection1", "document1", "bits per voxel", 42)
 
                 date = datetime.datetime(2014, 2, 11, 8, 5, 7)
                 session.add_value("collection1", "document1", "AcquisitionDate", date, date)
@@ -398,6 +397,8 @@ def create_test_case(**database_creation_parameters):
                     "collection1", "document1", "PatientName"), "test2")
                 self.assertEqual(session.get_value(
                     "collection1", "document1", "Bits per voxel"), 2)
+                self.assertEqual(session.get_value(
+                    "collection1", "document1", "bits per voxel"), 42)
                 self.assertEqual(session.get_value(
                     "collection1", "document1", "AcquisitionDate"), date)
                 self.assertEqual(session.get_value(
@@ -903,9 +904,9 @@ def create_test_case(**database_creation_parameters):
                 self.assertRaises(ValueError, lambda : session.add_collection("collection1"))
 
                 # Trying with table names already taken
-                self.assertRaises(ValueError, lambda : session.add_collection("field"))
+                self.assertRaises(ValueError, lambda : session.add_collection("_field"))
 
-                self.assertRaises(ValueError, lambda : session.add_collection("collection"))
+                self.assertRaises(ValueError, lambda : session.add_collection("_collection"))
 
                 # Trying with wrong types
                 self.assertRaises(ValueError, lambda: session.add_collection(True))

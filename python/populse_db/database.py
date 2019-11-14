@@ -28,10 +28,21 @@ ALL_TYPES = {FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FL
              FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON, FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT,
              FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON}
 
-class Row:
+class ListWithKeys:
+    '''
+    Reprsents a list of value of fixed size with a key string for each value.
+    It allows to access to values with their index or with their key.
+    It is also possible to acess to values as attributes.
+    The function list_with_keys() is used to create derived classes
+    with a fixed set of item names.
+    '''
     _key_indices = {}
     
     def __init__(self, *args, **kwargs):
+        '''
+        Initialize values with their position (args)
+        or name (kwargs)
+        '''
         self._values = [None] * len(self._key_indices)
         i = 0
         for value in args:
@@ -41,15 +52,24 @@ class Row:
             self._values[self._key_indices[key]] = value
     
     def __iter__(self):
+        '''
+        Iterate over names of items
+        '''
         return iter(self._key_indices)
     
     def __getattr__(self, name):
+        '''
+        Get a value given its key
+        '''
         try:
             return self._values[self._key_indices[name]]
         except KeyError:
             raise AttributeError(repr(name))
 
     def __getitem__(self, name_or_index):
+        '''
+        Get a value given its index or key
+        '''
         if isinstance(name_or_index, str):
             return self._values[self._key_indices[name_or_index]]
         else:
@@ -57,24 +77,37 @@ class Row:
     
     @classmethod
     def _append_key(cls, key):
+        '''
+        Append a new key to the class
+        '''
         cls._key_indices[key] = len(cls._key_indices)
     
     def __repr__(self):
         return '<%s: %s>' % (self.__class__.__name__, ','.join('%s = %s' % (k, repr(self._values[i])) for k, i in self._key_indices.items()))
     
     def _dict(self):
+        '''
+        Create a dictionary using keys and values
+        '''
         return dict((i, self[i]) for i in self._key_indices if self[i] is not None)
 
     @classmethod
-    def _delete_column(cls, name):
+    def _delete_key(cls, name):
+        '''
+        Delete a key from the class
+        '''
         index = cls._key_indices.pop(name)
         for n, i in list(cls._key_indices.items()):
             if i > index:
                 cls._key_indices[n] = i - 1
 
-def row_class(name, keys):
-    return type(name, (Row,), {'_key_indices': dict(zip(keys, 
-                                                    range(len(keys))))})        
+def list_with_keys(name, keys):
+    '''
+    Return a new instance of ListWithNames with
+    a given list of keys
+    '''
+    return type(name, (ListWithKeys,), {'_key_indices': dict(zip(keys, 
+                                                        range(len(keys))))})        
 
 
 class Database:

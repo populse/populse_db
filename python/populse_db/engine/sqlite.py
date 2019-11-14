@@ -13,8 +13,8 @@ from populse_db.filter import FilterToQuery, filter_parser
 import dateutil
 
 # Table names
-FIELD_TABLE = 'field'
-COLLECTION_TABLE = 'collection'
+FIELD_TABLE = '_field'
+COLLECTION_TABLE = '_collection'
                 
 class SQLiteEngine(Engine):
     def __init__(self, database):
@@ -25,16 +25,16 @@ class SQLiteEngine(Engine):
     
     def name_to_sql(self, name):
         """
-        Transforms the name into a valid and unique table/column name, by hashing it with md5
+        Transforms the name into a valid and unique SQLite table/column name.
+        Since all names are quoted in SQL with '[]', there is no restriction
+        on character that can be used. However, case is insignificant in
+        SQLite. Therefore, all upper case characters are prefixed with '!'.
 
         :param name: Name (str)
 
-        :return: Valid and unique (hashed) table/column name
+        :return: Valid and unique table/column name
         """
-        if self._valid_identifier.match(name):
-            return name
-        else:
-            return '__' + hashlib.md5(name.encode('utf-8')).hexdigest()
+        return re.sub('([A-Z])', r'!\1', name)
 
     def __enter__(self):
         self.cursor = self.connection.cursor()
@@ -86,7 +86,7 @@ class SQLiteEngine(Engine):
             sql = 'PRAGMA table_info([%s])' % table
             self.cursor.execute(sql)
             columns = [i[1] for i in self.cursor]
-            self.table_row[table] = pdb.row_class(table, columns)
+            self.table_row[table] = pdb.list_with_keys(table, columns)
         sql = 'SELECT collection_name, table_name, primary_key FROM [%s]' % COLLECTION_TABLE
         self.cursor.execute(sql)
         for i in self.cursor.fetchall():
@@ -98,8 +98,8 @@ class SQLiteEngine(Engine):
             rows = self.cursor.fetchall()
             fields = [i[0] for i in rows]
             columns = [i[1] for i in rows]
-            self.table_row[table] = pdb.row_class(table, columns)
-            self.table_document[table] = pdb.row_class(table, fields)
+            self.table_row[table] = pdb.list_with_keys(table, columns)
+            self.table_document[table] = pdb.list_with_keys(table, fields)
         
         sql = 'SELECT collection_name, field_name, field_type, column FROM [%s]' % FIELD_TABLE
         self.cursor.execute(sql)
@@ -177,8 +177,8 @@ class SQLiteEngine(Engine):
             self.cursor.execute(sql)
         except sqlite3.OperationalError as e:
             raise ValueError(str(e))
-        self.table_row[table_name] = pdb.row_class(table_name, [pk_column])
-        self.table_document[table_name] = pdb.row_class(table_name, [primary_key])
+        self.table_row[table_name] = pdb.list_with_keys(table_name, [pk_column])
+        self.table_document[table_name] = pdb.list_with_keys(table_name, [primary_key])
         
         sql = 'INSERT INTO [%s] (collection_name, primary_key, table_name) VALUES (?, ?, ?)' % COLLECTION_TABLE
         self.cursor.execute(sql, [collection, primary_key, table_name])
@@ -341,8 +341,8 @@ class SQLiteEngine(Engine):
                 if field.has_index:
                     indices.append(field.column)
             else:
-                self.table_row[table]._delete_column(field.column)
-                self.table_document[table]._delete_column(field.field_name)
+                self.table_row[table]._delete_key(field.column)
+                self.table_document[table]._delete_key(field.field_name)
                 del self.field_column[collection][field.field_name]
                 sql = 'DELETE FROM [%s] WHERE collection_name = ? AND field_name = ?' % FIELD_TABLE
                 self.cursor.execute(sql, [collection, field.field_name])
@@ -448,7 +448,7 @@ class SQLiteEngine(Engine):
                     if list_hash is None:
                         values.append(None)
                     else:
-                        sql = 'SELECT value FROM list_{0}_{1} WHERE list_id = ? ORDER BY i'.format(table, column)
+                        sql = 'SELECT value FROM [list_{0}_{1}] WHERE list_id = ? ORDER BY i'.format(table, column)
                         self.cursor.execute(sql, [document_id])
                         values.append([self.column_to_python(item_type,i[0]) for i in self.cursor])
                 else:
@@ -570,7 +570,20 @@ class SQLiteEngine(Engine):
 
 
 class FilterToSqliteQuery(FilterToQuery):
+    '''
+    Implements required methods to produce a SQLite query given a document
+    selection filter. This class returns either None (all documents are 
+    selected) or an SQL WHERE clause (without the WHERE keyword) as a list 
+    of string (that must be joined with spaces). This WHERE clause is useable 
+    with a SELECT from the table containing the collection documents. Using a 
+    list for combining strings is supposed to be more efficient (especially 
+    for long queries).
+    '''
+    
     def __init__(self, engine, collection):
+        '''
+        Create a parser for a givent engine and collection
+        '''
         super(FilterToSqliteQuery, self).__init__(engine, collection)
         self.table = self.engine.collection_table[collection]
 
@@ -611,9 +624,6 @@ class FilterToSqliteQuery(FilterToQuery):
         return None
 
     def build_condition_literal_in_list_field(self, value, list_field):
-        '''
-        Builds a condition checking if a constant value is in a list field
-        '''
         cvalue = self.get_column_value(value)
         list_column = self.get_column(list_field)
         list_table = 'list_%s_%s' % (self.table, list_column)
@@ -628,10 +638,6 @@ class FilterToSqliteQuery(FilterToQuery):
         return [where]
 
     def build_condition_field_in_list_field(self, field, list_field):
-        '''
-        Builds a condition checking if a field value is in another
-        list field value
-        '''
         column = self.get_column(field)
         list_column = self.get_column(list_field)
         list_table = 'list_%s_%s' % (self.table, list_column)
@@ -646,10 +652,6 @@ class FilterToSqliteQuery(FilterToQuery):
         return [where]
 
     def build_condition_field_in_list(self, field, list_value):
-        '''
-        Builds a condition checking if a field value is a
-        constant list value
-        '''
         column = self.get_column(field)
         if None in list_value:
             list_value.remove(None)
