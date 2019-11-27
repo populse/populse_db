@@ -1,11 +1,3 @@
-##########################################################################
-# Populse_db - Copyright (C) IRMaGe/CEA, 2018
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-##########################################################################
-
 from __future__ import print_function
 
 import datetime
@@ -15,12 +7,10 @@ import tempfile
 import unittest
 import sys
 
-from sqlalchemy.exc import OperationalError
-
 from populse_db.database import Database, FIELD_TYPE_STRING, FIELD_TYPE_FLOAT, FIELD_TYPE_TIME, FIELD_TYPE_DATETIME, \
     FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_BOOLEAN, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_INTEGER, FIELD_TYPE_LIST_DATE, \
     FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_FLOAT, DatabaseSession, \
-    FIELD_TYPE_JSON, FIELD_TYPE_LIST_JSON, Document
+    FIELD_TYPE_JSON, FIELD_TYPE_LIST_JSON
 from populse_db.filter import literal_parser, FilterToQuery
 
 do_tests = True
@@ -63,7 +53,7 @@ class TestsSQLiteInMemory(unittest.TestCase):
                 doc[lk] = [v]
             doc['index'] = 'test'
             dbs.add_document('test', doc)
-            stored_doc = dict(dbs.get_document('test', 'test'))
+            stored_doc = dbs.get_document('test', 'test')._dict()
             self.maxDiff = None
             self.assertEqual(doc, stored_doc)
 
@@ -78,21 +68,23 @@ def create_test_case(**database_creation_parameters):
             Called before every unit test
             Creates a temporary folder containing the database file that will be used for the test
             """
-
-            self.temp_folder = tempfile.mkdtemp()
-            self.path = os.path.join(self.temp_folder, "test.db")
-            if 'string_engine' not in database_creation_parameters:
-                database_creation_parameters['string_engine'] = 'sqlite:///' + self.path
-            self.string_engine = database_creation_parameters['string_engine']
+            if 'database_url' not in database_creation_parameters:
+                self.temp_folder = tempfile.mkdtemp()
+                path = os.path.join(self.temp_folder, "test.db")
+                database_creation_parameters['database_url'] = 'sqlite:///' + path
+            else:
+                self.temp_folder = None
+            self.database_url = database_creation_parameters['database_url']
 
         def tearDown(self):
             """
             Called after every unit test
             Deletes the temporary folder created for the test
             """
-
-            shutil.rmtree(self.temp_folder)
-
+            if self.temp_folder:
+                shutil.rmtree(self.temp_folder)
+                del database_creation_parameters['database_url']
+            
         def create_database(self, clear=True):
             """
             Opens the database
@@ -101,13 +93,13 @@ def create_test_case(**database_creation_parameters):
 
             try:
                 db = Database(**database_creation_parameters)
-            except OperationalError as e:
-                if database_creation_parameters['string_engine'].startswith('postgresql'):
+            except Exception as e:
+                if database_creation_parameters['database_url'].startswith('postgresql'):
                     raise unittest.SkipTest(str(e))
                 raise
             except ImportError as e:
                 if ('psycopg2' in str(e) and 
-                    database_creation_parameters['string_engine'].startswith('postgresql')):
+                    database_creation_parameters['database_url'].startswith('postgresql')):
                     raise unittest.SkipTest(str(e))
                 raise
             if clear:
@@ -118,31 +110,8 @@ def create_test_case(**database_creation_parameters):
             """
             Tests the parameters of the Database class constructor
             """
-
-            engine = 'sqlite:///' + self.path
-
-            # Testing with wrong engine type
-            self.assertRaises(ValueError, lambda : Database(1))
-
-            # Testing with wrong query_type
-            self.assertRaises(ValueError, lambda : Database(engine, query_type="wrong_query_type"))
-            self.assertRaises(ValueError, lambda : Database(engine, query_type=True))
-
-            # Testing with wrong caches
-            self.assertRaises(ValueError, lambda : Database(engine, caches="False"))
-
-            # Testing with wrong list_tables
-            self.assertRaises(ValueError, lambda : Database(engine, list_tables="False"))
-
-            # Testing with wrong database schema
-            if os.path.exists(os.path.join("..", "..", "docs", "databases", "sample.db")):
-                with self.assertRaises(Exception):
-                    database_path = os.path.realpath(os.path.join("..", "..", "docs", "databases", "sample.db"))
-                    database_engine = 'sqlite:///' + database_path
-                    Database(database_engine)
-
             # Testing with wrong engine
-            self.assertRaises(ValueError, lambda : Database("engine"))
+            self.assertRaises(ValueError, lambda : Database("engine").__enter__())
 
         def test_add_field(self):
             """
@@ -162,7 +131,7 @@ def create_test_case(**database_creation_parameters):
                 # Checking the field properties
                 field = session.get_field("collection1", "PatientName")
                 self.assertEqual(field.field_name, "PatientName")
-                self.assertEqual(field.type, FIELD_TYPE_STRING)
+                self.assertEqual(field.field_type, FIELD_TYPE_STRING)
                 self.assertEqual(field.description, "Name of the patient")
                 self.assertEqual(field.collection_name, "collection1")
 
@@ -183,10 +152,14 @@ def create_test_case(**database_creation_parameters):
                 session.add_field("collection1", "Bits per voxel", FIELD_TYPE_INTEGER, "with space")
                 session.add_field("collection1", "Bitspervoxel", FIELD_TYPE_INTEGER,
                                   "without space")
+                session.add_field("collection1", "bitspervoxel", FIELD_TYPE_INTEGER,
+                                  "lower case")
                 self.assertEqual(session.get_field(
                     "collection1", "Bitspervoxel").description, "without space")
                 self.assertEqual(session.get_field(
                     "collection1", "Bits per voxel").description, "with space")
+                self.assertEqual(session.get_field(
+                    "collection1", "bitspervoxel").description, "lower case")
 
                 # Testing with wrong parameters
                 self.assertRaises(ValueError, lambda : session.add_field("collection_not_existing", "Field", FIELD_TYPE_LIST_INTEGER,
@@ -301,8 +274,8 @@ def create_test_case(**database_creation_parameters):
                 self.assertRaises(ValueError, lambda : session.remove_field("current", ["SequenceName", "PatientName", "Not_Existing"]))
 
                 # Testing with wrong parameters
-                self.assertRaises(ValueError, lambda : session.remove_field("current", 1))
-                self.assertRaises(ValueError, lambda : session.remove_field("current", None))
+                self.assertRaises(Exception, lambda : session.remove_field("current", 1))
+                self.assertRaises(Exception, lambda : session.remove_field("current", None))
 
                 # Removing list of fields with list type
                 session.add_field("current", "list1", FIELD_TYPE_LIST_INTEGER, None)
@@ -390,6 +363,8 @@ def create_test_case(**database_creation_parameters):
                 session.add_field(
                     "collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
                 session.add_field(
+                    "collection1", "bits per voxel", FIELD_TYPE_INTEGER, None)
+                session.add_field(
                     "collection1", "AcquisitionDate", FIELD_TYPE_DATETIME, None)
                 session.add_field(
                     "collection1", "AcquisitionTime", FIELD_TYPE_TIME, None)
@@ -400,6 +375,7 @@ def create_test_case(**database_creation_parameters):
 
                 session.add_value("collection1", "document1", "Bits per voxel", 1, 1)
                 session.set_value("collection1", "document1", "Bits per voxel", 2)
+                session.set_value("collection1", "document1", "bits per voxel", 42)
 
                 date = datetime.datetime(2014, 2, 11, 8, 5, 7)
                 session.add_value("collection1", "document1", "AcquisitionDate", date, date)
@@ -419,6 +395,8 @@ def create_test_case(**database_creation_parameters):
                     "collection1", "document1", "PatientName"), "test2")
                 self.assertEqual(session.get_value(
                     "collection1", "document1", "Bits per voxel"), 2)
+                self.assertEqual(session.get_value(
+                    "collection1", "document1", "bits per voxel"), 42)
                 self.assertEqual(session.get_value(
                     "collection1", "document1", "AcquisitionDate"), date)
                 self.assertEqual(session.get_value(
@@ -503,7 +481,7 @@ def create_test_case(**database_creation_parameters):
                 values["PatientName"] = 50
                 values["BandWidth"] = 25000
                 self.assertRaises(ValueError, lambda : session.set_values("collection1", "document1", values))
-                self.assertRaises(ValueError, lambda: session.set_values("collection1", "document1", True))
+                self.assertRaises(Exception, lambda: session.set_values("collection1", "document1", True))
 
                 # Trying with the collection not existing
                 values = {}
@@ -630,24 +608,24 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value("string", FIELD_TYPE_STRING))
-                self.assertFalse(DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_STRING))
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(None, FIELD_TYPE_STRING))
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_INTEGER))
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(1, FIELD_TYPE_FLOAT))
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(1.5, FIELD_TYPE_FLOAT))
-                self.assertFalse(DatabaseSession._DatabaseSession__check_type_value(None, None))
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value([1.5], FIELD_TYPE_LIST_FLOAT))
-                self.assertFalse(DatabaseSession._DatabaseSession__check_type_value(1.5, FIELD_TYPE_LIST_FLOAT))
-                self.assertFalse(DatabaseSession._DatabaseSession__check_type_value([1.5, "test"], FIELD_TYPE_LIST_FLOAT))
+                self.assertTrue(DatabaseSession.check_value_type("string", FIELD_TYPE_STRING))
+                self.assertFalse(DatabaseSession.check_value_type(1, FIELD_TYPE_STRING))
+                self.assertTrue(DatabaseSession.check_value_type(None, FIELD_TYPE_STRING))
+                self.assertTrue(DatabaseSession.check_value_type(1, FIELD_TYPE_INTEGER))
+                self.assertTrue(DatabaseSession.check_value_type(1, FIELD_TYPE_FLOAT))
+                self.assertTrue(DatabaseSession.check_value_type(1.5, FIELD_TYPE_FLOAT))
+                self.assertFalse(DatabaseSession.check_value_type(None, None))
+                self.assertTrue(DatabaseSession.check_value_type([1.5], FIELD_TYPE_LIST_FLOAT))
+                self.assertFalse(DatabaseSession.check_value_type(1.5, FIELD_TYPE_LIST_FLOAT))
+                self.assertFalse(DatabaseSession.check_value_type([1.5, "test"], FIELD_TYPE_LIST_FLOAT))
                 value = {}
                 value["test1"] = 1
                 value["test2"] = 2
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value(value, FIELD_TYPE_JSON))
+                self.assertTrue(DatabaseSession.check_value_type(value, FIELD_TYPE_JSON))
                 value2 = {}
                 value2["test3"] = 1
                 value2["test4"] = 2
-                self.assertTrue(DatabaseSession._DatabaseSession__check_type_value([value, value2], FIELD_TYPE_LIST_JSON))
+                self.assertTrue(DatabaseSession.check_value_type([value, value2], FIELD_TYPE_LIST_JSON))
 
         def test_add_value(self):
             """
@@ -770,8 +748,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Testing that a document is returned if it exists
-                self.assertIsInstance(session.get_document("collection1", "document1"),
-                                      Document)                
+                self.assertIsNotNone(session.get_document("collection1", "document1"))
                 
                 # Testing that None is returned if the document does not exist
                 self.assertIsNone(session.get_document("collection1", "document3"))
@@ -859,8 +836,6 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing that the document has been added
                 document = session.get_document("collection1", "document1")
-                self.assertIsInstance(document,
-                                      Document)
                 self.assertEqual(document.name, "document1")
 
                 # Testing when trying to add a document that already exists
@@ -927,9 +902,9 @@ def create_test_case(**database_creation_parameters):
                 self.assertRaises(ValueError, lambda : session.add_collection("collection1"))
 
                 # Trying with table names already taken
-                self.assertRaises(ValueError, lambda : session.add_collection("field"))
+                self.assertRaises(ValueError, lambda : session.add_collection("_field"))
 
-                self.assertRaises(ValueError, lambda : session.add_collection("collection"))
+                self.assertRaises(ValueError, lambda : session.add_collection("_collection"))
 
                 # Trying with wrong types
                 self.assertRaises(ValueError, lambda: session.add_collection(True))
@@ -982,7 +957,7 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(field.field_name, "Field")
                 self.assertEqual(field.collection_name, "collection1")
                 self.assertIsNone(field.description)
-                self.assertEqual(field.type, FIELD_TYPE_STRING)
+                self.assertEqual(field.field_type, FIELD_TYPE_STRING)
 
                 # Adding a document
                 session.add_document("collection1", "document")
@@ -1227,6 +1202,8 @@ def create_test_case(**database_creation_parameters):
             Tests the storage and retrieval of fields of type JSON
             """
 
+            doc = {"name": "the_name",
+                    "json": {"key": [1, 2, "three"]}}
             database = self.create_database()
             with database as session:
                 # Adding a collection
@@ -1235,16 +1212,12 @@ def create_test_case(**database_creation_parameters):
                 # Adding fields
                 session.add_field("collection1", "json", FIELD_TYPE_JSON)
                 
-                doc = {"name": "the_name",
-                       "json": {"key": [1, 2, "three"]}}
                 session.add_document("collection1", doc)
-                self.assertEqual(doc, session.get_document("collection1", "the_name"))
+                self.assertEqual(doc, session.get_document("collection1", "the_name")._dict())
                 self.assertIsNone(session.get_document("collection1", "not_a_valid_name"))
 
             with database as session:
-                doc = {"name": "the_name",
-                       "json": {"key": [1, 2, "three"]}}
-                self.assertEqual(doc, session.get_document("collection1", "the_name"))
+                self.assertEqual(doc, session.get_document("collection1", "the_name")._dict())
                 self.assertIsNone(session.get_document("collection1", "not_a_valid_name"))
                 
         def test_filter_documents(self):
@@ -1266,10 +1239,6 @@ def create_test_case(**database_creation_parameters):
                 documents = set(document.index for document in session.filter_documents("collection_test", None))
                 self.assertEqual(documents, set(['document_test']))
 
-                # Checking with invalid filter (every document must be returned)
-                documents = set(document.index for document in session.filter_documents("collection_test", True))
-                self.assertEqual(documents, set(['document_test']))
-
         def test_filters(self):
             list_datetime = [datetime.datetime(2018, 5, 23, 12, 41, 33, 540),
                              datetime.datetime(1981, 5, 8, 20, 0),
@@ -1288,7 +1257,6 @@ def create_test_case(**database_creation_parameters):
                 session.add_field("collection1", 'has_format', field_type=FIELD_TYPE_BOOLEAN,
                                   description=None)
 
-                session.save_modifications()
                 files = ('abc', 'bcd', 'def', 'xyz')
                 for file in files:
                     for date in list_datetime:
@@ -1304,7 +1272,8 @@ def create_test_case(**database_creation_parameters):
                             )
                             session.add_document("collection1", document)
                         document = '/%s_%d.none' % (file, date.year)
-                        session.add_document("collection1", dict(name=document, strings=list(file)))
+                        d = dict(name=document, strings=list(file))
+                        session.add_document("collection1", d)
 
                 for filter, expected in (
                         ('format == "NIFTI"',
@@ -1839,9 +1808,7 @@ def create_test_case(**database_creation_parameters):
                         documents = set(document.name for document in session.filter_documents("collection1", filter))
                         self.assertEqual(documents, expected)
                     except Exception as e:
-                        session.unsave_modifications()
-                        #query = session._DatabaseSession__filter_query('collection1', filter)
-                        e.message = 'While testing filter : %s\n%s' % (str(filter), e.message)
+                        e.message = 'While testing filter : %s\n%s' % (str(filter), str(e))
                         e.args = (e.message,)
                         raise
 
@@ -1853,19 +1820,16 @@ def create_test_case(**database_creation_parameters):
                                   description=None)
                 session.add_document("collection1", 'test')
                 session.add_value("collection1", 'test', 'strings', ['a', 'b', 'c'])
-                session.save_modifications()
                 names = list(document.name for document in session.filter_documents("collection1", '"b" IN strings'))
                 self.assertEqual(names, ['test'])
 
                 session.set_value("collection1", 'test', 'strings', ['x', 'y', 'z'])
-                session.save_modifications()
                 names = list(document.name for document in session.filter_documents("collection1", '"b" IN strings'))
                 self.assertEqual(names, [])
                 names = list(document.name for document in session.filter_documents("collection1", '"z" IN strings'))
                 self.assertEqual(names, ['test'])
 
                 session.remove_value("collection1", 'test', 'strings')
-                session.save_modifications()
                 names = list(document.name for document in session.filter_documents("collection1", '"y" IN strings'))
                 self.assertEqual(names, [])
 
@@ -1981,7 +1945,7 @@ def create_test_case(**database_creation_parameters):
                     doc[lk] = [v]
                 doc['index'] = 'test'
                 session.add_document('test', doc)
-                stored_doc = dict(session.get_document('test', 'test'))
+                stored_doc = session.get_document('test', 'test')._dict()
                 self.assertEqual(doc, stored_doc)
     
     return TestDatabaseMethods
@@ -2000,25 +1964,17 @@ def load_tests(loader, standard_tests, pattern):
     """
     suite = unittest.TestSuite()
     suite.addTests(loader.loadTestsFromTestCase(TestsSQLiteInMemory))
-    for params in (dict(caches=False, list_tables=True, query_type='mixed'),
-                   dict(caches=True, list_tables=True, query_type='mixed'),
-                   dict(caches=False, list_tables=False, query_type='mixed'),
-                   dict(caches=True, list_tables=False, query_type='mixed'),
-                   dict(caches=False, list_tables=True, query_type='guess'),
-                   dict(caches=True, list_tables=True, query_type='guess'),
-                   dict(caches=False, list_tables=False, query_type='guess'),
-                   dict(caches=True, list_tables=False, query_type='guess')):
-        tests = loader.loadTestsFromTestCase(create_test_case(**params))
-        suite.addTests(tests)
+    tests = loader.loadTestsFromTestCase(create_test_case())
+    suite.addTests(tests)
 
     # Tests with postgresql. All the tests will be skiped if
     # it is not possible to connect to populse_db_tests database.
-    tests = loader.loadTestsFromTestCase(create_test_case(
-        string_engine='postgresql:///populse_db_tests',
-        caches=False,
-        list_tables=True,
-        query_type='mixed'))
-    suite.addTests(tests)
+    #tests = loader.loadTestsFromTestCase(create_test_case(
+        #database_url='postgresql:///populse_db_tests',
+        #caches=False,
+        #list_tables=True,
+        #query_type='mixed'))
+    #suite.addTests(tests)
 
     return suite
 
