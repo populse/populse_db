@@ -79,11 +79,14 @@ def create_test_case(**database_creation_parameters):
             Creates a temporary folder containing the database file that will be used for the test
             """
 
-            self.temp_folder = tempfile.mkdtemp()
+            self.temp_folder = tempfile.mkdtemp(prefix='populse_db')
             self.path = os.path.join(self.temp_folder, "test.db")
-            if 'string_engine' not in database_creation_parameters:
-                database_creation_parameters['string_engine'] = 'sqlite:///' + self.path
-            self.string_engine = database_creation_parameters['string_engine']
+            self.database_creation_parameters \
+                = dict(database_creation_parameters)
+            self.database_creation_parameters['string_engine'] \
+                = 'sqlite:///' + self.path
+            self.string_engine \
+                = self.database_creation_parameters['string_engine']
 
         def tearDown(self):
             """
@@ -92,6 +95,8 @@ def create_test_case(**database_creation_parameters):
             """
 
             shutil.rmtree(self.temp_folder)
+            sys.stdout.flush()
+            self.temp_folder = None
 
         def create_database(self, clear=True):
             """
@@ -100,14 +105,16 @@ def create_test_case(**database_creation_parameters):
             """
 
             try:
-                db = Database(**database_creation_parameters)
+                db = Database(**self.database_creation_parameters)
             except OperationalError as e:
-                if database_creation_parameters['string_engine'].startswith('postgresql'):
+                if self.database_creation_parameters['string_engine'].startswith(
+                        'postgresql'):
                     raise unittest.SkipTest(str(e))
                 raise
             except ImportError as e:
                 if ('psycopg2' in str(e) and 
-                    database_creation_parameters['string_engine'].startswith('postgresql')):
+                    self.database_creation_parameters[
+                        'string_engine'].startswith('postgresql')):
                     raise unittest.SkipTest(str(e))
                 raise
             if clear:
