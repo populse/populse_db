@@ -95,7 +95,6 @@ def create_test_case(**database_creation_parameters):
             """
 
             shutil.rmtree(self.temp_folder)
-            sys.stdout.flush()
             self.temp_folder = None
 
         def create_database(self, clear=True):
