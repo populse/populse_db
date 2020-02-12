@@ -86,11 +86,18 @@ class ListWithKeys(object):
     def __repr__(self):
         return '<%s: %s>' % (self.__class__.__name__, ','.join('%s = %s' % (k, repr(self._values[i])) for k, i in self._key_indices.items()))
     
+    def _items(self):
+        '''
+        Iterate over key, value pairs
+        '''
+        return ((i, self[i]) for i in self._key_indices if self[i] is not None)
+    
+    
     def _dict(self):
         '''
         Create a dictionary using keys and values
         '''
-        return dict((i, self[i]) for i in self._key_indices if self[i] is not None)
+        return dict(self._items())
 
     @classmethod
     def _delete_key(cls, name):
@@ -171,7 +178,7 @@ class Database:
         statement).
         """
         if self.__session is None:            
-            self.__session = DatabaseSession(self)
+            self.__session = self.database_session_class(self)
             self.__session.engine.__enter__()
             self.__session_count = 1
         else:
@@ -796,3 +803,9 @@ class DatabaseSession:
                 return True
         else:
             return cls._value_type_checker[field_type](value)
+
+
+# Default link between Database and DatabaseSession class is defined below.
+# It is used whenever a database session is created. This allow to derive
+# Database class and to also use a derived version of DatabaseSession.
+Database.database_session_class = DatabaseSession
