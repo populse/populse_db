@@ -288,6 +288,12 @@ class DatabaseSession:
         self.engine = engine_factory(database.database_url)
         self.__names = {}
 
+    def commit(self):
+        self.engine.commit()
+    
+    def rollback(self):
+        self.engine.rollback()
+    
     """ COLLECTIONS """
 
     def add_collection(self, name, primary_key="index"):

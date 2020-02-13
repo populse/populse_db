@@ -4,6 +4,7 @@ import json
 import re
 import six
 import sqlite3
+import threading
 import uuid
 
 import populse_db.database as pdb
@@ -18,8 +19,11 @@ COLLECTION_TABLE = '_collection'
                 
 class SQLiteEngine(Engine):
     def __init__(self, database):
-        self.connection = sqlite3.connect(database, isolation_level=None)
+        self.connection = sqlite3.connect(database, 
+                                          isolation_level=None,
+                                          check_same_thread=False)
         self.cursor = None
+        self.lock = threading.RLock()
            
     _valid_identifier = re.compile(r'^[_A-Za-z][a-zA-Z0-9_]*$')
     
@@ -37,10 +41,11 @@ class SQLiteEngine(Engine):
         return re.sub('([A-Z])', r'!\1', name)
 
     def __enter__(self):
+        self.lock.acquire()
         self.cursor = self.connection.cursor()
         self.cursor.execute('PRAGMA case_sensitive_like=ON')
         self.cursor.execute('PRAGMA foreign_keys=ON')
-        self.cursor.execute('BEGIN')
+        self.cursor.execute('BEGIN DEFERRED')
         
         if not self.has_table(COLLECTION_TABLE):
             sql = '''CREATE TABLE [{0}] (
@@ -111,12 +116,21 @@ class SQLiteEngine(Engine):
         
         return self
     
+    def commit(self):
+        self.cursor.execute('COMMIT')
+        self.cursor.execute('BEGIN DEFERRED')
+    
+    def rollback(self):
+        self.cursor.execute('ROLLBACK')
+        self.cursor.execute('BEGIN DEFERRED')
+        
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None:
-            self.cursor.execute('COMMIT')
+            self.commit()
         else:
-            self.cursor.execute('ROLLBACK')
+            self.rollback()
         self.cursor = None
+        self.lock.release()
     
     type_to_sql = {
         pdb.FIELD_TYPE_INTEGER: 'INT',
@@ -472,7 +486,8 @@ class SQLiteEngine(Engine):
     
     def document(self, collection, document):
         primary_key = self.collection_primary_key[collection]
-        where = '[%s] = ?' % primary_key
+        pk_column = self.field_column[collection][primary_key]
+        where = '[%s] = ?' % pk_column
         where_data = [document]
         
         try:
