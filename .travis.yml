@@ -5,22 +5,27 @@ matrix:
       name: python 3.8
     - os: linux
       language: python
+      name: python 2.7
       python:
         - "2.7"
     - os: linux
       language: python
+      name: python 3.4
       python:
         - "3.4"
     - os: linux
       language: python
+      name: python 3.5
       python:
         - "3.5"
     - os: linux
       language: python
+      name: python 3.6
       python:
         - "3.6"
     - os: linux
       language: python
+      name: python 3.7
       python:
         - "3.7"
       dist: xenial
@@ -34,6 +39,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python@3.8; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH="/usr/local/opt/python@3.8/bin:$PATH"; ln -sf `which python3` /usr/local/bin/python; ln -sf `which pip3` /usr/local/bin/pip; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python --version; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python --version; fi
 
 before_script:
