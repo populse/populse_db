@@ -2,6 +2,7 @@ matrix:
   include:
     - os: osx
       language: generic
+      name: python 3.8
     - os: linux
       language: python  
       python:
