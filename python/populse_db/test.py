@@ -25,16 +25,6 @@ from populse_db.filter import literal_parser, FilterToQuery
 
 do_tests = True
 
-if not hasattr(unittest, 'SkipTest'):
-    # python 2.6
-    try:
-        import unittest2 as unittest
-    except ImportError:
-        do_tests = False
-        print('A recent version of unittest is not available. All tests '
-              'will be skipped. Please consider using python >= 2.7 or '
-              'installing unittest2.', file=sys.stderr)
-
 
 class TestsSQLiteInMemory(unittest.TestCase):
     def test_add_get_document(self):
