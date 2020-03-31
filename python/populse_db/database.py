@@ -26,7 +26,6 @@ from sqlalchemy.schema import CreateTable, DropTable
 from sqlalchemy.exc import ArgumentError
 
 import populse_db
-import populse_db.filter
 
 # Field types
 FIELD_TYPE_STRING = "string"
