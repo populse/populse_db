@@ -78,7 +78,7 @@ FIELD_TABLE = "field"
 COLLECTION_TABLE = "collection"
 
 
-class Database:
+class Database(object):
     """
     Database API
 
@@ -322,7 +322,7 @@ class Database:
             return False
 
 
-class DatabaseSession:
+class DatabaseSession(object):
     """
     DatabaseSession API
 
@@ -1703,7 +1703,7 @@ class DatabaseSession:
             return list_value
         return [converter(i) for i in list_value]
 
-class Undefined:
+class Undefined(object):
     pass
 
 class Document(dict):
