@@ -1630,7 +1630,8 @@ class DatabaseSession(object):
             return True
         if valid_type == FIELD_TYPE_BOOLEAN and value_type == bool:
             return True
-        if valid_type == FIELD_TYPE_STRING and isinstance(value, str):
+        if valid_type == FIELD_TYPE_STRING and isinstance(value,
+                                                          six.string_types):
             return True
         if valid_type == FIELD_TYPE_JSON and isinstance(value, dict):
             return True
