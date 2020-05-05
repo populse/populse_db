@@ -1630,9 +1630,9 @@ class DatabaseSession(object):
             return True
         if valid_type == FIELD_TYPE_BOOLEAN and value_type == bool:
             return True
-        if valid_type == FIELD_TYPE_STRING and value_type == str:
+        if valid_type == FIELD_TYPE_STRING and isinstance(value, str):
             return True
-        if valid_type == FIELD_TYPE_JSON and value_type == dict:
+        if valid_type == FIELD_TYPE_JSON and isinstance(value, dict):
             return True
         if valid_type == FIELD_TYPE_DATETIME and value_type == datetime:
             return True
@@ -1640,10 +1640,10 @@ class DatabaseSession(object):
             return True
         if valid_type == FIELD_TYPE_DATE and value_type == date:
             return True
-        if (valid_type in LIST_TYPES
-                and value_type == list):
+        if valid_type in LIST_TYPES and isinstance(value, list):
             for value_element in value:
-                if not DatabaseSession.__check_type_value(value_element, valid_type.replace("list_", "")):
+                if not DatabaseSession.__check_type_value(
+                        value_element, valid_type.replace("list_", "")):
                     return False
             return True
         return False
