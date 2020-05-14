@@ -14,6 +14,7 @@ import os
 import re
 import types
 from datetime import date, time, datetime
+import weakref
 
 import dateutil.parser
 import six
@@ -391,8 +392,8 @@ class DatabaseSession(object):
         :param session: Session instance attached to the Database instance
         """
 
-        self.database = database
-        self.session = session
+        self.database = weakref.proxy(database)
+        self.session = weakref.proxy(session)
 
         # Database opened
         self.metadata = MetaData()
