@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 import json
+import os.path as osp
 import re
 import six
 import sqlite3
@@ -18,14 +19,37 @@ FIELD_TABLE = '_field'
 COLLECTION_TABLE = '_collection'
                 
 class SQLiteEngine(Engine):
+    
+    _global_lock = threading.RLock()
+    _database_locks = {}
+    
     def __init__(self, database):
-        self.connection = sqlite3.connect(database, 
-                                          isolation_level=None,
-                                          check_same_thread=False)
-        self.cursor = None
-        self.lock = threading.RLock()
-           
-    _valid_identifier = re.compile(r'^[_A-Za-z][a-zA-Z0-9_]*$')
+        with self._global_lock:
+            self.connection = sqlite3.connect(database, 
+                                            isolation_level=None,
+                                            check_same_thread=False)
+            self.cursor = None
+            if database == ':memory:':
+                self._global_lock_id = None
+                self.lock = threading.RLock()
+            else:
+                self._global_lock_id = osp.normpath(osp.realpath(osp.abspath(database)))
+                self.lock, lock_count = self._database_locks.get(self._global_lock_id) or (None, None)
+                if self.lock is None:
+                    self.lock = threading.RLock()
+                    self._database_locks[self._global_lock_id] = (self.lock, 1)
+                else:
+                    self._database_locks[self._global_lock_id] = (self.lock, lock_count + 1)
+
+    def __del__(self):
+        if self._global_lock_id:
+            with self._global_lock:
+                self.lock, lock_count = self._database_locks.get(self._global_lock_id)
+                lock_count -= 1
+                if lock_count:
+                    self._database_locks[self._global_lock_id] = (self.lock, lock_count)
+                else:
+                    del self._database_locks[self._global_lock_id]
     
     def name_to_sql(self, name):
         """
