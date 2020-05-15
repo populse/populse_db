@@ -179,10 +179,7 @@ class Database:
         """
         if self.__session is None:            
             self.__session = self.database_session_class(self)
-            self.__session.engine.__enter__()
-            self.__session_count = 1
-        else:
-            self.__session_count += 1
+        self.__session.engine.__enter__()
         return self.__session
     
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -192,12 +189,7 @@ class Database:
         is commited if no error is reported (e.g. exc_type is None)
         otherwise it is rolled back. Nothing is done 
         """
-        self.__session_count -= 1
-        if self.__session_count == 0:
-            # If there is no recursive call, commit or rollback
-            # the session according to the presence of an exception
-            self.__session.engine.__exit__(exc_type, exc_val, exc_tb)
-            self.__session = None
+        self.__session.engine.__exit__(exc_type, exc_val, exc_tb)
             
     def clear(self):
         """

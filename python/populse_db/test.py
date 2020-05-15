@@ -1910,11 +1910,21 @@ def create_test_case(**database_creation_parameters):
                     self.assertIs(session, session2)
                     with database as session3:
                         self.assertIs(session, session3)
+                        session.add_document("collection1", {"name": "toto"})
 
-            # Check that previous session was released and that
-            # a new one is created.
+            # Check that previous session was commited but preserved
+            # as long as the database is not destroyed.
             with database as session4:
-                self.assertIsNot(session, session4)
+                self.assertIs(session, session4)
+        
+            # Destroy the database and create a new one
+            database = self.create_database(clear=False)
+
+            # Check that previous session was destroyed and that
+            # a new one is created.
+            with database as session5:
+                self.assertIsNot(session, session5)
+                self.assertEqual(len(session5.get_documents('collection1')), 2)
         
         def test_automatic_fields_creation(self):
             """

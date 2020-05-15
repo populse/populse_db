@@ -24,6 +24,7 @@ class SQLiteEngine(Engine):
     _database_locks = {}
     
     def __init__(self, database):
+        self._enter_recursion_count = 0
         with self._global_lock:
             self.connection = sqlite3.connect(database, 
                                             isolation_level=None,
@@ -65,96 +66,98 @@ class SQLiteEngine(Engine):
         return re.sub('([A-Z])', r'!\1', name)
 
     def __enter__(self):
-        self.lock.acquire()
-        self.cursor = self.connection.cursor()
-        self.cursor.execute('PRAGMA case_sensitive_like=ON')
-        self.cursor.execute('PRAGMA foreign_keys=ON')
-        self.cursor.execute('BEGIN DEFERRED')
-        
-        if not self.has_table(COLLECTION_TABLE):
-            sql = '''CREATE TABLE [{0}] (
-                collection_name TEXT,
-                field_name TEXT,
-                field_type TEXT CHECK(field_type IN ({1})) NOT NULL,
-                description TEXT,
-                has_index BOOLEAN NOT NULL,
-                column TEXT NOT NULL,
-                PRIMARY KEY (field_name, collection_name))
-            '''.format(FIELD_TABLE,
-                    ','.join("'%s'" % i for i in (pdb.FIELD_TYPE_STRING,
-                                                pdb.FIELD_TYPE_INTEGER, 
-                                                pdb.FIELD_TYPE_FLOAT, 
-                                                pdb.FIELD_TYPE_BOOLEAN,
-                                                pdb.FIELD_TYPE_DATE,
-                                                pdb.FIELD_TYPE_DATETIME,
-                                                pdb.FIELD_TYPE_TIME,
-                                                pdb.FIELD_TYPE_JSON,
-                                                pdb.FIELD_TYPE_LIST_STRING,
-                                                pdb.FIELD_TYPE_LIST_INTEGER,
-                                                pdb.FIELD_TYPE_LIST_FLOAT,
-                                                pdb.FIELD_TYPE_LIST_BOOLEAN,
-                                                pdb.FIELD_TYPE_LIST_DATE,
-                                                pdb.FIELD_TYPE_LIST_DATETIME,
-                                                pdb.FIELD_TYPE_LIST_TIME,
-                                                pdb.FIELD_TYPE_LIST_JSON)))
-            self.cursor.execute(sql)
+        if self._enter_recursion_count == 0:
+            self.lock.acquire()
+            self.cursor = self.connection.cursor()
+            self.cursor.execute('PRAGMA case_sensitive_like=ON')
+            self.cursor.execute('PRAGMA foreign_keys=ON')
+            self.cursor.execute('BEGIN DEFERRED')
             
-            sql = '''CREATE TABLE [{0}] (
-                collection_name TEXT PRIMARY KEY,
-                primary_key TEXT NOT NULL,
-                table_name TEXT NOT NULL)
-            '''.format(COLLECTION_TABLE)
+            if not self.has_table(COLLECTION_TABLE):
+                sql = '''CREATE TABLE [{0}] (
+                    collection_name TEXT,
+                    field_name TEXT,
+                    field_type TEXT CHECK(field_type IN ({1})) NOT NULL,
+                    description TEXT,
+                    has_index BOOLEAN NOT NULL,
+                    column TEXT NOT NULL,
+                    PRIMARY KEY (field_name, collection_name))
+                '''.format(FIELD_TABLE,
+                        ','.join("'%s'" % i for i in (pdb.FIELD_TYPE_STRING,
+                                                    pdb.FIELD_TYPE_INTEGER, 
+                                                    pdb.FIELD_TYPE_FLOAT, 
+                                                    pdb.FIELD_TYPE_BOOLEAN,
+                                                    pdb.FIELD_TYPE_DATE,
+                                                    pdb.FIELD_TYPE_DATETIME,
+                                                    pdb.FIELD_TYPE_TIME,
+                                                    pdb.FIELD_TYPE_JSON,
+                                                    pdb.FIELD_TYPE_LIST_STRING,
+                                                    pdb.FIELD_TYPE_LIST_INTEGER,
+                                                    pdb.FIELD_TYPE_LIST_FLOAT,
+                                                    pdb.FIELD_TYPE_LIST_BOOLEAN,
+                                                    pdb.FIELD_TYPE_LIST_DATE,
+                                                    pdb.FIELD_TYPE_LIST_DATETIME,
+                                                    pdb.FIELD_TYPE_LIST_TIME,
+                                                    pdb.FIELD_TYPE_LIST_JSON)))
+                self.cursor.execute(sql)
+                
+                sql = '''CREATE TABLE [{0}] (
+                    collection_name TEXT PRIMARY KEY,
+                    primary_key TEXT NOT NULL,
+                    table_name TEXT NOT NULL)
+                '''.format(COLLECTION_TABLE)
+                self.cursor.execute(sql)
+            
+            
+            self.collection_primary_key = {}
+            self.collection_table = {}
+            self.table_row = {}
+            self.table_document = {}
+            for table in (COLLECTION_TABLE, FIELD_TABLE):
+                sql = 'PRAGMA table_info([%s])' % table
+                self.cursor.execute(sql)
+                columns = [i[1] for i in self.cursor]
+                self.table_row[table] = pdb.list_with_keys(table, columns)
+            sql = 'SELECT collection_name, table_name, primary_key FROM [%s]' % COLLECTION_TABLE
             self.cursor.execute(sql)
-        
-        
-        self.collection_primary_key = {}
-        self.collection_table = {}
-        self.table_row = {}
-        self.table_document = {}
-        for table in (COLLECTION_TABLE, FIELD_TABLE):
-            sql = 'PRAGMA table_info([%s])' % table
+            for i in self.cursor.fetchall():
+                collection, table, primary_key = i
+                self.collection_primary_key[collection] = primary_key
+                self.collection_table[collection] = table
+                sql = "SELECT field_name, column FROM [%s] WHERE collection_name = '%s'" % (FIELD_TABLE, collection)
+                self.cursor.execute(sql)
+                rows = self.cursor.fetchall()
+                fields = [i[0] for i in rows]
+                columns = [i[1] for i in rows]
+                self.table_row[table] = pdb.list_with_keys(table, columns)
+                self.table_document[table] = pdb.list_with_keys(table, fields)
+            
+            sql = 'SELECT collection_name, field_name, field_type, column FROM [%s]' % FIELD_TABLE
             self.cursor.execute(sql)
-            columns = [i[1] for i in self.cursor]
-            self.table_row[table] = pdb.list_with_keys(table, columns)
-        sql = 'SELECT collection_name, table_name, primary_key FROM [%s]' % COLLECTION_TABLE
-        self.cursor.execute(sql)
-        for i in self.cursor.fetchall():
-            collection, table, primary_key = i
-            self.collection_primary_key[collection] = primary_key
-            self.collection_table[collection] = table
-            sql = "SELECT field_name, column FROM [%s] WHERE collection_name = '%s'" % (FIELD_TABLE, collection)
-            self.cursor.execute(sql)
-            rows = self.cursor.fetchall()
-            fields = [i[0] for i in rows]
-            columns = [i[1] for i in rows]
-            self.table_row[table] = pdb.list_with_keys(table, columns)
-            self.table_document[table] = pdb.list_with_keys(table, fields)
+            self.field_column = {}
+            self.field_type = {}
+            for collection, field, field_type, column in self.cursor:
+                self.field_column.setdefault(collection, {})[field] = column
+                self.field_type.setdefault(collection, {})[field] = field_type
         
-        sql = 'SELECT collection_name, field_name, field_type, column FROM [%s]' % FIELD_TABLE
-        self.cursor.execute(sql)
-        self.field_column = {}
-        self.field_type = {}
-        for collection, field, field_type, column in self.cursor:
-            self.field_column.setdefault(collection, {})[field] = column
-            self.field_type.setdefault(collection, {})[field] = field_type
-        
+        self._enter_recursion_count += 1
         return self
     
     def commit(self):
         self.cursor.execute('COMMIT')
-        self.cursor.execute('BEGIN DEFERRED')
     
     def rollback(self):
         self.cursor.execute('ROLLBACK')
-        self.cursor.execute('BEGIN DEFERRED')
         
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
-            self.commit()
-        else:
-            self.rollback()
-        self.cursor = None
-        self.lock.release()
+        self._enter_recursion_count -= 1
+        if self._enter_recursion_count == 0:
+            if exc_type is None:
+                self.commit()
+            else:
+                self.rollback()
+            self.cursor = None
+            self.lock.release()
     
     type_to_sql = {
         pdb.FIELD_TYPE_INTEGER: 'INT',
