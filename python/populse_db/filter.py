@@ -241,10 +241,10 @@ class FilterToQuery(Transformer):
         literal = self.keyword_literals.get(field.lower(), self)
         if literal is not self:
             return literal
-        field = self.engine.field(self.collection, field)
-        if field is None:
+        field_name = self.engine.field(self.collection, field)
+        if field_name is None:
             raise ValueError('No field named "%s"' % field)
-        return field
+        return field_name
 
     def quoted_field_name(self, items):
         return items[0][1:-1]
