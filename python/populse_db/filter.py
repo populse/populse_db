@@ -14,8 +14,7 @@ from populse_db.database import ListWithKeys
 filter_grammar = '''
 ?start : filter
 
-?filter : "ALL"i                         -> all
-        | conditions
+?filter : conditions
         | negation
         | "(" filter ")"
         | "(" filter ")" BOOLEAN_OPERATOR filter -> conditions
@@ -39,7 +38,8 @@ CONDITION_OPERATOR : "=="i
                    | "ILIKE"i
                    | "LIKE"i
 
-condition : operand CONDITION_OPERATOR operand
+condition : "ALL"i                         -> all
+          | operand CONDITION_OPERATOR operand
 
 ?operand : literal
          | field_name
