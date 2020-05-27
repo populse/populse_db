@@ -211,6 +211,24 @@ class FilterToQuery(Transformer):
         while stack:
             operator_str = stack.pop(0).lower()
             right_operand = stack.pop(0)
+            if result is None:
+                if operator_str == 'and':
+                    result = right_operand
+                    continue
+                elif operator_str == 'or':
+                    result = None
+                    continue
+                left_operand = ['1']
+            else:
+                left_operand = result
+            if right_operand is None:
+                if operator_str == 'and':
+                    result = left_operand
+                    continue
+                elif operator_str == 'or':
+                    result = None
+                    continue
+                right_operand = ['1']
             result = self.build_condition_combine_conditions(result, operator_str, right_operand)
         return result
 

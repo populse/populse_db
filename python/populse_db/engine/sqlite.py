@@ -773,6 +773,8 @@ class FilterToSqliteQuery(FilterToQuery):
         return [where]
 
     def build_condition_negation(self, condition):
+        if condition is None:
+            return ['0']
         return ['NOT', '(' ] + condition + [')']
     
     def build_condition_combine_conditions(self, left_condition, operator_str, right_condition):
