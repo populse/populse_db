@@ -118,7 +118,7 @@ def list_with_keys(name, keys):
                                                         range(len(keys))))})        
 
 
-class Database:
+class Database(object):
     """
     Database API
 
@@ -230,7 +230,7 @@ def python_value_type(value):
         return _python_type_to_field_type[type(value)]
 
 
-class DatabaseSession:
+class DatabaseSession(object):
     """
     DatabaseSession API
 
