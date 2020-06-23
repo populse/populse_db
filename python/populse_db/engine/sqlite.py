@@ -144,7 +144,11 @@ class SQLiteEngine(Engine):
         return self
     
     def commit(self):
-        self.cursor.execute('COMMIT')
+        try:
+            self.cursor.execute('COMMIT')
+        except sqlite3.OperationalError as e:
+            if 'no transaction is active' not in str(e):
+                raise
     
     def rollback(self):
         self.cursor.execute('ROLLBACK')
