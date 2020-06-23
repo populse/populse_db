@@ -478,7 +478,8 @@ class SQLiteEngine(Engine):
     def has_document(self, collection, document):
         table = self.collection_table[collection]
         primary_key = self.collection_primary_key[collection]
-        sql = 'SELECT COUNT(*) FROM [%s] WHERE [%s] = ?' % (table, primary_key)
+        pk_column = self.field_column[collection][primary_key]
+        sql = 'SELECT COUNT(*) FROM [%s] WHERE [%s] = ?' % (table, pk_column)
         self.cursor.execute(sql, [document])
         r = self.cursor.fetchone()
         return bool(r[0])
@@ -530,9 +531,11 @@ class SQLiteEngine(Engine):
         table = self.collection_table.get(collection)
         if table is not None:
             primary_key = self.collection_primary_key[collection]
+            pk_column = self.field_column[collection][primary_key]
             column = self.field_column[collection].get(field)
             if column is not None:
-                sql = 'SELECT [%s] FROM [%s] WHERE [%s] = ?' % (column, table, primary_key)
+                sql = 'SELECT [%s] FROM [%s] WHERE [%s] = ?' % (column, table,
+                                                                pk_column)
                 self.cursor.execute(sql, [document_id])
                 row = self.cursor.fetchone()
                 if row:
@@ -544,6 +547,7 @@ class SQLiteEngine(Engine):
         primary_key = self.collection_primary_key[collection]
         if primary_key in values:
             raise ValueError('Cannot modify document id "%s" of collection %s' % (primary_key, collection))
+        pk_column = self.field_column[collection][primary_key]
         for field, value in values.items():
             column = self.field_column[collection][field]
             field_type = self.field_type[collection][field]
@@ -565,13 +569,14 @@ class SQLiteEngine(Engine):
             sql = 'UPDATE [%s] SET [%s] = ? WHERE [%s] = ?' % (
                 table,
                 column,
-                primary_key)
+                pk_column)
             self.cursor.execute(sql, [column_value, document_id])
 
     def remove_value(self, collection, document_id, field):
         table = self.collection_table[collection]
         column = self.field_column[collection][field]
         primary_key = self.collection_primary_key[collection]
+        pk_column = self.field_column[collection][primary_key]
         field_type = self.field_type[collection][field]
         if field_type.startswith('list_'):
             list_table = 'list_%s_%s' % (table, column)
@@ -581,20 +586,21 @@ class SQLiteEngine(Engine):
         sql = 'UPDATE [%s] SET [%s] = NULL WHERE [%s] = ?' % (
             table,
             column,
-            primary_key)
+            pk_column)
         self.cursor.execute(sql, [document_id])
         
 
     def remove_document(self, collection, document_id):
         table = self.collection_table[collection]
         primary_key = self.collection_primary_key[collection]
+        pk_column = self.field_column[collection][primary_key]
         document = self.document(collection, document_id)
         for field in self.fields(collection):
             if field.field_type.startswith('list_') and document[field.field_name]:
                 self.remove_value(collection, document_id, field.field_name)
         sql = 'DELETE FROM [%s] WHERE [%s] = ?' % (
             table,
-            primary_key)
+            pk_column)
         self.cursor.execute(sql, [document_id])
         
     def parse_filter(self, collection, filter):
@@ -688,13 +694,14 @@ class FilterToSqliteQuery(FilterToQuery):
         list_column = self.get_column(list_field)
         list_table = 'list_%s_%s' % (self.table, list_column)
         primary_key_column = self.engine.primary_key(self.collection)
-    
+        pk_column = self.field_column[collection][primary_key_column]
+
         where = ('[{0}] IS NOT NULL AND '
                  '{1} IN (SELECT value FROM {2} '
                  'WHERE list_id = [{3}])').format(list_column,
                                                   cvalue,
                                                   list_table,
-                                                  primary_key_column)
+                                                  pk_column)
         return [where]
 
     def build_condition_field_in_list_field(self, field, list_field):
@@ -702,13 +709,14 @@ class FilterToSqliteQuery(FilterToQuery):
         list_column = self.get_column(list_field)
         list_table = 'list_%s_%s' % (self.table, list_column)
         primary_key_column = self.engine.primary_key(self.collection)
-    
+        pk_column = self.field_column[collection][primary_key_column]
+
         where = ('[{0}] IS NOT NULL AND '
                  '[{1}] IN (SELECT value FROM {2} '
                  'WHERE list_id = [{3}])').format(list_column,
                                                   column,
                                                   list_table,
-                                                  primary_key_column)
+                                                  pk_column)
         return [where]
 
     def build_condition_field_in_list(self, field, list_value):
