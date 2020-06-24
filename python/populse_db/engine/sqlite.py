@@ -694,7 +694,8 @@ class FilterToSqliteQuery(FilterToQuery):
         list_column = self.get_column(list_field)
         list_table = 'list_%s_%s' % (self.table, list_column)
         primary_key_column = self.engine.primary_key(self.collection)
-        pk_column = self.field_column[collection][primary_key_column]
+        pk_column = self.engine.field_column[
+            self.collection][primary_key_column]
 
         where = ('[{0}] IS NOT NULL AND '
                  '{1} IN (SELECT value FROM {2} '
@@ -709,7 +710,7 @@ class FilterToSqliteQuery(FilterToQuery):
         list_column = self.get_column(list_field)
         list_table = 'list_%s_%s' % (self.table, list_column)
         primary_key_column = self.engine.primary_key(self.collection)
-        pk_column = self.field_column[collection][primary_key_column]
+        pk_column = self.engine.field_column[self.collection][primary_key_column]
 
         where = ('[{0}] IS NOT NULL AND '
                  '[{1}] IN (SELECT value FROM {2} '
