@@ -385,7 +385,7 @@ class SQLiteEngine(Engine):
         for row in self.cursor.fetchall():
             yield row_class(*row)
     
-    def remove_fields(self, collection ,fields):
+    def remove_fields(self, collection, fields):
         table = self.collection_table[collection]
         exclude_fields = set(fields)
         new_columns = []
