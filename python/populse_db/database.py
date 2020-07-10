@@ -240,10 +240,10 @@ class Database(object):
         '''
         Return a DatabaseSession instance for using the database. This is
         supposed to be called using a "with" statement:
-        
+
         with database as session:
            session.add_document(...)
-           
+
         Therefore __exit__ must be called to get rid of the session.
         When called recursively, the underlying database session returned
         is the same. The commit/rollback of the session is done only by the
@@ -278,7 +278,7 @@ class Database(object):
         Release a DatabaseSession previously created by __enter__.
         If no recursive call of __enter__ was done, the session
         is commited if no error is reported (e.g. exc_type is None)
-        otherwise it is rolled back. Nothing is done 
+        otherwise it is rolled back. Nothing is done
         '''
         # Get the current session. SqlAlchemy scoped_session returns
         # the same object (per thread) on each call until remove()
@@ -735,7 +735,7 @@ class DatabaseSession(object):
                              (self.name_to_valid_column_name(collection), column_name, column_str_type))
         self.session.execute(document_query)
         self.table_classes[self.name_to_valid_column_name(collection)].__table__.append_column(column)
-        
+
         # Redefinition of the table classes
         if flush:
             self.session.flush()
@@ -952,7 +952,7 @@ class DatabaseSession(object):
 
         :return: The current value of <collection, document, field> if it exists, None otherwise
         """
-        
+
         document = self.get_document(collection, document)
         if document is None:
             return None
@@ -1255,7 +1255,7 @@ class DatabaseSession(object):
                 column == value)
             document_row = query.first()
             return document_row
-    
+
     def get_document(self, collection, document):
         """
         Gives a Document instance given a collection and a document identifier
@@ -1362,7 +1362,7 @@ class DatabaseSession(object):
 
             - If True, fields that are in the document but not in the collection are created if the type can be guessed from the value in the document
               (possible for all valid values except None and []).
-            
+
         :param flush: Bool to know if flush to do, put False in the middle of filling the table => True by default
 
         :raise ValueError: - If the collection does not exist
@@ -1440,10 +1440,10 @@ class DatabaseSession(object):
         :param field: field name to check
 
         :param value: value whose type is used to determine the field type
-            
+
         :param create: if False, raises an error if the field does not exist
         """
-        
+
         if self.get_field(collection, field) is None:
             if not create:
                 raise ValueError('Collection {0} has no field {1}'
@@ -1537,28 +1537,54 @@ class DatabaseSession(object):
         """
 
         collection_row = self.get_collection(collection)
+
+        print('\n merdouille étape 10.02 collection_row :', collection_row)
+
         if collection_row is None:
             raise ValueError("The collection {0} does not exist".format(collection))
 
         if isinstance(filter_query, six.string_types):
+
+            print('\n merdouille étape 10.03 cas 1')
+
             filter_query = self.__filter_query(collection, filter_query)
         if filter_query is None:
+
+            print('\n merdouille étape 10.03 cas 2')
+
             select = self.metadata.tables[self.name_to_valid_column_name(collection)].select()
             python_filter = None
         elif isinstance(filter_query, types.FunctionType):
+
+            print('\n merdouille étape 10.03 cas 3')
+
             select = self.metadata.tables[self.name_to_valid_column_name(collection)].select()
             python_filter = filter_query
         elif isinstance(filter_query, tuple):
+
+            print('\n merdouille étape 10.03 cas 4')
+
             sql_condition, python_filter = filter_query
             select = select = self.metadata.tables[self.name_to_valid_column_name(collection)].select(
                 sql_condition)
         else:
+
+            print('\n merdouille étape 10.03 cas 5')
+
             select = self.metadata.tables[self.name_to_valid_column_name(collection)].select(
                 filter_query)
             python_filter = None
+
+        print('\n merdouiller 10.035 self.session.execute(select) :', self.session.execute(select))
+
         for row in self.session.execute(select):
             row = Document(self, collection, row)
+            print('\n merdouille 10.04 row :', row)
+
             if python_filter is None or python_filter(row):
+
+                print('\n merdouille 10.04 je retourne 1 truc')
+
                 yield row
 
     """ UTILS """
@@ -1593,7 +1619,7 @@ class DatabaseSession(object):
                 return self._python_type_to_tag_type[list]
         else:
             return self._python_type_to_tag_type[type(value)]
-    
+
     @staticmethod
     def __field_type_to_column_type(field_type):
         """
