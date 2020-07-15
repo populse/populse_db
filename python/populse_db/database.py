@@ -1575,9 +1575,9 @@ class DatabaseSession(object):
             print('\n merdouille étape 10.03 cas 5')
             print('\n merdouille étape 10.03 filter_query: ', filter_query)
             print('\n merdouille étape 10.03 self.metadata.tables[self.name_to_valid_column_name(collection)] :', self.metadata.tables[self.name_to_valid_column_name(collection)])
-            # select = self.metadata.tables[self.name_to_valid_column_name(collection)].select(
-            #     filter_query)
-            select = self.metadata.tables[self.name_to_valid_column_name(collection)].select()
+            select = self.metadata.tables[self.name_to_valid_column_name(collection)].select(
+                filter_query)
+            # select = self.metadata.tables[self.name_to_valid_column_name(collection)].select()
             python_filter = None
 
         print('\n merdouiller 10.035 self.session.execute(select) :', self.session.execute(select))
