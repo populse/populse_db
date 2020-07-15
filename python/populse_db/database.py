@@ -1513,8 +1513,11 @@ class DatabaseSession(object):
 
         if query_type is None:
             query_type = self.query_type
+            print('\n merdouille étape 10.036 query_type :', query_type)
         filter_to_query_class = populse_db.filter._filter_to_query_classes[query_type]
+        print('\n merdouille étape 10.036 filter_to_query_class :', filter_to_query_class)
         tree = populse_db.filter.filter_parser().parse(filter)
+        print('\n merdouille étape 10.036 tree :', tree)
         query = filter_to_query_class(self, collection).transform(tree)
         return query
 
@@ -1546,7 +1549,7 @@ class DatabaseSession(object):
         if isinstance(filter_query, six.string_types):
 
             print('\n merdouille étape 10.03 cas 1')
-
+            print('\n merdouille étape 10.03 filter_query', filter_query)
             filter_query = self.__filter_query(collection, filter_query)
         if filter_query is None:
 
@@ -1570,21 +1573,20 @@ class DatabaseSession(object):
         else:
 
             print('\n merdouille étape 10.03 cas 5')
-
-            select = self.metadata.tables[self.name_to_valid_column_name(collection)].select(
-                filter_query)
+            print('\n merdouille étape 10.03 filter_query: ', filter_query)
+            print('\n merdouille étape 10.03 self.metadata.tables[self.name_to_valid_column_name(collection)] :', self.metadata.tables[self.name_to_valid_column_name(collection)])
+            # select = self.metadata.tables[self.name_to_valid_column_name(collection)].select(
+            #     filter_query)
+            select = self.metadata.tables[self.name_to_valid_column_name(collection)].select()
             python_filter = None
 
         print('\n merdouiller 10.035 self.session.execute(select) :', self.session.execute(select))
+        print('\n merdouille 10.035 select :', select)
+        print('\n merdouille self.session._populse_db_counter :', self.session._populse_db_counter)
 
         for row in self.session.execute(select):
             row = Document(self, collection, row)
-            print('\n merdouille 10.04 row :', row)
-
             if python_filter is None or python_filter(row):
-
-                print('\n merdouille 10.04 je retourne 1 truc')
-
                 yield row
 
     """ UTILS """
