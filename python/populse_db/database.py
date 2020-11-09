@@ -1557,6 +1557,12 @@ class DatabaseSession(object):
                 filter_query)
             python_filter = None
         for row in self.session.execute(select):
+
+            print('\nprout populse_db.database.py in filter_documents() branch estcurrentUTpbinmia')
+            print('\nprout self: ', self)
+            print('\nprout collection: ', collection)
+            print('\nprout row: ', row)
+            
             row = Document(self, collection, row)
             if python_filter is None or python_filter(row):
                 yield row
