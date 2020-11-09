@@ -1722,8 +1722,22 @@ class Document(dict):
     '''
 
     def __init__(self, database_session, collection, row):
+      
+        
+
+        print('\nprout populse_db class Document database_session: ', database_session)
+        print('\nprout populse_db class Document collection: ', collection)
+        print('\nprout populse_db class Document row: ', row)
+        
         for field in database_session.get_fields_names(collection):
+          
+            print('\nprout populse_db class Document field: ', field)
+            
+            
             column = database_session.name_to_valid_column_name(field)
+            
+            print('\nprout populse_db class Document column: ', column)
+            
             db_value = getattr(row, column)
             value = database_session._DatabaseSession__column_to_python(
                 database_session.get_field(collection,field).type,
