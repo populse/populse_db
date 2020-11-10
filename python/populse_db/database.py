@@ -1759,6 +1759,9 @@ class Document(dict):
             print('prout populse_db - database.py - class Document; column: ', column)
             
             db_value = getattr(row, column)
+
+            print('prout populse_db - database.py - class Document; db_value: ', db_value)
+            
             value = database_session._DatabaseSession__column_to_python(
                 database_session.get_field(collection,field).type,
                 db_value)
