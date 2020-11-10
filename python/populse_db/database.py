@@ -1536,6 +1536,14 @@ class DatabaseSession(object):
                                 - Example: "((({BandWidth} == "50000")) AND (({FileName} LIKE "%G1%")))"
         """
 
+        print('\nprout populse_db.database.py in filter_documents() branch testcurrentUTpbinmia')
+        print('prout populse_db.database.py in filter_documents(); self: ', self)
+        print('prout populse_db.database.py in filter_documents(); collection: ', collection)
+        print('prout populse_db.database.py in filter_documents(); filter_query: ', filter_query)
+
+
+
+        
         collection_row = self.get_collection(collection)
         if collection_row is None:
             raise ValueError("The collection {0} does not exist".format(collection))
@@ -1558,12 +1566,12 @@ class DatabaseSession(object):
             python_filter = None
         for row in self.session.execute(select):
 
-            print('\nprout populse_db.database.py in filter_documents() branch estcurrentUTpbinmia')
-            print('\nprout self: ', self)
-            print('\nprout collection: ', collection)
-            print('\nprout row: ', row)
+            print('prout populse_db.database.py in filter_documents(); row avant row = Document(self, collection, row): ', row)
             
             row = Document(self, collection, row)
+
+            print('prout populse_db.database.py in filter_documents(); row apres row = Document(self, collection, row): ', row)
+            
             if python_filter is None or python_filter(row):
                 yield row
 
@@ -1725,18 +1733,19 @@ class Document(dict):
       
         
 
-        print('\nprout populse_db class Document database_session: ', database_session)
-        print('\nprout populse_db class Document collection: ', collection)
-        print('\nprout populse_db class Document row: ', row)
+        print('\nprout populse_db - database.py - class Document; database_session: ', database_session)
+        print('prout ppopulse_db - database.py - class Document; collection: ', collection)
+        print('prout populse_db - database.py - class Document; row: ', row)
+        print('') # prout
         
         for field in database_session.get_fields_names(collection):
           
-            print('\nprout populse_db class Document field: ', field)
+            print('\nprout populse_db - database.py - class Document; field: ', field)
             
             
             column = database_session.name_to_valid_column_name(field)
             
-            print('\nprout populse_db class Document column: ', column)
+            print('prout populse_db - database.py - class Document; column: ', column)
             
             db_value = getattr(row, column)
             value = database_session._DatabaseSession__column_to_python(
