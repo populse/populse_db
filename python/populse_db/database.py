@@ -757,15 +757,26 @@ class DatabaseSession(object):
         :return: Valid and unique (hashed) table/column name
         """
 
+
+        print('\nprout populse_db.database.py in name_to_valid_column_name ; self: ', self)
+        print('\nprout populse_db.database.py in name_to_valid_column_name ; name: ', name)
+        
+        
         if self.__caches:
             try:
+                print('\nprout populse_db.database.py in name_to_valid_column_name ; passage par try')
                 return self.__names[name]
             except KeyError:
+                print('\nprout populse_db.database.py in name_to_valid_column_name ; passage par except KeyError')
                 valid_name = hashlib.md5(name.encode('utf-8')).hexdigest()
+                print('prout populse_db.database.py in name_to_valid_column_name ; valid_name: ', valid_name)
                 self.__names[name] = valid_name
                 return valid_name
         else:
+            
             valid_name = hashlib.md5(name.encode('utf-8')).hexdigest()
+            print('\nprout populse_db.database.py in name_to_valid_column_name ; passage par else')
+            print('prout populse_db.database.py in name_to_valid_column_name ; valid_name: ', valid_name)
             return valid_name
 
     def remove_field(self, collection, field):
