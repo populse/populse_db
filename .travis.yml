@@ -4,13 +4,9 @@ matrix:
   include:
     - os: osx
       language: generic
-      name: "Python ? running on macOS 10.15.7"
+      name: "Python 3.? running on macOS 10.15.7"
       osx_image: xcode12.2 
       language: shell  # 'language: python' is an error on Travis CI macOS
-      script: python3 -m pytest
-      after_success: python 3 -m codecov
-
-
     - os: linux
       language: python
       name: python 2.7
