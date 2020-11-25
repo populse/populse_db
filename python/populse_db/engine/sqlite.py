@@ -486,26 +486,32 @@ class SQLiteEngine(Engine):
         return bool(r[0])
 
 
-    def _select_documents(self, collection, where, where_data):
+    def _select_documents(self, collection, where, where_data,
+                          fields=None, as_list=False):
         table = self.collection_table[collection]
         primary_key = self.collection_primary_key[collection]
         row_class = self.table_row[table]
+        if fields:
+            selected_fields = fields
+            columns = [self.field_column[collection][i] for i in fields]
+        else:
+            selected_fields = list(self.table_document[table].keys())
+            columns = list(row_class._key_indices)
         sql = 'SELECT %s FROM [%s]' % (
-            ','.join('[%s]' % i for i in row_class._key_indices),
+            ','.join('[%s]' % i for i in [primary_key] + columns),
             table)
         if where:
             sql += ' WHERE %s' % where
         self.cursor.execute(sql, where_data)
         for row in self.cursor.fetchall():
-            result = self.table_document[table](*row)
-            document_id = result[primary_key]
+            document_id = row[0]
             values = []
-            for field in result:
+            for field, sql_value in zip(selected_fields, row[1:]):
                 field_type = self.field_type[collection][field]
                 if field_type.startswith('list_'):
                     item_type = field_type[5:]
                     column = self.field_column[collection][field]
-                    list_hash = result[field]
+                    list_hash = sql_value
                     if list_hash is None:
                         values.append(None)
                     else:
@@ -513,18 +519,26 @@ class SQLiteEngine(Engine):
                         self.cursor.execute(sql, [document_id])
                         values.append([self.column_to_python(item_type,i[0]) for i in self.cursor])
                 else:
-                    values.append(self.column_to_python(field_type, result[field]))
-            result._values = values
-            yield result
+                    values.append(self.column_to_python(field_type, sql_value))
+            if as_list:
+                yield values
+            else:
+                if fields:
+                    result = pdb.DictList(selected_fields, values)
+                else:
+                    result = self.table_document[table](*values)
+                yield result
     
-    def document(self, collection, document):
+    def document(self, collection, document,
+                 fields=None, as_list=False):
         primary_key = self.collection_primary_key[collection]
         pk_column = self.field_column[collection][primary_key]
         where = '[%s] = ?' % pk_column
         where_data = [document]
         
         try:
-            return next(self._select_documents(collection, where, where_data))
+            return next(self._select_documents(collection, where, where_data,
+                                               fields=fields, as_list=as_list))
         except StopIteration:
             return None
     
@@ -630,14 +644,15 @@ class SQLiteEngine(Engine):
         return (collection, query)
 
 
-    def filter_documents(self, parsed_filter):
+    def filter_documents(self, parsed_filter, fields=None, as_list=False):
         collection, where_filter = parsed_filter
         if where_filter is None:
             where = None
         else:
             where = ' '.join(where_filter)
         where_data = []
-        for doc in self._select_documents(collection, where, where_data):
+        for doc in self._select_documents(collection, where, where_data,
+                                          fields=fields, as_list=as_list):
             yield doc
 
 

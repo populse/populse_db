@@ -77,6 +77,11 @@ class ListWithKeys(object):
             return self._values[name_or_index]
     
     @classmethod
+    def keys(cls):
+        return cls._key_indices.keys()
+    
+    
+    @classmethod
     def _append_key(cls, key):
         '''
         Append a new key to the class
@@ -109,6 +114,7 @@ class ListWithKeys(object):
             if i > index:
                 cls._key_indices[n] = i - 1
 
+
 def list_with_keys(name, keys):
     '''
     Return a new instance of ListWithNames with
@@ -116,6 +122,11 @@ def list_with_keys(name, keys):
     '''
     return type(str(name), (ListWithKeys,), {'_key_indices': OrderedDict(zip(keys, 
                                                         range(len(keys))))})        
+
+class DictList(ListWithKeys):
+    def __init__(self, keys, values):
+        self._key_indices = keys
+        super(self, DictList).__init__(*values)
 
 
 class Database(object):
@@ -497,14 +508,11 @@ class DatabaseSession(object):
         :return: The current value of <collection, document, field> if it exists, None otherwise
         """
         
-        document = self.get_document(collection, document_id)
-        if document is None:
+        r = self.get_document(collection, document_id, fields=[field],
+                              as_list=True)
+        if r is None:
             return None
-        try:
-            return getattr(document, field, None)
-        except TypeError:
-            # Raises if field is not a string
-            return None
+        return r[0]
 
     def set_value(self, collection, document_id, field, new_value, flush=None):
         """
@@ -616,7 +624,7 @@ class DatabaseSession(object):
         """
         if self.engine.get_value(collection, document_id, field) is not None:
             raise ValueError(
-                "The document with the name {2} already have a value for field {3} in the collection {1}".format(collection, document_id, field))
+                "The document with the name {1} already have a value for field {2} in the collection {0}".format(collection, document_id, field))
         if checks:
             if not self.engine.has_collection(collection):
                 raise ValueError("The collection {0} does not exist".format(collection))
@@ -634,7 +642,8 @@ class DatabaseSession(object):
         
     """ DOCUMENTS """
 
-    def get_document(self, collection, document_id):
+    def get_document(self, collection, document_id, fields=None,
+                     as_list=False):
         """
         Gives a Document instance given a collection and a document identifier
 
@@ -645,7 +654,8 @@ class DatabaseSession(object):
         :return: The document row if the document exists, None otherwise
         """
         try:
-            result = self.engine.document(collection, document_id)
+            result = self.engine.document(collection, document_id,
+                                          fields=fields, as_list=as_list)
         except KeyError:
             result = None
         return result
@@ -662,10 +672,11 @@ class DatabaseSession(object):
         if not self.engine.has_collection(collection):
             return []
         primary_key = self.engine.primary_key(collection)
-        return [i[primary_key] for i in self.get_documents(collection)]
+        return [i[0] for i in self.get_documents(collection, fields=[primary_key],
+                                                 as_list=True)]
      
 
-    def get_documents(self, collection):
+    def get_documents(self, collection, fields=None, as_list=False):
         """
         Gives the list of all document rows, given a collection
 
@@ -676,7 +687,7 @@ class DatabaseSession(object):
 
         if not self.engine.has_collection(collection):
             return []
-        return list(self.filter_documents(collection, None))
+        return list(self.filter_documents(collection, None, fields=fields, as_list=as_list))
 
     def remove_document(self, collection, document_id):
         """
@@ -737,7 +748,7 @@ class DatabaseSession(object):
         
     """ FILTERS """
 
-    def filter_documents(self, collection, filter_query):
+    def filter_documents(self, collection, filter_query, fields=None, as_list=False):
         """
         Iterates over the collection documents selected by filter_query
 
@@ -758,7 +769,7 @@ class DatabaseSession(object):
         if not self.engine.has_collection(collection):
             raise ValueError("The collection {0} does not exist".format(collection))
         parsed_filter = self.engine.parse_filter(collection, filter_query)
-        for doc in self.engine.filter_documents(parsed_filter):
+        for doc in self.engine.filter_documents(parsed_filter,fields=fields, as_list=as_list):
             yield doc
             
     
