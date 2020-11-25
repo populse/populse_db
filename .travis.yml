@@ -43,8 +43,8 @@ services:
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install -U pip; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; thenpip3 install -U pytest; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; thenpip3 install codecov; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install -U pytest; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install codecov; fi
 
 before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then psql -c 'create database populse_db_tests;' -U postgres; fi
