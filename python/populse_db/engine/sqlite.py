@@ -69,6 +69,7 @@ class SQLiteEngine(Engine):
         if self._enter_recursion_count == 0:
             self.lock.acquire()
             self.cursor = self.connection.cursor()
+            self.cursor.execute('PRAGMA synchronous=OFF')
             self.cursor.execute('PRAGMA case_sensitive_like=ON')
             self.cursor.execute('PRAGMA foreign_keys=ON')
             self.cursor.execute('BEGIN DEFERRED')
@@ -354,8 +355,7 @@ class SQLiteEngine(Engine):
         except sqlite3.IntegrityError as e:
             raise ValueError(str(e))
         for sql, sql_params in lists:
-            for params in sql_params:
-                self.cursor.execute(sql, params)
+            self.cursor.executemany(sql, sql_params)
             
     def has_field(self, collection, field):
         return self.field_column.get(collection, {}).get(field) is not None
@@ -561,8 +561,8 @@ class SQLiteEngine(Engine):
                             i,
                             self.python_to_column(field_type[5:], value[i])]
                             for i in range(len(value))]
-                for p in sql_params:
-                    self.cursor.execute(sql, p)
+                self.cursor.executemany(sql, sql_params)
+                # column_value = repr(value)
             else:
                 column_value = self.python_to_column(field_type, value)
             
