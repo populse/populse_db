@@ -437,9 +437,10 @@ class SQLiteEngine(Engine):
     # (in _list_item_to_string) and deserialize (in _string_to_list_item)
     # the list items.
     _python_to_sql_data = {
-        pdb.FIELD_TYPE_DATE: lambda x: x.isoformat(),
-        pdb.FIELD_TYPE_DATETIME: lambda x: x.isoformat(),
-        pdb.FIELD_TYPE_TIME: lambda x: x.isoformat(),
+        pdb.FIELD_TYPE_DATE: lambda x: x.isoformat() if x is not None else x,
+        pdb.FIELD_TYPE_DATETIME:
+            lambda x: x.isoformat() if x is not None else x,
+        pdb.FIELD_TYPE_TIME: lambda x: x.isoformat() if x is not None else x,
         pdb.FIELD_TYPE_BOOLEAN: lambda x: (1 if x else 0),
     }
 
@@ -548,15 +549,20 @@ class SQLiteEngine(Engine):
         if primary_key in values:
             raise ValueError('Cannot modify document id "%s" of collection %s' % (primary_key, collection))
         pk_column = self.field_column[collection][primary_key]
+        column_values = []
+        columns = []
         for field, value in values.items():
             column = self.field_column[collection][field]
+            columns.append(column)
             field_type = self.field_type[collection][field]
             if field_type.startswith('list_'):
                 list_table = 'list_%s_%s' % (table, column)
-                column_value = self.list_hash(value)
+                column_values.append(self.list_hash(value))
                 sql = 'DELETE FROM [%s] WHERE list_id = ?' % list_table
                 self.cursor.execute(sql, [document_id])
                 sql = 'INSERT INTO [%s] (list_id, i, value) VALUES (?, ?, ?)' % list_table
+                if value is None:
+                    value = []
                 sql_params = [[document_id, 
                             i,
                             self.python_to_column(field_type[5:], value[i])]
@@ -564,13 +570,13 @@ class SQLiteEngine(Engine):
                 self.cursor.executemany(sql, sql_params)
                 # column_value = repr(value)
             else:
-                column_value = self.python_to_column(field_type, value)
-            
-            sql = 'UPDATE [%s] SET [%s] = ? WHERE [%s] = ?' % (
-                table,
-                column,
-                pk_column)
-            self.cursor.execute(sql, [column_value, document_id])
+                column_values.append(self.python_to_column(field_type, value))
+
+        sql = 'UPDATE [%s] SET %s WHERE [%s] = ?' % (
+            table,
+            ', '.join(['[%s] = ?' % c for c in columns]),
+            pk_column)
+        self.cursor.execute(sql, column_values + [document_id])
 
     def remove_value(self, collection, document_id, field):
         table = self.collection_table[collection]
