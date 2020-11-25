@@ -616,7 +616,7 @@ class DatabaseSession(object):
         """
         if self.engine.get_value(collection, document_id, field) is not None:
             raise ValueError(
-                "The document with the name {1} already have a value for field {2} in the collection {1}".format(collection, document_id, field))
+                "The document with the name {2} already have a value for field {3} in the collection {1}".format(collection, document_id, field))
         if checks:
             if not self.engine.has_collection(collection):
                 raise ValueError("The collection {0} does not exist".format(collection))
