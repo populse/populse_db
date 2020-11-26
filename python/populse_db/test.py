@@ -1087,7 +1087,7 @@ def create_test_case(**database_creation_parameters):
             with database as session:
                 # Adding collections
                 session.add_collection("collection1", "name")
-                session.add_collection("collection2", "id")
+                session.add_collection("collection2", "FileName")
 
                 session.add_document("collection1", "document1")
                 session.add_document("collection1", "document2")
