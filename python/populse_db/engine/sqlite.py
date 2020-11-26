@@ -490,6 +490,7 @@ class SQLiteEngine(Engine):
                           fields=None, as_list=False):
         table = self.collection_table[collection]
         primary_key = self.collection_primary_key[collection]
+        pk_column = self.field_column[collection][primary_key]
         row_class = self.table_row[table]
         if fields:
             selected_fields = fields
@@ -498,7 +499,7 @@ class SQLiteEngine(Engine):
             selected_fields = list(self.table_document[table].keys())
             columns = list(row_class._key_indices)
         sql = 'SELECT %s FROM [%s]' % (
-            ','.join('[%s]' % i for i in [primary_key] + columns),
+            ','.join('[%s]' % i for i in [pk_column] + columns),
             table)
         if where:
             sql += ' WHERE %s' % where
@@ -528,7 +529,7 @@ class SQLiteEngine(Engine):
                 else:
                     result = self.table_document[table](*values)
                 yield result
-    
+
     def document(self, collection, document,
                  fields=None, as_list=False):
         primary_key = self.collection_primary_key[collection]
