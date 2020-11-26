@@ -14,6 +14,13 @@ from populse_db.filter import FilterToQuery, filter_parser
 
 import dateutil
 
+'''
+SQLite3 implementation of populse_db engine.
+
+A populse_db engine is created when a DatabaseSession object is created 
+(typically within a "with" statement)
+'''
+
 # Table names
 FIELD_TABLE = '_field'
 COLLECTION_TABLE = '_collection'
@@ -476,12 +483,12 @@ class SQLiteEngine(Engine):
         else:
             return value
 
-    def has_document(self, collection, document):
+    def has_document(self, collection, document_id):
         table = self.collection_table[collection]
         primary_key = self.collection_primary_key[collection]
         pk_column = self.field_column[collection][primary_key]
         sql = 'SELECT COUNT(*) FROM [%s] WHERE [%s] = ?' % (table, pk_column)
-        self.cursor.execute(sql, [document])
+        self.cursor.execute(sql, [document_id])
         r = self.cursor.fetchone()
         return bool(r[0])
 
@@ -530,12 +537,12 @@ class SQLiteEngine(Engine):
                     result = self.table_document[table](*values)
                 yield result
 
-    def document(self, collection, document,
+    def document(self, collection, document_id,
                  fields=None, as_list=False):
         primary_key = self.collection_primary_key[collection]
         pk_column = self.field_column[collection][primary_key]
         where = '[%s] = ?' % pk_column
-        where_data = [document]
+        where_data = [document_id]
         
         try:
             return next(self._select_documents(collection, where, where_data,
@@ -543,7 +550,7 @@ class SQLiteEngine(Engine):
         except StopIteration:
             return None
     
-    def get_value(self, collection, document_id, field):
+    def has_value(self, collection, document_id, field):
         table = self.collection_table.get(collection)
         if table is not None:
             primary_key = self.collection_primary_key[collection]
@@ -555,8 +562,8 @@ class SQLiteEngine(Engine):
                 self.cursor.execute(sql, [document_id])
                 row = self.cursor.fetchone()
                 if row:
-                    return row[0]
-        return None
+                    return row[0] != None
+        return False
         
     def set_values(self, collection, document_id, values):
         table = self.collection_table[collection]
