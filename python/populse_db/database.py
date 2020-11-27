@@ -642,6 +642,9 @@ class DatabaseSession(object):
         
     """ DOCUMENTS """
 
+    def has_document(self, collection, document_id):
+        return self.engine.has_document(collection, document_id)
+
     def get_document(self, collection, document_id, fields=None,
                      as_list=False):
         """
