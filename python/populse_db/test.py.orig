@@ -58,25 +58,42 @@ def create_test_case(**database_creation_parameters):
             Called before every unit test
             Creates a temporary folder containing the database file that will be used for the test
             """
-            self.database_creation_parameters = dict(database_creation_parameters)
-            if 'database_url' not in self.database_creation_parameters:
-                self.temp_folder = tempfile.mkdtemp(prefix='populse_db')
+<<<<<<< HEAD
+            if 'database_url' not in database_creation_parameters:
+                self.temp_folder = tempfile.mkdtemp()
                 path = os.path.join(self.temp_folder, "test.db")
-                self.database_creation_parameters['database_url'] = 'sqlite:///' + path
+                database_creation_parameters['database_url'] = 'sqlite:///' + path
             else:
                 self.temp_folder = None
-            self.database_url = self.database_creation_parameters['database_url']
+            self.database_url = database_creation_parameters['database_url']
+=======
+
+            self.temp_folder = tempfile.mkdtemp(prefix='populse_db')
+            self.path = os.path.join(self.temp_folder, "test.db")
+            self.database_creation_parameters \
+                = dict(database_creation_parameters)
+            self.database_creation_parameters['string_engine'] \
+                = 'sqlite:///' + self.path
+            self.string_engine \
+                = self.database_creation_parameters['string_engine']
+>>>>>>> master
 
         def tearDown(self):
             """
             Called after every unit test
             Deletes the temporary folder created for the test
             """
+<<<<<<< HEAD
             if self.temp_folder:
                 shutil.rmtree(self.temp_folder)
-                del self.database_creation_parameters['database_url']
-            self.temp_folder = None
+                del database_creation_parameters['database_url']
             
+=======
+
+            shutil.rmtree(self.temp_folder)
+            self.temp_folder = None
+
+>>>>>>> master
         def create_database(self, clear=True):
             """
             Opens the database
@@ -84,14 +101,26 @@ def create_test_case(**database_creation_parameters):
             """
 
             try:
-                db = Database(**self.database_creation_parameters)
+<<<<<<< HEAD
+                db = Database(**database_creation_parameters)
             except Exception as e:
-                if self.database_creation_parameters['database_url'].startswith('postgresql'):
+                if database_creation_parameters['database_url'].startswith('postgresql'):
+=======
+                db = Database(**self.database_creation_parameters)
+            except OperationalError as e:
+                if self.database_creation_parameters['string_engine'].startswith(
+                        'postgresql'):
+>>>>>>> master
                     raise unittest.SkipTest(str(e))
                 raise
             except ImportError as e:
                 if ('psycopg2' in str(e) and 
-                    self.database_creation_parameters['database_url'].startswith('postgresql')):
+<<<<<<< HEAD
+                    database_creation_parameters['database_url'].startswith('postgresql')):
+=======
+                    self.database_creation_parameters[
+                        'string_engine'].startswith('postgresql')):
+>>>>>>> master
                     raise unittest.SkipTest(str(e))
                 raise
             if clear:
@@ -1087,7 +1116,7 @@ def create_test_case(**database_creation_parameters):
             with database as session:
                 # Adding collections
                 session.add_collection("collection1", "name")
-                session.add_collection("collection2", "FileName")
+                session.add_collection("collection2", "id")
 
                 session.add_document("collection1", "document1")
                 session.add_document("collection1", "document2")

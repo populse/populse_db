@@ -1,11 +1,3 @@
-##########################################################################
-# Populse_db - Copyright (C) IRMaGe/CEA, 2018
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-##########################################################################
-
 import ast
 import datetime
 import operator
@@ -13,21 +5,16 @@ import types
 
 import dateutil.parser
 import six
-import sqlalchemy
-import sqlalchemy.sql.operators as sql_operators
 from lark import Lark, Transformer
-from sqlalchemy.ext.automap import AutomapBase
-from sqlalchemy.sql.elements import BinaryExpression
 
 import populse_db
-from populse_db.database import DatabaseSession
+from populse_db.database import ListWithKeys
 
 # The grammar (in Lark format) used to parse filter strings:
 filter_grammar = '''
 ?start : filter
 
-?filter : "ALL"i                         -> all
-        | conditions
+?filter : conditions
         | negation
         | "(" filter ")"
         | "(" filter ")" BOOLEAN_OPERATOR filter -> conditions
@@ -51,7 +38,8 @@ CONDITION_OPERATOR : "=="i
                    | "ILIKE"i
                    | "LIKE"i
 
-condition : operand CONDITION_OPERATOR operand
+condition : "ALL"i                         -> all
+          | operand CONDITION_OPERATOR operand
 
 ?operand : literal
          | field_name
@@ -75,9 +63,9 @@ DATE.2 : INT "-" INT "-" INT
 TIME.2 : INT ":" INT (":" INT ("." INT)?)?
 DATETIME.2 : DATE "T" TIME
 
-KEYWORD_LITERAL : "NULL"i
+KEYWORD_LITERAL : "NuLL"i
                 | "TRUE"i
-                | "FALSE"i
+                | "FaLSE"i
                   
 FIELD_NAME : ("_"|LETTER) ("_"|LETTER|DIGIT)*
 QUOTED_FIELD_NAME : "{" /[^}]/* "}"
@@ -118,41 +106,31 @@ def literal_parser():
     '''
     This is used to test literals parsing
 
-    :return: An instance of Lark grammar parser for parsing only a literal value (int, string, list, date, etc.) from a filter expression.
-
+    :return: An instance of Lark grammar parser for parsing only a literal
+    value (int, string, list, date, etc.) from a filter expression. This
+    is used for testing the parsing of these literals.
     '''
     return Lark(filter_grammar, parser='lalr', start='literal')
 
 
-class FilterImplementationLimit(NotImplementedError):
-    '''
-    This exception is raised when a valid filter cannot
-    be converted to a query for a specific implementation
-    (for instance some list comparison operators cannot be
-    used in SQL)
-    '''
-
-
 class FilterToQuery(Transformer):
     '''
-    Transforms the parsing of a filter expression into object(s) that can
-    be used ot select items from a database.
-
-    The produced object is one of the three following items :
-
-    - An SqlAlchemy expression (that can be passed to select()) if the filter
-      can be fully expressed with SQL in all SqlAlchemy engines.
-
-    - Python function taking a path row from SqlAlchemy and returning True if
-      the row is selected by the filter or False otherwise.
-
-    - A tuple containing an SqlAlchemy expression and a boolean Python
-      function if the filter can be expressed as a AND combination of these
-      two elements.
+    Instance of this class are passed to Lark parser when parsing a document
+    selection filter string in order to create an object that can be used to
+    select items from the database. FilterToQuery implements methods that are
+    common to all engines and does not produce anything because the query
+    objectis specific to each engine. Therefore, engine class must use a 
+    subclass of FilterToQuery that implements the following methods:
+    
+        build_condition_all
+        build_condition_literal_in_list_field
+        build_condition_field_in_list_field
+        build_condition_field_in_list
+        build_condition_field_op_field
+        build_condition_value_op_field
+        build_condition_negation
+        build_condition_combine_conditions
     '''
-
-    invalidCombinationMessage = ('Invalid combination of conditions on simple '
-                                 'fields and on list fields')
 
     keyword_literals = {
         'true': True,
@@ -160,8 +138,8 @@ class FilterToQuery(Transformer):
         'null': None,
     }
 
-    def __init__(self, database, collection):
-        self.database = database
+    def __init__(self, engine, collection):
+        self.engine = engine
         self.collection = collection
 
     @staticmethod
@@ -169,12 +147,12 @@ class FilterToQuery(Transformer):
         '''
         Checks if an object is an SqlAlchemy column object
         '''
-        return isinstance(object, AutomapBase)
+        return isinstance(object, ListWithKeys)
 
     @staticmethod
     def is_list_field(field):
-        return (isinstance(field, AutomapBase) and
-                field.type.startswith('list_'))
+        return (isinstance(field, ListWithKeys) and
+                field.field_type.startswith('list_'))
 
     def all(self, items):
         return self.build_condition_all()
@@ -233,6 +211,24 @@ class FilterToQuery(Transformer):
         while stack:
             operator_str = stack.pop(0).lower()
             right_operand = stack.pop(0)
+            if result is None:
+                if operator_str == 'and':
+                    result = right_operand
+                    continue
+                elif operator_str == 'or':
+                    result = None
+                    continue
+                left_operand = ['1']
+            else:
+                left_operand = result
+            if right_operand is None:
+                if operator_str == 'and':
+                    result = left_operand
+                    continue
+                elif operator_str == 'or':
+                    result = None
+                    continue
+                right_operand = ['1']
             result = self.build_condition_combine_conditions(result, operator_str, right_operand)
         return result
 
@@ -263,293 +259,111 @@ class FilterToQuery(Transformer):
         literal = self.keyword_literals.get(field.lower(), self)
         if literal is not self:
             return literal
-        column = self.database.get_field(self.collection, field)
-        if column is None:
+        field_name = self.engine.field(self.collection, field)
+        if field_name is None:
             raise ValueError('No field named "%s"' % field)
-        return column
+        return field_name
 
     def quoted_field_name(self, items):
         return items[0][1:-1]
 
-
-def sql_equal(a, b):
-    if FilterToQuery.is_field(a):
-        if FilterToQuery.is_field(b):
-            r = ((a == b) | (sql_operators.is_(a, None) & sql_operators.is_(b, None)))
-        else:
-            if b is not None:
-                r = ((a == b) | sql_operators.eq(a, None))
-            else:
-                r = sql_operators.eq(a, None)
-    else:
-        if FilterToQuery.is_field(b):
-            if a is not None:
-                r = ((a == b) | sql_operators.eq(b, None))
-            else:
-                sql_operators.eq(b, None)
-        else:
-            r = (a == b)
-    return r
-
-
-def sql_differ(a, b):
-    r = ((a != b) | (sql_operators.eq(a, None) & sql_operators.ne(b, None))) | (
-            sql_operators.ne(a, None) & sql_operators.eq(b, None))
-    return r
-
-
-class FilterToSqlQuery(FilterToQuery):
-    sql_operators = {
-        '==': sql_equal,
-        '!=': sql_differ,
-        '<': sql_operators.lt,
-        '<=': sql_operators.le,
-        '>': sql_operators.gt,
-        '>=': sql_operators.ge,
-        'and': sql_operators.and_,
-        'or': sql_operators.or_,
-        'ilike': sql_operators.ilike_op,
-        'like': sql_operators.like_op,
-    }
-
-    def get_column(self, column):
-        '''
-        :return: The SqlAlchemy Column object corresponding to a populse_db field object.
-        '''
-        return getattr(self.database.metadata.tables[self.database.name_to_valid_column_name(self.collection)].c,
-                       self.database.name_to_valid_column_name(column.field_name))
-
-    def get_column_value(self, python_value):
-        '''
-        Converts a Python value to a value suitable to put in a database column
-        '''
-        tag_type = self.database._DatabaseSession__python_value_type(python_value)
-        column_value = DatabaseSession._DatabaseSession__python_to_column(tag_type, python_value)
-        return column_value
-
     def build_condition_all(self):
-        return sqlalchemy.literal(True)
-
-    def build_condition_literal_in_list_field(self, value, list_field):
         '''
-        Builds an condition checking if a constant value is in a list field
+        Return a selection query that select all documents. This query
+        is directly given to the engine and never combined with other
+        queries.
         '''
-        if not self.database.list_tables:
-            raise FilterImplementationLimit(
-                'Cannot convert IN operator in SQL because database model does not include tables for list fields')
-        value = self.get_column_value(value)
-        collection_table = self.database.metadata.tables[self.database.name_to_valid_column_name(self.collection)]
-        primary_key = list(collection_table.primary_key.columns.values())[0]
-        list_column = self.get_column(list_field)
-        list_table = self.database.metadata.tables['list_%s_%s' % (self.database.name_to_valid_column_name(self.collection), list_column.name)]
-        subquery = sqlalchemy.select([list_table.c.value], list_table.c.document_id == primary_key).correlate(
-            collection_table)
-        return list_column.isnot(None) & sqlalchemy.literal(value).in_(subquery)
-
-    def build_condition_field_in_list_field(self, field, list_field):
-        '''
-        Builds a condition checking if a field value is in another
-        list field value
-        '''
-        if not self.database.list_tables:
-            raise FilterImplementationLimit(
-                'Cannot convert IN operator in SQL because database model does not include tables for list fields')
-        collection_table = self.database.metadata.tables[self.collection]
-        primary_key = list(collection_table.primary_key.columns.values())[0]
-        list_column = self.get_column(list_field)
-        list_table = self.database.metadata.tables['list_%s_%s' % (self.collection, list_column.name)]
-        subquery = sqlalchemy.select([list_table.c.value], list_table.c.document_id == primary_key).correlate(
-            collection_table)
-        return list_column.isnot(None) & self.get_column(field).in_(subquery)
-
-    def build_condition_field_in_list(self, field, list_value):
-        '''
-        Builds a condition checking if a field value is a
-        constant list value
-        '''
-        column = self.get_column(field)
-        in_query = column.in_([self.get_column_value(i) for i in list_value])
-        if None in list_value:
-            list_value.remove(None)
-            return column.is_(None) | in_query
-        return in_query
-
-    def build_condition_field_op_field(self, left_field, operator_str, right_field):
-        operator = self.sql_operators[operator_str]
-        return operator(self.get_column(left_field), self.get_column(right_field))
-
-    def build_condition_field_op_value(self, field, operator_str, value):
-        operator = self.sql_operators[operator_str]
-        return operator(self.get_column(field), self.get_column_value(value))
-
-    def build_condition_value_op_field(self, value, operator_str, field):
-        operator = self.sql_operators[operator_str]
-        return operator(self.get_column_value(value), self.get_column(field))
-
-    def build_condition_negation(self, condition):
-        # Workaround of what seems to be a bug in SqlAlchemy,
-        # a "is" condition is not inverted by "not"
-        if isinstance(condition, BinaryExpression):
-            if condition.operator is sql_operators.is_:
-                return condition.left.isnot(condition.right)
-            elif condition.operator is sql_operators.eq:
-                return sql_differ(condition.left, condition.right)
-        return ~ condition
-
-    def build_condition_combine_conditions(self, left_condition, operator_str, right_condition):
-        operator = self.sql_operators[operator_str]
-        return operator(left_condition, right_condition)
-
-
-class FilterToPythonQuery(FilterToQuery):
-    @staticmethod
-    def like_to_re(like_pattern):
-        return '^%s$' % re.escape(like_pattern).replace('%', '.*').replace('_', '.')
-
-    @staticmethod
-    def like(value, like_pattern):
-        re_pattern = like_to_re(like_pattern)
-        return bool(re.match(pattern, value))
-
-    @staticmethod
-    def ilike(value, like_pattern):
-        re_pattern = like_to_re(like_pattern)
-        return bool(re.match(pattern, value), flags=re.IGNORECASE)
-
-    python_operators = {
-        '==': operator.eq,
-        '!=': operator.ne,
-        '<': operator.lt,
-        '<=': operator.le,
-        '>': operator.gt,
-        '>=': operator.ge,
-        'and': operator.and_,
-        'or': operator.or_,
-        'like': like,
-        'ilike': ilike,
-    }
-
-    def build_condition_all(self):
-        return lambda x: True
+        raise NotImplementedError()
 
     def build_condition_literal_in_list_field(self, value, list_field):
         '''
         Builds a condition checking if a constant value is in a list field
+        
+        :param value: Python literal
+        
+        :param list_field: field object as returned by Database.get_field
+
         '''
-        return (lambda x, lf=list_field.field_name, v=value:
-                x[lf] is not None and v in x[lf])
+        raise NotImplementedError()
 
     def build_condition_field_in_list_field(self, field, list_field):
         '''
         Builds a condition checking if a field value is in another
         list field value
+        
+        :param field: field object as returned by Database.get_field
+        :param list_field: field object as returned by Database.get_field
         '''
-        return (lambda x, lf=list_field.name, f=field.name:
-                x[lf] is not None and x[f] in x[lf])
+        raise NotImplementedError()
 
     def build_condition_field_in_list(self, field, list_value):
         '''
         Builds a condition checking if a field value is a
         constant list value
+
+        :param field: field object as returned by Database.get_field
+        :param list_value: Pyton list containing literals
         '''
-        return (lambda x, l=list_value, f=field.name:
-                x[f] in l)
-
+        raise NotImplementedError()
+    
     def build_condition_field_op_field(self, left_field, operator_str, right_field):
-        operator = self.python_operators[operator_str]
-        return (lambda x, ln=left_field.name, rn=right_field.name, o=operator:
-                x[ln] is not None and x[rn] is not None and o(x[ln], x[rn]))
+        '''
+        Builds a condition comparing the content of two fields with an operator.
 
+        :param left_field: field object as returned by Database.get_field
+        :param operator: string containing one of the CONDITION_OPERATOR
+                         defined in the grammar (in lowercase)
+        :param right_field: field object as returned by Database.get_field
+        '''
+        raise NotImplementedError()
+    
     def build_condition_field_op_value(self, field, operator_str, value):
-        operator = self.python_operators[operator_str]
-        if value is None:
-            return lambda x, f=field.name, o=operator: o(x[f], None)
-        else:
-            return (lambda x, f=field.name, v=value, o=operator:
-                    x[f] is not None and o(x[f], v))
+        '''
+        Builds a condition comparing the content of a field with a constant
+        value using an operator.
 
+        :param field: field object as returned by Database.get_field
+        :param operator_str: string containing one of the CONDITION_OPERATOR
+                             defined in the grammar (in lowercase)
+        :param value: Python value (None, string number, boolean or date/time)
+        '''
+        raise NotImplementedError()
+
+    
     def build_condition_value_op_field(self, value, operator_str, field):
-        operator = self.python_operators[operator_str]
-        if value is None:
-            return lambda x, f=field.name, o=operator: o(None, x[f])
-        else:
-            return (lambda x, f=field.name, v=value, o=operator:
-                    x[f] is not None and o(v, x[f], ))
+        '''
+        Builds a condition comparing a constant value with the content of a
+        field withusing an operator.
+
+        :param value: Python value (None, string number, boolean or date/time)
+        :param operator_str: string containing one of the CONDITION_OPERATOR
+                             defined in the grammar (in lowercase)
+        :param field: field object as returned by Database.get_field
+        '''
+        raise NotImplementedError()
 
     def build_condition_negation(self, condition):
-        return lambda x, f=condition: not f(x)
+        '''
+        Builds a condition inverting another condition.
 
+        :param condition: condition object returned by one of the 
+                          build_condition_*() method (except 
+                          build_condition_all)
+        '''
+        raise NotImplementedError()
+    
     def build_condition_combine_conditions(self, left_condition, operator_str, right_condition):
-        operator = self.python_operators[operator_str]
-        return lambda x, f1=left_condition, f2=right_condition, o=operator: o(f1(x), f2(x))
+        '''
+        Builds a condition that combines two conditions with an operator.
 
-
-class FilterToMixedQuery(FilterToSqlQuery, FilterToPythonQuery):
-    def build_condition_literal_in_list_field(self, value, list_field):
-        if self.database.list_tables:
-            return FilterToSqlQuery.build_condition_literal_in_list_field(self, value, list_field)
-        else:
-            return FilterToPythonQuery.build_condition_literal_in_list_field(self, value, list_field)
-
-    def build_condition_field_in_list_field(self, field, list_field):
-        if self.database.list_tables:
-            return FilterToSqlQuery.build_condition_field_in_list_field(self, field, list_field)
-        else:
-            return FilterToPythonQuery.build_condition_field_in_list_field(self, field, list_field)
-
-    def build_condition_negation(self, condition):
-        if isinstance(condition, types.FunctionType):
-            return FilterToPythonQuery.build_condition_negation(self, condition)
-        elif isinstance(condition, tuple):
-            raise FilterImplementationLimit('Cannot use NOT on a SQL+Python query')
-        else:
-            return FilterToSqlQuery.build_condition_negation(self, condition)
-
-    def build_condition_combine_conditions(self, left_condition, operator_str, right_condition):
-        if isinstance(left_condition, types.FunctionType):
-            if not isinstance(right_condition, types.FunctionType):
-                raise FilterImplementationLimit('Cannot combine a Python query with a non-Python query')
-            return FilterToPythonQuery.build_condition_combine_conditions(self, left_condition, operator_str,
-                                                                          right_condition)
-        elif isinstance(left_condition, tuple):
-            raise FilterImplementationLimit('A query combining SQL + Python cannot be combined anymore')
-        else:
-            # Current condition is a SqlAlchemy expression
-            if isinstance(right_condition, types.FunctionType):
-                # Right operand is a Python function. Such a combination
-                # is allowed once with AND operator. In that case, the
-                # result is a tuple with the SqlAlchemy expression and 
-                # the Python function condition.
-                if operator_str != 'and':
-                    raise ValueError('Combination of simple fields '
-                                     'conditions with list fields conditions is only '
-                                     'allowed with AND but not with %s' % operator_str)
-                return (left_condition, right_condition)
-            elif isinstance(right_condition, tuple):
-                raise FilterImplementationLimit('A query combining SQL + Python cannot be combined anymore')
-            else:
-                return FilterToSqlQuery.build_condition_combine_conditions(self, left_condition, operator_str,
-                                                                           right_condition)
-
-
-class FilterToGuessedQuery(FilterToMixedQuery):
-    def transform(self, *args, **kwargs):
-        try:
-            return FilterToMixedQuery.transform(self, *args, **kwargs)
-        except FilterImplementationLimit:
-            transformer = FilterToPythonQuery(self.database, self.collection)
-            return transformer.transform(*args, **kwargs)
-
-
-# Query_types
-QUERY_SQL = "sql"
-QUERY_PYTHON = "python"
-QUERY_MIXED = "mixed"
-QUERY_GUESS = "guess"
-
-_filter_to_query_classes = {
-    QUERY_SQL: FilterToSqlQuery,
-    QUERY_PYTHON: FilterToPythonQuery,
-    QUERY_MIXED: FilterToMixedQuery,
-    QUERY_GUESS: FilterToGuessedQuery,
-}
+        :param left_condition: condition object returned by one of the 
+                               build_condition_*() method (except 
+                               build_condition_all)
+        :param operator_str: string containing one of the BOOLEAN_OPERATOR
+                             defined in the grammar (in lowercase)
+        :param right_condition: condition object returned by one of the 
+                                build_condition_*() method (except 
+                                build_condition_all)
+        '''
+        raise NotImplementedError()
+    
