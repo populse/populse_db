@@ -679,7 +679,8 @@ class DatabaseSession(object):
                                                  as_list=True)]
      
 
-    def get_documents(self, collection, fields=None, as_list=False):
+    def get_documents(self, collection, fields=None, as_list=False,
+                      document_ids=None):
         """
         Gives the list of all document rows, given a collection
 
@@ -690,7 +691,18 @@ class DatabaseSession(object):
 
         if not self.engine.has_collection(collection):
             return []
-        return list(self.filter_documents(collection, None, fields=fields, as_list=as_list))
+        if document_ids is None:
+            return list(self.filter_documents(collection, None, fields=fields,
+                                              as_list=as_list))
+        # get a list of documents
+        primary_key = self.get_collection(collection).primary_key
+        pk_column = self.engine.field_column[collection][primary_key]
+        filter_query = '[%s] in (%s)' \
+            % (pk_column, ', '.join('?' for document_id in document_ids))
+        return self.engine._select_documents(
+            collection, filter_query, document_ids, fields=fields,
+            as_list=as_list)
+
 
     def remove_document(self, collection, document_id):
         """
