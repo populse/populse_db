@@ -1,3 +1,4 @@
+import os.path
 import sys
 
 # populse_db current version
@@ -60,4 +61,4 @@ EXTRA_REQUIRES = {
 }
 
 # tests to run
-test_commands = ['%s -m populse_db.test' % sys.executable]
+test_commands = ['%s -m populse_db.test' % os.path.basename(sys.executable)]
