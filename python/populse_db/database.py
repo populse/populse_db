@@ -126,7 +126,7 @@ def list_with_keys(name, keys):
 class DictList(ListWithKeys):
     def __init__(self, keys, values):
         self._key_indices = keys
-        super(self, DictList).__init__(*values)
+        super(DictList, self).__init__(*values)
 
 
 class Database(object):
