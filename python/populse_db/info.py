@@ -10,9 +10,9 @@ import os.path
 import sys
 
 # populse_db current version
-version_major = 1
-version_minor = 1
-version_micro = 3
+version_major = 2
+version_minor = 0
+version_micro = 1
 version_extra = ""
 
 # Expected by setup.py: string of form "X.Y.Z"
@@ -23,11 +23,10 @@ CLASSIFIERS = ['Development Status :: 5 - Production/Stable',
                'Environment :: Console',
                'Operating System :: OS Independent',
                'Programming Language :: Python :: 2.7',
-               #'Programming Language :: Python :: 3.3',
-               'Programming Language :: Python :: 3.4',
                'Programming Language :: Python :: 3.5',
                'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7',
+               'Programming Language :: Python :: 3.8',
                'Programming Language :: SQL',
                'Natural Language :: English',
                'Topic :: Database',
@@ -50,7 +49,7 @@ brainvisa_build_model = 'pure_python'
 # Other values used in setup.py
 ORGANISATION = 'populse'
 AUTHOR = 'Populse'
-AUTHOR_EMAIL = 'econdami@yahoo.fr'
+AUTHOR_EMAIL = 'yann@cointepas.net'
 URL = 'http://populse.github.io/populse_db/'
 LICENSE = 'CeCILL-B'
 VERSION = __version__
@@ -58,8 +57,8 @@ CLASSIFIERS = CLASSIFIERS
 PLATFORMS = 'OS Independent'
 REQUIRES = [
     'python-dateutil',
-    'sqlalchemy',
-    'lark-parser>=0.7.0'
+    'lark-parser>=0.7.0',
+    'populse_mia>=2.0.0
 ]
 EXTRA_REQUIRES = {
     'doc': [
