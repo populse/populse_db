@@ -12,7 +12,7 @@ import sys
 # populse_db current version
 version_major = 2
 version_minor = 0
-version_micro = 1
+version_micro = 0
 version_extra = ""
 
 # Expected by setup.py: string of form "X.Y.Z"
@@ -58,7 +58,7 @@ PLATFORMS = 'OS Independent'
 REQUIRES = [
     'python-dateutil',
     'lark-parser>=0.7.0',
-    'populse_mia>=2.0.0
+    'populse_mia>=2.0.0'
 ]
 EXTRA_REQUIRES = {
     'doc': [
