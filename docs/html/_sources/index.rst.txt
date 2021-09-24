@@ -17,8 +17,7 @@ Generalities
 Overview
 --------
 
-* SQLAlchemy based database API for Populse
-* It can support every database type, as it takes an engine as entry
+* Can support every database type, as it takes an engine as entry
 * Populse_db is ensured to work with Python 2.7 and Python >= 3.4
 * Populse_db is ensured to work on the platforms Linux, OSX, and Windows
 
@@ -74,7 +73,6 @@ Requirements
 
 The modules required for populse_db are the following ones:
 
-* sqlalchemy
 * lark-parser
 * python-dateutil
 * sphinx
@@ -100,7 +98,7 @@ The other packages used by populse_db are the following ones:
 Documentation
 -------------
 
-* This documentation website has been generated with Sphinx (See Sphinx website for more informations `here <http://www.sphinx-doc.org/en/master/>`_)
+* This documentation website has been generated with Sphinx (See Sphinx website for more informations `here <http://www.sphinx-doc.org/en/master/>`__)
 
 * The source code of this website is in docs/ directory (The website is actually in docs/html/ directory, but docs/index.html is redirecting to the website)
 
@@ -112,7 +110,7 @@ Documentation
    make html # The website generated will be in docs/html/ directory
    cd ..
 
-* The website is deployed automatically thanks to GitHub pages (More informations are available on their website `here <https://pages.github.com/>`_)
+* The website is deployed automatically thanks to GitHub pages (More informations are available on their website `here <https://pages.github.com/>`__)
 
 * The option is available in the GitHub repository populse_db settings: See GitHub Pages subsection in Options section, it is currently set to master branch /docs folder
 
@@ -158,6 +156,6 @@ The whole populse project is open source.
 Populse_db is precisely released under the CeCILL-B software license.
 
 You can find all the details on the license `here
-<http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`_, or refer to the license file `here
-<https://github.com/populse/populse_db/blob/master/LICENSE.en>`_.
+<http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`__, or refer to the license file `here
+<https://github.com/populse/populse_db/blob/master/LICENSE.en>`__.
 

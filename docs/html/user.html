@@ -4,19 +4,27 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>User documentation &#8212; populse_db 1.0.1 documentation</title>
     <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
-  </head><body>
+  </head>
+  <body>
       <div class="header" role="banner"><h1 class="heading"><a href="index.html">
           <span>populse_db 1.0.1 documentation</span></a></h1>
         <h2 class="heading"><span>User documentation</span></h2>
@@ -53,7 +61,7 @@
 <ul class="simple">
 <li>From <a class="reference external" href="https://pypi.org/project/populse-db/">PyPI</a>:</li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># A compatible version of Python and Pip must be installed</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># A compatible version of Python and Pip must be installed</span>
 
 <span class="n">To</span> <span class="n">install</span> <span class="n">pip</span><span class="p">:</span>
 <span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python</span><span class="o">-</span><span class="n">pip</span> <span class="c1"># Python2</span>
@@ -68,7 +76,7 @@
 <ul class="simple">
 <li>From source:</li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># A compatible version of Python must be installed</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># A compatible version of Python must be installed</span>
 <span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">git</span>
 <span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">populse</span><span class="o">/</span><span class="n">populse_db</span><span class="o">.</span><span class="n">git</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">populse_db</span>
 <span class="n">cd</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">populse_db</span>
@@ -81,7 +89,7 @@
 <div class="section" id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
 <p>Import examples:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">populse_db</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">populse_db</span>
 <span class="kn">from</span> <span class="nn">populse_db.database</span> <span class="kn">import</span> <span class="n">Database</span>
 <span class="kn">import</span> <span class="nn">populse_db.database</span>
 </pre></div>
@@ -95,9 +103,9 @@
 <li>The code coverage is generated with the package codecov</li>
 <li>The script of tests is python/populse_db/test.py, so the following command launches the tests:</li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>python test.py (if python/populse_db/ directory has been added to $PATH, or if $PWD in the terminal)
-python python/populse_db/test.py (from populse_db root directory)
-python -m populse_db.test
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">test</span><span class="o">.</span><span class="n">py</span> <span class="c1"># (if python/populse_db/ directory has been added to $PATH, or if $PWD in the terminal)</span>
+<span class="n">python</span> <span class="n">python</span><span class="o">/</span><span class="n">populse_db</span><span class="o">/</span><span class="n">test</span><span class="o">.</span><span class="n">py</span> <span class="c1"># (from populse_db root directory)</span>
+<span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">populse_db</span><span class="o">.</span><span class="n">test</span>
 </pre></div>
 </div>
 </div>
@@ -106,7 +114,7 @@ python -m populse_db.test
 <ul class="simple">
 <li>Small script to show the initialization and some examples of calls:</li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 
 <span class="kn">import</span> <span class="nn">shutil</span>
@@ -116,44 +124,41 @@ python -m populse_db.test
 <span class="c1"># Generating the database in a temp directory</span>
 <span class="n">temp_folder</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">()</span>
 <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_folder</span><span class="p">,</span> <span class="s2">&quot;test.db&quot;</span><span class="p">)</span>
-<span class="n">string_engine</span> <span class="o">=</span> <span class="s1">&#39;sqlite:///&#39;</span> <span class="o">+</span> <span class="n">path</span>
-<span class="n">database</span> <span class="o">=</span> <span class="n">Database</span><span class="p">(</span><span class="n">string_engine</span><span class="p">)</span>
+<span class="n">database_url</span> <span class="o">=</span> <span class="s1">&#39;sqlite:///&#39;</span> <span class="o">+</span> <span class="n">path</span>
+<span class="n">database</span> <span class="o">=</span> <span class="n">Database</span><span class="p">(</span><span class="n">database_url</span><span class="p">)</span>
 
 <span class="c1"># Creating the session and working with it</span>
 <span class="k">with</span> <span class="n">database</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
 
- <span class="c1"># Creating a profile table</span>
- <span class="n">session</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">)</span>
+    <span class="c1"># Creating a profile table</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">)</span>
 
- <span class="c1"># Adding several properties</span>
- <span class="n">session</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;First name&quot;</span><span class="p">,</span> <span class="n">FIELD_TYPE_STRING</span><span class="p">)</span>
- <span class="n">session</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;Last name&quot;</span><span class="p">,</span> <span class="n">FIELD_TYPE_STRING</span><span class="p">)</span>
- <span class="n">session</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;Age&quot;</span><span class="p">,</span> <span class="n">FIELD_TYPE_INTEGER</span><span class="p">)</span>
+    <span class="c1"># Adding several properties</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;First name&quot;</span><span class="p">,</span> <span class="n">FIELD_TYPE_STRING</span><span class="p">)</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;Last name&quot;</span><span class="p">,</span> <span class="n">FIELD_TYPE_STRING</span><span class="p">)</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;Age&quot;</span><span class="p">,</span> <span class="n">FIELD_TYPE_INTEGER</span><span class="p">)</span>
 
- <span class="c1"># Filling the table</span>
- <span class="n">profile1</span> <span class="o">=</span> <span class="p">{}</span>
- <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;index&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;profile1&quot;</span>
- <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;First name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Jules&quot;</span>
- <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;Last name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CESAR&quot;</span>
- <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;Age&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">55</span>
- <span class="n">session</span><span class="o">.</span><span class="n">add_document</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="n">profile1</span><span class="p">)</span>
+    <span class="c1"># Filling the table</span>
+    <span class="n">profile1</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;index&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;profile1&quot;</span>
+    <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;First name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Jules&quot;</span>
+    <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;Last name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CESAR&quot;</span>
+    <span class="n">profile1</span><span class="p">[</span><span class="s2">&quot;Age&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">55</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">add_document</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="n">profile1</span><span class="p">)</span>
 
- <span class="n">session</span><span class="o">.</span><span class="n">add_document</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">)</span>
- <span class="n">session</span><span class="o">.</span><span class="n">add_value</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">,</span> <span class="s2">&quot;First name&quot;</span><span class="p">,</span> <span class="s2">&quot;Louis&quot;</span><span class="p">)</span>
- <span class="n">session</span><span class="o">.</span><span class="n">add_value</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">,</span> <span class="s2">&quot;Last name&quot;</span><span class="p">,</span> <span class="s2">&quot;XIV&quot;</span><span class="p">)</span>
- <span class="n">session</span><span class="o">.</span><span class="n">add_value</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">,</span> <span class="s2">&quot;Age&quot;</span><span class="p">,</span> <span class="mi">76</span><span class="p">)</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">add_document</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">)</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">add_value</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">,</span> <span class="s2">&quot;First name&quot;</span><span class="p">,</span> <span class="s2">&quot;Louis&quot;</span><span class="p">)</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">add_value</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">,</span> <span class="s2">&quot;Last name&quot;</span><span class="p">,</span> <span class="s2">&quot;XIV&quot;</span><span class="p">)</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">add_value</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;profile2&quot;</span><span class="p">,</span> <span class="s2">&quot;Age&quot;</span><span class="p">,</span> <span class="mi">76</span><span class="p">)</span>
 
- <span class="c1"># Setting a value</span>
- <span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">filter_documents</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;({Age} &gt; 50) AND ({First name} == </span><span class="se">\&quot;</span><span class="s2">Jules</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="p">)</span>
- <span class="k">for</span> <span class="n">document</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span> <span class="c1"># profile1 is displayed, as it&#39;s the only document with the value Age greater than 50, and the value First name being Jules</span>
-     <span class="k">print</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
-
- <span class="n">session</span><span class="o">.</span><span class="n">save_modifications</span><span class="p">()</span>
+    <span class="c1"># Setting a value</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">filter_documents</span><span class="p">(</span><span class="s2">&quot;Profile&quot;</span><span class="p">,</span> <span class="s2">&quot;(</span><span class="si">{Age}</span><span class="s2"> &gt; 50) AND ({First name} == </span><span class="se">\&quot;</span><span class="s2">Jules</span><span class="se">\&quot;</span><span class="s2">)&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">document</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span> <span class="c1"># profile1 is displayed, as it&#39;s the only document with the value Age greater than 50, and the value First name being Jules</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 
 <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">temp_folder</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The script is available <a class="reference external" href="https://github.com/populse/populse_db/blob/master/python/populse_db/script.py">here</a>.</p>
 <p>The database file test.py resulting from the script is available <a class="reference external" href="https://github.com/populse/populse_db/blob/master/docs/databases/test.db">here</a>.</p>
 <p>As you can see in the collection table, the collection Profile has been created.</p>
 <img alt="_images/test_db_collection.png" src="_images/test_db_collection.png" />
@@ -176,7 +181,7 @@ python -m populse_db.test
 
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, populse.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.7.
     </div>
   </body>
 </html>

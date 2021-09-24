@@ -103,8 +103,8 @@ class Engine:
     def collection(self, collection):
         """
         Returns a Row Object with at least the following items:
-          collection_name: name of the collection
-          primary_key: name of the primary key field
+        collection_name: name of the collection
+        primary_key: name of the primary key field
         More engine specific items may be present but they must
         not be used in the general API.
         Returns None if the collection does not exist.
@@ -147,18 +147,14 @@ class Engine:
         Adds a new field in a collection.
 
         :param collection: collection name (str, must be existing)
-
         :param field: new field name (str, must not be existing)
-
         :param type: field type, in ('string', 'int', 'float', 
-            'boolean', 'date', 'datetime', 'time', 'json', 'list_string',
-             'list_int', 'list_float', 'list_boolean', 'list_date',
-             'list_datetime', 'list_time', 'list_json')
-
+           'boolean', 'date', 'datetime', 'time', 'json', 'list_string',
+           'list_int', 'list_float', 'list_boolean', 'list_date',
+           'list_datetime', 'list_time', 'list_json')
         :param description: field description (str or None)
-
         :param index: boolean indicating if a database index must be created
-            for this field to speed-ud queries involving values for this field.
+           for this field to speed-ud queries involving values for this field.
         """
         raise NotImplementedError()
 
@@ -180,11 +176,11 @@ class Engine:
         """
         Returns a Row Object corresponding to a collection field with at
         least the following items:
-          collection_name: name of the collection
-          field_name: field name
-          field_type: type of values for this field
-          description: text describing the field usage
-          has_index: boolean indicating if an index was created for this field
+        collection_name: name of the collection
+        field_name: field name
+        field_type: type of values for this field
+        description: text describing the field usage
+        has_index: boolean indicating if an index was created for this field
         More engine specific items may be present but they must
         not be used in the general API.
         Returns None if the collection or the field does not exist.

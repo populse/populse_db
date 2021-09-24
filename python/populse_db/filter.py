@@ -107,8 +107,8 @@ def literal_parser():
     This is used to test literals parsing
 
     :return: An instance of Lark grammar parser for parsing only a literal
-    value (int, string, list, date, etc.) from a filter expression. This
-    is used for testing the parsing of these literals.
+       value (int, string, list, date, etc.) from a filter expression. This
+       is used for testing the parsing of these literals.
     '''
     return Lark(filter_grammar, parser='lalr', start='literal')
 
@@ -145,7 +145,7 @@ class FilterToQuery(Transformer):
     @staticmethod
     def is_field(object):
         '''
-        Checks if an object is an SqlAlchemy column object
+        Checks if an object is a populse_db.database column object
         '''
         return isinstance(object, ListWithKeys)
 

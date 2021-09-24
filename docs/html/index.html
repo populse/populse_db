@@ -4,19 +4,27 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Generalities &#8212; populse_db 1.0.1 documentation</title>
     <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
-  </head><body>
+  </head>
+  <body>
       <div class="header" role="banner"><h1 class="heading"><a href="#">
           <span>populse_db 1.0.1 documentation</span></a></h1>
         <h2 class="heading"><span>Generalities</span></h2>
@@ -51,8 +59,7 @@
 <div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>SQLAlchemy based database API for Populse</li>
-<li>It can support every database type, as it takes an engine as entry</li>
+<li>Can support every database type, as it takes an engine as entry</li>
 <li>Populse_db is ensured to work with Python 2.7 and Python &gt;= 3.4</li>
 <li>Populse_db is ensured to work on the platforms Linux, OSX, and Windows</li>
 </ul>
@@ -89,7 +96,6 @@
 <h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
 <p>The modules required for populse_db are the following ones:</p>
 <ul class="simple">
-<li>sqlalchemy</li>
 <li>lark-parser</li>
 <li>python-dateutil</li>
 <li>sphinx</li>
@@ -120,7 +126,7 @@
 <li>The source code of this website is in docs/ directory (The website is actually in docs/html/ directory, but docs/index.html is redirecting to the website)</li>
 <li>Generate the website (from populse_db root directory):</li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">docs</span><span class="o">/</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">docs</span><span class="o">/</span>
 <span class="n">make</span> <span class="n">html</span> <span class="c1"># The website generated will be in docs/html/ directory</span>
 <span class="n">cd</span> <span class="o">..</span>
 </pre></div>
@@ -132,7 +138,7 @@
 <li>The structure of the website that can be modified is in docs/source/ directory (for example, docs/source/index.rst is this current page)</li>
 <li>In order to install Sphinx, the following commands have been executed (from populse_db root directory):</li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">sphinx</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">sphinx</span>
 <span class="n">mkdir</span> <span class="n">docs</span><span class="o">/</span>
 <span class="n">cd</span> <span class="n">docs</span><span class="o">/</span>
 <span class="n">sphinx</span><span class="o">-</span><span class="n">quickstart</span>
@@ -180,7 +186,7 @@
 
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, populse.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.7.
     </div>
   </body>
 </html>

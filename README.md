@@ -7,7 +7,7 @@
 [![](https://img.shields.io/badge/python-2.7%2C%203.4%2C%203.5%2C%203.6%2C%203.7%203.8%203.9-yellow.svg)](#)
 [![](https://img.shields.io/badge/platform-Linux%2C%20OSX%2C%20Windows-orange.svg)](#)
 
-SQLAlchemy based database API for Populse
+Database API for Populse
 
 # Documentation
 
@@ -66,13 +66,13 @@ The script of tests is python/populse_db/test.py, so the following command launc
 	
 # Requirements
 
-* sqlalchemy
 * lark-parser
 * python-dateutil
 * sphinx
 * psycopg2
 
 # Other packages used
+
   * ast
   * copy
   * datetime

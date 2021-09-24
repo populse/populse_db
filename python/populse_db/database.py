@@ -767,7 +767,7 @@ class DatabaseSession(object):
         """
         Iterates over the collection documents selected by filter_query
 
-        Each item yield is a row of the collection table returned by sqlalchemy
+        Each item yield is a row of the collection table returned
 
         filter_query can be the result of self.filter_query() or a string containing a filter
         (in this case self.fliter_query() is called to get the actual query)

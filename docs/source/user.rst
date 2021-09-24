@@ -58,8 +58,8 @@ Tests
 
 .. code-block:: python
    
-   python test.py (if python/populse_db/ directory has been added to $PATH, or if $PWD in the terminal)
-   python python/populse_db/test.py (from populse_db root directory)
+   python test.py # (if python/populse_db/ directory has been added to $PATH, or if $PWD in the terminal)
+   python python/populse_db/test.py # (from populse_db root directory)
    python -m populse_db.test
 
 Using populse_db

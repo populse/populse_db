@@ -6,6 +6,13 @@ populse\_db package
     :undoc-members:
     :show-inheritance:
 
+Subpackages
+-----------
+
+.. toctree::
+
+   populse_db.engine
+
 Submodules
 ----------
 
@@ -29,14 +36,6 @@ populse\_db.info module
 -----------------------
 
 .. automodule:: populse_db.info
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-populse\_db.script module
--------------------------
-
-.. automodule:: populse_db.script
     :members:
     :undoc-members:
     :show-inheritance:
