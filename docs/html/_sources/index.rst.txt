@@ -4,9 +4,7 @@
    contain the root `toctree` directive.
 
 .. toctree::
-   documentation.rst
-   modules.rst
-   user.rst
+
 
 +----------------------------+--------------------------------------------------------------+--------------------------------------------------+
 |`Index <./index.html>`_     |`Documentation <./documentation.html>`_                       |`GitHub <https://github.com/populse/populse_db>`_ |
@@ -161,3 +159,9 @@ You can find all the details on the license `here
 <http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`__, or refer to the license file `here
 <https://github.com/populse/populse_db/blob/master/LICENSE.en>`__.
 
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
