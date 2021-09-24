@@ -3,8 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-
 .. toctree::
+   documentation.rst
+   modules.rst
+   user.rst
 
 +----------------------------+--------------------------------------------------------------+--------------------------------------------------+
 |`Index <./index.html>`_     |`Documentation <./documentation.html>`_                       |`GitHub <https://github.com/populse/populse_db>`_ |
