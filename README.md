@@ -1,5 +1,5 @@
 # populse_db
-[![](https://travis-ci.org/populse/populse_db.svg?branch=master)](https://travis-ci.org/populse/populse_db)
+[//]: [![](https://travis-ci.org/populse/populse_db.svg?branch=master)](https://travis-ci.org/populse/populse_db)
 [![](https://ci.appveyor.com/api/projects/status/exyixo4o0osns6tn?svg=true)](https://ci.appveyor.com/project/populse/populse-db-6gndf)
 [![](https://codecov.io/github/populse/populse_db/coverage.svg?branch=master)](https://codecov.io/github/populse/populse_db)
 [![](https://img.shields.io/badge/license-CeCILL--B-blue.svg)](https://github.com/populse/populse_db/blob/master/LICENSE.en)
