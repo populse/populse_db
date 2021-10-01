@@ -1,34 +1,53 @@
 environment:
 
-  # postgres
-  POSTGRES_PORT: tcp://localhost:5432
-  POSTGRES_ENV_POSTGRES_USER: postgres
-  POSTGRES_ENV_POSTGRES_PASSWORD: Password12!
-  POSTGRES_ENV_POSTGRES_DB: testdb
-  POSTGRES_PATH: C:\Program Files\PostgreSQL\9.6
-  PGUSER: postgres
-  PGPASSWORD: Password12!
-  
   matrix:
-    - PYTHON: "C:\\Python27"
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python36"
-    - PYTHON: "C:\\Python37"
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      PYTHON: "C:\\Python27"
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      PYTHON: "C:\\Python37"
+      
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      PYTHON: "Python2.7"
+#      APPVEYOR_SSH_KEY:
+#      APPVEYOR_SSH_BLOCK: true
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      PYTHON: "Python3.7"
+#      APPVEYOR_SSH_KEY:
+#      APPVEYOR_SSH_BLOCK: true
 
-services:
-  - postgresql96
+    - APPVEYOR_BUILD_WORKER_IMAGE: macos
+      PYTHON: "Python2.7"
+#      APPVEYOR_SSH_KEY:
+#      APPVEYOR_SSH_BLOCK: true
+    - APPVEYOR_BUILD_WORKER_IMAGE: macos
+      PYTHON: "Python3.7"
 
-build_script:
-  - "SET PATH=C:\\Program Files\\PostgreSQL\\9.6\\bin\\;%PATH%"
-  - psql -c "create database populse_db_tests;" -U postgres
+build: off
 
 install:
-  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - "pip install -e .[postgres]"
+  - cmd: echo "     ** windows build **"
+  - sh: if [[ $(uname -s) == Linux ]]; then echo "     ** linux build **"; fi
+  - sh: if [[ $(uname -s) == Darwin ]]; then echo "     ** macos build **"; fi
+
+#  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
+
+  - cmd: SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
+  - sh: if [[ $PYTHON == Python3.7 ]]; then export PATH=~/venv3.7/bin:~/venv3.7/lib:$PATH; fi
+
+  - python --version
+  - python -m pip install pip --upgrade
+  - pip -V
+  - pip install setuptools --upgrade
+  - pip install -e .[postgres]
+  - pip install codecov
 
 test_script:
-  - "python -V"
-  - "python -m populse_db.test -v"
+  - cmd: python -m populse_db.test -v
+  - sh: python ./python/populse_db/test.py -v
+  - sh: if [[ $(uname -s) == Linux ]] && [[ $PYTHON == Python3.7 ]]; then coverage run ./python/populse_db/test.py -v; fi
+
+after_test:
+  - sh: if [[ $(uname -s) == Linux ]] && [[ $PYTHON == Python3.7 ]]; then codecov; fi
 
 notifications:
   - provider: Email
