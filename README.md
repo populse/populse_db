@@ -54,10 +54,6 @@ Continuous integration made with Travis (Linux, OSX), and AppVeyor (Windows)
 Code coverage calculated by the python module codecov
 
 The module is ensured to work with Python 2.7 and Python >= 3.4
-[![Build status](https://ci.appveyor.com/api/projects/status/exyixo4o0osns6tn/branch/master?svg=true)](https://ci.appveyor.com/project/populse/populse-db-6gndf/branch/master)
-
-[![Build status](https://ci.appveyor.com/api/projects/status/exyixo4o0osns6tn/branch/master?svg=true)](https://ci.appveyor.com/project/populse/populse-db-6gndf/branch/master)
-
 
 The module is ensured to work on the platforms Linux, OSX and Windows
 
