@@ -3,16 +3,21 @@ This Python package contains engines that contains the minimum API to connect
 an external database engine to a Populse database.
 """
 
+from urllib.parse import urlparse
+
 def engine_factory(database_url):
     """
     Method that interprets an URL and creates the corresponding database
     engine.
     """
-    if database_url.startswith('sqlite:///'):
-        from .sqlite import SQLiteEngine
-        return SQLiteEngine(database_url[10:])
+    url = urlparse(database_url)
+    if url.scheme in ('', 'sqlite'):
+        if url.path:
+            return SQLiteEngine(url.path)
+        elif url.netloc:
+            return SQLiteEngine(url.netloc)
     else:
-        raise ValueError('Invalid database URL: %s' % database_url)
+        raise ValueError(f'Invalid database URL: {database_url}')
 
 
 class Engine:
