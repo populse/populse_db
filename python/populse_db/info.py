@@ -1,17 +1,9 @@
-##########################################################################
-# Populse_db - Copyright (C) IRMaGe/CEA, 2018
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-##########################################################################
-
 import os.path
 import sys
 
 # populse_db current version
-version_major = 2
-version_minor = 1
+version_major = 3
+version_minor = 0
 version_micro = 0
 version_extra = ""
 
@@ -22,11 +14,11 @@ __version__ = "{0}.{1}.{2}".format(version_major, version_minor, version_micro)
 CLASSIFIERS = ['Development Status :: 5 - Production/Stable',
                'Environment :: Console',
                'Operating System :: OS Independent',
-               'Programming Language :: Python :: 2.7',
-               'Programming Language :: Python :: 3.5',
                'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7',
                'Programming Language :: Python :: 3.8',
+               'Programming Language :: Python :: 3.9',
+               'Programming Language :: Python :: 3.10',
                'Programming Language :: SQL',
                'Natural Language :: English',
                'Topic :: Database',
@@ -69,4 +61,4 @@ EXTRA_REQUIRES = {
 }
 
 # tests to run
-test_commands = ['%s -m populse_db.test' % os.path.basename(sys.executable)]
+test_commands = [f'{os.path.basename(sys.executable)} -m populse_db.test']
