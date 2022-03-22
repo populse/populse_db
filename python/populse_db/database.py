@@ -413,7 +413,7 @@ class DatabaseSession(object):
             result = None
         return result
     
-    def get_documents_keys(self, collection):
+    def get_documents_ids(self, collection):
         """
         Iterates over document primary keys of a given a collection
 
@@ -432,11 +432,19 @@ class DatabaseSession(object):
     def get_documents(self, collection, fields=None, as_list=False,
                       document_ids=None):
         """
-        Gives the list of all document rows, given a collection
+        Iterate over of all or selected document of a collection
 
         :param collection: Documents collection (str, must be existing)
 
-        :return: List of all document rows of the collection if it exists, None otherwise
+        :param fields: List of fields to retrieve in the document
+
+        :param as_list: If True, document values are returned in a list using
+                        fields order
+
+        :param document_ids: Restrict the result to the document ids contained
+                             in this iterable 
+
+        :return: generator
         """
 
         if not self.engine.has_collection(collection):
@@ -465,16 +473,10 @@ class DatabaseSession(object):
         :raise ValueError: - If the collection does not exist
                            - If the document does not exist
         """
-
-        if not self.engine.has_collection(collection):
-            raise ValueError("The collection {0} does not exist".format(collection))
-        if not self.engine.has_document(collection, document_id):
-            raise ValueError(
-                "The document with the name {0} does not exist in the collection {1}".format(document_id, collection))
         self.engine.remove_document(collection, document_id)
     
     
-    def add_document(self, collection, document, create_missing_fields=True, flush=None):
+    def add_document(self, collection, document, create_missing_fields=False):
         """
         Adds a document to a collection
 
@@ -489,29 +491,13 @@ class DatabaseSession(object):
             - If True, fields that are in the document but not in the collection are created if the type can be guessed from the value in the document
               (possible for all valid values except None and []).
             
-        :param flush: ignored obsolete parameter
-
         :raise ValueError: - If the collection does not exist
                            - If the document already exists
                            - If document is invalid (invalid name or no primary_key)
         """
 
-        # Checks
-        if not self.engine.has_collection(collection):
-            raise ValueError("The collection {0} does not exist".format(collection))
-        if not isinstance(document, dict) and not isinstance(document, str):
-            raise ValueError(
-                "The document must be of type {0} or {1}, but document of type {2} given".format(dict, str, document))
-        primary_key = self.engine.primary_key(collection)
-        if isinstance(document, dict) and primary_key not in document:
-            raise ValueError(
-                "The primary_key {0} of the collection {1} is missing from the document dictionary".format(primary_key,
-                                                                                                           collection))
-        if not isinstance(document, dict):
-            document = {primary_key: document}
         self.engine.add_document(collection, document, create_missing_fields)
         
-    """ FILTERS """
 
     def filter_documents(self, collection, filter_query, fields=None, as_list=False):
         """
@@ -523,34 +509,25 @@ class DatabaseSession(object):
         (in this case self.fliter_query() is called to get the actual query)
 
         :param collection: Filter collection (str, must be existing)
+
         :param filter_query: Filter query (str)
 
-                                - A filter row must be written this way: {<field>} <operator> "<value>"
-                                - The operator must be in ('==', '!=', '<=', '>=', '<', '>', 'IN', 'ILIKE', 'LIKE')
-                                - The filter rows can be linked with ' AND ' or ' OR '
-                                - Example: "((({BandWidth} == "50000")) AND (({FileName} LIKE "%G1%")))"
+                    - A filter row must be written this way: {<field>} <operator> "<value>"
+                    - The operator must be in ('==', '!=', '<=', '>=', '<', '>', 'IN', 'ILIKE', 'LIKE')
+                    - The filter rows can be linked with ' AND ' or ' OR '
+                    - Example: "((({BandWidth} == "50000")) AND (({FileName} LIKE "%G1%")))"
+
+        :param fields: List of fields to retrieve in the document
+
+        :param as_list: If True, document values are returned in a list using
+                        fields order
+
         """
 
-        if not self.engine.has_collection(collection):
-            raise ValueError("The collection {0} does not exist".format(collection))
         parsed_filter = self.engine.parse_filter(collection, filter_query)
         for doc in self.engine.filter_documents(parsed_filter,fields=fields, as_list=as_list):
             yield doc
             
-    
-    """ UTILS """
-
-
-    _value_type_checker = {
-        FIELD_TYPE_INTEGER: lambda v: isinstance(v, int),
-        FIELD_TYPE_FLOAT: lambda v: isinstance(v, (int, float)),
-        FIELD_TYPE_BOOLEAN: lambda v: isinstance(v, bool),
-        FIELD_TYPE_STRING: lambda v: isinstance(v, str),
-        FIELD_TYPE_JSON: lambda v: isinstance(v, dict),
-        FIELD_TYPE_DATETIME: lambda v: isinstance(v, datetime),
-        FIELD_TYPE_DATE: lambda v: isinstance(v, date),
-        FIELD_TYPE_TIME: lambda v: isinstance(v, time),
-    }
     
     @classmethod
     def check_value_type(cls, value, field_type):
@@ -568,16 +545,22 @@ class DatabaseSession(object):
             return False
         if value is None:
             return True
-        if field_type.startswith('list_'):
-            if isinstance(value, list):
-                item_type = field_type[5:]
+        origin = getattr(field_type, '__origin__', None)
+        if origin:
+            # field_type is a parameterized type such as list[str]
+            # origin is the parent type (e.g. list)
+            if isinstance(value, origin):
+                # The following code works only on list[...]
+                # because other parameterized types are not
+                # supported.
+                item_type = field_type.__args__[0]
                 for v in value:
                     if not cls.check_value_type(v, item_type):
                         return False
                 return True
         else:
-            return cls._value_type_checker[field_type](value)
-
+            return isinstance(field_type, value)
+        return False
 
 # Default link between Database and DatabaseSession class is defined below.
 # It is used whenever a database session is created. This allow to derive
