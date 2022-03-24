@@ -1,14 +1,8 @@
 import ast
 import datetime
-import operator
-import types
-
 import dateutil.parser
-import six
-from lark import Lark, Transformer
 
-import populse_db
-from populse_db.database import ListWithKeys
+from lark import Lark, Transformer
 
 # The grammar (in Lark format) used to parse filter strings:
 filter_grammar = '''
@@ -113,14 +107,34 @@ def literal_parser():
     return Lark(filter_grammar, parser='lalr', start='literal')
 
 
-class FilterToQuery(Transformer):
+type_to_sql = {
+    type(None): lambda x: 'NULL',
+    str: lambda x: f"'{x}'",
+    int: lambda x: str(x),
+    float: lambda x: str(x),
+    # datetime.time: lambda x: f"'{x.isoformat()}'",
+    # datetime.datetime: lambda x: f"'{x.isoformat()}'",
+    # datetime.date: lambda x: f"'{x.isoformat()}'",
+    bool: lambda x: ('1' if x else '0'),
+    list: lambda x: f"'[{', '.join((chr(34)+f'{i}'+chr(34) if isinstance(i,str) else to_sql(i)) for i in x)}]'"
+}
+
+def to_sql(value):
+    global type_to_sql
+
+    return type_to_sql[type(value)](value)
+
+class Field(str):
+    pass
+
+class FilterToSQL(Transformer):
     '''
     Instance of this class are passed to Lark parser when parsing a document
     selection filter string in order to create an object that can be used to
-    select items from the database. FilterToQuery implements methods that are
+    select items from the database. FilterToSQL implements methods that are
     common to all engines and does not produce anything because the query
     objectis specific to each engine. Therefore, engine class must use a 
-    subclass of FilterToQuery that implements the following methods:
+    subclass of FilterToSQL that implements the following methods:
     
         build_condition_all
         build_condition_literal_in_list_field
@@ -138,21 +152,17 @@ class FilterToQuery(Transformer):
         'null': None,
     }
 
-    def __init__(self, engine, collection):
-        self.engine = engine
-        self.collection = collection
+    sql_operators = {
+        '==': 'IS',
+        '!=': 'IS NOT',
+        'ilike': 'LIKE',
+    }
+    
 
-    @staticmethod
-    def is_field(object):
-        '''
-        Checks if an object is a populse_db.database column object
-        '''
-        return isinstance(object, ListWithKeys)
+    no_list_operators = {'>', '<', '>=', '<=', 'like', 'ilike'}
 
-    @staticmethod
-    def is_list_field(field):
-        return (isinstance(field, ListWithKeys) and
-                field.field_type.startswith('list_'))
+    def __init__(self, dictable):
+        self.dictable = dictable
 
     def all(self, items):
         return self.build_condition_all()
@@ -162,41 +172,40 @@ class FilterToQuery(Transformer):
         operator_str = str(operator).lower()
         if operator_str == 'in':
 
-            if self.is_list_field(right_operand):
+            if isinstance(right_operand, Field):
 
-                if isinstance(left_operand, six.string_types + (int,
-                                                                float,
-                                                                bool,
-                                                                None.__class__,
-                                                                datetime.date,
-                                                                datetime.time,
-                                                                datetime.datetime)):
+                if isinstance(left_operand, (str,
+                                             int,
+                                             float,
+                                             bool,
+                                             type(None),
+                                             datetime.date,
+                                             datetime.time,
+                                             datetime.datetime)):
                     return self.build_condition_literal_in_list_field(left_operand, right_operand)
-                elif self.is_field(left_operand):
-                    if self.is_list_field(left_operand):
-                        raise ValueError('Cannot use operator IN with two list fields')
+                elif isinstance(left_operand, Field):
                     return self.build_condition_field_in_list_field(left_operand, right_operand)
                 else:
                     raise ValueError('Left operand of IN <list field> must be a '
-                                     'field, string, number, boolean, date, time or null but "%s" '
-                                     'was used' % str(left_operand))
+                                     f'field, string, number, boolean, date, time or null but "{left_operand}" '
+                                     'was used')
             elif isinstance(right_operand, list):
-                if self.is_field(left_operand):
+                if isinstance(left_operand, Field):
                     return self.build_condition_field_in_list(left_operand, right_operand)
                 else:
                     raise ValueError('Left operand of IN <list> must be a '
-                                     'simple field but "%s" was used' % str(left_operand))
+                                     f'simple field but "{left_operand}" was used')
             else:
                 raise ValueError('Right operand of IN must be a list or a '
-                                 'list field but "%s" was used' % str(right_operand))
+                                 f'list field but "{right_operand}" was used')
 
-        if self.is_field(left_operand):
-            if self.is_field(right_operand):
+        if isinstance(left_operand, Field):
+            if isinstance(right_operand, Field):
                 return self.build_condition_field_op_field(left_operand, operator_str, right_operand)
             else:
                 return self.build_condition_field_op_value(left_operand, operator_str, right_operand)
         else:
-            if self.is_field(right_operand):
+            if isinstance(right_operand, Field):
                 return self.build_condition_value_op_field(left_operand, operator_str, right_operand)
             else:
                 raise ValueError('Either left or right operand of a condition'
@@ -259,13 +268,13 @@ class FilterToQuery(Transformer):
         literal = self.keyword_literals.get(field.lower(), self)
         if literal is not self:
             return literal
-        field_name = self.engine.field(self.collection, field)
-        if field_name is None:
-            raise ValueError('No field named "%s"' % field)
-        return field_name
+        if field in self.dictable.primary_columns or field in self.dictable.other_columns:
+            return Field(f'[{field}]')
+        elif self.dictable.json_column:
+            return Field(f"json_extract([{self.dictable.json_column}],'$.\"{field}\"')")
 
     def quoted_field_name(self, items):
-        return items[0][1:-1]
+        return Field(items[0][1:-1])
 
     def build_condition_all(self):
         '''
@@ -273,7 +282,7 @@ class FilterToQuery(Transformer):
         is directly given to the engine and never combined with other
         queries.
         '''
-        raise NotImplementedError()
+        return None
 
     def build_condition_literal_in_list_field(self, value, list_field):
         '''
@@ -284,7 +293,8 @@ class FilterToQuery(Transformer):
         :param list_field: field object as returned by Database.get_field
 
         '''
-        raise NotImplementedError()
+        return [f'{list_field} IS NOT NULL AND '
+                f'{to_sql(value)} IN (SELECT value FROM json_each({list_field}))']
 
     def build_condition_field_in_list_field(self, field, list_field):
         '''
@@ -294,7 +304,8 @@ class FilterToQuery(Transformer):
         :param field: field object as returned by Database.get_field
         :param list_field: field object as returned by Database.get_field
         '''
-        raise NotImplementedError()
+        return [f'{list_field} IS NOT NULL AND '
+                f'{field} IN (SELECT value FROM json_each({list_field}))']
 
     def build_condition_field_in_list(self, field, list_value):
         '''
@@ -304,8 +315,20 @@ class FilterToQuery(Transformer):
         :param field: field object as returned by Database.get_field
         :param list_value: Pyton list containing literals
         '''
-        raise NotImplementedError()
+        if None in list_value:
+            list_value.remove(None)
+            where = [f'{field} IS NULL OR {field} ']
+        else:
+            where = [f'{field} ']
+        if not list_value:
+            return [0]
+        elif len(list_value) == 1:
+            where.append(f'IS {to_sql(list_value[0])}')
+        else:
+            where.append(f'IN ({",".join(to_sql(i) for i in list_value)})')
+        return where
     
+
     def build_condition_field_op_field(self, left_field, operator_str, right_field):
         '''
         Builds a condition comparing the content of two fields with an operator.
@@ -315,8 +338,13 @@ class FilterToQuery(Transformer):
                          defined in the grammar (in lowercase)
         :param right_field: field object as returned by Database.get_field
         '''
-        raise NotImplementedError()
+        sql_operator = self.sql_operators.get(operator_str, operator_str)
+        if operator_str == 'ilike':
+            return [f'UPPER({left_field}) {sql_operator} UPPER({right_field})']
+        else:
+            return [f'{left_field} {sql_operator} {right_field}']
     
+
     def build_condition_field_op_value(self, field, operator_str, value):
         '''
         Builds a condition comparing the content of a field with a constant
@@ -327,9 +355,19 @@ class FilterToQuery(Transformer):
                              defined in the grammar (in lowercase)
         :param value: Python value (None, string number, boolean or date/time)
         '''
-        raise NotImplementedError()
-
+        if isinstance(value, list):
+            if operator_str in self.no_list_operators:
+                raise ValueError(f'operator {operator_str} cannot be used with value of list type')
+        if operator_str == 'ilike':
+            field = f'UPPER({field})'
+            if isinstance(value, str):
+                value = value.upper()
+        else:
+            field = f'{field}'
+        sql_operator = self.sql_operators.get(operator_str, operator_str)
+        return [f'{field} {sql_operator} {to_sql(value)}']
     
+
     def build_condition_value_op_field(self, value, operator_str, field):
         '''
         Builds a condition comparing a constant value with the content of a
@@ -340,7 +378,16 @@ class FilterToQuery(Transformer):
                              defined in the grammar (in lowercase)
         :param field: field object as returned by Database.get_field
         '''
-        raise NotImplementedError()
+        if isinstance(value, list):
+            if operator_str in self.no_list_operators:
+                raise ValueError(f'operator {operator_str} cannot be used with value of list type')
+        if operator_str == 'ilike':
+            field = f'UPPER({field})'
+            if isinstance(value, str):
+                value = value.upper()
+        sql_operator = self.sql_operators.get(operator_str, operator_str)
+        return [f'{to_sql(value)} {sql_operator} {field}']
+
 
     def build_condition_negation(self, condition):
         '''
@@ -350,7 +397,9 @@ class FilterToQuery(Transformer):
                           build_condition_*() method (except 
                           build_condition_all)
         '''
-        raise NotImplementedError()
+        if condition is None:
+            return ['0']
+        return ['NOT', '(' ] + condition + [')']
     
     def build_condition_combine_conditions(self, left_condition, operator_str, right_condition):
         '''
@@ -365,5 +414,4 @@ class FilterToQuery(Transformer):
                                 build_condition_*() method (except 
                                 build_condition_all)
         '''
-        raise NotImplementedError()
-    
+        return ['('] + left_condition + [')', operator_str, '('] + right_condition + [')']

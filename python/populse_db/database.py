@@ -1,7 +1,5 @@
 from datetime import date, time, datetime
 
-from  populse_db.engine import engine_factory
-
 # Field types
 FIELD_TYPE_STRING = str
 FIELD_TYPE_INTEGER = int
@@ -26,77 +24,59 @@ ALL_TYPES = {FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FL
              FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON}
 
 
-class Database(object):
+
+def check_value_type(value, field_type):
     """
-    Database API
+    Checks the type of the value
 
-    attributes:
-        - engine: database engine
+    :param value: Value
 
-    methods:
-        - __enter__: Creates or gets a DatabaseSession instance
-        - __exit__: Releases the latest created DatabaseSession
-        - clear: Clears the database
+    :param field_type: Type that the value is supposed to have
 
+    :return: True if the value is None or has a valid type, False otherwise
     """
 
-    def __init__(self, database_url):
-        """Initialization of the database
+    if field_type is None:
+        return False
+    if value is None:
+        return True
+    origin = getattr(field_type, '__origin__', None)
+    if origin:
+        # field_type is a parameterized type such as list[str]
+        # origin is the parent type (e.g. list)
+        if isinstance(value, origin):
+            # The following code works only on list[...]
+            # because other parameterized types are not
+            # supported.
+            item_type = field_type.__args__[0]
+            for v in value:
+                if not check_value_type(v, item_type):
+                    return False
+            return True
+    else:
+        return isinstance(field_type, value)
+    return False
 
-        :param database_url: Database engine
+def type_to_str(type):
+    args = getattr(type, '__args__', None)
+    if args:
+        return f'{type.__name__}[{",".join(type_to_str(i) for i in args)}]'
+    else:
+        return type.__name__
 
-                              The engine is constructed this way: dialect://user:password@host/dbname[?key=value..]
+_str_to_type = dict((type_to_str(i), i) for i in (
+    str, int, float, bool, date, datetime, time, dict, list
+))
 
-                              The dialect can be sqlite or postgresql
+def str_to_type(str):
+    global _str_to_type
 
-                              For sqlite databases, the file can be not existing yet, it will be created in this case
-
-                              Examples:
-                                        - "sqlite:///foo.db"
-                                        - "postgresql://scott:tiger@localhost/test"
-
-        :raise ValueError: - If database_url is invalid
-                           - If the schema is not coherent with the API (the database is not a populse_db database)
-        """
-
-        self.database_url = database_url
-        self.__session = None
-
-
-    def __enter__(self):
-        """
-        Return a DatabaseSession instance for using the database. This is
-        supposed to be called using a "with" statement:
-        
-        with database as session:
-           session.add_document(...)
-           
-        Therefore __exit__ must be called to get rid of the session.
-        When called recursively, the underlying database session returned
-        is the same. The commit/rollback of the session is done only by the
-        outermost __enter__/__exit__ pair (i.e. by the outermost with
-        statement).
-        """
-        if self.__session is None:            
-            self.__session = self.database_session_class(self)
-        self.__session.engine.__enter__()
-        return self.__session
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """
-        Release a DatabaseSession previously created by __enter__.
-        If no recursive call of __enter__ was done, the session
-        is commited if no error is reported (e.g. exc_type is None)
-        otherwise it is rolled back. Nothing is done 
-        """
-        self.__session.engine.__exit__(exc_type, exc_val, exc_tb)
-            
-    def clear(self):
-        """
-        Removes all documents and collections in the database
-        """
-        with self as session:
-            session.engine.clear()
+    s = str.split('[',1)
+    if len(s) == 1:
+        return _str_to_type[s[0]]
+    else:
+        args = tuple(str_to_type(i) for i in s[1][:-1].split(","))
+        return _str_to_type[s[0]][args]
 
 def python_value_type(value):
     """
@@ -110,7 +90,7 @@ def python_value_type(value):
     type(value)
 
 
-class DatabaseSession(object):
+class DatabaseSession:
     """
     DatabaseSession API
 
@@ -150,20 +130,23 @@ class DatabaseSession(object):
         - filter_documents: Gives the list of documents matching the filter
     """
 
-    def __init__(self, database):
-        """
-        Creates a session API of the Database instance
-
-        :param database: Database instance to take into account
-        """
-        
-        self.engine = engine_factory(database.database_url)
+    def __getitem__(self, collection_name):
+        raise NotImplemented()
+    
+    def execute(self, *args, **kwargs):
+        raise NotImplemented()
 
     def commit(self):
-        self.engine.commit()
+        raise NotImplemented()
     
     def rollback(self):
-        self.engine.rollback()
+        raise NotImplemented()
+
+    def get_settings(self, category, key, default=None):
+        raise NotImplemented()
+
+    def set_settings(self, category, key, value):
+        raise NotImplemented()
     
     def add_collection(self, name, primary_key):
         """
@@ -177,8 +160,7 @@ class DatabaseSession(object):
                            - If the collection name is invalid
                            - If the primary_key is invalid
         """
-        self.engine.add_collection(name, primary_key)
-
+        raise NotImplemented()
 
     def remove_collection(self, name):
         """
@@ -188,13 +170,7 @@ class DatabaseSession(object):
 
         :raise ValueError: If the collection does not exist
         """
-
-        # Checks
-        
-        if not self.engine.has_collection(name):
-            raise ValueError("The collection {0} does not exist".format(name))
-
-        self.engine.remove_collection(name)
+        raise NotImplemented()
 
     def get_collection(self, name):
         """
@@ -204,7 +180,7 @@ class DatabaseSession(object):
 
         :return: The collection row if it exists, None otherwise
         """
-        return self.engine.collection(name)
+        return self[name]
 
     def get_collections_names(self):
         """
@@ -212,7 +188,7 @@ class DatabaseSession(object):
 
         :return: generator
         """
-        return (i[0] for i in self.engine.collections())
+        return (i.name for i in self)
 
     def get_collections(self):
         """
@@ -221,7 +197,7 @@ class DatabaseSession(object):
         :return: generator
         """
 
-        return self.engine.collections()
+        yield from self
 
     def add_field(self, collection, name, field_type, description=None,
                   index=False):
@@ -246,32 +222,21 @@ class DatabaseSession(object):
                            - If the field type is invalid
                            - If the field description is invalid
         """
+        self[collection].add_field(name, field_type, description=None, 
+                                     index=False)
 
-        # Checks
-        self.engine.add_field(collection, name, field_type, description, index)
-
-    def remove_field(self, collection, fields):
+    def remove_field(self, collection, field):
         """
         Removes a field in the collection
 
         :param collection: Field collection (str, must be existing)
 
-        :param field: Field name (str, must be existing), or list of fields (list of str, must all be existing)
+        :param field: Field name (str, must be existing))
 
         :raise ValueError: - If the collection does not exist
                            - If the field does not exist
         """
-
-        if not self.engine.has_collection(collection):
-            raise ValueError("The collection {0} does not exist".format(collection))
-        if isinstance(fields, str):
-            fields = [fields]
-        for field in fields:
-            if not self.engine.has_field(collection, field):
-                raise ValueError(
-                    "The field with the name {0} does not exist in the collection {1}".format(field,
-                                                                                              collection))
-        self.engine.remove_fields(collection, fields)
+        self[collection].remove_field(field)
 
     def get_field(self, collection, name):
         """
@@ -284,7 +249,7 @@ class DatabaseSession(object):
         :return: The field row if the field exists, None otherwise
         """
 
-        return self.engine.field(collection, name)
+        return self[collection].field(name)
     
     def get_fields_names(self, collection):
         """
@@ -295,7 +260,7 @@ class DatabaseSession(object):
         :return: generator
         """
 
-        return (i.field_name for i in self.engine.fields(collection))
+        return (i.name for i in self[collection].fields())
 
     def get_fields(self, collection):
         """
@@ -305,32 +270,8 @@ class DatabaseSession(object):
 
         :return: generator
         """
-
-        return self.engine.fields(collection)
-
-    def set_value(self, collection, document_id, field, new_value):
-        """
-        Sets the value associated to <collection, document, field> if it exists
-
-        :param collection: Document collection (str, must be existing)
-
-        :param document_id: Document name (str, must be existing)
-
-        :param field: Field name (str, must be existing)
-
-        :param new_value: New value
-
-        :param flush: unused obsolete parmeter
-
-        :raise ValueError: - If the collection does not exist
-                           - If the field does not exist
-                           - If the document does not exist
-                           - If the value is invalid
-                           - If trying to set the primary_key
-        """
-
-        self.set_values(collection, document_id, {field: new_value})
-
+        
+        yield from self[collection].fields()
 
     def set_values(self, collection, document_id, values):
         """
@@ -348,52 +289,10 @@ class DatabaseSession(object):
                            - If the values are invalid
                            - If trying to set the primary_key
         """
-        self.engine.set_values(collection, document_id, values)
-    
-    
-    def remove_value(self, collection, document_id, field):
-        """
-        Removes the value <collection, document, field> if it exists
-
-        :param collection: Document collection (str, must be existing)
-
-        :param document_id: Document name (str, must be existing)
-
-        :param field: Field name (str, must be existing)
-
-        :raise ValueError: - If the collection does not exist
-                           - If the field does not exist
-                           - If the document does not exist
-        """
-        self.engine.remove_value(collection, document_id, field)
-
-    def add_value(self, collection, document_id, field, value):
-        """
-        Adds a value for <collection, document_id, field>
-
-        :param collection: Document collection (str, must be existing)
-
-        :param document_id: Document name (str, must be existing)
-
-        :param field: Field name (str, must be existing)
-
-        :param value: Value to add
-
-        :param checks: if False, do not perform any type or value checking
-
-        :raise ValueError: - If the collection does not exist
-                           - If the field does not exist
-                           - If the document does not exist
-                           - If the value is invalid
-                           - If <collection, document_id, field> already has a value
-        """
-        if self.engine.has_value(collection, document_id, field):
-            raise ValueError(
-                f"The document with the name {document_id} already have a value for field {field} in the collection {collection}")
-        self.engine.set_values(collection, document_id, {field: value})
-        
+        self[collection].update_document(document_id, values)
+            
     def has_document(self, collection, document_id):
-        return self.engine.has_document(collection, document_id)
+        return self[collection].has_document(document_id)
 
     def get_document(self, collection, document_id, fields=None,
                      as_list=False):
@@ -406,12 +305,7 @@ class DatabaseSession(object):
 
         :return: The document row if the document exists, None otherwise
         """
-        try:
-            result = self.engine.document(collection, document_id,
-                                          fields=fields, as_list=as_list)
-        except KeyError:
-            result = None
-        return result
+        return self[collection].document(document_id, fields, as_list)
     
     def get_documents_ids(self, collection):
         """
@@ -421,12 +315,8 @@ class DatabaseSession(object):
 
         :return: generator
         """
-
-        if not self.engine.has_collection(collection):
-            return []
-        primary_key = self.engine.primary_key(collection)
-        return [i[0] for i in self.get_documents(collection, fields=[primary_key],
-                                                 as_list=True)]
+        c = self[collection]
+        return (i for i in c.documents(fields=tuple(c.primary_key), as_list=True))
      
 
     def get_documents(self, collection, fields=None, as_list=False,
@@ -446,21 +336,14 @@ class DatabaseSession(object):
 
         :return: generator
         """
-
-        if not self.engine.has_collection(collection):
-            return []
+        c = self[collection]
         if document_ids is None:
-            return list(self.filter_documents(collection, None, fields=fields,
-                                              as_list=as_list))
-        # get a list of documents
-        primary_key = self.get_collection(collection).primary_key
-        pk_column = self.engine.field_column[collection][primary_key]
-        filter_query = '[%s] in (%s)' \
-            % (pk_column, ', '.join('?' for document_id in document_ids))
-        return self.engine._select_documents(
-            collection, filter_query, document_ids, fields=fields,
-            as_list=as_list)
-
+            yield from c.documents(fields=fields, as_list=as_list)
+        else:
+            for document_id in document_ids:
+                document = c.get(document_id)
+                if document is not None:
+                    yield document
 
     def remove_document(self, collection, document_id):
         """
@@ -473,7 +356,7 @@ class DatabaseSession(object):
         :raise ValueError: - If the collection does not exist
                            - If the document does not exist
         """
-        self.engine.remove_document(collection, document_id)
+        del self[collection][document_id]
     
     
     def add_document(self, collection, document, create_missing_fields=False):
@@ -495,8 +378,9 @@ class DatabaseSession(object):
                            - If the document already exists
                            - If document is invalid (invalid name or no primary_key)
         """
-
-        self.engine.add_document(collection, document, create_missing_fields)
+        if create_missing_fields:
+            raise NotImplementedError('create_missing_field option is not implemented yet')
+        self[collection].add(document)
         
 
     def filter_documents(self, collection, filter_query, fields=None, as_list=False):
@@ -524,45 +408,4 @@ class DatabaseSession(object):
 
         """
 
-        parsed_filter = self.engine.parse_filter(collection, filter_query)
-        for doc in self.engine.filter_documents(parsed_filter,fields=fields, as_list=as_list):
-            yield doc
-            
-    
-    @classmethod
-    def check_value_type(cls, value, field_type):
-        """
-        Checks the type of the value
-
-        :param value: Value
-
-        :param field_type: Type that the value is supposed to have
-
-        :return: True if the value is None or has a valid type, False otherwise
-        """
-
-        if field_type is None:
-            return False
-        if value is None:
-            return True
-        origin = getattr(field_type, '__origin__', None)
-        if origin:
-            # field_type is a parameterized type such as list[str]
-            # origin is the parent type (e.g. list)
-            if isinstance(value, origin):
-                # The following code works only on list[...]
-                # because other parameterized types are not
-                # supported.
-                item_type = field_type.__args__[0]
-                for v in value:
-                    if not cls.check_value_type(v, item_type):
-                        return False
-                return True
-        else:
-            return isinstance(field_type, value)
-        return False
-
-# Default link between Database and DatabaseSession class is defined below.
-# It is used whenever a database session is created. This allow to derive
-# Database class and to also use a derived version of DatabaseSession.
-Database.database_session_class = DatabaseSession
+        yield from self[collection].filter(filter_query, fields=fields, as_list=as_list)

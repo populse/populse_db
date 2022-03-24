@@ -1,18 +1,12 @@
-import datetime
-import hashlib
-import json
-import os.path as osp
-import re
-import six
-import sqlite3
-import threading
-import uuid
-
-import populse_db.database as pdb
-from populse_db.engine import Engine
-from populse_db.filter import FilterToQuery, filter_parser
-
+from datetime import time, date, datetime
+from turtle import update
+from xml.dom.minidom import Document
 import dateutil
+import json
+import sqlite3
+
+from ..database import str_to_type, type_to_str
+from ..filter import FilterToSQL, filter_parser
 
 '''
 SQLite3 implementation of populse_db engine.
@@ -21,803 +15,564 @@ A populse_db engine is created when a DatabaseSession object is created
 (typically within a "with" statement)
 '''
 
-# Table names
-FIELD_TABLE = '_field'
-COLLECTION_TABLE = '_collection'
-                
-class SQLiteEngine(Engine):
-    
-    _global_lock = threading.RLock()
-    _database_locks = {}
-    
-    def __init__(self, database):
-        self._enter_recursion_count = 0
-        with self._global_lock:
-            self.connection = sqlite3.connect(database, 
-                                            isolation_level=None,
-                                            check_same_thread=False)
-            self.cursor = None
-            if database == ':memory:':
-                self._global_lock_id = None
-                self.lock = threading.RLock()
-            else:
-                self._global_lock_id = osp.normpath(osp.realpath(osp.abspath(database)))
-                self.lock, lock_count = self._database_locks.get(self._global_lock_id) or (None, None)
-                if self.lock is None:
-                    self.lock = threading.RLock()
-                    self._database_locks[self._global_lock_id] = (self.lock, 1)
-                else:
-                    self._database_locks[self._global_lock_id] = (self.lock, lock_count + 1)
+class ParsedFilter(str):
+    pass
 
-    def __del__(self):
-        if self._global_lock_id:
-            with self._global_lock:
-                self.lock, lock_count = self._database_locks.get(self._global_lock_id)
-                lock_count -= 1
-                if lock_count:
-                    self._database_locks[self._global_lock_id] = (self.lock, lock_count)
-                else:
-                    del self._database_locks[self._global_lock_id]
+class SQLiteSession:
+    populse_db_table = 'populse_db'
+
+    def parse_url(self, url):
+        if url.path:
+            args = (url.path,)
+        elif url.netloc:
+            args = (url.netloc,)
+        return args, {}
     
-    def name_to_sql(self, name):
-        """
-        Transforms the name into a valid and unique SQLite table/column name.
-        Since all names are quoted in SQL with '[]', there is no restriction
-        on character that can be used. However, case is insignificant in
-        SQLite. Therefore, all upper case characters are prefixed with '!'.
+    def __init__(self, sqlite_file):
+        self.sqlite = sqlite3.connect(sqlite_file)
+        self._collection_cache = {}
 
-        :param name: Name (str)
-
-        :return: Valid and unique table/column name
-        """
-        return re.sub('([A-Z])', r'!\1', name)
-
-    def __enter__(self):
-        if self._enter_recursion_count == 0:
-            self.lock.acquire()
-            self.cursor = self.connection.cursor()
-            self.cursor.execute('PRAGMA synchronous=OFF')
-            self.cursor.execute('PRAGMA case_sensitive_like=ON')
-            self.cursor.execute('PRAGMA foreign_keys=ON')
-            self.cursor.execute('BEGIN DEFERRED')
-            
-            if not self.has_table(COLLECTION_TABLE):
-                sql = '''CREATE TABLE [{0}] (
-                    collection_name TEXT,
-                    field_name TEXT,
-                    field_type TEXT CHECK(field_type IN ({1})) NOT NULL,
-                    description TEXT,
-                    has_index BOOLEAN NOT NULL,
-                    column TEXT NOT NULL,
-                    PRIMARY KEY (field_name, collection_name))
-                '''.format(FIELD_TABLE,
-                        ','.join("'%s'" % i for i in (pdb.FIELD_TYPE_STRING,
-                                                    pdb.FIELD_TYPE_INTEGER, 
-                                                    pdb.FIELD_TYPE_FLOAT, 
-                                                    pdb.FIELD_TYPE_BOOLEAN,
-                                                    pdb.FIELD_TYPE_DATE,
-                                                    pdb.FIELD_TYPE_DATETIME,
-                                                    pdb.FIELD_TYPE_TIME,
-                                                    pdb.FIELD_TYPE_JSON,
-                                                    pdb.FIELD_TYPE_LIST_STRING,
-                                                    pdb.FIELD_TYPE_LIST_INTEGER,
-                                                    pdb.FIELD_TYPE_LIST_FLOAT,
-                                                    pdb.FIELD_TYPE_LIST_BOOLEAN,
-                                                    pdb.FIELD_TYPE_LIST_DATE,
-                                                    pdb.FIELD_TYPE_LIST_DATETIME,
-                                                    pdb.FIELD_TYPE_LIST_TIME,
-                                                    pdb.FIELD_TYPE_LIST_JSON)))
-                self.cursor.execute(sql)
-                
-                sql = '''CREATE TABLE [{0}] (
-                    collection_name TEXT PRIMARY KEY,
-                    primary_key TEXT NOT NULL,
-                    table_name TEXT NOT NULL)
-                '''.format(COLLECTION_TABLE)
-                self.cursor.execute(sql)
-            
-            
-            self.collection_primary_key = {}
-            self.collection_table = {}
-            self.table_row = {}
-            self.table_document = {}
-            for table in (COLLECTION_TABLE, FIELD_TABLE):
-                sql = 'PRAGMA table_info([%s])' % table
-                self.cursor.execute(sql)
-                columns = [i[1] for i in self.cursor]
-                self.table_row[table] = pdb.list_with_keys(table, columns)
-            sql = 'SELECT collection_name, table_name, primary_key FROM [%s]' % COLLECTION_TABLE
-            self.cursor.execute(sql)
-            for i in self.cursor.fetchall():
-                collection, table, primary_key = i
-                self.collection_primary_key[collection] = primary_key
-                self.collection_table[collection] = table
-                sql = "SELECT field_name, column FROM [%s] WHERE collection_name = '%s'" % (FIELD_TABLE, collection)
-                self.cursor.execute(sql)
-                rows = self.cursor.fetchall()
-                fields = [i[0] for i in rows]
-                columns = [i[1] for i in rows]
-                self.table_row[table] = pdb.list_with_keys(table, columns)
-                self.table_document[table] = pdb.list_with_keys(table, fields)
-            
-            sql = 'SELECT collection_name, field_name, field_type, column FROM [%s]' % FIELD_TABLE
-            self.cursor.execute(sql)
-            self.field_column = {}
-            self.field_type = {}
-            for collection, field, field_type, column in self.cursor:
-                self.field_column.setdefault(collection, {})[field] = column
-                self.field_type.setdefault(collection, {})[field] = field_type
-        
-        self._enter_recursion_count += 1
-        return self
+    def __getitem__(self, collection_name):
+        return SQLiteCollection(self, collection_name)
     
-    def commit(self):
+    def execute(self, *args, **kwargs):
+        return self.sqlite.execute(*args, **kwargs)
+
+    def get_settings(self, category, key, default=None):
         try:
-            self.cursor.execute('COMMIT')
-        except sqlite3.OperationalError as e:
-            if 'no transaction is active' not in str(e):
-                raise
-    
-    def rollback(self):
-        self.cursor.execute('ROLLBACK')
-        
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._enter_recursion_count -= 1
-        if self._enter_recursion_count == 0:
-            if exc_type is None:
-                self.commit()
-            else:
-                self.rollback()
-            self.cursor = None
-            self.lock.release()
-    
-    type_to_sql = {
-        pdb.FIELD_TYPE_INTEGER: 'INT',
-        pdb.FIELD_TYPE_FLOAT: 'REAL',
-        pdb.FIELD_TYPE_BOOLEAN: 'BOOLEAN',
-        pdb.FIELD_TYPE_DATE: 'TEXT',
-        pdb.FIELD_TYPE_DATETIME: 'TEXT',
-        pdb.FIELD_TYPE_TIME: 'TEXT',
-        pdb.FIELD_TYPE_STRING: 'TEXT',
-        pdb.FIELD_TYPE_JSON: 'STRING',
-    }
-    
-    def sql_type(self, type):
-        if type.startswith('list_'):
-            return 'TEXT'
-        else:
-            return self.type_to_sql[type]
-    
-    @staticmethod
-    def list_hash(list):
-        if list is None:
-            return None
-        if not list:
-            return ''
-        m = hashlib.md5()
-        for i in list:
-            m.update(six.text_type(i).encode('utf8'))
-        hash = m.hexdigest()
-        return hash
-    
+            sql = f'SELECT _json FROM [{self.populsedb_table}] WHERE category=? and key=?'
+            cur = self.execute(sql, [category, key])
+        except sqlite3.OperationalError:
+            return default
+        if cur.rowcount:
+            return json.loads(next(cur)[0])
+        return default
+
+    def set_settings(self, category, key, value):
+        sql = f'INSERT OR REPLACE INTO {self.populsedb_table} (category, key, _json) VALUES (?,?,?)'
+        data = [category, key, json.dumps(value)]
+        retry = False
+        try:
+            self.execute(sql, data)
+        except sqlite3.OperationalError:
+            retry = True
+        if retry:
+            sql2 = ('CREATE TABLE IF NOT EXISTS '
+                f'[{self.jsondb_table}] ('
+                'category TEXT NOT NULL,'
+                'key TEXT NOT NULL,'
+                '_json TEXT,'
+                'PRIMARY KEY (category, key))')
+            self.execute(sql2)
+            self.execute(sql, data)
+
     def clear(self):
-        tables = [FIELD_TABLE, COLLECTION_TABLE]
-        tables += [i.table_name for i in self.collections()]
-        tables += ['list_%s_%s' % (self.collection_table[i.collection_name],
-                                   self.field_column[i.collection_name][i.field_name])
-                   for i in self.fields() if i.field_type.startswith('list_')]
+        """
+        Erase the whole database content.
+        """
+
+        sql = f'SELECT name FROM sqlite_schema'
+        tables = [i[0] for i in self.execute(sql)]
         for table in tables:
-            sql = 'DROP TABLE [%s]' % table
-            self.cursor.execute(sql)
-        self.collection_table = {}
-        self.table_row = {}
-        self.table_document = {}
-        self.field_column = {}
-        self.field_type = {}
-        
-    def has_table(self, table):
-        self.cursor.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='%s'" % table)
-        return self.cursor.fetchone()[0] == 1
+            sql = f'DROP TABLE {table}'
+            self.execute(sql)
+        self._collection_cache = {}
     
-    def has_collection(self, collection):
-        return collection in self.collection_table
+    def add_collection(self, name, primary_key):
+        if isinstance(primary_key, str):
+            primary_key = {primary_key: str}
+        elif isinstance(primary_key, (list, tuple)):
+            primary_key = dict((i,str) for i in primary_key)
+        sql = (f'CREATE TABLE [{name}] ('
+            f'{",".join(f"[{n}] {type_to_str(t)} NOT NULL" for n, t in primary_key.items())},'
+            f'{self.catchall_column} dict,'
+            f'PRIMARY KEY ({",".join(primary_key.keys())}))')
+        print('!sql!', sql)
+        self.execute(sql)
 
-    def add_collection(self, collection, primary_key):
-        table_name = self.name_to_sql(collection)
-        pk_column = self.name_to_sql(primary_key)
-        sql = 'CREATE TABLE [%s] ([%s] TEXT PRIMARY KEY)' % (table_name, pk_column)
-        try:
-            self.cursor.execute(sql)
-        except sqlite3.OperationalError as e:
-            raise ValueError(str(e))
-        self.table_row[table_name] = pdb.list_with_keys(table_name, [pk_column])
-        self.table_document[table_name] = pdb.list_with_keys(table_name, [primary_key])
-        
-        sql = 'INSERT INTO [%s] (collection_name, primary_key, table_name) VALUES (?, ?, ?)' % COLLECTION_TABLE
-        self.cursor.execute(sql, [collection, primary_key, table_name])
-        self.collection_table[collection] = table_name
-        self.collection_primary_key[collection] = primary_key
-        
-        sql = 'INSERT INTO [%s] (field_name, collection_name, field_type, description, has_index, column) VALUES (?, ?, ?, ?, 1, ?)' % FIELD_TABLE
-        self.cursor.execute(sql, [primary_key, collection, pdb.FIELD_TYPE_STRING,
-                                  'Primary_key of the document collection %s' % collection,
-                                  pk_column])
-        self.field_column[collection] = {primary_key: pk_column}
-        self.field_type[collection] = {primary_key: pdb.FIELD_TYPE_STRING}
-        
-    def collection(self, collection):
-        row_class = self.table_row[COLLECTION_TABLE]
-        sql = 'SELECT %s FROM [%s] WHERE collection_name = ?' % (
-            ','.join('[%s]' % i for i in row_class._key_indices),
-            COLLECTION_TABLE)
-        self.cursor.execute(sql, [collection])
-        row = self.cursor.fetchone()
-        if row is not None:
-            return row_class(*row)
-        return None
+    def remove_collection(self, name):
+        sql = f'DROP TABLE [{name}]'
+        self.execute(sql)
+        self._collection_cache.pop(name, None)
     
-    def primary_key(self, collection):
-        return self.collection_primary_key[collection]
+    def __iter__(self):
+        sql = f'SELECT name FROM sqlite_schema'
+        for row in self.execute(sql):
+            table = row[0]
+            if table == self.populse_db_table:
+                continue
+            yield self[table]
+
+def json_dumps(value):
+    return json.dumps(value, separators=(',', ':'))
+
+_json_encodings = {
+    datetime: lambda d: f'{d.isoformat()}ℹdatetime',
+    date: lambda d: f'{d.isoformat()}ℹdate',
+    time: lambda d: f'{d.isoformat()}ℹtime',
+    list: lambda l: [json_encode(i) for i in l],
+    dict: lambda d: dict((k, json_encode(v)) for k, v in d.items()),
+}
+
+_json_decodings = {
+    'datetime': lambda s: dateutil.parser.parse(s),
+    'date': lambda s: dateutil.parser.parse(s).date(),
+    'time': lambda s: dateutil.parser.parse(s).time(),
+}
+
+def json_encode(value):
+    global _json_encodings
+
+    type_ = type(value)
+    encode = _json_encodings.get(type_)
+    if encode is not None:
+        return encode(value)
+    return encode(value)
+
+def json_decode(value):
+    global _json_decodings
+
+    if isinstance(value, list):
+        return [json_decode(i) for i in value]
+    elif isinstance(value, dict):
+        return dict((k, json_decode(v)) for k, v in value.items())
+    elif isinstance(value, str):
+        if value.startswith('ℹ'):
+            l = value[1:].rsplit('ℹ', 1)
+            if len(l) == 2:
+                encoded_value, decoding_name = l
+                decode = _json_decodings.get(decoding_name)
+                if decode is None:
+                    raise ValueError(f'Invalid JSON encoding type for value "{value}"')
+                return decode(encoded_value)
+    return value
+
+class SQLiteCollection:
+    _column_encodings = {
+        'datetime': (
+            lambda d: d.isoformat(),
+            lambda s: dateutil.parser.parse(s)
+        ),
+        'date': (
+            lambda d: d.isoformat(),
+            lambda s: dateutil.parser.parse(s).date()
+        ),
+        'time': (
+            lambda d: d.isoformat(),
+            lambda s: dateutil.parser.parse(s).time()
+        ),
+        'list': (
+            lambda l: json_dumps(l),
+            lambda l: json.loads(l),
+        ),
+        'dict': (
+            lambda d: json_dumps(d),
+            lambda d: json.loads(d),
+        ),
+    }
+
+    def __new__(cls, session, name):
+        result = session._collection_cache.get(name)
+        if result is not None:
+            return result
+        return super().__new__(cls)
+
+    def __init__(self, session, name):
+        self.session = session
+        settings = self.session.get_settings('session', name, {})
+        self.catchall_column = settings.get('catchall_column', '_catchall')
+        self.name = name
+        self.primary_key = {}
+        self.bad_json_fields = set()
+        self.fields = {}
+        sql = f'pragma table_info({self.name})'
+        bad_table = True
+        catchall_column_found = False
+        for row in self.session.execute(sql):
+            bad_table = False
+            if row[1] == self.catchall_column:
+                catchall_column_found = True
+                continue
+            column_type_str = row[2].lower()
+            column_type = str_to_type(column_type_str)
+            main_type = column_type_str.split('[',1)[0]
+            encoding = self._column_encodings.get(main_type)
+            if row[5]:
+                self.primary_key[row[1]] = column_type
+            field = {
+                'name': row[1],
+                'primary_key': bool(row[5]),
+                'type': column_type,
+                'encoding': encoding
+            }
+            field_settings = settings.get('fields', {}).get(row[1], {})
+            field.update(field_settings)
+            if field_settings.get('bad_json', False):
+                self.bad_json_fields.add(row[1])
+            self.fields[row[1]] = field
+        if bad_table:
+            raise ValueError(f'No such database table: {name}')
+        if self.catchall_column and not catchall_column_found:
+            raise ValueError(f'table {name} must have a column {self.catchall_column}')
+
+    def settings(self):
+        return self.session.get_settings('collection', self.name)
     
-    def remove_collection(self, collection):
-        table = self.collection_table[collection]
-        
-        sql = 'DELETE FROM [%s] WHERE collection_name = ?' % FIELD_TABLE
-        self.cursor.execute(sql, [collection])
+    def set_settings(self, settings):
+        self.session.set_settings('collection', self.name, settings)
 
-        sql = 'DELETE FROM [%s] WHERE collection_name = ?' % COLLECTION_TABLE
-        self.cursor.execute(sql, [collection])
-        del self.collection_table[collection]
-        del self.collection_primary_key[collection]
-        del self.table_row[table]
-        del self.table_document[table]
-        del self.field_column[collection]
-        del self.field_type[collection]
-        
-        sql = 'DROP TABLE [%s]' % table
-        self.cursor.execute(sql)
+    def document_id(self, document_id):
+        if isinstance(document_id, str):
+            document_id = (document_id,)
+        if len(document_id) != len(self.primary_key):
+            raise KeyError(f'key for table {self.name} requires {len(self.primary_key)} value(s), {len(document_id)} given')
+        return document_id
+    
+    def update_settings(self, **kwargs):
+        settings = self.settings()
+        settings.update(kwargs)
+        self.set_settings(settings)
 
-    def collections(self):
-        row_class = self.table_row[COLLECTION_TABLE]
-        sql = 'SELECT %s FROM [%s]' % (
-            ','.join('[%s]' % i for i in row_class._key_indices),
-            COLLECTION_TABLE)
-        return [self.table_row[COLLECTION_TABLE](*i) for i in self.cursor.execute(sql)]
-
-    def add_field(self, collection, field, type, description, index):
-        table = self.collection_table[collection]
-        column = self.name_to_sql(field)
-        sql = 'ALTER TABLE [%s] ADD COLUMN [%s] %s' % (table, column, self.sql_type(type))
-        table_row = self.table_row[table]
-        table_row._append_key(column)
-        table_doc = self.table_document[table]
-        table_doc._append_key(field)
-        
-        self.cursor.execute(sql)
-        sql = 'INSERT INTO [%s] (field_name, collection_name, field_type, description, has_index, column) VALUES (?, ?, ?, ?, ?, ?)' % FIELD_TABLE
-        self.cursor.execute(sql, [field,
-                                  collection,
-                                  type,
-                                  description,
-                                  (1 if index else 0),
-                                  column])
-        self.field_column.setdefault(collection, {})[field] = column
-        self.field_type.setdefault(collection, {})[field] = type
+    def add_field(self, name, field_type, description,
+                  index):
+        sql = f'ALTER TABLE [{self.name}] ADD COLUMN [{name}] {type_to_str(field_type)}'
+        self.session.execute(sql)
         if index:
-            sql = 'CREATE INDEX [{0}_{1}] ON [{0}] ([{1}])'.format(table, column)
-            self.cursor.execute(sql)
-        if type.startswith('list_'):
-            sql = 'CREATE TABLE [list_{0}_{1}] (list_id TEXT NOT NULL, i INT, value {2})'.format(table, column, self.sql_type(type[5:]))
-            self.cursor.execute(sql)
-            sql = 'CREATE INDEX [list_{0}_{1}_id] ON [list_{0}_{1}] (list_id)'.format(table, column)
-            self.cursor.execute(sql)
-            sql = 'CREATE INDEX [list_{0}_{1}_i] ON [list_{0}_{1}] (i ASC)'.format(table, column)
-            self.cursor.execute(sql)
+            sql = 'CREATE INDEX [{self.name}_{name}] ON [{self.name}] ([{name}])'
+            self.session.execute(sql)
+        settings = self.settings()
+        settings.setdefault('fields', {})[name] = {
+            'description': description,
+            'index': index
+        }
+        self.set_settings(settings)
+        field = {
+            'name': name,
+            'primary_key': False,
+            'type': field_type,
+            'description': description,
+            'index': index
+        }
+        self.fields[name] = field
     
-    def add_document(self, collection, document, create_missing_fields):
-        table = self.collection_table[collection]
-        primary_key = self.collection_primary_key[collection]
-        document_id = document[primary_key]
-        lists = []
-        column_values = {}
-        for field, value in document.items():
-            field_type = self.field_type[collection].get(field)
-            if field_type is None:
-                if not create_missing_fields:
-                    raise ValueError('Collection {0} has no field {1}'
-                                    .format(collection, field))
-                try:
-                    field_type = pdb.python_value_type(value)
-                    if field_type is None:
-                        raise KeyError
-                except KeyError:
-                    raise ValueError('Collection {0} has no field {1} and it '
-                                    'cannot be created from a value of type {2}'
-                                    .format(collection,
-                                            field,
-                                            type(value)))
-                self.add_field(collection, field, field_type,
-                            description=None, index=False)
-            column = self.field_column[collection][field]
-            if isinstance(value, list):
-                list_table = 'list_%s_%s' % (table, column)
-                list_id = document_id
-                column_values[column] = self.list_hash(value)
-                sql = 'INSERT INTO [%s] (list_id, i, value) VALUES (?, ?, ?)' % list_table
-                sql_params = [
-                    [list_id,
-                     i,
-                     self.python_to_column(field_type[5:], value[i])]
-                     for i in range(len(value))]
-                lists.append((sql, sql_params))
-            else:
-                column_values[column] = self.python_to_column(field_type, value)
-        
-        sql = 'INSERT INTO [%s] (%s) VALUES (%s)' % (
-            table,
-            ','.join('[%s]' % i for i in column_values.keys()),
-            ','.join('?' for i in column_values))
-        try:
-            self.cursor.execute(sql, list(column_values.values()))
-        except sqlite3.IntegrityError as e:
-            raise ValueError(str(e))
-        for sql, sql_params in lists:
-            self.cursor.executemany(sql, sql_params)
-            
-    def has_field(self, collection, field):
-        return self.field_column.get(collection, {}).get(field) is not None
+    def remove_field(self, name):
+        if name in self.primary_key:
+            raise ValueError('Cannot remove a key field')
+        sql = f'ALTER TABLE [{self.name}] DROP COLUMN [{name}]'
+        self.session.execute(sql)
+        settings = self.settings()
+        settings.setdefault('fields', {}).pop(name, None)
+        self.set_settings(settings)
+        self.fields.pop(name, None)
+        self.bad_json_fields.discard(name)
+
+    def field(self,name):
+        return self.field[name]
     
-    def field(self, collection, field):
-        row_class = self.table_row[FIELD_TABLE]
-        sql = 'SELECT %s FROM [%s] WHERE collection_name = ? AND field_name = ?' % (
-            ','.join('[%s]' % i for i in row_class._key_indices),
-            FIELD_TABLE)
-        self.cursor.execute(sql, [collection, field])
-        row = self.cursor.fetchone()
-        if row is not None:
-            return row_class(*row)
-        return None
+    def fields(self):
+        return self.fields.values()
 
-    def fields(self, collection=None):
-        row_class = self.table_row[FIELD_TABLE]
-        sql = 'SELECT %s FROM [%s]' % (
-            ','.join('[%s]' % i for i in row_class._key_indices),
-            FIELD_TABLE)
-        if collection is None:
-            data = []
-        else:
-            sql += ' WHERE collection_name = ?'
-            data = [collection]
-        self.cursor.execute(sql, data)
-        for row in self.cursor.fetchall():
-            yield row_class(*row)
+    def update_document(self, document_id, partial_document):
+        document_id = self.document_id(document_id)
+        #TODO can be optimized
+        document = self[document_id]
+        document.update(partial_document)
+        document[document_id] = document
     
-    def remove_fields(self, collection, fields):
-        table = self.collection_table[collection]
-        exclude_fields = set(fields)
-        new_columns = []
-        indices = []
-        for field in self.fields(collection):
-            if field.field_name not in exclude_fields:
-                new_columns.append((field.column,
-                                    self.sql_type(field.field_type)))
-                if field.has_index:
-                    indices.append(field.column)
-            else:
-                self.table_row[table]._delete_key(field.column)
-                self.table_document[table]._delete_key(field.field_name)
-                del self.field_column[collection][field.field_name]
-                sql = 'DELETE FROM [%s] WHERE collection_name = ? AND field_name = ?' % FIELD_TABLE
-                self.cursor.execute(sql, [collection, field.field_name])
-                if field.field_type.startswith('list_'):
-                    column = field.column
-                    list_table = 'list_%s_%s' % (table, column)
-                    sql = 'DROP TABLE [%s]' % list_table
-                    self.cursor.execute(sql)
-        tmp_table = '_' + str(uuid.uuid4())
-        sql = 'CREATE TABLE [%s] (%s)' % (tmp_table,
-                                          ','.join('[%s] %s' % (i, j) for i, j in new_columns))
-        self.cursor.execute(sql)
-        for column in indices:
-            sql = 'CREATE INDEX [{0}_{1}] ON [{0}] ([{1}])'.format(tmp_table, column)
-            self.cursor.execute(sql)
-        self.cursor.execute('PRAGMA table_info([%s])' % table)
-        sql = 'INSERT INTO [%s] SELECT %s FROM [%s]' % (
-            tmp_table,
-            ','.join('[%s]' % i[0] for i in new_columns),
-            table)
-        self.cursor.execute(sql)
-        sql = 'PRAGMA foreign_keys=OFF'
-        self.cursor.execute(sql)
-        sql = 'DROP TABLE [%s]' % table
-        self.cursor.execute(sql)
-        sql = 'ALTER TABLE [%s] RENAME TO [%s]' % (tmp_table, table)
-        self.cursor.execute(sql)
-        sql = 'PRAGMA foreign_keys=ON'
-        self.cursor.execute(sql)
+    def has_document(self, document_id):
+        document_id = self.document_id(document_id)
+        sql = f'SELECT count(*) FROM [{self.name}] WHERE {" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
+        return next(self.session.execute(sql, document_id))[0] != 0
+
     
-    # Some types (e.g. time, date and datetime) cannot be
-    # serialized/deserialized into string with repr/ast.literal_eval.
-    # This is a problem for storing the corresponding list_columns in
-    # database. For the list types with this problem, we record in the
-    # following dictionaries the functions that must be used to serialize
-    # (in _list_item_to_string) and deserialize (in _string_to_list_item)
-    # the list items.
-    _python_to_sql_data = {
-        pdb.FIELD_TYPE_DATE: lambda x: x.isoformat() if x is not None else x,
-        pdb.FIELD_TYPE_DATETIME:
-            lambda x: x.isoformat() if x is not None else x,
-        pdb.FIELD_TYPE_TIME: lambda x: x.isoformat() if x is not None else x,
-        pdb.FIELD_TYPE_BOOLEAN: lambda x: (1 if x else 0),
-    }
-
-    _sql_to_python = {
-        pdb.FIELD_TYPE_DATE: lambda x: dateutil.parser.parse(x).date(),
-        pdb.FIELD_TYPE_DATETIME: lambda x: dateutil.parser.parse(x),
-        pdb.FIELD_TYPE_TIME: lambda x: dateutil.parser.parse(x).time(),
-        pdb.FIELD_TYPE_BOOLEAN: lambda x: bool(x),
-        pdb.FIELD_TYPE_JSON: lambda x: json.loads(x),
-    }
-
-    @staticmethod
-    def python_to_column(field_type, value):
-        """
-        Converts a python value into a suitable value to put in a
-        database column.
-        """
-        converter = SQLiteEngine._python_to_sql_data.get(field_type)
-        if converter is not None:
-            return converter(value)
-        elif isinstance(value, dict):
-            return json.dumps(value)
-        else:
-            return value
-
-    @staticmethod
-    def column_to_python(field_type, value):
-        if value is None:
-            return None
-        converter = SQLiteEngine._sql_to_python.get(field_type)
-        if converter is not None:
-            return converter(value)
-        else:
-            return value
-
-    def has_document(self, collection, document_id):
-        table = self.collection_table[collection]
-        primary_key = self.collection_primary_key[collection]
-        pk_column = self.field_column[collection][primary_key]
-        sql = 'SELECT COUNT(*) FROM [%s] WHERE [%s] = ?' % (table, pk_column)
-        self.cursor.execute(sql, [document_id])
-        r = self.cursor.fetchone()
-        return bool(r[0])
-
-
-    def _select_documents(self, collection, where, where_data,
-                          fields=None, as_list=False):
-        table = self.collection_table[collection]
-        primary_key = self.collection_primary_key[collection]
-        pk_column = self.field_column[collection][primary_key]
-        row_class = self.table_row[table]
+    def _documents(self, fields, as_list, where, where_data):
         if fields:
-            selected_fields = fields
-            columns = [self.field_column[collection][i] for i in fields]
+            columns = []
+            catchall_fields = set()
+            for field in fields:
+                if field in self.fields:
+                    columns.append(field)
+                else:
+                    catchall_fields.add(field)
         else:
-            selected_fields = list(self.table_document[table].keys())
-            columns = list(row_class._key_indices)
-        sql = 'SELECT %s FROM [%s]' % (
-            ','.join('[%s]' % i for i in [pk_column] + columns),
-            table)
+            columns = list(self.fields)
+            catchall_fields = bool(self.catchall_column)        
+        if catchall_fields:
+            if not self.catchall_column and isinstance(catchall_fields, set):
+                raise ValueError(f'Collection {self.name} do not have the following fields: {",".join(catchall_fields)}')
+            columns.append(self.catchall_column)
+
+        sql = f'SELECT {",".join(f"[{i}]" for i in self.columns)} FROM [{self.name}]'
         if where:
-            sql += ' WHERE %s' % where
-        self.cursor.execute(sql, where_data)
-        for row in self.cursor.fetchall():
-            document_id = row[0]
-            values = []
-            for field, sql_value in zip(selected_fields, row[1:]):
-                field_type = self.field_type[collection][field]
-                if field_type.startswith('list_'):
-                    item_type = field_type[5:]
-                    column = self.field_column[collection][field]
-                    list_hash = sql_value
-                    if list_hash is None:
-                        values.append(None)
-                    else:
-                        sql = 'SELECT value FROM [list_{0}_{1}] WHERE list_id = ? ORDER BY i'.format(table, column)
-                        self.cursor.execute(sql, [document_id])
-                        values.append([self.column_to_python(item_type,i[0]) for i in self.cursor])
-                else:
-                    values.append(self.column_to_python(field_type, sql_value))
+            sql += f' WHERE {where}'
+        cur = self.sqlite.execute(sql, where, where_data)
+        if cur.rowcount == 0:
+            raise ValueError(f'No such collection: {self.name}')
+        for row in cur:
+            if catchall_fields:
+                if as_list and catchall_fields is True:
+                    raise ValueError(f'as_list=True cannot be used on {self.name} without a fields list because two documents can have different fields')
+                catchall = json.loads(row[-1])
+                if isinstance(catchall_fields, set):
+                    catchall = dict((i, catchall[i]) for i in catchall_fields)
+                row = row[:-1]
+                columns = columns[:-1]
+            else:
+                catchall = {}        
+
+            document = catchall
+            document.update(zip(columns, row))
+            for field, value in document.items():
+                if field in self.bad_json:
+                    value = json_decode(value)
+                encoding = self.fields.get(field,{}).get('encoding')
+                if encoding:
+                    encode, decode = encoding
+                    value = decode(value)
+                document[field] = value
             if as_list:
-                yield values
+                yield [document[i] for i in fields]
             else:
-                if fields:
-                    result = pdb.DictList(selected_fields, values)
+                yield document
+      
+    def document(self, document_id, fields, as_list):
+        document_id = self.document_id(document_id)
+        where += f' WHERE {" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
+        return next(self._documents(where, tuple(self.primary_key), fields, as_list))
+
+    def documents(self, fields, as_list):
+        yield from self._documents(None, None, fields, as_list)
+    
+    def add(self, document):
+        document_id = tuple(document.get(i) for i in self.primary_key)
+        self._set_document(document_id, document, replace=False)
+
+    def __setitem__(self, document_id, document):
+        document_id = self.document_id(document_id)
+        self._set_document(document_id, document, replace=True)
+
+    def _set_document(self, document_id, document, replace):
+        columns = [i for i in self.primary_key]
+        data = [i for i in document_id]
+        catchall = {}
+        for field, value in document.items():
+            if field in self.primary_key:
+                continue
+            if field in self.bad_json_field:
+                value = json_encode(value)
+            field_dict = self.fields.get(field)
+            if field_dict:
+                columns.append(field)
+                encoding  = field_dict.get('encoding')
+                if encoding:
+                    encode, decode = encoding
+                    try:
+                        column_value = encode(value)
+                    except TypeError:
+                        # Error with JSON encoding
+                        column_value = ...
+                    if column_value is ...:
+                        column_value = encode(json_encode(value))
+                        self.bad_json_field.add(field)
+                        settings = self.settings()
+                        settings.setdefault('fields', {}).setdefault(field,{})['bad_json'] = True
+                        self.set_settings(settings)
+                    data.append(column_value)
                 else:
-                    result = self.table_document[table](*values)
-                yield result
-
-    def document(self, collection, document_id,
-                 fields=None, as_list=False):
-        primary_key = self.collection_primary_key[collection]
-        pk_column = self.field_column[collection][primary_key]
-        where = '[%s] = ?' % pk_column
-        where_data = [document_id]
-        
-        try:
-            return next(self._select_documents(collection, where, where_data,
-                                               fields=fields, as_list=as_list))
-        except StopIteration:
-            return None
-    
-    def has_value(self, collection, document_id, field):
-        table = self.collection_table.get(collection)
-        if table is not None:
-            primary_key = self.collection_primary_key[collection]
-            pk_column = self.field_column[collection][primary_key]
-            column = self.field_column[collection].get(field)
-            if column is not None:
-                sql = 'SELECT [%s] FROM [%s] WHERE [%s] = ?' % (column, table,
-                                                                pk_column)
-                self.cursor.execute(sql, [document_id])
-                row = self.cursor.fetchone()
-                if row:
-                    return row[0] != None
-        return False
-        
-    def set_values(self, collection, document_id, values):
-        table = self.collection_table[collection]
-        primary_key = self.collection_primary_key[collection]
-        if primary_key in values:
-            raise ValueError('Cannot modify document id "%s" of collection %s' % (primary_key, collection))
-        pk_column = self.field_column[collection][primary_key]
-        column_values = []
-        columns = []
-        for field, value in values.items():
-            column = self.field_column[collection][field]
-            columns.append(column)
-            field_type = self.field_type[collection][field]
-            if field_type.startswith('list_'):
-                list_table = 'list_%s_%s' % (table, column)
-                column_values.append(self.list_hash(value))
-                sql = 'DELETE FROM [%s] WHERE list_id = ?' % list_table
-                self.cursor.execute(sql, [document_id])
-                sql = 'INSERT INTO [%s] (list_id, i, value) VALUES (?, ?, ?)' % list_table
-                if value is None:
-                    value = []
-                sql_params = [[document_id, 
-                            i,
-                            self.python_to_column(field_type[5:], value[i])]
-                            for i in range(len(value))]
-                self.cursor.executemany(sql, sql_params)
-                # column_value = repr(value)
+                    data.append(value)
             else:
-                column_values.append(self.python_to_column(field_type, value))
+                catchall[field] = value
+        if catchall:
+            if not self.catchall_column:
+                raise ValueError(f'Collection {self.name} cannot store the following unknown fields: {", ".join(catchall)}')
+            columns.append(self.catchall_column)
+            data.append(json.dumps(catchall))
 
-        sql = 'UPDATE [%s] SET %s WHERE [%s] = ?' % (
-            table,
-            ', '.join(['[%s] = ?' % c for c in columns]),
-            pk_column)
-        self.cursor.execute(sql, column_values + [document_id])
-
-    def remove_value(self, collection, document_id, field):
-        table = self.collection_table[collection]
-        column = self.field_column[collection][field]
-        primary_key = self.collection_primary_key[collection]
-        pk_column = self.field_column[collection][primary_key]
-        field_type = self.field_type[collection][field]
-        if field_type.startswith('list_'):
-            list_table = 'list_%s_%s' % (table, column)
-            sql = 'DELETE FROM [%s] WHERE list_id = ?' % list_table
-            self.cursor.execute(sql, [document_id])
-        
-        sql = 'UPDATE [%s] SET [%s] = NULL WHERE [%s] = ?' % (
-            table,
-            column,
-            pk_column)
-        self.cursor.execute(sql, [document_id])
-        
-
-    def remove_document(self, collection, document_id):
-        table = self.collection_table[collection]
-        primary_key = self.collection_primary_key[collection]
-        pk_column = self.field_column[collection][primary_key]
-        document = self.document(collection, document_id)
-        for field in self.fields(collection):
-            if field.field_type.startswith('list_') and document[field.field_name]:
-                self.remove_value(collection, document_id, field.field_name)
-        sql = 'DELETE FROM [%s] WHERE [%s] = ?' % (
-            table,
-            pk_column)
-        self.cursor.execute(sql, [document_id])
-        
-    def parse_filter(self, collection, filter):
-        """
-        Given a filter string, return a internal query representation that
-        can be used with filter_documents() to select documents
-
-
-        :param collection: the collection for which the filter is intended 
-               (str, must be existing)
-        
-        :param filter: the selection string using the populse_db selection
-                       language.
-
-        """
-        if filter is None:
-            query = None
+        if replace:
+            replace = ' OR REPLACE'
         else:
-            tree = filter_parser().parse(filter)
-            query = FilterToSqliteQuery(self, collection).transform(tree)
-        return (collection, query)
+            replace = ''
+        sql = f'INSERT{replace} INTO [{self.name}] ({",".join(f"[{i}]" for i in columns)}) values ({",".join("?" for i in data)})'
+        self.session.execute(sql, data)
 
-
-    def filter_documents(self, parsed_filter, fields=None, as_list=False):
-        collection, where_filter = parsed_filter
+    def __getitem__(self, document_id):
+        return self.document(document_id)
+    
+    def __delitem__(self, document_id):
+        document_id = self.document_id(document_id)
+        sql = f'DELETE FROM [{self.name}] WHERE {" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
+        self.session.execute(sql, document_id)
+    
+    def parse_filter(self, filter):
+        if filter is None or isinstance(filter, ParsedFilter):
+            return filter
+        tree = filter_parser().parse(filter)
+        where_filter = FilterToSQL(self).transform(tree)
         if where_filter is None:
-            where = None
+            return None
         else:
-            where = ' '.join(where_filter)
-        where_data = []
-        for doc in self._select_documents(collection, where, where_data,
-                                          fields=fields, as_list=as_list):
-            yield doc
-
-
-class FilterToSqliteQuery(FilterToQuery):
-    '''
-    Implements required methods to produce a SQLite query given a document
-    selection filter. This class returns either None (all documents are 
-    selected) or an SQL WHERE clause (without the WHERE keyword) as a list 
-    of string (that must be joined with spaces). This WHERE clause is useable 
-    with a SELECT from the table containing the collection documents. Using a 
-    list for combining strings is supposed to be more efficient (especially 
-    for long queries).
-    '''
+            return ParsedFilter(' '.join(where_filter))
     
-    def __init__(self, engine, collection):
-        '''
-        Create a parser for a givent engine and collection
-        '''
-        FilterToQuery.__init__(self, engine, collection)
-        self.table = self.engine.collection_table[collection]
 
-    def get_column(self, field):
-        '''
-        :return: The SQL representation of a field object.
-        '''
-        return self.engine.field_column[self.collection][field.field_name]
+    def filter(self, filter, fields=None, as_list=False):
+        parsed_filter = self.parse_filter(filter)
+        yield from self._select_documents(where, None, fields=fields, as_list=as_list)
 
-    _python_to_sql = {
-        pdb.FIELD_TYPE_DATE: lambda x: x.isoformat(),
-        pdb.FIELD_TYPE_DATETIME: lambda x: x.isoformat(),
-        pdb.FIELD_TYPE_TIME: lambda x: x.isoformat(),
-        pdb.FIELD_TYPE_BOOLEAN: lambda x: (1 if x else 0),
-    }
-    _python_to_sql = {
-        type(None): lambda x: 'NULL',
-        type(''): lambda x: "'{0}'".format(x),
-        type(u''): lambda x: "'{0}'".format(x),
-        int: lambda x: str(x),
-        float: lambda x: str(x),
-        datetime.time: lambda x: "'{0}'".format(x.isoformat()),
-        datetime.datetime: lambda x: "'{0}'".format(x.isoformat()),
-        datetime.date: lambda x: "'{0}'".format(x.isoformat()),
-        bool: lambda x: ('1' if x else '0'),
-    }
 
-    def get_column_value(self, python_value):
-        '''
-        Converts a Python value to a value suitable to put in a database column
-        '''
-        if isinstance(python_value, list):
-            c = '(%s)' % ','.join(self.get_column_value(i) for i in python_value)
-            return c
-        return self._python_to_sql[type(python_value)](python_value)
-
-    def build_condition_all(self):
-        return None
-
-    def build_condition_literal_in_list_field(self, value, list_field):
-        cvalue = self.get_column_value(value)
-        list_column = self.get_column(list_field)
-        list_table = 'list_%s_%s' % (self.table, list_column)
-        primary_key_column = self.engine.primary_key(self.collection)
-        pk_column = self.engine.field_column[
-            self.collection][primary_key_column]
-
-        where = ('[{0}] IS NOT NULL AND '
-                 '{1} IN (SELECT value FROM {2} '
-                 'WHERE list_id = [{3}])').format(list_column,
-                                                  cvalue,
-                                                  list_table,
-                                                  pk_column)
-        return [where]
-
-    def build_condition_field_in_list_field(self, field, list_field):
-        column = self.get_column(field)
-        list_column = self.get_column(list_field)
-        list_table = 'list_%s_%s' % (self.table, list_column)
-        primary_key_column = self.engine.primary_key(self.collection)
-        pk_column = self.engine.field_column[self.collection][primary_key_column]
-
-        where = ('[{0}] IS NOT NULL AND '
-                 '[{1}] IN (SELECT value FROM {2} '
-                 'WHERE list_id = [{3}])').format(list_column,
-                                                  column,
-                                                  list_table,
-                                                  pk_column)
-        return [where]
-
-    def build_condition_field_in_list(self, field, list_value):
-        column = self.get_column(field)
-        if None in list_value:
-            list_value.remove(None)
-            where = '[{0}] IS NULL OR [{0}] IN {1}'.format(column,
-                self.get_column_value(list_value))
-        else:
-            where = '[{0}] IN {1}'.format(column,
-                self.get_column_value(list_value))
-        return [where]
-
-    sql_operators = {
-        '==': 'IS',
-        '!=': 'IS NOT',
-        'ilike': 'LIKE',
-    }    
+# class FilterToSqliteQuery(FilterToQuery):
+#     '''
+#     Implements required methods to produce a SQLite query given a document
+#     selection filter. This class returns either None (all documents are 
+#     selected) or an SQL WHERE clause (without the WHERE keyword) as a list 
+#     of string (that must be joined with spaces). This WHERE clause is useable 
+#     with a SELECT from the table containing the collection documents. Using a 
+#     list for combining strings is supposed to be more efficient (especially 
+#     for long queries).
+#     '''
     
-    no_list_operator = {'>', '<', '>=', '<=', 'like', 'ilike'}
+#     def __init__(self, engine, collection):
+#         '''
+#         Create a parser for a givent engine and collection
+#         '''
+#         FilterToQuery.__init__(self, engine, collection)
+#         self.table = self.engine.collection_table[collection]
+
+#     def get_column(self, field):
+#         '''
+#         :return: The SQL representation of a field object.
+#         '''
+#         return self.engine.field_column[self.collection][field.field_name]
+
+#     _python_to_sql = {
+#         pdb.FIELD_TYPE_DATE: lambda x: x.isoformat(),
+#         pdb.FIELD_TYPE_DATETIME: lambda x: x.isoformat(),
+#         pdb.FIELD_TYPE_TIME: lambda x: x.isoformat(),
+#         pdb.FIELD_TYPE_BOOLEAN: lambda x: (1 if x else 0),
+#     }
+#     _python_to_sql = {
+#         type(None): lambda x: 'NULL',
+#         type(''): lambda x: "'{0}'".format(x),
+#         type(u''): lambda x: "'{0}'".format(x),
+#         int: lambda x: str(x),
+#         float: lambda x: str(x),
+#         datetime.time: lambda x: "'{0}'".format(x.isoformat()),
+#         datetime.datetime: lambda x: "'{0}'".format(x.isoformat()),
+#         datetime.date: lambda x: "'{0}'".format(x.isoformat()),
+#         bool: lambda x: ('1' if x else '0'),
+#     }
+
+#     def get_column_value(self, python_value):
+#         '''
+#         Converts a Python value to a value suitable to put in a database column
+#         '''
+#         if isinstance(python_value, list):
+#             c = '(%s)' % ','.join(self.get_column_value(i) for i in python_value)
+#             return c
+#         return self._python_to_sql[type(python_value)](python_value)
+
+#     def build_condition_all(self):
+#         return None
+
+#     def build_condition_literal_in_list_field(self, value, list_field):
+#         cvalue = self.get_column_value(value)
+#         list_column = self.get_column(list_field)
+#         list_table = 'list_%s_%s' % (self.table, list_column)
+#         primary_key_column = self.engine.primary_key(self.collection)
+#         pk_column = self.engine.field_column[
+#             self.collection][primary_key_column]
+
+#         where = ('[{0}] IS NOT NULL AND '
+#                  '{1} IN (SELECT value FROM {2} '
+#                  'WHERE list_id = [{3}])').format(list_column,
+#                                                   cvalue,
+#                                                   list_table,
+#                                                   pk_column)
+#         return [where]
+
+#     def build_condition_field_in_list_field(self, field, list_field):
+#         column = self.get_column(field)
+#         list_column = self.get_column(list_field)
+#         list_table = 'list_%s_%s' % (self.table, list_column)
+#         primary_key_column = self.engine.primary_key(self.collection)
+#         pk_column = self.engine.field_column[self.collection][primary_key_column]
+
+#         where = ('[{0}] IS NOT NULL AND '
+#                  '[{1}] IN (SELECT value FROM {2} '
+#                  'WHERE list_id = [{3}])').format(list_column,
+#                                                   column,
+#                                                   list_table,
+#                                                   pk_column)
+#         return [where]
+
+#     def build_condition_field_in_list(self, field, list_value):
+#         column = self.get_column(field)
+#         if None in list_value:
+#             list_value.remove(None)
+#             where = '[{0}] IS NULL OR [{0}] IN {1}'.format(column,
+#                 self.get_column_value(list_value))
+#         else:
+#             where = '[{0}] IN {1}'.format(column,
+#                 self.get_column_value(list_value))
+#         return [where]
+
+#     sql_operators = {
+#         '==': 'IS',
+#         '!=': 'IS NOT',
+#         'ilike': 'LIKE',
+#     }    
     
-    def build_condition_field_op_field(self, left_field, operator_str, right_field):
-        if operator_str == 'ilike':
-            field_pattern = 'UPPER([%s])'
-        else:
-            field_pattern = '[%s]'
-        sql_operator = self.sql_operators.get(operator_str, operator_str)
-        where = '%s %s %s' % (field_pattern % self.get_column(left_field),
-                              sql_operator,
-                              field_pattern % self.get_column(right_field))
-        return [where]
+#     no_list_operator = {'>', '<', '>=', '<=', 'like', 'ilike'}
     
-    def build_condition_field_op_value(self, field, operator_str, value):
-        if isinstance(value, list):
-            if operator_str in self.no_list_operator:
-                raise ValueError('operator %s cannot be used with value of list type' % operator_str)
-            value = self.engine.list_hash(value)
-        if operator_str == 'ilike':
-            field_pattern = 'UPPER([%s])'
-            if isinstance(value, six.string_types):
-                value = value.upper()
-        else:
-            field_pattern = '[%s]'
-        sql_operator = self.sql_operators.get(operator_str, operator_str)
-        where = '%s %s %s' % (field_pattern % self.get_column(field),
-                              sql_operator,
-                              self.get_column_value(value))
-        return [where]
+#     def build_condition_field_op_field(self, left_field, operator_str, right_field):
+#         if operator_str == 'ilike':
+#             field_pattern = 'UPPER([%s])'
+#         else:
+#             field_pattern = '[%s]'
+#         sql_operator = self.sql_operators.get(operator_str, operator_str)
+#         where = '%s %s %s' % (field_pattern % self.get_column(left_field),
+#                               sql_operator,
+#                               field_pattern % self.get_column(right_field))
+#         return [where]
+    
+#     def build_condition_field_op_value(self, field, operator_str, value):
+#         if isinstance(value, list):
+#             if operator_str in self.no_list_operator:
+#                 raise ValueError('operator %s cannot be used with value of list type' % operator_str)
+#             value = self.engine.list_hash(value)
+#         if operator_str == 'ilike':
+#             field_pattern = 'UPPER([%s])'
+#             if isinstance(value, six.string_types):
+#                 value = value.upper()
+#         else:
+#             field_pattern = '[%s]'
+#         sql_operator = self.sql_operators.get(operator_str, operator_str)
+#         where = '%s %s %s' % (field_pattern % self.get_column(field),
+#                               sql_operator,
+#                               self.get_column_value(value))
+#         return [where]
 
     
-    def build_condition_value_op_field(self, value, operator_str, field):
-        if isinstance(value, list):
-            if operator_str in self.no_list_operator:
-                raise ValueError('operator %s cannot be used with value of list type' % operator_str)
-            value = self.list_hash(value)
-        if operator_str == 'ilike':
-            field_pattern = 'UPPER([%s])'
-            if isinstance(value, six.string_types):
-                value = value.upper()
-        else:
-            field_pattern = '[%s]'
-        sql_operator = self.sql_operators.get(operator_str, operator_str)
-        where = '%s %s %s' % (self.get_column_value(value),
-                              sql_operator,
-                              field_pattern % self.get_column(field))
-        return [where]
+#     def build_condition_value_op_field(self, value, operator_str, field):
+#         if isinstance(value, list):
+#             if operator_str in self.no_list_operator:
+#                 raise ValueError('operator %s cannot be used with value of list type' % operator_str)
+#             value = self.list_hash(value)
+#         if operator_str == 'ilike':
+#             field_pattern = 'UPPER([%s])'
+#             if isinstance(value, six.string_types):
+#                 value = value.upper()
+#         else:
+#             field_pattern = '[%s]'
+#         sql_operator = self.sql_operators.get(operator_str, operator_str)
+#         where = '%s %s %s' % (self.get_column_value(value),
+#                               sql_operator,
+#                               field_pattern % self.get_column(field))
+#         return [where]
 
-    def build_condition_negation(self, condition):
-        if condition is None:
-            return ['0']
-        return ['NOT', '(' ] + condition + [')']
+#     def build_condition_negation(self, condition):
+#         if condition is None:
+#             return ['0']
+#         return ['NOT', '(' ] + condition + [')']
     
-    def build_condition_combine_conditions(self, left_condition, operator_str, right_condition):
-        return ['('] + left_condition + [')', operator_str, '('] + right_condition + [')']
+#     def build_condition_combine_conditions(self, left_condition, operator_str, right_condition):
+#         return ['('] + left_condition + [')', operator_str, '('] + right_condition + [')']
