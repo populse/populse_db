@@ -290,8 +290,13 @@ class SQLiteCollection:
         document_id = self.document_id(document_id)
         #TODO can be optimized
         document = self[document_id]
-        document.update(partial_document)
-        document[document_id] = document
+        if document is None:
+            raise ValueError(f'Collection {self.name} have no document with key {document_id}')
+        for field, value in partial_document.items():
+            if field in self.primary_key and value != document[field]:
+                raise ValueError(f'cannot change the value of the key field {field}')
+            document[field] = value
+        self[document_id] = document
     
     def has_document(self, document_id):
         document_id = self.document_id(document_id)

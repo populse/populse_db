@@ -325,88 +325,6 @@ def create_test_case(**database_creation_parameters):
                 # Testing with a collection not existing
                 self.assertEqual(list(session.get_fields("collection_not_existing")), [])
 
-        def test_set_value(self):
-
-            database = self.create_database()
-            with database as session:
-
-                # Adding a collection
-                session.add_collection("collection1", "name")
-
-                # Adding a document
-                document = {}
-                document["name"] = "document1"
-                session.add_document("collection1", document)
-
-                # Adding fields
-                session.add_field("collection1", "PatientName", str,
-                                  "Name of the patient")
-                session.add_field(
-                    "collection1", "Bits per voxel", int, None)
-                session.add_field(
-                    "collection1", "bits per voxel", int, None)
-                session.add_field(
-                    "collection1", "AcquisitionDate", datetime, None)
-                session.add_field(
-                    "collection1", "AcquisitionTime", time, None)
-
-                # Adding values and setting them
-                session.add_value("collection1", "document1", "PatientName", "test", "test")
-                session.set_value("collection1", "document1", "PatientName", "test2")
-
-                session.add_value("collection1", "document1", "Bits per voxel", 1, 1)
-                session.set_value("collection1", "document1", "Bits per voxel", 2)
-                session.set_value("collection1", "document1", "bits per voxel", 42)
-
-                date = datetime(2014, 2, 11, 8, 5, 7)
-                session.add_value("collection1", "document1", "AcquisitionDate", date, date)
-                self.assertEqual(session.get_value("collection1", "document1", "AcquisitionDate"), date)
-                date = datetime(2015, 2, 11, 8, 5, 7)
-                session.set_value("collection1", "document1", "AcquisitionDate", date)
-
-                time = datetime(2014, 2, 11, 0, 2, 20).time()
-                session.add_value("collection1", "document1", "AcquisitionTime", time, time)
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "AcquisitionTime"), time)
-                time = datetime(2014, 2, 11, 15, 24, 20).time()
-                session.set_value("collection1", "document1", "AcquisitionTime", time)
-
-                # Testing that the values are actually set
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "PatientName"), "test2")
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "Bits per voxel"), 2)
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "bits per voxel"), 42)
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "AcquisitionDate"), date)
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "AcquisitionTime"), time)
-                session.set_value("collection1", "document1", "PatientName", None)
-                self.assertIsNone(session.get_value("collection1", "document1", "PatientName"))
-
-                # Testing when the value is not existing
-                self.assertRaises(ValueError, lambda : session.set_value("collection_not_existing", "document3", "PatientName", None))
-                self.assertRaises(ValueError, lambda : session.set_value("collection1", "document3", "PatientName", None))
-                self.assertRaises(ValueError, lambda : session.set_value("collection1", "document1", "NotExisting", None))
-                self.assertRaises(ValueError, lambda : session.set_value("collection1", "document3", "NotExisting", None))
-
-                # Testing with wrong types
-                self.assertRaises(ValueError, lambda : session.set_value("collection1", "document1", "Bits per voxel", "test"))
-                self.assertEqual(session.get_value("collection1",
-                                                   "document1", "Bits per voxel"), 2)
-                self.assertRaises(ValueError, lambda : session.set_value("collection1", "document1", "Bits per voxel", 35.8))
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "Bits per voxel"), 2)
-
-                # Testing with wrong parameters
-                self.assertRaises(ValueError, lambda : session.set_value(False, "document1", "Bits per voxel", 35))
-                self.assertRaises(ValueError, lambda : session.set_value("collection1", 1, "Bits per voxel", "2"))
-                self.assertRaises(ValueError, lambda : session.set_value("collection1", "document1", None, "1"))
-                self.assertRaises(ValueError, lambda : session.set_value("collection1", 1, None, True))
-
-                # Testing that setting a primary key value is impossible
-                self.assertRaises(ValueError, lambda : session.set_value("collection1", "document1", "name", None))
 
         def test_set_values(self):
             """
@@ -425,29 +343,34 @@ def create_test_case(**database_creation_parameters):
                 session.add_field("collection1", "BandWidth", float)
 
                 # Adding documents
-                session.add_document("collection1", "document1")
-                session.add_document("collection1", "document2")
+                session["collection1"]["document1"] = {
+                    "SequenceName": "Flash",
+                    "PatientName": "Guerbet",
+                    "BandWidth": 50000,
+                }
+                session["collection1"]["document2"] = {}
 
                 # Adding values
-                session.add_value("collection1", "document1", "SequenceName", "Flash")
-                session.add_value("collection1", "document1", "PatientName", "Guerbet")
-                session.add_value("collection1", "document1", "BandWidth", 50000)
-                self.assertEqual(session.get_value("collection1", "document1", "SequenceName"), "Flash")
-                self.assertEqual(session.get_value("collection1", "document1", "PatientName"), "Guerbet")
-                self.assertEqual(session.get_value("collection1", "document1", "BandWidth"), 50000)
+                document1 = session["collection1"]["document1"]
+                self.assertEqual(document1["SequenceName"], "Flash")
+                self.assertEqual(document1["PatientName"], "Guerbet")
+                self.assertEqual(document1["BandWidth"], 50000)
 
                 # Setting all values
                 values = {}
                 values["PatientName"] = "Patient"
                 values["BandWidth"] = 25000
                 session.set_values("collection1", "document1", values)
-                self.assertEqual(session.get_value("collection1", "document1", "PatientName"), "Patient")
-                self.assertEqual(session.get_value("collection1", "document1", "BandWidth"), 25000)
+                document1 = session["collection1"]["document1"]
+                self.assertEqual(document1["SequenceName"], "Flash")
+                self.assertEqual(document1["PatientName"], "Patient")
+                self.assertEqual(document1["BandWidth"], 25000)
 
                 # Testing that the primary_key cannot be set
-                values = {}
-                values["index"] = "document3"
-                values["BandWidth"] = 25000
+                values = {
+                    "primary_key" :"document3",
+                    "BandWidth": 25000
+                }
                 self.assertRaises(ValueError, lambda : session.set_values("collection1", "document1", values))
 
                 # Trying with the field not existing
@@ -455,13 +378,13 @@ def create_test_case(**database_creation_parameters):
                 values["PatientName"] = "Patient"
                 values["BandWidth"] = 25000
                 values["Field_not_existing"] = "value"
-                self.assertRaises(ValueError, lambda : session.set_values("collection1", "document1", values))
+                session.set_values("collection1", "document1", values)
 
                 # Trying with invalid values
                 values = {}
                 values["PatientName"] = 50
                 values["BandWidth"] = 25000
-                self.assertRaises(ValueError, lambda : session.set_values("collection1", "document1", values))
+                session.set_values("collection1", "document1", values)
                 self.assertRaises(Exception, lambda: session.set_values("collection1", "document1", True))
 
                 # Trying with the collection not existing
@@ -479,14 +402,12 @@ def create_test_case(**database_creation_parameters):
                 # Testing with list values
                 session.add_field("collection1", "list1", list[str])
                 session.add_field("collection1", "list2", list[int])
-                session.add_value("collection1", "document1", "list1", ["a", "b", "c"])
-                session.add_value("collection1", "document1", "list2", [1, 2, 3])
                 values = {}
                 values["list1"] = ["a", "a", "a"]
                 values["list2"] = [1, 1, 1]
                 session.set_values("collection1", "document1", values)
-                self.assertEqual(session.get_value("collection1", "document1", "list1"), ["a", "a", "a"])
-                self.assertEqual(session.get_value("collection1", "document1", "list2"), [1, 1, 1])
+                self.assertEqual(session["collection1"]["document1"]["list1"], ["a", "a", "a"])
+                self.assertEqual(session["collection1"]["document1"]["list2"], [1, 1, 1])
 
         def test_get_field_names(self):
             """
