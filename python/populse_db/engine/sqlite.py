@@ -156,24 +156,24 @@ def json_decode(value):
 class SQLiteCollection:
     _column_encodings = {
         datetime: (
-            lambda d: d.isoformat(),
-            lambda s: dateutil.parser.parse(s)
+            lambda d: (None if d is None else d.isoformat()),
+            lambda s: (None if s is None else dateutil.parser.parse(s)),
         ),
         date: (
-            lambda d: d.isoformat(),
-            lambda s: dateutil.parser.parse(s).date()
+            lambda d: (None if d is None else d.isoformat()),
+            lambda s: (None if s is None else dateutil.parser.parse(s).date()),
         ),
         time: (
-            lambda d: d.isoformat(),
-            lambda s: dateutil.parser.parse(s).time()
+            lambda d: (None if d is None else d.isoformat()),
+            lambda s: (None if s is None else dateutil.parser.parse(s).time()),
         ),
         list: (
-            lambda l: json_dumps(l),
-            lambda l: json.loads(l),
+            lambda l: (None if l is None else json_dumps(l)),
+            lambda l: (None if l is None else json.loads(l)),
         ),
         dict: (
-            lambda d: json_dumps(d),
-            lambda d: json.loads(d),
+            lambda d: (None if d is None else json_dumps(d)),
+            lambda d: (None if d is None else json.loads(d)),
         ),
     }
 
@@ -343,7 +343,7 @@ class SQLiteCollection:
             else:
                 yield document
       
-    def document(self, document_id, fields, as_list):
+    def document(self, document_id, fields=None, as_list=False):
         document_id = self.document_id(document_id)
         where = f'{" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
         return next(self._documents(fields, as_list, where, document_id))

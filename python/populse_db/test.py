@@ -636,77 +636,41 @@ def create_test_case(**database_creation_parameters):
                 session.add_field("collection1", "Boolean", bool, None)
                 session.add_field("collection1", "Boolean list", list[bool], None)
 
+
                 # Adding values
-                session.add_value("collection1", "document1", "PatientName", "test")
-                session.add_value("collection1", "document2", "BandWidth", 35.5)
-                session.add_value("collection1", "document1", "Bits per voxel", 1)
-                session.add_value(
-                    "collection1", "document1", "Dataset dimensions", [3, 28, 28, 3])
-                session.add_value("collection1", "document2", "Grids spacing", [
-                    0.234375, 0.234375, 0.4])
-                session.add_value("collection1", "document1", "Boolean", True)
+                collection1 = session["collection1"]
 
-                # Testing when the cell is not existing
-                self.assertRaises(ValueError, lambda : session.add_value("collection_not_existing", "document1", "PatientName", "test"))
-                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document1", "NotExisting", "none"))
-                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document3", "SequenceName", "none"))
-                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document3", "NotExisting", "none"))
+                document1 = collection1["document1"]
+                document1["PatientName"] = "test"
+                document1["Bits per voxel"] = 1
+                document1["Dataset dimensions"] = [3, 28, 28, 3]
+                document1["Boolean"] = True
+                d = datetime(2014, 2, 11, 8, 5, 7)
+                document1["AcquisitionDate"] = d
+                t = datetime(2014, 2, 11, 0, 2, 2).time()
+                document1["AcquisitionTime"] = t
+                document1["BandWidth"] = 45
+                collection1["document1"] = document1
 
-                self.assertIsNone(session.add_value("collection1", "document1", "BandWidth", 45))
+                document2 = collection1["document2"]
+                document2["Grids spacing"] = [0.234375, 0.234375, 0.4]
+                document2["BandWidth"] = 35.5
+                collection1["document2"] = document2
 
-                date = datetime(2014, 2, 11, 8, 5, 7)
-                session.add_value("collection1", "document1", "AcquisitionDate", date)
-                time = datetime(2014, 2, 11, 0, 2, 2).time()
-                session.add_value("collection1", "document1", "AcquisitionTime", time)
 
                 # Testing that the values are actually added
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "PatientName"), "test")
-                self.assertEqual(session.get_value(
-                    "collection1", "document2", "BandWidth"), 35.5)
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "Bits per voxel"), 1)
-                self.assertEqual(session.get_value("collection1", "document1", "BandWidth"), 45)
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "AcquisitionDate"), date)
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "AcquisitionTime"), time)
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "Dataset dimensions"), [3, 28, 28, 3])
-                self.assertEqual(session.get_value(
-                    "collection1", "document2", "Grids spacing"), [0.234375, 0.234375, 0.4])
-                self.assertEqual(session.get_value("collection1", "document1", "Boolean"), True)
+                document1 = session["collection1"]["document1"]
+                document2 = session["collection1"]["document2"]
+                self.assertEqual(document1["PatientName"], "test")
+                self.assertEqual(document2["BandWidth"], 35.5)
+                self.assertEqual(document1["Bits per voxel"], 1)
+                self.assertEqual(document1["BandWidth"], 45)
+                self.assertEqual(document1["AcquisitionDate"], d)
+                self.assertEqual(document1["AcquisitionTime"], t)
+                self.assertEqual(document1["Dataset dimensions"], [3, 28, 28, 3])
+                self.assertEqual(document2["Grids spacing"], [0.234375, 0.234375, 0.4])
+                self.assertEqual(document1["Boolean"], True)
 
-                # Test value override
-                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document1", "PatientName", "test2", "test2"))
-
-                value = session.get_value("collection1", "document1", "PatientName")
-                self.assertEqual(value, "test")
-
-                # Testing with wrong types
-                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document2", "Bits per voxel",
-                                      "space_field", "space_field"))
-
-                self.assertIsNone(session.get_value(
-                    "collection1", "document2", "Bits per voxel"))
-                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document2", "Bits per voxel", 35.5))
-
-                self.assertIsNone(session.get_value(
-                    "collection1", "document2", "Bits per voxel"))
-                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document1", "BandWidth", "test", "test"))
-
-                self.assertEqual(session.get_value("collection1", "document1", "BandWidth"), 45)
-
-                # Testing with wrong parameters
-                self.assertRaises(ValueError, lambda : session.add_value(5, "document1", "Grids spacing", "2", "2"))
-                self.assertRaises(ValueError, lambda : session.add_value("collection1", 1, "Grids spacing", "2", "2"))
-                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document1", None, "1", "1"))
-                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document1", "PatientName", None, None))
-
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "PatientName"), "test")
-                self.assertRaises(ValueError, lambda : session.add_value("collection1", 1, None, True))
-                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document2", "Boolean", "boolean"))
 
         def test_get_document(self):
             """
