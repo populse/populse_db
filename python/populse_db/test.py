@@ -1017,25 +1017,26 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
                 session.add_collection("collection2", "FileName")
 
-                session.add_document("collection1", "document1")
-                session.add_document("collection1", "document2")
-                session.add_document("collection2", "document3")
-                session.add_document("collection2", "document4")
+                session["collection1"]["document1"] = {}
+                session["collection1"]["document2"] = {}
+                session["collection2"]["document3"] = {}
+                session["collection2"]["document4"] = {}
 
-                documents1 = session.get_documents_names("collection1")
+                documents1 = list(session.get_documents_ids("collection1"))
                 self.assertEqual(len(documents1), 2)
-                self.assertTrue("document1" in documents1)
-                self.assertTrue("document2" in documents1)
+                print('!!!', documents1)
+                self.assertTrue(["document1"] in documents1)
+                self.assertTrue(["document2"] in documents1)
 
-                documents2 = session.get_documents_names("collection2")
+                documents2 = list(session.get_documents_ids("collection2"))
                 self.assertEqual(len(documents2), 2)
-                self.assertTrue("document3" in documents2)
-                self.assertTrue("document4" in documents2)
+                self.assertTrue(["document3"] in documents2)
+                self.assertTrue(["document4"] in documents2)
 
                 # Testing with a collection not existing
-                self.assertEqual(session.get_documents_names("collection_not_existing"), [])
-                self.assertEqual(session.get_documents_names("collection"), [])
-                self.assertEqual(session.get_documents_names(None), [])
+                self.assertEqual(list(session.get_documents_ids("collection_not_existing")), [])
+                self.assertEqual(list(session.get_documents_ids("collection")), [])
+                self.assertEqual(list(session.get_documents_ids(None)), [])
 
         def test_remove_value(self):
             """

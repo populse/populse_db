@@ -326,8 +326,11 @@ class DatabaseSession:
 
         :return: generator
         """
-        c = self[collection]
-        return (i for i in c.documents(fields=tuple(c.primary_key), as_list=True))
+        try:
+            c = self[collection]
+        except ValueError:
+            return
+        yield from (i for i in c.documents(fields=tuple(c.primary_key), as_list=True))
      
 
     def get_documents(self, collection, fields=None, as_list=False,
