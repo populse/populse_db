@@ -1,20 +1,17 @@
-import datetime
+from datetime import datetime, date, time
 import os
 import shutil
 import tempfile
 import unittest
 
 from populse_db import Database
-from populse_db.database import FIELD_TYPE_STRING, FIELD_TYPE_FLOAT, FIELD_TYPE_TIME, FIELD_TYPE_DATETIME, \
-    FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_BOOLEAN, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_INTEGER, FIELD_TYPE_LIST_DATE, \
-    FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_FLOAT, DatabaseSession, \
-    FIELD_TYPE_JSON, FIELD_TYPE_LIST_JSON
+from populse_db.database import DatabaseSession
 from populse_db.filter import literal_parser, FilterToSQL
 
 
 class TestsSQLiteInMemory(unittest.TestCase):
     def test_add_get_document(self):
-        now = datetime.datetime.now()
+        now = datetime.now()
         db = Database('sqlite://:memory:')
         with db as dbs:
             dbs.add_collection('test', 'index')
@@ -114,54 +111,55 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Testing with a first field
-                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
-                                  "Name of the patient")
+                session.add_field("collection1", "PatientName", str,
+                                  description="Name of the patient")
 
                 # Checking the field properties
                 field = session.get_field("collection1", "PatientName")
-                self.assertEqual(field.field_name, "PatientName")
-                self.assertEqual(field.field_type, FIELD_TYPE_STRING)
-                self.assertEqual(field.description, "Name of the patient")
-                self.assertEqual(field.collection_name, "collection1")
+                self.assertEqual(field["name"], "PatientName")
+                self.assertEqual(field["type"],str)
+                self.assertEqual(field["description"], "Name of the patient")
+                self.assertEqual(field["collection"], "collection1")
 
                 # Testing with a field that already exists
-                self.assertRaises(ValueError, lambda : session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
+                self.assertRaises(Exception, lambda : session.add_field("collection1", "PatientName", str,
                                       "Name of the patient"))
 
                 # Testing with several field types
-                session.add_field("collection1", "BandWidth", FIELD_TYPE_FLOAT, None)
-                session.add_field("collection1", "AcquisitionTime", FIELD_TYPE_TIME, None)
-                session.add_field("collection1", "AcquisitionDate", FIELD_TYPE_DATETIME, None)
-                session.add_field("collection1", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER,
+                session.add_field("collection1", "BandWidth", float, None)
+                session.add_field("collection1", "AcquisitionTime", time, None)
+                session.add_field("collection1", "AcquisitionDate", datetime, None)
+                session.add_field("collection1", "Dataset dimensions", list[int],
                                   None)
-                session.add_field("collection1", "Boolean", FIELD_TYPE_BOOLEAN, None)
-                session.add_field("collection1", "Boolean list", FIELD_TYPE_LIST_BOOLEAN, None)
+                session.add_field("collection1", "Boolean", bool, None)
+                session.add_field("collection1", "Boolean list", list[bool], None)
 
                 # Testing with close field names
-                session.add_field("collection1", "Bits per voxel", FIELD_TYPE_INTEGER, "with space")
-                session.add_field("collection1", "Bitspervoxel", FIELD_TYPE_INTEGER,
+                session.add_field("collection1", "Bits per voxel", int, "with space")
+                session.add_field("collection1", "Bitspervoxel", int,
                                   "without space")
-                session.add_field("collection1", "bitspervoxel", FIELD_TYPE_INTEGER,
-                                  "lower case")
+                with self.assertRaises(Exception):
+                    session.add_field("collection1", "bitspervoxel", int,
+                                    "lower case")
                 self.assertEqual(session.get_field(
-                    "collection1", "Bitspervoxel").description, "without space")
+                    "collection1", "Bitspervoxel")["description"], "without space")
                 self.assertEqual(session.get_field(
-                    "collection1", "Bits per voxel").description, "with space")
-                self.assertEqual(session.get_field(
-                    "collection1", "bitspervoxel").description, "lower case")
+                    "collection1", "Bits per voxel")["description"], "with space")
+                with self.assertRaises(Exception):
+                    self.assertEqual(session.get_field(
+                        "collection1", "bitspervoxel")["description"], "lower case")
 
                 # Testing with wrong parameters
-                self.assertRaises(ValueError, lambda : session.add_field("collection_not_existing", "Field", FIELD_TYPE_LIST_INTEGER,
+                self.assertRaises(ValueError, lambda : session.add_field("collection_not_existing", "Field", list[int],
                                       None))
-                self.assertRaises(ValueError, lambda : session.add_field(True, "Field", FIELD_TYPE_LIST_INTEGER, None))
-                self.assertRaises(ValueError, lambda : session.add_field("collection1", None, FIELD_TYPE_LIST_INTEGER, None))
-                self.assertRaises(ValueError, lambda : session.add_field("collection1", "Patient Name", None, None))
-                self.assertRaises(ValueError, lambda : session.add_field("collection1", "Patient Name", FIELD_TYPE_STRING, 1.5))
+                self.assertRaises(ValueError, lambda : session.add_field(True, "Field", list[int], None))
+                self.assertRaises(Exception, lambda : session.add_field("collection1", "Patient Name", None, None))
 
                 # Testing that the document primary key field is taken
-                self.assertRaises(ValueError, lambda : session.add_field("collection1", "name", FIELD_TYPE_STRING, None))
+                self.assertRaises(Exception, lambda : session.add_field("collection1", "name", str, None))
 
-                # TODO Testing column creation
+                with self.assertRaises(Exception):
+                    session.remove_field("collection", "name")
 
         def test_add_fields(self):
             """
@@ -176,8 +174,8 @@ def create_test_case(**database_creation_parameters):
 
                 # Adding several fields
                 fields = []
-                fields.append(["collection1", "First name", FIELD_TYPE_STRING, ""])
-                fields.append(["collection1", "Last name", FIELD_TYPE_STRING, ""])
+                fields.append(["collection1", "First name", str, ""])
+                fields.append(["collection1", "Last name", str, ""])
                 session.add_fields(fields)
                 collection_fields = session.get_fields_names("collection1")
                 self.assertEqual(len(collection_fields), 3)
@@ -187,8 +185,8 @@ def create_test_case(**database_creation_parameters):
 
                 # Trying with invalid dictionary
                 fields = []
-                fields.append(["collection1", "Age", FIELD_TYPE_STRING, ""])
-                fields.append(["collection1", "Gender", FIELD_TYPE_STRING])
+                fields.append(["collection1", "Age", str, ""])
+                fields.append(["collection1", "Gender", str])
                 self.assertRaises(ValueError, lambda : session.add_fields(fields))
                 fields = []
                 fields.append("Field")
@@ -207,10 +205,10 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("current", "name")
 
                 # Adding fields
-                session.add_field("current", "PatientName", FIELD_TYPE_STRING,
+                session.add_field("current", "PatientName", str,
                                   "Name of the patient")
-                session.add_field("current", "SequenceName", FIELD_TYPE_STRING, None)
-                session.add_field("current", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
+                session.add_field("current", "SequenceName", str, None)
+                session.add_field("current", "Dataset dimensions", list[int], None)
 
                 # Adding documents
                 document = {}
@@ -245,10 +243,10 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(session.get_field("current", "SequenceName"))
 
                 # Adding fields again
-                session.add_field("current", "PatientName", FIELD_TYPE_STRING,
+                session.add_field("current", "PatientName", str,
                                   "Name of the patient")
-                session.add_field("current", "SequenceName", FIELD_TYPE_STRING, None)
-                session.add_field("current", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER, None)
+                session.add_field("current", "SequenceName", str, None)
+                session.add_field("current", "Dataset dimensions", list[int], None)
 
                 # Testing with list of fields
                 session.remove_field("current", ["SequenceName", "PatientName"])
@@ -267,8 +265,8 @@ def create_test_case(**database_creation_parameters):
                 self.assertRaises(Exception, lambda : session.remove_field("current", None))
 
                 # Removing list of fields with list type
-                session.add_field("current", "list1", FIELD_TYPE_LIST_INTEGER, None)
-                session.add_field("current", "list2", FIELD_TYPE_LIST_STRING, None)
+                session.add_field("current", "list1", list[int], None)
+                session.add_field("current", "list2", list[str], None)
                 session.remove_field("current", ["list1", "list2"])
                 self.assertIsNone(session.get_field("current", "list1"))
                 self.assertIsNone(session.get_field("current", "list2"))
@@ -286,7 +284,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding a field
-                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", str,
                                   "Name of the patient")
 
                 # Testing that the field is returned if it exists
@@ -312,13 +310,13 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding a field
-                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", str,
                                   "Name of the patient")
 
                 fields = session.get_fields("collection1")
                 self.assertEqual(len(fields), 2)
 
-                session.add_field("collection1", "SequenceName", FIELD_TYPE_STRING,
+                session.add_field("collection1", "SequenceName", str,
                                   "Name of the patient")
 
                 fields = session.get_fields("collection1")
@@ -347,16 +345,16 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding fields
-                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", str,
                                   "Name of the patient")
                 session.add_field(
-                    "collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
+                    "collection1", "Bits per voxel", int, None)
                 session.add_field(
-                    "collection1", "bits per voxel", FIELD_TYPE_INTEGER, None)
+                    "collection1", "bits per voxel", int, None)
                 session.add_field(
-                    "collection1", "AcquisitionDate", FIELD_TYPE_DATETIME, None)
+                    "collection1", "AcquisitionDate", datetime, None)
                 session.add_field(
-                    "collection1", "AcquisitionTime", FIELD_TYPE_TIME, None)
+                    "collection1", "AcquisitionTime", time, None)
 
                 # Adding values and setting them
                 session.add_value("collection1", "document1", "PatientName", "test", "test")
@@ -366,17 +364,17 @@ def create_test_case(**database_creation_parameters):
                 session.set_value("collection1", "document1", "Bits per voxel", 2)
                 session.set_value("collection1", "document1", "bits per voxel", 42)
 
-                date = datetime.datetime(2014, 2, 11, 8, 5, 7)
+                date = datetime(2014, 2, 11, 8, 5, 7)
                 session.add_value("collection1", "document1", "AcquisitionDate", date, date)
                 self.assertEqual(session.get_value("collection1", "document1", "AcquisitionDate"), date)
-                date = datetime.datetime(2015, 2, 11, 8, 5, 7)
+                date = datetime(2015, 2, 11, 8, 5, 7)
                 session.set_value("collection1", "document1", "AcquisitionDate", date)
 
-                time = datetime.datetime(2014, 2, 11, 0, 2, 20).time()
+                time = datetime(2014, 2, 11, 0, 2, 20).time()
                 session.add_value("collection1", "document1", "AcquisitionTime", time, time)
                 self.assertEqual(session.get_value(
                     "collection1", "document1", "AcquisitionTime"), time)
-                time = datetime.datetime(2014, 2, 11, 15, 24, 20).time()
+                time = datetime(2014, 2, 11, 15, 24, 20).time()
                 session.set_value("collection1", "document1", "AcquisitionTime", time)
 
                 # Testing that the values are actually set
@@ -428,9 +426,9 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1")
 
                 # Adding fields
-                session.add_field("collection1", "SequenceName", FIELD_TYPE_STRING)
-                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING)
-                session.add_field("collection1", "BandWidth", FIELD_TYPE_FLOAT)
+                session.add_field("collection1", "SequenceName", str)
+                session.add_field("collection1", "PatientName", str)
+                session.add_field("collection1", "BandWidth", float)
 
                 # Adding documents
                 session.add_document("collection1", "document1")
@@ -485,8 +483,8 @@ def create_test_case(**database_creation_parameters):
                 self.assertRaises(ValueError, lambda : session.set_values("collection1", "document_not_existing", values))
 
                 # Testing with list values
-                session.add_field("collection1", "list1", FIELD_TYPE_LIST_STRING)
-                session.add_field("collection1", "list2", FIELD_TYPE_LIST_INTEGER)
+                session.add_field("collection1", "list1", list[str])
+                session.add_field("collection1", "list2", list[int])
                 session.add_value("collection1", "document1", "list1", ["a", "b", "c"])
                 session.add_value("collection1", "document1", "list2", [1, 2, 3])
                 values = {}
@@ -507,7 +505,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding a field
-                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", str,
                                   "Name of the patient")
 
                 fields = session.get_fields_names("collection1")
@@ -515,7 +513,7 @@ def create_test_case(**database_creation_parameters):
                 self.assertTrue("name" in fields)
                 self.assertTrue("PatientName" in fields)
 
-                session.add_field("collection1", "SequenceName", FIELD_TYPE_STRING,
+                session.add_field("collection1", "SequenceName", str,
                                   "Name of the patient")
 
                 fields = session.get_fields_names("collection1")
@@ -552,12 +550,12 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding fields
-                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", str,
                                   "Name of the patient")
-                session.add_field("collection1", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER,
+                session.add_field("collection1", "Dataset dimensions", list[int],
                                   None)
-                session.add_field("collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
-                session.add_field("collection1", "Grids spacing", FIELD_TYPE_LIST_FLOAT, None)
+                session.add_field("collection1", "Bits per voxel", int, None)
+                session.add_field("collection1", "Grids spacing", list[float], None)
 
                 # Adding values
                 session.add_value("collection1", "document1", "PatientName", "test")
@@ -597,24 +595,24 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                self.assertTrue(DatabaseSession.check_value_type("string", FIELD_TYPE_STRING))
-                self.assertFalse(DatabaseSession.check_value_type(1, FIELD_TYPE_STRING))
-                self.assertTrue(DatabaseSession.check_value_type(None, FIELD_TYPE_STRING))
-                self.assertTrue(DatabaseSession.check_value_type(1, FIELD_TYPE_INTEGER))
-                self.assertTrue(DatabaseSession.check_value_type(1, FIELD_TYPE_FLOAT))
-                self.assertTrue(DatabaseSession.check_value_type(1.5, FIELD_TYPE_FLOAT))
+                self.assertTrue(DatabaseSession.check_value_type("string", str))
+                self.assertFalse(DatabaseSession.check_value_type(1, str))
+                self.assertTrue(DatabaseSession.check_value_type(None, str))
+                self.assertTrue(DatabaseSession.check_value_type(1, int))
+                self.assertTrue(DatabaseSession.check_value_type(1, float))
+                self.assertTrue(DatabaseSession.check_value_type(1.5, float))
                 self.assertFalse(DatabaseSession.check_value_type(None, None))
-                self.assertTrue(DatabaseSession.check_value_type([1.5], FIELD_TYPE_LIST_FLOAT))
-                self.assertFalse(DatabaseSession.check_value_type(1.5, FIELD_TYPE_LIST_FLOAT))
-                self.assertFalse(DatabaseSession.check_value_type([1.5, "test"], FIELD_TYPE_LIST_FLOAT))
+                self.assertTrue(DatabaseSession.check_value_type([1.5], list[float]))
+                self.assertFalse(DatabaseSession.check_value_type(1.5, list[float]))
+                self.assertFalse(DatabaseSession.check_value_type([1.5, "test"], list[float]))
                 value = {}
                 value["test1"] = 1
                 value["test2"] = 2
-                self.assertTrue(DatabaseSession.check_value_type(value, FIELD_TYPE_JSON))
+                self.assertTrue(DatabaseSession.check_value_type(value, dict))
                 value2 = {}
                 value2["test3"] = 1
                 value2["test4"] = 2
-                self.assertTrue(DatabaseSession.check_value_type([value, value2], FIELD_TYPE_LIST_JSON))
+                self.assertTrue(DatabaseSession.check_value_type([value, value2], list[dict]))
 
         def test_add_value(self):
             """
@@ -636,18 +634,18 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding fields
-                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", str,
                                   "Name of the patient")
                 session.add_field(
-                    "collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
-                session.add_field("collection1", "BandWidth", FIELD_TYPE_FLOAT, None)
-                session.add_field("collection1", "AcquisitionTime", FIELD_TYPE_TIME, None)
-                session.add_field("collection1", "AcquisitionDate", FIELD_TYPE_DATETIME, None)
-                session.add_field("collection1", "Dataset dimensions", FIELD_TYPE_LIST_INTEGER,
+                    "collection1", "Bits per voxel", int, None)
+                session.add_field("collection1", "BandWidth", float, None)
+                session.add_field("collection1", "AcquisitionTime", time, None)
+                session.add_field("collection1", "AcquisitionDate", datetime, None)
+                session.add_field("collection1", "Dataset dimensions", list[int],
                                   None)
-                session.add_field("collection1", "Grids spacing", FIELD_TYPE_LIST_FLOAT, None)
-                session.add_field("collection1", "Boolean", FIELD_TYPE_BOOLEAN, None)
-                session.add_field("collection1", "Boolean list", FIELD_TYPE_LIST_BOOLEAN, None)
+                session.add_field("collection1", "Grids spacing", list[float], None)
+                session.add_field("collection1", "Boolean", bool, None)
+                session.add_field("collection1", "Boolean list", list[bool], None)
 
                 # Adding values
                 session.add_value("collection1", "document1", "PatientName", "test")
@@ -667,9 +665,9 @@ def create_test_case(**database_creation_parameters):
 
                 self.assertIsNone(session.add_value("collection1", "document1", "BandWidth", 45))
 
-                date = datetime.datetime(2014, 2, 11, 8, 5, 7)
+                date = datetime(2014, 2, 11, 8, 5, 7)
                 session.add_value("collection1", "document1", "AcquisitionDate", date)
-                time = datetime.datetime(2014, 2, 11, 0, 2, 2).time()
+                time = datetime(2014, 2, 11, 0, 2, 2).time()
                 session.add_value("collection1", "document1", "AcquisitionTime", time)
 
                 # Testing that the values are actually added
@@ -769,9 +767,9 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding a field
-                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", str,
                                   "Name of the patient")
-                session.add_field("collection1", "FOV", FIELD_TYPE_LIST_INTEGER, None)
+                session.add_field("collection1", "FOV", list[int], None)
 
                 # Adding a value
                 session.add_value("collection1", "document1", "PatientName", "test")
@@ -813,8 +811,8 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding fields
-                session.add_field("collection1", "List", FIELD_TYPE_LIST_INTEGER)
-                session.add_field("collection1", "Int", FIELD_TYPE_INTEGER)
+                session.add_field("collection1", "List", list[int])
+                session.add_field("collection1", "Int", int)
 
                 # Adding a document
                 document = {}
@@ -925,12 +923,12 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(session.get_collection("collection2"))
 
                 # Adding a field
-                session.add_field("collection1", "Field", FIELD_TYPE_STRING)
+                session.add_field("collection1", "Field", str)
                 field = session.get_field("collection1", "Field")
                 self.assertEqual(field.field_name, "Field")
                 self.assertEqual(field.collection_name, "collection1")
                 self.assertIsNone(field.description)
-                self.assertEqual(field.field_type, FIELD_TYPE_STRING)
+                self.assertEqual(field.field_type, str)
 
                 # Adding a document
                 session.add_document("collection1", "document")
@@ -1105,11 +1103,11 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", "document1")
 
                 # Adding fields
-                session.add_field("collection1", "PatientName", FIELD_TYPE_STRING,
+                session.add_field("collection1", "PatientName", str,
                                   "Name of the patient")
-                session.add_field("collection1", "Bits per voxel", FIELD_TYPE_INTEGER, None)
+                session.add_field("collection1", "Bits per voxel", int, None)
                 session.add_field("collection1", "Dataset dimensions",
-                                  FIELD_TYPE_LIST_INTEGER, None)
+                                  list[int], None)
 
                 # Adding values
                 session.add_value("collection1", "document1", "PatientName", "test")
@@ -1147,18 +1145,18 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding fields
-                session.add_field("collection1", "list_date", FIELD_TYPE_LIST_DATE, None)
-                session.add_field("collection1", "list_time", FIELD_TYPE_LIST_TIME, None)
-                session.add_field("collection1", "list_datetime", FIELD_TYPE_LIST_DATETIME, None)
+                session.add_field("collection1", "list_date", list[date], None)
+                session.add_field("collection1", "list_time", list[time], None)
+                session.add_field("collection1", "list_datetime", list[datetime], None)
 
                 document = {}
                 document["name"] = "document1"
                 session.add_document("collection1", document)
 
-                list_date = [datetime.date(2018, 5, 23), datetime.date(1899, 12, 31)]
-                list_time = [datetime.time(12, 41, 33, 540), datetime.time(1, 2, 3)]
-                list_datetime = [datetime.datetime(2018, 5, 23, 12, 41, 33, 540),
-                                 datetime.datetime(1899, 12, 31, 1, 2, 3)]
+                list_date = [date(2018, 5, 23), date(1899, 12, 31)]
+                list_time = [time(12, 41, 33, 540), time(1, 2, 3)]
+                list_datetime = [datetime(2018, 5, 23, 12, 41, 33, 540),
+                                 datetime(1899, 12, 31, 1, 2, 3)]
 
                 session.add_value("collection1", "document1", "list_date", list_date)
                 self.assertEqual(
@@ -1183,7 +1181,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding fields
-                session.add_field("collection1", "json", FIELD_TYPE_JSON)
+                session.add_field("collection1", "json", dict)
                 
                 session.add_document("collection1", doc)
                 self.assertEqual(doc, session.get_document("collection1", "the_name")._dict())
@@ -1202,7 +1200,7 @@ def create_test_case(**database_creation_parameters):
             with database as session:
 
                 session.add_collection("collection_test")
-                session.add_field("collection_test", "field_test", FIELD_TYPE_STRING, None)
+                session.add_field("collection_test", "field_test", str, None)
                 session.add_document("collection_test", "document_test")
 
                 # Checking with invalid collection
@@ -1213,21 +1211,21 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(documents, set(['document_test']))
 
         def test_filters(self):
-            list_datetime = [datetime.datetime(2018, 5, 23, 12, 41, 33, 540),
-                             datetime.datetime(1981, 5, 8, 20, 0),
-                             datetime.datetime(1899, 12, 31, 1, 2, 3)]
+            list_datetime = [datetime(2018, 5, 23, 12, 41, 33, 540),
+                             datetime(1981, 5, 8, 20, 0),
+                             datetime(1899, 12, 31, 1, 2, 3)]
 
             database = self.create_database()
             with database as session:
                 session.add_collection("collection1", "name")
 
-                session.add_field("collection1", 'format', field_type=FIELD_TYPE_STRING,
+                session.add_field("collection1", 'format', field_type=str,
                                   description=None, index=True)
-                session.add_field("collection1", 'strings', field_type=FIELD_TYPE_LIST_STRING,
+                session.add_field("collection1", 'strings', field_type=list[str],
                                   description=None)
-                session.add_field("collection1", 'datetime', field_type=FIELD_TYPE_DATETIME,
+                session.add_field("collection1", 'datetime', field_type=datetime,
                                   description=None)
-                session.add_field("collection1", 'has_format', field_type=FIELD_TYPE_BOOLEAN,
+                session.add_field("collection1", 'has_format', field_type=bool,
                                   description=None)
 
                 files = ('abc', 'bcd', 'def', 'xyz')
@@ -1799,7 +1797,7 @@ def create_test_case(**database_creation_parameters):
             database = self.create_database()
             with database as session:
                 session.add_collection("collection1", "name")
-                session.add_field("collection1", 'strings', field_type=FIELD_TYPE_LIST_STRING,
+                session.add_field("collection1", 'strings', field_type=list[str],
                                   description=None)
                 session.add_document("collection1", 'test')
                 session.add_value("collection1", 'test', 'strings', ['a', 'b', 'c'])
@@ -1841,17 +1839,17 @@ def create_test_case(**database_creation_parameters):
                 '"2018-05-25"': '2018-05-25',
                 '"a\n b\n  c"': 'a\n b\n  c',
                 '"\\""': '"',
-                '2018-05-25': datetime.date(2018, 5, 25),
-                '2018-5-25': datetime.date(2018, 5, 25),
-                '12:54': datetime.time(12, 54),
-                '02:4:9': datetime.time(2, 4, 9),
+                '2018-05-25': date(2018, 5, 25),
+                '2018-5-25': date(2018, 5, 25),
+                '12:54': time(12, 54),
+                '02:4:9': time(2, 4, 9),
                 # The following interpretation of microsecond is a strange
                 # behavior of datetime.strptime that expect up to 6 digits
                 # with zeroes padded on the right !?
-                '12:34:56.789': datetime.time(12, 34, 56, 789000),
-                '12:34:56.000789': datetime.time(12, 34, 56, 789),
-                '2018-05-25T12:34:56.000789': datetime.datetime(2018, 5, 25, 12, 34, 56, 789),
-                '2018-5-25T12:34': datetime.datetime(2018, 5, 25, 12, 34),
+                '12:34:56.789': time(12, 34, 56, 789000),
+                '12:34:56.000789': time(12, 34, 56, 789),
+                '2018-05-25T12:34:56.000789': datetime(2018, 5, 25, 12, 34, 56, 789),
+                '2018-5-25T12:34': datetime(2018, 5, 25, 12, 34),
                 '[]': [],
             }
             # Adds the literal for a list of all elements in the dictionary
@@ -1915,7 +1913,7 @@ def create_test_case(**database_creation_parameters):
             """
             database = self.create_database()
             with database as session:
-                now = datetime.datetime.now()
+                now = datetime.now()
                 session.add_collection('test')
                 base_doc = {
                     'string': 'string',

@@ -200,6 +200,7 @@ class SQLiteCollection:
             if row[5]:
                 self.primary_key[row[1]] = column_type
             field = {
+                'collection': self.name,
                 'name': row[1],
                 'primary_key': bool(row[5]),
                 'type': column_type,
@@ -243,10 +244,12 @@ class SQLiteCollection:
         settings = self.settings()
         settings.setdefault('fields', {})[name] = {
             'description': description,
-            'index': index
+            'index': index,
+            'bad_json': bad_json,
         }
         self.set_settings(settings)
         field = {
+            'collection': self.name,
             'name': name,
             'primary_key': False,
             'type': field_type,
@@ -271,7 +274,7 @@ class SQLiteCollection:
         self.bad_json_fields.discard(name)
 
     def field(self,name):
-        return self.field[name]
+        return self.fields[name]
     
     def fields(self):
         return self.fields.values()

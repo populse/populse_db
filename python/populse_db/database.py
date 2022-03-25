@@ -224,8 +224,8 @@ class DatabaseSession:
                            - If the field type is invalid
                            - If the field description is invalid
         """
-        self[collection].add_field(name, field_type, description=None, 
-                                     index=False)
+        self[collection].add_field(name, field_type, description=description, 
+                                     index=index)
 
     def remove_field(self, collection, field):
         """
