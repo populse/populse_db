@@ -9,6 +9,7 @@ import unittest
 from populse_db import Database
 from populse_db.database import check_value_type
 from populse_db.filter import literal_parser, FilterToSQL
+from populse_db.engine.sqlite import SQLiteSession
 
 
 class TestsSQLiteInMemory(unittest.TestCase):
@@ -205,64 +206,66 @@ def create_test_case(**database_creation_parameters):
                 document = {}
                 document["name"] = "document1"
                 session.add_document("current", document)
-                document = {}
+                document = {
+                    "name": "document2",
+                    "PatientName": "Guerbet",
+                    "SequenceName": "RARE",
+                    "Dataset dimensions": [1, 2]
+                }
                 document["name"] = "document2"
                 session.add_document("current", document)
 
-                # Adding values
-                session.add_value("current", "document1", "PatientName", "Guerbet")
-                session.add_value("current", "document1", "SequenceName", "RARE")
-                session.add_value("current", "document1", "Dataset dimensions", [1, 2])
-
                 # Removing fields
-                session.remove_field("current", "PatientName")
-                session.remove_field("current", "Dataset dimensions")
+                if isinstance(session, SQLiteSession):
+                    with self.assertRaises(NotImplementedError):
+                        session.remove_field("current", "PatientName")
+                else:
+                    session.remove_field("current", "PatientName")
+                    session.remove_field("current", "Dataset dimensions")
 
-                # Testing that the field does not exist anymore
-                self.assertIsNone(session.get_field("current", "PatientName"))
-                self.assertIsNone(session.get_field("current", "Dataset dimensions"))
+                    # Testing that the field does not exist anymore
+                    self.assertIsNone(session.get_field("current", "PatientName"))
+                    self.assertIsNone(session.get_field("current", "Dataset dimensions"))
 
-                # Testing that the field values are removed
-                self.assertIsNone(session.get_value("current", "document1", "PatientName"))
-                self.assertEqual(session.get_value(
-                    "current", "document1", "SequenceName"), "RARE")
-                self.assertIsNone(session.get_value(
-                    "current", "document1", "Dataset dimensions"))
+                    # Testing that the field values are removed
+                    self.assertIsNone(session.get_value("current", "document1", "PatientName"))
+                    self.assertEqual(session.get_value(
+                        "current", "document1", "SequenceName"), "RARE")
+                    self.assertIsNone(session.get_value(
+                        "current", "document1", "Dataset dimensions"))
 
-                # Testing with list of fields
-                session.remove_field("current", ["SequenceName"])
-                self.assertIsNone(session.get_field("current", "SequenceName"))
+                    # Testing with list of fields
+                    session.remove_field("current", ["SequenceName"])
+                    self.assertIsNone(session.get_field("current", "SequenceName"))
 
-                # Adding fields again
-                session.add_field("current", "PatientName", str,
-                                  "Name of the patient")
-                session.add_field("current", "SequenceName", str, None)
-                session.add_field("current", "Dataset dimensions", list[int], None)
+                    # Adding fields again
+                    session.add_field("current", "PatientName", str,
+                                    "Name of the patient")
+                    session.add_field("current", "SequenceName", str, None)
+                    session.add_field("current", "Dataset dimensions", list[int], None)
 
-                # Testing with list of fields
-                session.remove_field("current", ["SequenceName", "PatientName"])
-                self.assertIsNone(session.get_field("current", "SequenceName"))
-                self.assertIsNone(session.get_field("current", "PatientName"))
+                    # Testing with list of fields
+                    session.remove_field("current", ["SequenceName", "PatientName"])
+                    self.assertIsNone(session.get_field("current", "SequenceName"))
+                    self.assertIsNone(session.get_field("current", "PatientName"))
 
-                # Testing with a field not existing
-                self.assertRaises(ValueError, lambda : session.remove_field("not_existing", "document1"))
-                self.assertRaises(ValueError, lambda : session.remove_field(1, "NotExisting"))
-                self.assertRaises(ValueError, lambda : session.remove_field("current", "NotExisting"))
-                self.assertRaises(ValueError, lambda : session.remove_field("current", "Dataset dimension"))
-                self.assertRaises(ValueError, lambda : session.remove_field("current", ["SequenceName", "PatientName", "Not_Existing"]))
+                    # Testing with a field not existing
+                    self.assertRaises(ValueError, lambda : session.remove_field("not_existing", "document1"))
+                    self.assertRaises(ValueError, lambda : session.remove_field(1, "NotExisting"))
+                    self.assertRaises(ValueError, lambda : session.remove_field("current", "NotExisting"))
+                    self.assertRaises(ValueError, lambda : session.remove_field("current", "Dataset dimension"))
+                    self.assertRaises(ValueError, lambda : session.remove_field("current", ["SequenceName", "PatientName", "Not_Existing"]))
 
-                # Testing with wrong parameters
-                self.assertRaises(Exception, lambda : session.remove_field("current", 1))
-                self.assertRaises(Exception, lambda : session.remove_field("current", None))
+                    # Testing with wrong parameters
+                    self.assertRaises(Exception, lambda : session.remove_field("current", 1))
+                    self.assertRaises(Exception, lambda : session.remove_field("current", None))
 
-                # Removing list of fields with list type
-                session.add_field("current", "list1", list[int], None)
-                session.add_field("current", "list2", list[str], None)
-                session.remove_field("current", ["list1", "list2"])
-                self.assertIsNone(session.get_field("current", "list1"))
-                self.assertIsNone(session.get_field("current", "list2"))
-
-                # TODO Testing column removal
+                    # Removing list of fields with list type
+                    session.add_field("current", "list1", list[int], None)
+                    session.add_field("current", "list2", list[str], None)
+                    session.remove_field("current", ["list1", "list2"])
+                    self.assertIsNone(session.get_field("current", "list1"))
+                    self.assertIsNone(session.get_field("current", "list2"))
 
         def test_get_field(self):
             """

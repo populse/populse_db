@@ -271,13 +271,14 @@ class SQLiteCollection:
     def remove_field(self, name):
         if name in self.primary_key:
             raise ValueError('Cannot remove a key field')
-        sql = f'ALTER TABLE [{self.name}] DROP COLUMN [{name}]'
-        self.session.execute(sql)
-        settings = self.settings()
-        settings.setdefault('fields', {}).pop(name, None)
-        self.set_settings(settings)
-        self.fields.pop(name, None)
-        self.bad_json_fields.discard(name)
+        raise NotImplementedError('SQLite does not support removing a column')
+        # sql = f'ALTER TABLE [{self.name}] DROP COLUMN [{name}]'
+        # self.session.execute(sql)
+        # settings = self.settings()
+        # settings.setdefault('fields', {}).pop(name, None)
+        # self.set_settings(settings)
+        # self.fields.pop(name, None)
+        # self.bad_json_fields.discard(name)
 
     def field(self,name):
         return self.fields[name]
