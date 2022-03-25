@@ -1,27 +1,23 @@
-from __future__ import print_function
-
 import datetime
 import os
 import shutil
 import tempfile
 import unittest
-import sys
 
-from populse_db.database import Database, FIELD_TYPE_STRING, FIELD_TYPE_FLOAT, FIELD_TYPE_TIME, FIELD_TYPE_DATETIME, \
+from populse_db import Database
+from populse_db.database import FIELD_TYPE_STRING, FIELD_TYPE_FLOAT, FIELD_TYPE_TIME, FIELD_TYPE_DATETIME, \
     FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_BOOLEAN, FIELD_TYPE_LIST_BOOLEAN, FIELD_TYPE_INTEGER, FIELD_TYPE_LIST_DATE, \
     FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_DATETIME, FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_FLOAT, DatabaseSession, \
     FIELD_TYPE_JSON, FIELD_TYPE_LIST_JSON
-from populse_db.filter import literal_parser, FilterToQuery
-
-do_tests = True
+from populse_db.filter import literal_parser, FilterToSQL
 
 
 class TestsSQLiteInMemory(unittest.TestCase):
     def test_add_get_document(self):
         now = datetime.datetime.now()
-        db = Database('sqlite:///:memory:')
+        db = Database('sqlite://:memory:')
         with db as dbs:
-            dbs.add_collection('test')
+            dbs.add_collection('test', 'index')
             base_doc = {
                 'string': 'string',
                 'int': 1,
@@ -43,7 +39,7 @@ class TestsSQLiteInMemory(unittest.TestCase):
                 doc[lk] = [v]
             doc['index'] = 'test'
             dbs.add_document('test', doc)
-            stored_doc = dbs.get_document('test', 'test')._dict()
+            stored_doc = dbs.get_document('test', 'test')
             self.maxDiff = None
             self.assertEqual(doc, stored_doc)
 
@@ -95,7 +91,8 @@ def create_test_case(**database_creation_parameters):
                     raise unittest.SkipTest(str(e))
                 raise
             if clear:
-                db.clear()
+                with db as dbs:
+                    dbs.clear()
             return db
 
         def test_wrong_constructor_parameters(self):
@@ -1879,7 +1876,7 @@ def create_test_case(**database_creation_parameters):
             parser = literal_parser()
             for literal, expected_value in literals.items():
                 tree = parser.parse(literal)
-                value = FilterToQuery(None, None).transform(tree)
+                value = FilterToSQL(None, None).transform(tree)
                 self.assertEqual(value, expected_value)
 
         def test_with(self):
@@ -1996,5 +1993,4 @@ if __name__ == '__main__':
     # Working from the scripts directory
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
-    if do_tests:
-        unittest.main()
+    unittest.main()

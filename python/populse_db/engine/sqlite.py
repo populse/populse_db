@@ -1,11 +1,9 @@
 from datetime import time, date, datetime
-from turtle import update
-from xml.dom.minidom import Document
 import dateutil
 import json
 import sqlite3
 
-from ..database import str_to_type, type_to_str
+from ..database import DatabaseSession, str_to_type, type_to_str
 from ..filter import FilterToSQL, filter_parser
 
 '''
@@ -18,10 +16,9 @@ A populse_db engine is created when a DatabaseSession object is created
 class ParsedFilter(str):
     pass
 
-class SQLiteSession:
-    populse_db_table = 'populse_db'
-
-    def parse_url(self, url):
+class SQLiteSession(DatabaseSession):
+    @staticmethod
+    def parse_url(url):
         if url.path:
             args = (url.path,)
         elif url.netloc:
@@ -33,24 +30,33 @@ class SQLiteSession:
         self._collection_cache = {}
 
     def __getitem__(self, collection_name):
-        return SQLiteCollection(self, collection_name)
+        result = self._collection_cache.get(collection_name)
+        if result is None:
+            result = SQLiteCollection(self, collection_name)
+            self._collection_cache[collection_name] = result
+        return result
     
-    def execute(self, *args, **kwargs):
-        return self.sqlite.execute(*args, **kwargs)
+    def execute(self, sql, data=None):
+        print('!sql!', sql, data)
+        if data:
+            return self.sqlite.execute(sql, data)
+        else:
+            return self.sqlite.execute(sql)
 
     def get_settings(self, category, key, default=None):
         try:
-            sql = f'SELECT _json FROM [{self.populsedb_table}] WHERE category=? and key=?'
+            sql = f'SELECT _json FROM [{self.populse_db_table}] WHERE category=? and key=?'
             cur = self.execute(sql, [category, key])
         except sqlite3.OperationalError:
             return default
-        if cur.rowcount:
-            return json.loads(next(cur)[0])
+        j = cur.fetchone()
+        if j:
+            return json.loads(j[0])
         return default
 
     def set_settings(self, category, key, value):
-        sql = f'INSERT OR REPLACE INTO {self.populsedb_table} (category, key, _json) VALUES (?,?,?)'
-        data = [category, key, json.dumps(value)]
+        sql = f'INSERT OR REPLACE INTO {self.populse_db_table} (category, key, _json) VALUES (?,?,?)'
+        data = [category, key, json_dumps(value)]
         retry = False
         try:
             self.execute(sql, data)
@@ -58,7 +64,7 @@ class SQLiteSession:
             retry = True
         if retry:
             sql2 = ('CREATE TABLE IF NOT EXISTS '
-                f'[{self.jsondb_table}] ('
+                f'[{self.populse_db_table}] ('
                 'category TEXT NOT NULL,'
                 'key TEXT NOT NULL,'
                 '_json TEXT,'
@@ -78,16 +84,15 @@ class SQLiteSession:
             self.execute(sql)
         self._collection_cache = {}
     
-    def add_collection(self, name, primary_key):
+    def add_collection(self, name, primary_key, catchall_column='_catchall'):
         if isinstance(primary_key, str):
             primary_key = {primary_key: str}
         elif isinstance(primary_key, (list, tuple)):
             primary_key = dict((i,str) for i in primary_key)
         sql = (f'CREATE TABLE [{name}] ('
             f'{",".join(f"[{n}] {type_to_str(t)} NOT NULL" for n, t in primary_key.items())},'
-            f'{self.catchall_column} dict,'
-            f'PRIMARY KEY ({",".join(primary_key.keys())}))')
-        print('!sql!', sql)
+            f'{catchall_column} dict,'
+            f'PRIMARY KEY ({",".join(f"[{i}]" for i in primary_key.keys())}))')
         self.execute(sql)
 
     def remove_collection(self, name):
@@ -107,9 +112,9 @@ def json_dumps(value):
     return json.dumps(value, separators=(',', ':'))
 
 _json_encodings = {
-    datetime: lambda d: f'{d.isoformat()}ℹdatetime',
-    date: lambda d: f'{d.isoformat()}ℹdate',
-    time: lambda d: f'{d.isoformat()}ℹtime',
+    datetime: lambda d: f'{d.isoformat()}ℹdatetimeℹ',
+    date: lambda d: f'{d.isoformat()}ℹdateℹ',
+    time: lambda d: f'{d.isoformat()}ℹtimeℹ',
     list: lambda l: [json_encode(i) for i in l],
     dict: lambda d: dict((k, json_encode(v)) for k, v in d.items()),
 }
@@ -137,8 +142,8 @@ def json_decode(value):
     elif isinstance(value, dict):
         return dict((k, json_decode(v)) for k, v in value.items())
     elif isinstance(value, str):
-        if value.startswith('ℹ'):
-            l = value[1:].rsplit('ℹ', 1)
+        if value.endswith('ℹ'):
+            l = value[:-1].rsplit('ℹ', 1)
             if len(l) == 2:
                 encoded_value, decoding_name = l
                 decode = _json_decodings.get(decoding_name)
@@ -149,37 +154,31 @@ def json_decode(value):
 
 class SQLiteCollection:
     _column_encodings = {
-        'datetime': (
+        datetime: (
             lambda d: d.isoformat(),
             lambda s: dateutil.parser.parse(s)
         ),
-        'date': (
+        date: (
             lambda d: d.isoformat(),
             lambda s: dateutil.parser.parse(s).date()
         ),
-        'time': (
+        time: (
             lambda d: d.isoformat(),
             lambda s: dateutil.parser.parse(s).time()
         ),
-        'list': (
+        list: (
             lambda l: json_dumps(l),
             lambda l: json.loads(l),
         ),
-        'dict': (
+        dict: (
             lambda d: json_dumps(d),
             lambda d: json.loads(d),
         ),
     }
 
-    def __new__(cls, session, name):
-        result = session._collection_cache.get(name)
-        if result is not None:
-            return result
-        return super().__new__(cls)
-
     def __init__(self, session, name):
         self.session = session
-        settings = self.session.get_settings('session', name, {})
+        settings = self.session.get_settings('collection', name, {})
         self.catchall_column = settings.get('catchall_column', '_catchall')
         self.name = name
         self.primary_key = {}
@@ -195,7 +194,7 @@ class SQLiteCollection:
                 continue
             column_type_str = row[2].lower()
             column_type = str_to_type(column_type_str)
-            main_type = column_type_str.split('[',1)[0]
+            main_type = getattr(column_type, '__origin__', None) or column_type
             encoding = self._column_encodings.get(main_type)
             if row[5]:
                 self.primary_key[row[1]] = column_type
@@ -216,7 +215,7 @@ class SQLiteCollection:
             raise ValueError(f'table {name} must have a column {self.catchall_column}')
 
     def settings(self):
-        return self.session.get_settings('collection', self.name)
+        return self.session.get_settings('collection', self.name, {})
     
     def set_settings(self, settings):
         self.session.set_settings('collection', self.name, settings)
@@ -233,8 +232,8 @@ class SQLiteCollection:
         settings.update(kwargs)
         self.set_settings(settings)
 
-    def add_field(self, name, field_type, description,
-                  index):
+    def add_field(self, name, field_type, description=None,
+                  index=False, bad_json=False):
         sql = f'ALTER TABLE [{self.name}] ADD COLUMN [{name}] {type_to_str(field_type)}'
         self.session.execute(sql)
         if index:
@@ -251,9 +250,13 @@ class SQLiteCollection:
             'primary_key': False,
             'type': field_type,
             'description': description,
-            'index': index
+            'index': index,
+            'bad_json': bad_json,
+            'encoding': self._column_encodings.get(getattr(field_type, '__origin__', None) or field_type),
         }
         self.fields[name] = field
+        if bad_json:
+            self.bad_json_fields.add(name)
     
     def remove_field(self, name):
         if name in self.primary_key:
@@ -302,12 +305,10 @@ class SQLiteCollection:
                 raise ValueError(f'Collection {self.name} do not have the following fields: {",".join(catchall_fields)}')
             columns.append(self.catchall_column)
 
-        sql = f'SELECT {",".join(f"[{i}]" for i in self.columns)} FROM [{self.name}]'
+        sql = f'SELECT {",".join(f"[{i}]" for i in columns)} FROM [{self.name}]'
         if where:
             sql += f' WHERE {where}'
-        cur = self.sqlite.execute(sql, where, where_data)
-        if cur.rowcount == 0:
-            raise ValueError(f'No such collection: {self.name}')
+        cur = self.session.execute(sql, where_data)
         for row in cur:
             if catchall_fields:
                 if as_list and catchall_fields is True:
@@ -323,12 +324,12 @@ class SQLiteCollection:
             document = catchall
             document.update(zip(columns, row))
             for field, value in document.items():
-                if field in self.bad_json:
-                    value = json_decode(value)
                 encoding = self.fields.get(field,{}).get('encoding')
                 if encoding:
                     encode, decode = encoding
                     value = decode(value)
+                if field in self.bad_json_fields:
+                    value = json_decode(value)
                 document[field] = value
             if as_list:
                 yield [document[i] for i in fields]
@@ -337,8 +338,8 @@ class SQLiteCollection:
       
     def document(self, document_id, fields, as_list):
         document_id = self.document_id(document_id)
-        where += f' WHERE {" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
-        return next(self._documents(where, tuple(self.primary_key), fields, as_list))
+        where = f'{" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
+        return next(self._documents(fields, as_list, where, document_id))
 
     def documents(self, fields, as_list):
         yield from self._documents(None, None, fields, as_list)
@@ -351,6 +352,24 @@ class SQLiteCollection:
         document_id = self.document_id(document_id)
         self._set_document(document_id, document, replace=True)
 
+    def _encode_column_value(self, field, value):
+        encoding  = self.fields.get(field,{}).get('encoding')
+        if encoding:
+            encode, decode = encoding
+            try:
+                column_value = encode(value)
+            except TypeError:
+                # Error with JSON encoding
+                column_value = ...
+            if column_value is ...:
+                column_value = encode(json_encode(value))
+                self.bad_json_fields.add(field)
+                settings = self.settings()
+                settings.setdefault('fields', {}).setdefault(field,{})['bad_json'] = True
+                self.set_settings(settings)
+            return column_value
+        return value
+
     def _set_document(self, document_id, document, replace):
         columns = [i for i in self.primary_key]
         data = [i for i in document_id]
@@ -358,35 +377,44 @@ class SQLiteCollection:
         for field, value in document.items():
             if field in self.primary_key:
                 continue
-            if field in self.bad_json_field:
+            if field in self.bad_json_fields:
                 value = json_encode(value)
-            field_dict = self.fields.get(field)
-            if field_dict:
+            if field in self.fields:
                 columns.append(field)
-                encoding  = field_dict.get('encoding')
-                if encoding:
-                    encode, decode = encoding
-                    try:
-                        column_value = encode(value)
-                    except TypeError:
-                        # Error with JSON encoding
-                        column_value = ...
-                    if column_value is ...:
-                        column_value = encode(json_encode(value))
-                        self.bad_json_field.add(field)
-                        settings = self.settings()
-                        settings.setdefault('fields', {}).setdefault(field,{})['bad_json'] = True
-                        self.set_settings(settings)
-                    data.append(column_value)
-                else:
-                    data.append(value)
+                data.append(self._encode_column_value(column_value))
             else:
                 catchall[field] = value
         if catchall:
             if not self.catchall_column:
                 raise ValueError(f'Collection {self.name} cannot store the following unknown fields: {", ".join(catchall)}')
-            columns.append(self.catchall_column)
-            data.append(json.dumps(catchall))
+            bad_json = False
+            try:
+                data.append(json_dumps(catchall))
+            except TypeError:
+                bad_json = True
+            if bad_json:
+                jsons = []
+                for field, value in catchall.items():
+                    bad_json = False
+                    try:
+                        j = json_dumps(value)
+                    except TypeError:
+                        bad_json = True
+                    if bad_json:
+                        t = type(value)
+                        self.add_field(field, t,
+                            bad_json=t not in (time, date, datetime))
+                        column_value = self._encode_column_value(field, value)
+                        columns.append(field)
+                        data.append(column_value)
+                    else:
+                        jsons.append((f'"{field}"', j))
+                if jsons:
+                    columns.append(self.catchall_column)
+                    data.append(f'{{{",".join(f"{i}:{j}" for i, j in jsons)}}}')
+
+            else:
+                columns.append(self.catchall_column)
 
         if replace:
             replace = ' OR REPLACE'
@@ -416,163 +444,4 @@ class SQLiteCollection:
 
     def filter(self, filter, fields=None, as_list=False):
         parsed_filter = self.parse_filter(filter)
-        yield from self._select_documents(where, None, fields=fields, as_list=as_list)
-
-
-# class FilterToSqliteQuery(FilterToQuery):
-#     '''
-#     Implements required methods to produce a SQLite query given a document
-#     selection filter. This class returns either None (all documents are 
-#     selected) or an SQL WHERE clause (without the WHERE keyword) as a list 
-#     of string (that must be joined with spaces). This WHERE clause is useable 
-#     with a SELECT from the table containing the collection documents. Using a 
-#     list for combining strings is supposed to be more efficient (especially 
-#     for long queries).
-#     '''
-    
-#     def __init__(self, engine, collection):
-#         '''
-#         Create a parser for a givent engine and collection
-#         '''
-#         FilterToQuery.__init__(self, engine, collection)
-#         self.table = self.engine.collection_table[collection]
-
-#     def get_column(self, field):
-#         '''
-#         :return: The SQL representation of a field object.
-#         '''
-#         return self.engine.field_column[self.collection][field.field_name]
-
-#     _python_to_sql = {
-#         pdb.FIELD_TYPE_DATE: lambda x: x.isoformat(),
-#         pdb.FIELD_TYPE_DATETIME: lambda x: x.isoformat(),
-#         pdb.FIELD_TYPE_TIME: lambda x: x.isoformat(),
-#         pdb.FIELD_TYPE_BOOLEAN: lambda x: (1 if x else 0),
-#     }
-#     _python_to_sql = {
-#         type(None): lambda x: 'NULL',
-#         type(''): lambda x: "'{0}'".format(x),
-#         type(u''): lambda x: "'{0}'".format(x),
-#         int: lambda x: str(x),
-#         float: lambda x: str(x),
-#         datetime.time: lambda x: "'{0}'".format(x.isoformat()),
-#         datetime.datetime: lambda x: "'{0}'".format(x.isoformat()),
-#         datetime.date: lambda x: "'{0}'".format(x.isoformat()),
-#         bool: lambda x: ('1' if x else '0'),
-#     }
-
-#     def get_column_value(self, python_value):
-#         '''
-#         Converts a Python value to a value suitable to put in a database column
-#         '''
-#         if isinstance(python_value, list):
-#             c = '(%s)' % ','.join(self.get_column_value(i) for i in python_value)
-#             return c
-#         return self._python_to_sql[type(python_value)](python_value)
-
-#     def build_condition_all(self):
-#         return None
-
-#     def build_condition_literal_in_list_field(self, value, list_field):
-#         cvalue = self.get_column_value(value)
-#         list_column = self.get_column(list_field)
-#         list_table = 'list_%s_%s' % (self.table, list_column)
-#         primary_key_column = self.engine.primary_key(self.collection)
-#         pk_column = self.engine.field_column[
-#             self.collection][primary_key_column]
-
-#         where = ('[{0}] IS NOT NULL AND '
-#                  '{1} IN (SELECT value FROM {2} '
-#                  'WHERE list_id = [{3}])').format(list_column,
-#                                                   cvalue,
-#                                                   list_table,
-#                                                   pk_column)
-#         return [where]
-
-#     def build_condition_field_in_list_field(self, field, list_field):
-#         column = self.get_column(field)
-#         list_column = self.get_column(list_field)
-#         list_table = 'list_%s_%s' % (self.table, list_column)
-#         primary_key_column = self.engine.primary_key(self.collection)
-#         pk_column = self.engine.field_column[self.collection][primary_key_column]
-
-#         where = ('[{0}] IS NOT NULL AND '
-#                  '[{1}] IN (SELECT value FROM {2} '
-#                  'WHERE list_id = [{3}])').format(list_column,
-#                                                   column,
-#                                                   list_table,
-#                                                   pk_column)
-#         return [where]
-
-#     def build_condition_field_in_list(self, field, list_value):
-#         column = self.get_column(field)
-#         if None in list_value:
-#             list_value.remove(None)
-#             where = '[{0}] IS NULL OR [{0}] IN {1}'.format(column,
-#                 self.get_column_value(list_value))
-#         else:
-#             where = '[{0}] IN {1}'.format(column,
-#                 self.get_column_value(list_value))
-#         return [where]
-
-#     sql_operators = {
-#         '==': 'IS',
-#         '!=': 'IS NOT',
-#         'ilike': 'LIKE',
-#     }    
-    
-#     no_list_operator = {'>', '<', '>=', '<=', 'like', 'ilike'}
-    
-#     def build_condition_field_op_field(self, left_field, operator_str, right_field):
-#         if operator_str == 'ilike':
-#             field_pattern = 'UPPER([%s])'
-#         else:
-#             field_pattern = '[%s]'
-#         sql_operator = self.sql_operators.get(operator_str, operator_str)
-#         where = '%s %s %s' % (field_pattern % self.get_column(left_field),
-#                               sql_operator,
-#                               field_pattern % self.get_column(right_field))
-#         return [where]
-    
-#     def build_condition_field_op_value(self, field, operator_str, value):
-#         if isinstance(value, list):
-#             if operator_str in self.no_list_operator:
-#                 raise ValueError('operator %s cannot be used with value of list type' % operator_str)
-#             value = self.engine.list_hash(value)
-#         if operator_str == 'ilike':
-#             field_pattern = 'UPPER([%s])'
-#             if isinstance(value, six.string_types):
-#                 value = value.upper()
-#         else:
-#             field_pattern = '[%s]'
-#         sql_operator = self.sql_operators.get(operator_str, operator_str)
-#         where = '%s %s %s' % (field_pattern % self.get_column(field),
-#                               sql_operator,
-#                               self.get_column_value(value))
-#         return [where]
-
-    
-#     def build_condition_value_op_field(self, value, operator_str, field):
-#         if isinstance(value, list):
-#             if operator_str in self.no_list_operator:
-#                 raise ValueError('operator %s cannot be used with value of list type' % operator_str)
-#             value = self.list_hash(value)
-#         if operator_str == 'ilike':
-#             field_pattern = 'UPPER([%s])'
-#             if isinstance(value, six.string_types):
-#                 value = value.upper()
-#         else:
-#             field_pattern = '[%s]'
-#         sql_operator = self.sql_operators.get(operator_str, operator_str)
-#         where = '%s %s %s' % (self.get_column_value(value),
-#                               sql_operator,
-#                               field_pattern % self.get_column(field))
-#         return [where]
-
-#     def build_condition_negation(self, condition):
-#         if condition is None:
-#             return ['0']
-#         return ['NOT', '(' ] + condition + [')']
-    
-#     def build_condition_combine_conditions(self, left_condition, operator_str, right_condition):
-#         return ['('] + left_condition + [')', operator_str, '('] + right_condition + [')']
+        yield from self._select_documents(parsed_filter, None, fields=fields, as_list=as_list)

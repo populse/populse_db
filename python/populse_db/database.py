@@ -9,7 +9,7 @@ FIELD_TYPE_DATE = date
 FIELD_TYPE_DATETIME = datetime
 FIELD_TYPE_TIME = time
 FIELD_TYPE_JSON = dict
-FIELD_TYPE_LIST_STRING = list[string]
+FIELD_TYPE_LIST_STRING = list[str]
 FIELD_TYPE_LIST_INTEGER = list[int]
 FIELD_TYPE_LIST_FLOAT = list[float]
 FIELD_TYPE_LIST_BOOLEAN = list[bool]
@@ -129,6 +129,7 @@ class DatabaseSession:
           modifications
         - filter_documents: Gives the list of documents matching the filter
     """
+    populse_db_table = 'populse_db'
 
     def __getitem__(self, collection_name):
         raise NotImplemented()

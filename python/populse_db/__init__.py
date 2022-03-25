@@ -68,7 +68,7 @@ class Database(object):
         outermost __enter__/__exit__ pair (i.e. by the outermost with
         statement).
         """
-        args, kwargs = session_parameters
+        args, kwargs = self.session_parameters
         return self.session_class(*args, **kwargs)
     
     def __exit__(self, exc_type, exc_val, exc_tb):
