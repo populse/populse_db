@@ -102,7 +102,7 @@ class SQLiteSession(DatabaseSession):
         self._collection_cache.pop(name, None)
     
     def __iter__(self):
-        sql = f'SELECT name FROM sqlite_schema'
+        sql = f"SELECT name FROM sqlite_schema WHERE type='table'"
         for row in self.execute(sql):
             table = row[0]
             if table == self.populse_db_table:
