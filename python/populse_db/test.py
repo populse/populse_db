@@ -318,7 +318,7 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(len(fields), 3)
 
                 # Testing with a collection not existing
-                self.assertEqual(session.get_fields("collection_not_existing"), [])
+                self.assertEqual(list(session.get_fields("collection_not_existing")), [])
 
         def test_set_value(self):
 
@@ -521,7 +521,7 @@ def create_test_case(**database_creation_parameters):
                 self.assertTrue("SequenceName" in fields)
 
                 # Testing with a collection not existing
-                self.assertEqual(session.get_fields_names("collection_not_existing"), [])
+                self.assertEqual(list(session.get_fields_names("collection_not_existing")), [])
 
         def test_get_value(self):
             """

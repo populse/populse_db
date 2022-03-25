@@ -268,8 +268,10 @@ class DatabaseSession:
 
         :return: generator
         """
-
-        return self[collection].fields.keys()
+        try:
+            return self[collection].fields.keys()
+        except ValueError:
+            return ()
 
     def get_fields(self, collection):
         """
@@ -279,8 +281,10 @@ class DatabaseSession:
 
         :return: generator
         """
-        
-        return self[collection].fields.values()
+        try:     
+            return self[collection].fields.values()
+        except ValueError:
+            return ()
 
     def set_values(self, collection, document_id, values):
         """
