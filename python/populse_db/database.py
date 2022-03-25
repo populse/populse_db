@@ -347,7 +347,10 @@ class DatabaseSession:
 
         :return: generator
         """
-        c = self[collection]
+        try:
+            c = self[collection]
+        except ValueError:
+            return
         if document_ids is None:
             yield from c.documents(fields=fields, as_list=as_list)
         else:
@@ -376,9 +379,7 @@ class DatabaseSession:
 
         :param collection: Document collection (str, must be existing)
 
-        :param document: Dictionary of document values (dict), or document primary_key (str)
-
-                            - The primary_key must not be existing
+        :param document: Dictionary of document values (dict)
 
         :param create_missing_fields: Boolean to know if the missing fields must be created
 

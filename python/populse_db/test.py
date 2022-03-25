@@ -990,21 +990,21 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
                 session.add_collection("collection2", "id")
 
-                session.add_document("collection1", "document1")
-                session.add_document("collection1", "document2")
-                session.add_document("collection2", "document1")
-                session.add_document("collection2", "document2")
+                session["collection1"]["document1"] = {}
+                session["collection1"]["document2"] = {}
+                session["collection2"]["document1"] = {}
+                session["collection2"]["document2"] = {}
 
-                documents1 = session.get_documents("collection1")
+                documents1 = list(session.get_documents("collection1"))
                 self.assertEqual(len(documents1), 2)
 
-                documents2 = session.get_documents("collection2")
+                documents2 = list(session.get_documents("collection2"))
                 self.assertEqual(len(documents2), 2)
 
                 # Testing with a collection not existing
-                self.assertEqual(session.get_documents("collection_not_existing"), [])
-                self.assertEqual(session.get_documents("collection"), [])
-                self.assertEqual(session.get_documents(None), [])
+                self.assertEqual(list(session.get_documents("collection_not_existing")), [])
+                self.assertEqual(list(session.get_documents("collection")), [])
+                self.assertEqual(list(session.get_documents(None)), [])
 
         def test_get_documents_names(self):
             """
