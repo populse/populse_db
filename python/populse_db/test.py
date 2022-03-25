@@ -173,25 +173,14 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1")
 
                 # Adding several fields
-                fields = []
-                fields.append(["collection1", "First name", str, ""])
-                fields.append(["collection1", "Last name", str, ""])
-                session.add_fields(fields)
-                collection_fields = session.get_fields_names("collection1")
+                session.add_field("collection1", "First name", str, "")
+                session.add_field("collection1", "Last name", str, "")
+                collection_fields = list(session.get_fields_names("collection1"))
                 self.assertEqual(len(collection_fields), 3)
-                self.assertTrue("index" in collection_fields)
+                self.assertTrue("primary_key" in collection_fields)
                 self.assertTrue("First name" in collection_fields)
                 self.assertTrue("Last name" in collection_fields)
 
-                # Trying with invalid dictionary
-                fields = []
-                fields.append(["collection1", "Age", str, ""])
-                fields.append(["collection1", "Gender", str])
-                self.assertRaises(ValueError, lambda : session.add_fields(fields))
-                fields = []
-                fields.append("Field")
-                self.assertRaises(ValueError, lambda: session.add_fields(fields))
-                self.assertRaises(ValueError, lambda: session.add_fields(True))
 
         def test_remove_field(self):
             """

@@ -262,7 +262,7 @@ class DatabaseSession:
         :return: generator
         """
 
-        return (i.name for i in self[collection].fields())
+        return self[collection].fields.keys()
 
     def get_fields(self, collection):
         """
@@ -273,7 +273,7 @@ class DatabaseSession:
         :return: generator
         """
         
-        yield from self[collection].fields()
+        return self[collection].fields.values()
 
     def set_values(self, collection, document_id, values):
         """
