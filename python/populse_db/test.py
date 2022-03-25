@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import datetime, date, time
 import os
 import shutil
@@ -547,35 +548,18 @@ def create_test_case(**database_creation_parameters):
                 session.add_field("collection1", "Grids spacing", list[float], None)
 
                 # Adding values
-                session.add_value("collection1", "document1", "PatientName", "test")
-                session.add_value("collection1", "document1", "Bits per voxel", 10)
-                session.add_value(
-                    "collection1", "document1", "Dataset dimensions", [3, 28, 28, 3])
-                session.add_value("collection1", "document1", "Grids spacing", [
-                    0.234375, 0.234375, 0.4])
+                document["PatientName"] = "test"
+                document["Bits per voxel"] = 10
+                document["Dataset dimensions"] = [3, 28, 28, 3]
+                document["Grids spacing"] = [0.234375, 0.234375, 0.4]
+                session["collection1"].add(document, replace=True)
 
                 # Testing that the value is returned if it exists
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "PatientName"), "test")
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "Bits per voxel"), 10)
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "Dataset dimensions"), [3, 28, 28, 3])
-                self.assertEqual(session.get_value(
-                    "collection1", "document1", "Grids spacing"), [0.234375, 0.234375, 0.4])
-
-                # Testing when the value is not existing
-                self.assertIsNone(session.get_value("collection_not_existing", "document1", "PatientName"))
-                self.assertIsNone(session.get_value("collection1", "document3", "PatientName"))
-                self.assertIsNone(session.get_value("collection1", "document1", "NotExisting"))
-                self.assertIsNone(session.get_value("collection1", "document3", "NotExisting"))
-                self.assertIsNone(session.get_value("collection1", "document2", "Grids spacing"))
-
-                # Testing with wrong parameters
-                self.assertIsNone(session.get_value(3, "document1", "Grids spacing"))
-                self.assertIsNone(session.get_value("collection1", 1, "Grids spacing"))
-                self.assertIsNone(session.get_value("collection1", "document1", None))
-                self.assertIsNone(session.get_value("collection1", 3.5, None))
+                document1 = session["collection1"]["document1"]
+                self.assertEqual(document1["PatientName"], "test")
+                self.assertEqual(document1["Bits per voxel"], 10)
+                self.assertEqual(document1["Dataset dimensions"], [3, 28, 28, 3])
+                self.assertEqual(document1["Grids spacing"], [0.234375, 0.234375, 0.4])
 
         def test_check_type_value(self):
             """

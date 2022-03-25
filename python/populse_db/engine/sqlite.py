@@ -354,9 +354,9 @@ class SQLiteCollection:
     def documents(self, fields, as_list):
         yield from self._documents(None, None, fields, as_list)
     
-    def add(self, document):
+    def add(self, document, replace=False):
         document_id = tuple(document.get(i) for i in self.primary_key)
-        self._set_document(document_id, document, replace=False)
+        self._set_document(document_id, document, replace=replace)
 
     def __setitem__(self, document_id, document):
         document_id = self.document_id(document_id)
