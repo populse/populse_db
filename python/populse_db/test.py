@@ -1091,15 +1091,15 @@ def create_test_case(**database_creation_parameters):
                 list_datetime = [datetime(2018, 5, 23, 12, 41, 33, 540),
                                  datetime(1899, 12, 31, 1, 2, 3)]
 
-                session.add_value("collection1", "document1", "list_date", list_date)
-                self.assertEqual(
-                    list_date, session.get_value("collection1", "document1", "list_date"))
-                session.add_value("collection1", "document1", "list_time", list_time)
-                self.assertEqual(
-                    list_time, session.get_value("collection1", "document1", "list_time"))
-                session.add_value("collection1", "document1", "list_datetime", list_datetime)
-                self.assertEqual(list_datetime, session.get_value(
-                    "collection1", "document1", "list_datetime"))
+                document["list_date"] = list_date
+                document["list_time"] = list_time
+                document["list_datetime"] = list_datetime
+                session["collection1"]["document1"] = document
+
+                document = session["collection1"]["document1"]
+                self.assertEqual(list_date, document["list_date"])
+                self.assertEqual(list_time, document["list_time"])
+                self.assertEqual(list_datetime, document["list_datetime"])
 
         def test_json_field(self):
             """
