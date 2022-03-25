@@ -1153,13 +1153,13 @@ def create_test_case(**database_creation_parameters):
 
                 session.add_collection("collection_test")
                 session.add_field("collection_test", "field_test", str, None)
-                session.add_document("collection_test", "document_test")
+                session["collection_test"]["document_test"] = {}
 
                 # Checking with invalid collection
-                self.assertRaises(ValueError, lambda : set(document.index for document in session.filter_documents("collection_not_existing", None)))
+                self.assertRaises(ValueError, lambda : set(document["primary_key"] for document in session.filter_documents("collection_not_existing", None)))
 
                 # Checking that every document is returned if there is no filter
-                documents = set(document.index for document in session.filter_documents("collection_test", None))
+                documents = set(document["primary_key"] for document in session.filter_documents("collection_test", None))
                 self.assertEqual(documents, set(['document_test']))
 
         def test_filters(self):

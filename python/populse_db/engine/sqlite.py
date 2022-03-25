@@ -292,7 +292,7 @@ class SQLiteCollection:
         return next(self.session.execute(sql, document_id))[0] != 0
 
     
-    def _documents(self, fields, as_list, where, where_data):
+    def _documents(self, where, where_data, fields, as_list):
         if fields:
             columns = []
             catchall_fields = set()
@@ -346,7 +346,7 @@ class SQLiteCollection:
     def document(self, document_id, fields=None, as_list=False):
         document_id = self.document_id(document_id)
         where = f'{" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
-        return next(self._documents(fields, as_list, where, document_id))
+        return next(self._documents(where, document_id, fields, as_list))
 
     def documents(self, fields, as_list):
         yield from self._documents(None, None, fields, as_list)
@@ -451,4 +451,4 @@ class SQLiteCollection:
 
     def filter(self, filter, fields=None, as_list=False):
         parsed_filter = self.parse_filter(filter)
-        yield from self._select_documents(parsed_filter, None, fields=fields, as_list=as_list)
+        yield from self._documents(parsed_filter, None, fields=fields, as_list=as_list)
