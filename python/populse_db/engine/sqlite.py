@@ -43,6 +43,12 @@ class SQLiteSession(DatabaseSession):
         else:
             return self.sqlite.execute(sql)
 
+    def commit(self):
+        self.sqlite.commit()
+
+    def rollback(self):
+        self.sqlite.rollback()
+        
     def get_settings(self, category, key, default=None):
         try:
             sql = f'SELECT _json FROM [{self.populse_db_table}] WHERE category=? and key=?'
@@ -351,9 +357,12 @@ class SQLiteCollection:
         except StopIteration:
             return None
 
-    def documents(self, fields, as_list):
+    def documents(self, fields=None, as_list=False):
         yield from self._documents(None, None, fields, as_list)
-    
+
+    def __iter__(self):
+        return self.documents()
+     
     def add(self, document, replace=False):
         document_id = tuple(document.get(i) for i in self.primary_key)
         self._set_document(document_id, document, replace=replace)

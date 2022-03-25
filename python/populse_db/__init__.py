@@ -69,7 +69,11 @@ class Database(object):
         statement).
         """
         args, kwargs = self.session_parameters
-        return self.session_class(*args, **kwargs)
+        self.session = self.session_class(*args, **kwargs)
+        return self.session
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        if exc_type is None:
+            self.session.commit()
+        else:
+            self.session.rollback()

@@ -56,7 +56,7 @@ def create_test_case(**database_creation_parameters):
             if 'database_url' not in self.database_creation_parameters:
                 self.temp_folder = tempfile.mkdtemp(prefix='populse_db')
                 path = os.path.join(self.temp_folder, "test.db")
-                self.database_creation_parameters['database_url'] = 'sqlite:///' + path
+                self.database_creation_parameters['database_url'] = 'sqlite://' + path
             else:
                 self.temp_folder = None
             self.database_url = self.database_creation_parameters['database_url']
@@ -1008,7 +1008,6 @@ def create_test_case(**database_creation_parameters):
 
                 documents1 = list(session.get_documents_ids("collection1"))
                 self.assertEqual(len(documents1), 2)
-                print('!!!', documents1)
                 self.assertTrue(["document1"] in documents1)
                 self.assertTrue(["document2"] in documents1)
 
@@ -1108,7 +1107,7 @@ def create_test_case(**database_creation_parameters):
             """
 
             doc = {"name": "the_name",
-                    "json": {"key": [1, 2, "three"]}}
+                   "json": {"key": [1, 2, "three"]}}
             database = self.create_database()
             with database as session:
                 # Adding a collection
@@ -1118,11 +1117,10 @@ def create_test_case(**database_creation_parameters):
                 session.add_field("collection1", "json", dict)
                 
                 session.add_document("collection1", doc)
-                self.assertEqual(doc, session.get_document("collection1", "the_name")._dict())
+                self.assertEqual(doc, session.get_document("collection1", "the_name"))
                 self.assertIsNone(session.get_document("collection1", "not_a_valid_name"))
-
             with database as session:
-                self.assertEqual(doc, session.get_document("collection1", "the_name")._dict())
+                self.assertEqual(doc, session.get_document("collection1", "the_name"))
                 self.assertIsNone(session.get_document("collection1", "not_a_valid_name"))
                 
         def test_filter_documents(self):
