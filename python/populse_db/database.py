@@ -312,7 +312,11 @@ class DatabaseSession:
 
         :return: The document row if the document exists, None otherwise
         """
-        return self[collection].document(document_id, fields, as_list)
+        try:
+            collection = self[collection]
+        except ValueError:
+            return None
+        return collection.document(document_id, fields, as_list)
     
     def get_documents_ids(self, collection):
         """

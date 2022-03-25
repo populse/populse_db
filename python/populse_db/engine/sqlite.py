@@ -223,7 +223,7 @@ class SQLiteCollection:
         self.session.set_settings('collection', self.name, settings)
 
     def document_id(self, document_id):
-        if isinstance(document_id, str):
+        if not isinstance(document_id, (tuple, list)):
             document_id = (document_id,)
         if len(document_id) != len(self.primary_key):
             raise KeyError(f'key for table {self.name} requires {len(self.primary_key)} value(s), {len(document_id)} given')
@@ -346,7 +346,10 @@ class SQLiteCollection:
     def document(self, document_id, fields=None, as_list=False):
         document_id = self.document_id(document_id)
         where = f'{" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
-        return next(self._documents(where, document_id, fields, as_list))
+        try:
+            return next(self._documents(where, document_id, fields, as_list))
+        except StopIteration:
+            return None
 
     def documents(self, fields, as_list):
         yield from self._documents(None, None, fields, as_list)
