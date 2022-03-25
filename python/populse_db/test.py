@@ -910,23 +910,20 @@ def create_test_case(**database_creation_parameters):
 
                 # Checking values
                 collection = session.get_collection("collection1")
-                self.assertEqual(collection.collection_name, "collection1")
-                self.assertEqual(collection.primary_key, "index")
+                self.assertEqual(collection.name, "collection1")
+                self.assertEqual(collection.primary_key, {"primary_key": str})
 
                 # Adding a second collection
                 session.add_collection("collection2", "id")
 
                 # Checking values
                 collection = session.get_collection("collection2")
-                self.assertEqual(collection.collection_name, "collection2")
-                self.assertEqual(collection.primary_key, "id")
+                self.assertEqual(collection.name, "collection2")
+                self.assertEqual(collection.primary_key, {"id": str})
 
                 # Trying with a collection not existing
                 self.assertIsNone(session.get_collection("collection3"))
 
-                # Trying with a table name already existing
-                self.assertIsNone(session.get_collection("collection"))
-                self.assertIsNone(session.get_collection("field"))
 
         def test_get_collections(self):
             """

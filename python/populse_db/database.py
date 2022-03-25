@@ -184,7 +184,10 @@ class DatabaseSession:
 
         :return: The collection row if it exists, None otherwise
         """
-        return self[name]
+        try:
+            return self[name]
+        except ValueError:
+            return None
 
     def get_collections_names(self):
         """
