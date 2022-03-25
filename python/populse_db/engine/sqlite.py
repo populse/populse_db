@@ -314,9 +314,12 @@ class SQLiteCollection:
             if catchall_fields:
                 if as_list and catchall_fields is True:
                     raise ValueError(f'as_list=True cannot be used on {self.name} without a fields list because two documents can have different fields')
-                catchall = json.loads(row[-1])
-                if isinstance(catchall_fields, set):
-                    catchall = dict((i, catchall[i]) for i in catchall_fields)
+                if row[-1] is not None:
+                    catchall = json.loads(row[-1])
+                    if isinstance(catchall_fields, set):
+                        catchall = dict((i, catchall[i]) for i in catchall_fields)
+                else:
+                    catchall = {}
                 row = row[:-1]
                 columns = columns[:-1]
             else:
@@ -382,7 +385,7 @@ class SQLiteCollection:
                 value = json_encode(value)
             if field in self.fields:
                 columns.append(field)
-                data.append(self._encode_column_value(column_value))
+                data.append(self._encode_column_value(field, value))
             else:
                 catchall[field] = value
         if catchall:

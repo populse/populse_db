@@ -825,18 +825,18 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing that the document has been added
                 document = session.get_document("collection1", "document1")
-                self.assertEqual(document.name, "document1")
+                self.assertEqual(document["name"], "document1")
 
                 # Testing when trying to add a document that already exists
-                with self.assertRaises(ValueError):
-                    document = {}
-                    document["name"] = "document1"
+                document = {}
+                document["name"] = "document1"
+                with self.assertRaises(Exception):
                     session.add_document("collection1", document)
 
                 # Testing with invalid parameters
                 self.assertRaises(ValueError, lambda : session.add_document(15, "document1"))
                 self.assertRaises(ValueError, lambda : session.add_document("collection_not_existing", "document1"))
-                self.assertRaises(ValueError, lambda : session.add_document("collection1", True))
+                self.assertRaises(Exception, lambda : session.add_document("collection1", True))
 
                 # Testing the add of several documents
                 document = {}
@@ -844,23 +844,9 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding a document with a dictionary without the primary key
-                with self.assertRaises(ValueError):
-                    document = {}
-                    document["no_primary_key"] = "document1"
-                    session.add_document("collection1", document)
-
-                # Adding a document with missing field, without the option to add missing fields
-                with self.assertRaises(ValueError):
-                    document = {}
-                    document["name"] = "document10"
-                    document["field_not_existing"] = "field"
-                    session.add_document("collection1", document, False)
-
-                # Adding a document with missing field, but wrong value type
-                with self.assertRaises(ValueError):
-                    document = {}
-                    document["name"] = "document10"
-                    document["field_not_existing"] = None
+                document = {}
+                document["no_primary_key"] = "document1"
+                with self.assertRaises(Exception):
                     session.add_document("collection1", document)
 
         def test_add_collection(self):
