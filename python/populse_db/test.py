@@ -1029,39 +1029,41 @@ def create_test_case(**database_creation_parameters):
                 # Adding a collection
                 session.add_collection("collection1", "name")
 
-                # Adding a document
-                session.add_document("collection1", "document1")
-
                 # Adding fields
                 session.add_field("collection1", "PatientName", str,
                                   "Name of the patient")
-                session.add_field("collection1", "Bits per voxel", int, None)
+                session.add_field("collection1", "Bits per voxel", int)
                 session.add_field("collection1", "Dataset dimensions",
                                   list[int], None)
 
-                # Adding values
-                session.add_value("collection1", "document1", "PatientName", "test")
+                # Adding a document
+                doc = {
+                    "PatientName": "test",
+                    "Dataset dimensions": [3, 28, 28, 3],
+                    "Bits per voxel": 42,
+                }
+                session["collection1"]["document1"] = doc
 
-                self.assertRaises(ValueError, lambda : session.add_value("collection1", "document1", "Bits per voxel", "space_field"))
-                session.add_value("collection1", "document1", "Dataset dimensions", [3, 28, 28, 3])
-                value = session.get_value("collection1", "document1", "Dataset dimensions")
+
+                doc["Bits per voxel"] = "space_field"
+                # SQLite allows to store any type in columns
+                # with self.assertRaises(TypeError):
+                session["collection1"]["document1"] = doc
+                value = session["collection1"]["document1"]["Dataset dimensions"]
                 self.assertEqual(value, [3, 28, 28, 3])
 
                 # Removing values
-                session.remove_value("collection1", "document1", "PatientName")
-                session.remove_value("collection1", "document1", "Bits per voxel")
-                session.remove_value("collection1", "document1", "Dataset dimensions")
+                del doc["PatientName"]
+                del doc["Bits per voxel"]
+                del doc["Dataset dimensions"]
+                session["collection1"]["document1"] = doc
 
-                # Testing when not existing
-                self.assertRaises(ValueError, lambda : session.remove_value("collection_not_existing", "document1", "PatientName"))
-                self.assertRaises(ValueError, lambda : session.remove_value("collection1", "document3", "PatientName"))
-                self.assertRaises(ValueError, lambda : session.remove_value("collection1", "document1", "NotExisting"))
-                self.assertRaises(ValueError, lambda : session.remove_value("collection1", "document3", "NotExisting"))
 
                 # Testing that the values are actually removed
-                self.assertIsNone(session.get_value("collection1", "document1", "PatientName"))
-                self.assertIsNone(session.get_value("collection1", "document1", "Bits per voxel"))
-                self.assertIsNone(session.get_value("collection1", "document1", "Dataset dimensions"))
+                doc = session["collection1"]["document1"]
+                self.assertIsNone(doc.get("PatientName"))
+                self.assertIsNone(doc.get("Bits per voxel"))
+                self.assertIsNone(doc.get("Dataset dimensions"))
 
         def test_list_dates(self):
             """
