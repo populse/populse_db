@@ -1729,21 +1729,17 @@ def create_test_case(**database_creation_parameters):
                          )):
                     for tested_filter in (filter, '(%s) AND ALL' % filter, 'ALL AND (%s)' % filter):
                         try:
-                            documents = set(document.name for document in session.filter_documents("collection1", tested_filter))
+                            documents = set(document["name"] for document in session.filter_documents("collection1", tested_filter))
                             self.assertEqual(documents, expected)
                         except Exception as e:
-                            e.message = 'While testing filter : %s\n%s' % (str(tested_filter), str(e))
-                            e.args = (e.message,)
-                            raise
-                    all_documents = set(document.name for document in session.filter_documents("collection1", 'ALL'))
+                            raise Exception(f'Error while testing filter : {tested_filter}') from e
+                    all_documents = set(document["name"] for document in session.filter_documents("collection1", 'ALL'))
                     for tested_filter in ('(%s) OR ALL' % filter, 'ALL OR (%s)' % filter):
                         try:
-                            documents = set(document.name for document in session.filter_documents("collection1", tested_filter))
+                            documents = set(document["name"] for document in session.filter_documents("collection1", tested_filter))
                             self.assertEqual(documents, all_documents)
                         except Exception as e:
-                            e.message = 'While testing filter : %s\n%s' % (str(tested_filter), str(e))
-                            e.args = (e.message,)
-                            raise
+                            raise Exception(f'Error while testing filter : {tested_filter}') from e
 
         def test_modify_list_field(self):
             database = self.create_database()

@@ -239,7 +239,7 @@ class SQLiteCollection:
         sql = f'ALTER TABLE [{self.name}] ADD COLUMN [{name}] {type_to_str(field_type)}'
         self.session.execute(sql)
         if index:
-            sql = 'CREATE INDEX [{self.name}_{name}] ON [{self.name}] ([{name}])'
+            sql = f'CREATE INDEX [{self.name}_{name}] ON [{self.name}] ([{name}])'
             self.session.execute(sql)
         settings = self.settings()
         settings.setdefault('fields', {})[name] = {
@@ -324,10 +324,10 @@ class SQLiteCollection:
                 else:
                     catchall = {}
                 row = row[:-1]
-                columns = columns[:-1]
             else:
-                catchall = {}        
-
+                catchall = {}
+            if columns[-1] == self.catchall_column:
+                columns = columns[:-1]
             document = catchall
             document.update(zip(columns, row))
             for field, value in document.items():
