@@ -2,25 +2,15 @@ environment:
 
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      PYTHON: "C:\\Python27"
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      PYTHON: "C:\\Python37"
+      PYTHON: "C:\\Python39"
       
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-      PYTHON: "Python2.7"
-#      APPVEYOR_SSH_KEY:
-#      APPVEYOR_SSH_BLOCK: true
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-      PYTHON: "Python3.7"
+      PYTHON: "Python3.9"
 #      APPVEYOR_SSH_KEY:
 #      APPVEYOR_SSH_BLOCK: true
 
     - APPVEYOR_BUILD_WORKER_IMAGE: macos
-      PYTHON: "Python2.7"
-#      APPVEYOR_SSH_KEY:
-#      APPVEYOR_SSH_BLOCK: true
-    - APPVEYOR_BUILD_WORKER_IMAGE: macos
-      PYTHON: "Python3.7"
+      PYTHON: "Python3.9"
 
 build: off
 
@@ -44,10 +34,10 @@ install:
 test_script:
   - cmd: python -m populse_db.test -v
   - sh: python ./python/populse_db/test.py -v
-  - sh: if [[ $(uname -s) == Linux ]] && [[ $PYTHON == Python3.7 ]]; then coverage run ./python/populse_db/test.py -v; fi
+  - sh: if [[ $(uname -s) == Linux ]] && [[ $PYTHON == Python3.9 ]]; then coverage run ./python/populse_db/test.py -v; fi
 
 after_test:
-  - sh: if [[ $(uname -s) == Linux ]] && [[ $PYTHON == Python3.7 ]]; then codecov; fi
+  - sh: if [[ $(uname -s) == Linux ]] && [[ $PYTHON == Python3.9 ]]; then codecov; fi
 
 notifications:
   - provider: Email
