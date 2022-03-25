@@ -45,7 +45,6 @@ class SQLiteSession(DatabaseSession):
         return result
     
     def execute(self, sql, data=None):
-        print('!sql!', sql, data)
         if data:
             return self.sqlite.execute(sql, data)
         else:

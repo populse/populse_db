@@ -100,7 +100,7 @@ def create_test_case(**database_creation_parameters):
             Tests the parameters of the Database class constructor
             """
             # Testing with wrong engine
-            self.assertRaises(ValueError, lambda : Database("engine").__enter__())
+            self.assertRaises(ValueError, lambda : Database("engine://something").__enter__())
 
         def test_add_field(self):
             """
