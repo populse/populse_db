@@ -4,7 +4,7 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       PYTHON: "C:\\Python39"
       
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
       PYTHON: "Python3.9"
 #      APPVEYOR_SSH_KEY:
 #      APPVEYOR_SSH_BLOCK: true
@@ -22,7 +22,7 @@ install:
 #  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
 
   - cmd: SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
-  - sh: if [[ $PYTHON == Python3.7 ]]; then export PATH=~/venv3.7/bin:~/venv3.7/lib:$PATH; fi
+  - sh: if [[ $PYTHON == Python3.9 ]]; then export PATH=~/venv3.9/bin:~/venv3.9/lib:$PATH; fi
 
   - python --version
   - python -m pip install pip --upgrade
