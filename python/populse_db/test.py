@@ -1,6 +1,7 @@
 from dataclasses import replace
 from datetime import datetime, date, time
 import os
+from pydoc import doc
 import shutil
 import tempfile
 import unittest
@@ -708,8 +709,10 @@ def create_test_case(**database_creation_parameters):
                 session.add_field("collection1", "FOV", list[int], None)
 
                 # Adding a value
-                session.add_value("collection1", "document1", "PatientName", "test")
-                session.add_value("collection1", "document1", "FOV", [1, 2, 3])
+                document = session["collection1"]["document1"]
+                document["PatientName"] = "test"
+                document["FOV"] = [1, 2, 3]
+                session["collection1"]["document1"] = document
 
                 # Removing a document
                 session.remove_document("collection1", "document1")
@@ -717,23 +720,14 @@ def create_test_case(**database_creation_parameters):
                 # Testing that the document is removed from all tables
                 self.assertIsNone(session.get_document("collection1", "document1"))
 
-                # Testing that the values associated are removed
-                self.assertIsNone(session.get_value("collection1", "document1", "PatientName"))
-
                 # Testing with a collection not existing
                 self.assertRaises(ValueError, lambda : session.remove_document("collection_not_existing", "document1"))
-
-                # Testing with a document not existing
-                self.assertRaises(ValueError, lambda : session.remove_document("collection1", "NotExisting"))
 
                 # Removing a document
                 session.remove_document("collection1", "document2")
 
                 # Testing that the document is removed from the collection
                 self.assertIsNone(session.get_document("collection1", "document2"))
-
-                # Trying to remove the document a second time
-                self.assertRaises(ValueError, lambda : session.remove_document("collection1", "document1"))
 
         def test_add_document(self):
             """
