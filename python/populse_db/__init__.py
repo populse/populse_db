@@ -52,6 +52,8 @@ class Database(object):
         else:
             raise ValueError(f'Invalid datbase type in database URL: {database_url}')
         self.session_parameters = self.session_class.parse_url(self.url)
+        self.session = None
+        self.session_depth = 0
 
 
     def __enter__(self):
@@ -69,11 +71,17 @@ class Database(object):
         statement).
         """
         args, kwargs = self.session_parameters
-        self.session = self.session_class(*args, **kwargs)
+        if self.session is None:
+            self.session = self.session_class(*args, **kwargs)
+        self.session_depth += 1
         return self.session
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
-            self.session.commit()
-        else:
-            self.session.rollback()
+        self.session_depth -= 1
+        if self.session_depth == 0:
+            if exc_type is None:
+                self.session.commit()
+            else:
+                self.session.rollback()
+            self.session = None
+    

@@ -26,7 +26,15 @@ class SQLiteSession(DatabaseSession):
         return args, {}
     
     def __init__(self, sqlite_file):
-        self.sqlite = sqlite3.connect(sqlite_file)
+        self.sqlite = sqlite3.connect(sqlite_file,
+            isolation_level=None,
+            check_same_thread=False)
+        self.sqlite.executescript(
+            'PRAGMA synchronous=OFF;'
+            'PRAGMA case_sensitive_like=ON;'
+            'PRAGMA foreign_keys=ON;'
+            'BEGIN DEFERRED;'
+        )
         self._collection_cache = {}
 
     def __getitem__(self, collection_name):

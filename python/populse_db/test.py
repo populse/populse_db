@@ -1733,7 +1733,7 @@ def create_test_case(**database_creation_parameters):
             # Reopen the database to check that "titi" was commited
             database = self.create_database(clear=False)
             with database as session:
-                names = [i.name for i in session.filter_documents("collection1", "all")]
+                names = [i["name"] for i in session.filter_documents("collection1", "all")]
                 self.assertEqual(names, ['titi'])
 
                 # Check that recursive session creation always return the
@@ -1744,10 +1744,9 @@ def create_test_case(**database_creation_parameters):
                         self.assertIs(session, session3)
                         session.add_document("collection1", {"name": "toto"})
 
-            # Check that previous session was commited but preserved
-            # as long as the database is not destroyed.
+            # Check that previous session was commited and released.
             with database as session4:
-                self.assertIs(session, session4)
+                self.assertIsNot(session, session4)
         
             # Destroy the database and create a new one
             database = self.create_database(clear=False)
@@ -1756,7 +1755,7 @@ def create_test_case(**database_creation_parameters):
             # a new one is created.
             with database as session5:
                 self.assertIsNot(session, session5)
-                self.assertEqual(len(session5.get_documents('collection1')), 2)
+                self.assertEqual(len(list(session5.get_documents('collection1'))), 2)
         
         def test_automatic_fields_creation(self):
             """
