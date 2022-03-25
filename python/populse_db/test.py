@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 from populse_db import Database
-from populse_db.database import DatabaseSession
+from populse_db.database import check_value_type
 from populse_db.filter import literal_parser, FilterToSQL
 
 
@@ -584,24 +584,23 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                self.assertTrue(DatabaseSession.check_value_type("string", str))
-                self.assertFalse(DatabaseSession.check_value_type(1, str))
-                self.assertTrue(DatabaseSession.check_value_type(None, str))
-                self.assertTrue(DatabaseSession.check_value_type(1, int))
-                self.assertTrue(DatabaseSession.check_value_type(1, float))
-                self.assertTrue(DatabaseSession.check_value_type(1.5, float))
-                self.assertFalse(DatabaseSession.check_value_type(None, None))
-                self.assertTrue(DatabaseSession.check_value_type([1.5], list[float]))
-                self.assertFalse(DatabaseSession.check_value_type(1.5, list[float]))
-                self.assertFalse(DatabaseSession.check_value_type([1.5, "test"], list[float]))
+                self.assertTrue(check_value_type("string", str))
+                self.assertFalse(check_value_type(1, str))
+                self.assertTrue(check_value_type(None, str))
+                self.assertTrue(check_value_type(1, int))
+                self.assertTrue(check_value_type(1, float))
+                self.assertTrue(check_value_type(1.5, float))
+                self.assertTrue(check_value_type([1.5], list[float]))
+                self.assertFalse(check_value_type(1.5, list[float]))
+                self.assertFalse(check_value_type([1.5, "test"], list[float]))
                 value = {}
                 value["test1"] = 1
                 value["test2"] = 2
-                self.assertTrue(DatabaseSession.check_value_type(value, dict))
+                self.assertTrue(check_value_type(value, dict))
                 value2 = {}
                 value2["test3"] = 1
                 value2["test4"] = 2
-                self.assertTrue(DatabaseSession.check_value_type([value, value2], list[dict]))
+                self.assertTrue(check_value_type([value, value2], list[dict]))
 
         def test_add_value(self):
             """

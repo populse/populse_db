@@ -53,8 +53,10 @@ def check_value_type(value, field_type):
                 if not check_value_type(v, item_type):
                     return False
             return True
+    elif field_type is float:
+        return isinstance(value, (int, float))
     else:
-        return isinstance(field_type, value)
+        return isinstance(value, field_type)
     return False
 
 def type_to_str(type):
