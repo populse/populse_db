@@ -961,23 +961,23 @@ def create_test_case(**database_creation_parameters):
             database = self.create_database()
             with database as session:
                 # Testing that there is no collection at first
-                self.assertEqual(session.get_collections_names(), [])
+                self.assertEqual(list(session.get_collections_names()), [])
 
                 # Adding a collection
                 session.add_collection("collection1")
 
-                self.assertEqual(session.get_collections_names(), ["collection1"])
+                self.assertEqual(list(session.get_collections_names()), ["collection1"])
 
                 session.add_collection("collection2")
 
-                collections = session.get_collections_names()
+                collections = list(session.get_collections_names())
                 self.assertEqual(len(collections), 2)
                 self.assertTrue("collection1" in collections)
                 self.assertTrue("collection2" in collections)
 
                 session.remove_collection("collection2")
 
-                self.assertEqual(session.get_collections_names(), ["collection1"])
+                self.assertEqual(list(session.get_collections_names()), ["collection1"])
 
         def test_get_documents(self):
             """
