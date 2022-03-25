@@ -1810,7 +1810,7 @@ def create_test_case(**database_creation_parameters):
             parser = literal_parser()
             for literal, expected_value in literals.items():
                 tree = parser.parse(literal)
-                value = FilterToSQL(None, None).transform(tree)
+                value = FilterToSQL(None).transform(tree)
                 self.assertEqual(value, expected_value)
 
         def test_with(self):

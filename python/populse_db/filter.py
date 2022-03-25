@@ -161,8 +161,8 @@ class FilterToSQL(Transformer):
 
     no_list_operators = {'>', '<', '>=', '<=', 'like', 'ilike'}
 
-    def __init__(self, dictable):
-        self.dictable = dictable
+    def __init__(self, dbcollection):
+        self.dbcollection = dbcollection
 
     def all(self, items):
         return self.build_condition_all()
@@ -268,10 +268,12 @@ class FilterToSQL(Transformer):
         literal = self.keyword_literals.get(field.lower(), self)
         if literal is not self:
             return literal
-        if field in self.dictable.primary_columns or field in self.dictable.other_columns:
+        if field in self.dbcollection.fields:
             return Field(f'[{field}]')
-        elif self.dictable.json_column:
-            return Field(f"json_extract([{self.dictable.json_column}],'$.\"{field}\"')")
+        elif self.dbcollection.catchall_column:
+            return Field(f"json_extract([{self.dbcollection.catchall_column}],'$.\"{field}\"')")
+        else:
+            raise ValueError(f'Filter uses unknown field "{field}" in collection "{self.dbcollection.name}" that does not support it')
 
     def quoted_field_name(self, items):
         return Field(items[0][1:-1])
