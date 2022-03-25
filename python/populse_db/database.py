@@ -255,8 +255,10 @@ class DatabaseSession:
 
         :return: The field row if the field exists, None otherwise
         """
-
-        return self[collection].field(name)
+        try:
+            return self[collection].fields.get(name)
+        except ValueError:
+            return None
     
     def get_fields_names(self, collection):
         """
