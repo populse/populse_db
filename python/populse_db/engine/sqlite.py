@@ -84,7 +84,8 @@ class SQLiteSession(DatabaseSession):
             self.execute(sql)
         self._collection_cache = {}
     
-    def add_collection(self, name, primary_key, catchall_column='_catchall'):
+    def add_collection(self, name, primary_key=DatabaseSession.default_primary_key, 
+                       catchall_column='_catchall'):
         if isinstance(primary_key, str):
             primary_key = {primary_key: str}
         elif isinstance(primary_key, (list, tuple)):

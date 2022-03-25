@@ -130,6 +130,7 @@ class DatabaseSession:
         - filter_documents: Gives the list of documents matching the filter
     """
     populse_db_table = 'populse_db'
+    default_primary_key = 'primary_key'
 
     def __getitem__(self, collection_name):
         raise NotImplemented()
@@ -149,7 +150,7 @@ class DatabaseSession:
     def set_settings(self, category, key, value):
         raise NotImplemented()
     
-    def add_collection(self, name, primary_key):
+    def add_collection(self, name, primary_key=default_primary_key):
         """
         Adds a collection
 
