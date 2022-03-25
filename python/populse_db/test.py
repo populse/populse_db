@@ -1887,9 +1887,9 @@ def create_test_case(**database_creation_parameters):
                 for k, v in base_doc.items():
                     lk = 'list_%s' % k
                     doc[lk] = [v]
-                doc['index'] = 'test'
+                doc['primary_key'] = 'test'
                 session.add_document('test', doc)
-                stored_doc = session.get_document('test', 'test')._dict()
+                stored_doc = session.get_document('test', 'test')
                 self.assertEqual(doc, stored_doc)
     
     return TestDatabaseMethods
