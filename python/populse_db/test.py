@@ -1727,19 +1727,22 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
                 session.add_field("collection1", 'strings', field_type=list[str],
                                   description=None)
-                session.add_document("collection1", 'test')
-                session.add_value("collection1", 'test', 'strings', ['a', 'b', 'c'])
-                names = list(document.name for document in session.filter_documents("collection1", '"b" IN strings'))
+                session["collection1"]['test'] = {
+                    'strings': ['a', 'b', 'c']
+                }
+                names = list(document["name"] for document in session.filter_documents("collection1", '"b" IN strings'))
                 self.assertEqual(names, ['test'])
 
-                session.set_value("collection1", 'test', 'strings', ['x', 'y', 'z'])
-                names = list(document.name for document in session.filter_documents("collection1", '"b" IN strings'))
+                session["collection1"]['test'] = {
+                    'strings': ['x', 'y', 'z']
+                }
+                names = list(document["name"] for document in session.filter_documents("collection1", '"b" IN strings'))
                 self.assertEqual(names, [])
-                names = list(document.name for document in session.filter_documents("collection1", '"z" IN strings'))
+                names = list(document["name"] for document in session.filter_documents("collection1", '"z" IN strings'))
                 self.assertEqual(names, ['test'])
 
-                session.remove_value("collection1", 'test', 'strings')
-                names = list(document.name for document in session.filter_documents("collection1", '"y" IN strings'))
+                session["collection1"]['test'] = {}
+                names = list(document["name"] for document in session.filter_documents("collection1", '"y" IN strings'))
                 self.assertEqual(names, [])
 
         def test_filter_literals(self):
