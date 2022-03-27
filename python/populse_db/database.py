@@ -1,39 +1,17 @@
 from datetime import date, time, datetime
-
-# Field types
-FIELD_TYPE_STRING = str
-FIELD_TYPE_INTEGER = int
-FIELD_TYPE_FLOAT = float
-FIELD_TYPE_BOOLEAN = bool
-FIELD_TYPE_DATE = date
-FIELD_TYPE_DATETIME = datetime
-FIELD_TYPE_TIME = time
-FIELD_TYPE_JSON = dict
-FIELD_TYPE_LIST_STRING = list[str]
-FIELD_TYPE_LIST_INTEGER = list[int]
-FIELD_TYPE_LIST_FLOAT = list[float]
-FIELD_TYPE_LIST_BOOLEAN = list[bool]
-FIELD_TYPE_LIST_DATE = list[date]
-FIELD_TYPE_LIST_DATETIME = list[datetime]
-FIELD_TYPE_LIST_TIME = list[time]
-FIELD_TYPE_LIST_JSON = list[dict]
-
-ALL_TYPES = {FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN,
-             FIELD_TYPE_LIST_DATE, FIELD_TYPE_LIST_DATETIME,
-             FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON, FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT,
-             FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON}
-
-
+import dateutil
+import json
 
 def check_value_type(value, field_type):
     """
-    Checks the type of the value
+    Checks the type of a value
 
-    :param value: Value
+    :param value: value to check
 
-    :param field_type: Type that the value is supposed to have
+    :param field_type: type that the value is supposed to have
 
-    :return: True if the value is None or has a valid type, False otherwise
+    :return: true if the value is ``None`` or if the value is of that type,
+        ``False`` otherwise
     """
 
     if field_type is None:
@@ -60,6 +38,13 @@ def check_value_type(value, field_type):
     return False
 
 def type_to_str(type):
+    """Convert a Python type to a string.
+    
+    Examples:
+
+        - ``type_to_str(str) == 'str'``
+        - ``type_to_str(list[str]) == 'list[str]'``
+    """
     args = getattr(type, '__args__', None)
     if args:
         return f'{type.__name__}[{",".join(type_to_str(i) for i in args)}]'
@@ -71,6 +56,13 @@ _str_to_type = dict((type_to_str(i), i) for i in (
 ))
 
 def str_to_type(str):
+    """Convert a string to a Python type.
+
+    Examples:
+
+        - ``str_to_type('str') == str``
+        - ``str_to_type('list[str]') == list[str]``
+    """
     global _str_to_type
 
     s = str.split('[',1)
@@ -82,10 +74,18 @@ def str_to_type(str):
 
 def python_value_type(value):
     """
-    Returns the field type corresponding to a Python value.
+    Returns the Python type corresponding to a Python value.
     This type can be used in add_field(s) method.
-    For list values, only the first item is considered to get the type.
-    Type cannot be determined for empty list.
+    For list values, only the first item is considered to get the subtype
+    of the list.
+
+    Examples:
+
+        - ``python_value_type('a value') == str``
+        - ``python_value_type([]) == list``
+        - ``python_value_type([1, 2, 3]) == list[int]``
+        - ``python_value_type(['string', 2, {}]) == list[str]``
+        - ``python_value_type({'one': 1, 'two': 2}) == dict``
     """
     if isinstance(value, list) and value:
         return list[type(value[0])]
@@ -94,48 +94,51 @@ def python_value_type(value):
 
 class DatabaseSession:
     """
-    DatabaseSession API
-
-    attributes:
-        - database: Database instance
-        - session: Session related to the database
-        - table_classes: List of all table classes, generated automatically
-        - base: Database base
-        - metadata: Database metadata
+    Base class
 
     methods:
-        - add_collection: Adds a collection
-        - remove_collection: Removes a collection
-        - get_collection: Gives the collection row
-        - get_collections: Gives all collection rows
-        - get_collections_names: Gives all collection names
-        - add_field: Adds a field to a collection
-        - add_fields: Adds a list of fields to a collection
-        - remove_field: Removes a field from a collection
-        - get_field: Gives all fields rows given a collection
-        - get_fields_names: Gives all fields names given a collection
-          to the name
-        - get_value: Gives the value of <collection, document, field>
-        - set_value: Sets the value of <collection, document, field>
-        - set_values: Sets several values of <collection, document, field>
-        - remove_value: Removes the value of <collection, document, field>
-        - add_value: Adds a value to <collection, document, field>
-        - get_document: Gives the document row given a document name and a collection
-        - get_documents: Gives all document rows given a collection
-        - get_documents_names: Gives all document names given a collection
-        - add_document: Adds a document to a collection
-        - remove_document: Removes a document from a collection
-        - save_modifications: Saves the pending modifications
-        - unsave_modifications: Unsaves the pending modifications
-        - has_unsaved_modifications: To know if there are unsaved
-          modifications
-        - filter_documents: Gives the list of documents matching the filter
+
+        *Database related methods:*
+        
+        - :py:meth:`execute`
+        - :py:meth:`commit`
+        - :py:meth:`rollback`
+
+        *Database configuration methods:*
+
+        - :any:`settings`
+        - :py:meth:`set_settings`
+
+        *Collections related methods*
+
+        - :py:meth:`add_collection`
+        - :py:meth:`remove_collection`
+        - :py:meth:`__getitem__`
+        - :py:meth:`collections`
+
+        *Obsolete methods kept for backward compatibility*
+
+        - :py:meth:`get_collection`
+        - :py:meth:`get_collections`
+        - :py:meth:`get_collections_names`
+        - :py:meth:`add_field`
+        - :py:meth:`remove_field`
+        - :py:meth:`get_field`
+        - :py:meth:`get_fields_names`
+        - :py:meth:`get_fields`
+        - :py:meth:`set_values`
+        - :py:meth:`has_document`
+        - :py:meth:`get_document`
+        - :py:meth:`get_documents_ids`
+        - :py:meth:`get_documents`
+        - :py:meth:`remove_document`
+        - :py:meth:`add_document`
+        - :py:meth:`filter_documents`
+
+    .. automethod:: __getitem__
     """
     populse_db_table = 'populse_db'
     default_primary_key = 'primary_key'
-
-    def __getitem__(self, collection_name):
-        raise NotImplemented()
     
     def execute(self, *args, **kwargs):
         raise NotImplemented()
@@ -146,7 +149,7 @@ class DatabaseSession:
     def rollback(self):
         raise NotImplemented()
 
-    def get_settings(self, category, key, default=None):
+    def settings(self, category, key, default=None):
         raise NotImplemented()
 
     def set_settings(self, category, key, value):
@@ -176,28 +179,12 @@ class DatabaseSession:
         """
         raise NotImplemented()
 
-    def get_collection(self, name):
+    def __getitem__(self, collection_name):
+        """Return a collection object given its name.
         """
-        Returns the collection row of the collection
+        raise NotImplemented()
 
-        :param name: Collection name (str, must be existing)
-
-        :return: The collection row if it exists, None otherwise
-        """
-        try:
-            return self[name]
-        except ValueError:
-            return None
-
-    def get_collections_names(self):
-        """
-        Iterates over all collection names
-
-        :return: generator
-        """
-        return (i.name for i in self)
-
-    def get_collections(self):
+    def collections(self):
         """
         Iterates over collections
 
@@ -206,8 +193,197 @@ class DatabaseSession:
 
         yield from self
 
+    def get_collection(self, name):
+        """
+        .. deprecated:: 3.0
+            Use ``db_session[name]`` instead
+        """
+        try:
+            return self[name]
+        except ValueError:
+            return None
+
+    def get_collections(self):
+        """
+        .. deprecated:: 3.0
+            Use :py:meth:`collections()` instead
+        """
+        return self.collections()
+    
+    def get_collections_names(self):
+        """
+        .. deprecated:: 3.0
+            Use ``(i.name for i in db_session)`` instead
+        """
+        return (i.name for i in self)
+
     def add_field(self, collection, name, field_type, description=None,
                   index=False):
+        """
+        .. deprecated:: 3.0
+            Use ``db_session[collection].add_field(...)`` instead.
+            See :py:meth:`DatabaseCollection.add_field`.
+        """
+        self[collection].add_field(name, field_type, description=description, 
+                                   index=index)
+
+    def remove_field(self, collection, field):
+        """
+        .. deprecated:: 3.0
+            Use ``db_session[collection].remove_field(...)`` instead.
+            See :py:meth:`DatabaseCollection.remove_field`.
+        """
+        self[collection].remove_field(field)
+
+    def get_field(self, collection, name):
+        """
+        .. deprecated:: 3.0
+            Use ``db_session[collection].fields.get(name)`` instead.
+            See :py:attr:`DatabaseCollection.fields`.
+        """
+        try:
+            return self[collection].fields.get(name)
+        except ValueError:
+            return None
+    
+    def get_fields_names(self, collection):
+        """
+        .. deprecated:: 3.0
+            Use ``db_session[collection].fields.keys()`` instead.
+            See :py:attr:`DatabaseCollection.fields`.
+        """
+        try:
+            return self[collection].fields.keys()
+        except ValueError:
+            return ()
+
+    def get_fields(self, collection):
+        """
+        .. deprecated:: 3.0
+            Use ``db_session[collection].fields.values()`` instead.
+            See :py:attr:`DatabaseCollection.fields`.
+        """
+        try:     
+            return self[collection].fields.values()
+        except ValueError:
+            return ()
+
+    def set_values(self, collection, document_id, values):
+        """
+        .. deprecated:: 3.0
+            Use ``db_session[collection].update_document(...)`` instead.
+            See :py:meth:`DatabaseCollection.update_document`.
+        """
+        self[collection].update_document(document_id, values)
+            
+    def has_document(self, collection, document_id):
+        """
+        .. deprecated:: 3.0
+            Use ``db_session[collection].has_document(...)`` instead.
+            See :py:meth:`DatabaseCollection.has_document`.
+        """
+        return self[collection].has_document(document_id)
+
+    def get_document(self, collection, document_id, fields=None,
+                     as_list=False):
+        """
+        .. deprecated:: 3.0
+            Use ``db_session[collection].document(...)`` instead.
+            See :py:meth:`DatabaseCollection.document`.
+        """
+        try:
+            collection = self[collection]
+        except ValueError:
+            return None
+        return collection.document(document_id, fields, as_list)
+    
+    def get_documents_ids(self, collection):
+        """
+        .. deprecated:: 3.0
+            Use ``db_session[collection].documents_ids(...)`` instead.
+            See :py:meth:`DatabaseCollection.documents_ids`.
+        """
+        try:
+            c = self[collection]
+        except ValueError:
+            return
+        yield from c.documents_ids()
+
+    def get_documents(self, collection, fields=None, as_list=False,
+                      document_ids=None):
+        """
+        .. deprecated:: 3.0
+            Use ``db_session[collection].documents_ids(...)`` instead.
+            See :py:meth:`DatabaseCollection.documents_ids`.
+        """
+        try:
+            c = self[collection]
+        except ValueError:
+            return
+        if document_ids is None:
+            yield from c.documents(fields=fields, as_list=as_list)
+        else:
+            for document_id in document_ids:
+                document = c.get(document_id)
+                if document is not None:
+                    yield document
+
+    def remove_document(self, collection, document_id):
+        """
+        .. deprecated:: 3.0
+            Use ``del db_session[collection][document_id]`` instead.
+            See :py:meth:`DatabaseCollection.__delitem__`.
+        """
+        del self[collection][document_id]
+    
+    
+    def add_document(self, collection, document):
+        """
+        .. deprecated:: 3.0
+            Use ``del db_session[collection].add(document)`` instead.
+            See :py:meth:`DatabaseCollection.add`.
+        """
+        self[collection].add(document)
+        
+
+    def filter_documents(self, collection, filter_query, fields=None, as_list=False):
+        """
+        .. deprecated:: 3.0
+            Use ``del db_session[collection].filter(...)`` instead.
+            See :py:meth:`DatabaseCollection.filter`.
+        """
+        yield from self[collection].filter(filter_query, fields=fields, as_list=as_list)
+
+
+class DatabaseCollection:
+    def __init__(self, session, name):
+        self.session = session
+        self.name = name
+        self.catchall_column = self.settings().get('catchall_column', '_catchall')
+        self.primary_key = {}
+        self.bad_json_fields = set()
+        self.fields = {}
+
+    def settings(self):
+        return self.session.settings('collection', self.name, {})
+    
+    def set_settings(self, settings):
+        self.session.set_settings('collection', self.name, settings)
+
+    def document_id(self, document_id):
+        if not isinstance(document_id, (tuple, list)):
+            document_id = (document_id,)
+        if len(document_id) != len(self.primary_key):
+            raise KeyError(f'key for table {self.name} requires {len(self.primary_key)} value(s), {len(document_id)} given')
+        return document_id
+    
+    def update_settings(self, **kwargs):
+        settings = self.settings()
+        settings.update(kwargs)
+        self.set_settings(settings)
+
+    def add_field(self, name, field_type, description=None,
+                  index=False, bad_json=False):
         """
         Adds a field to the database
 
@@ -229,10 +405,9 @@ class DatabaseSession:
                            - If the field type is invalid
                            - If the field description is invalid
         """
-        self[collection].add_field(name, field_type, description=description, 
-                                     index=index)
-
-    def remove_field(self, collection, field):
+        raise NotImplementedError()
+    
+    def remove_field(self, name):
         """
         Removes a field in the collection
 
@@ -243,168 +418,68 @@ class DatabaseSession:
         :raise ValueError: - If the collection does not exist
                            - If the field does not exist
         """
-        self[collection].remove_field(field)
+        raise NotImplementedError()
 
-    def get_field(self, collection, name):
-        """
-        Gives the field row, given a field name and a collection
-
-        :param collection: Document collection (str, must be existing)
-
-        :param name: Field name (str, must be existing)
-
-        :return: The field row if the field exists, None otherwise
-        """
-        try:
-            return self[collection].fields.get(name)
-        except ValueError:
-            return None
+    def update_document(self, document_id, partial_document):
+        document_id = self.document_id(document_id)
+        document = self[document_id]
+        if document is None:
+            raise ValueError(f'Collection {self.name} have no document with key {document_id}')
+        for field, value in partial_document.items():
+            if field in self.primary_key and value != document[field]:
+                raise ValueError(f'cannot change the value of the key field {field}')
+            document[field] = value
+        self[document_id] = document
     
-    def get_fields_names(self, collection):
-        """
-        Iterates over field names of a given a collection
+    def has_document(self, document_id):
+        raise NotImplementedError()
+      
+    def document(self, document_id, fields=None, as_list=False):
+        raise NotImplementedError()
 
-        :param collection: Fields collection (str, must be existing)
+    def documents(self, fields=None, as_list=False):
+        raise NotImplementedError()
 
-        :return: generator
-        """
-        try:
-            return self[collection].fields.keys()
-        except ValueError:
-            return ()
+    def documents_ids(self):
+        yield from (i for i in self.documents(fields=tuple(self.primary_key), as_list=True))
 
-    def get_fields(self, collection):
-        """
-        Iterates over all fields of a given a collection
-
-        :param collection: Fields collection (str, must be existing)
-
-        :return: generator
-        """
-        try:     
-            return self[collection].fields.values()
-        except ValueError:
-            return ()
-
-    def set_values(self, collection, document_id, values):
-        """
-        Sets the values of a <collection, document, field> if it exists
-
-        :param collection: Document collection (str, must be existing)
-
-        :param document_id: Document name (str, must be existing)
-
-        :param values: Dict of values (key=field, value=value)
-
-        :raise ValueError: - If the collection does not exist
-                           - If the field does not exist
-                           - If the document does not exist
-                           - If the values are invalid
-                           - If trying to set the primary_key
-        """
-        self[collection].update_document(document_id, values)
-            
-    def has_document(self, collection, document_id):
-        return self[collection].has_document(document_id)
-
-    def get_document(self, collection, document_id, fields=None,
-                     as_list=False):
-        """
-        Gives a Document instance given a collection and a document identifier
-
-        :param collection: Document collection (str, must be existing)
-
-        :param document_id: Document name (str, must be existing)
-
-        :return: The document row if the document exists, None otherwise
-        """
-        try:
-            collection = self[collection]
-        except ValueError:
-            return None
-        return collection.document(document_id, fields, as_list)
-    
-    def get_documents_ids(self, collection):
-        """
-        Iterates over document primary keys of a given a collection
-
-        :param collection: Documents collection (str, must be existing)
-
-        :return: generator
-        """
-        try:
-            c = self[collection]
-        except ValueError:
-            return
-        yield from (i for i in c.documents(fields=tuple(c.primary_key), as_list=True))
+    def __iter__(self):
+        return self.documents()
      
+    def add(self, document, replace=False):
+        raise NotImplementedError()
 
-    def get_documents(self, collection, fields=None, as_list=False,
-                      document_ids=None):
-        """
-        Iterate over of all or selected document of a collection
+    def __setitem__(self, document_id, document):
+        raise NotImplementedError()
 
-        :param collection: Documents collection (str, must be existing)
+    def _encode_column_value(self, field, value):
+        encoding  = self.fields.get(field,{}).get('encoding')
+        if encoding:
+            encode, decode = encoding
+            try:
+                column_value = encode(value)
+            except TypeError:
+                # Error with JSON encoding
+                column_value = ...
+            if column_value is ...:
+                column_value = encode(json_encode(value))
+                self.bad_json_fields.add(field)
+                settings = self.settings()
+                settings.setdefault('fields', {}).setdefault(field,{})['bad_json'] = True
+                self.set_settings(settings)
+            return column_value
+        return value
 
-        :param fields: List of fields to retrieve in the document
-
-        :param as_list: If True, document values are returned in a list using
-                        fields order
-
-        :param document_ids: Restrict the result to the document ids contained
-                             in this iterable 
-
-        :return: generator
-        """
-        try:
-            c = self[collection]
-        except ValueError:
-            return
-        if document_ids is None:
-            yield from c.documents(fields=fields, as_list=as_list)
-        else:
-            for document_id in document_ids:
-                document = c.get(document_id)
-                if document is not None:
-                    yield document
-
-    def remove_document(self, collection, document_id):
-        """
-        Removes a document in the collection
-
-        :param collection: Document collection (str, must be existing)
-
-        :param document_id: Document name (str, must be existing)
-
-        :raise ValueError: - If the collection does not exist
-                           - If the document does not exist
-        """
-        del self[collection][document_id]
+    def __getitem__(self, document_id):
+        return self.document(document_id)
     
+    def __delitem__(self, document_id):
+        raise NotImplementedError()
     
-    def add_document(self, collection, document, create_missing_fields=False):
-        """
-        Adds a document to a collection
-
-        :param collection: Document collection (str, must be existing)
-
-        :param document: Dictionary of document values (dict)
-
-        :param create_missing_fields: Boolean to know if the missing fields must be created
-
-            - If True, fields that are in the document but not in the collection are created if the type can be guessed from the value in the document
-              (possible for all valid values except None and []).
-            
-        :raise ValueError: - If the collection does not exist
-                           - If the document already exists
-                           - If document is invalid (invalid name or no primary_key)
-        """
-        if create_missing_fields:
-            raise NotImplementedError('create_missing_field option is not implemented yet')
-        self[collection].add(document)
-        
-
-    def filter_documents(self, collection, filter_query, fields=None, as_list=False):
+    def parse_filter(self, filter):
+        raise NotImplementedError()
+    
+    def filter(self, filter, fields=None, as_list=False):
         """
         Iterates over the collection documents selected by filter_query
 
@@ -428,5 +503,72 @@ class DatabaseSession:
                         fields order
 
         """
+        raise NotImplementedError()
 
-        yield from self[collection].filter(filter_query, fields=fields, as_list=as_list)
+def json_dumps(value):
+    return json.dumps(value, separators=(',', ':'))
+
+_json_encodings = {
+    datetime: lambda d: f'{d.isoformat()}ℹdatetimeℹ',
+    date: lambda d: f'{d.isoformat()}ℹdateℹ',
+    time: lambda d: f'{d.isoformat()}ℹtimeℹ',
+    list: lambda l: [json_encode(i) for i in l],
+    dict: lambda d: dict((k, json_encode(v)) for k, v in d.items()),
+}
+
+_json_decodings = {
+    'datetime': lambda s: dateutil.parser.parse(s),
+    'date': lambda s: dateutil.parser.parse(s).date(),
+    'time': lambda s: dateutil.parser.parse(s).time(),
+}
+
+def json_encode(value):
+    global _json_encodings
+
+    type_ = type(value)
+    encode = _json_encodings.get(type_)
+    if encode is not None:
+        return encode(value)
+    return encode(value)
+
+def json_decode(value):
+    global _json_decodings
+
+    if isinstance(value, list):
+        return [json_decode(i) for i in value]
+    elif isinstance(value, dict):
+        return dict((k, json_decode(v)) for k, v in value.items())
+    elif isinstance(value, str):
+        if value.endswith('ℹ'):
+            l = value[:-1].rsplit('ℹ', 1)
+            if len(l) == 2:
+                encoded_value, decoding_name = l
+                decode = _json_decodings.get(decoding_name)
+                if decode is None:
+                    raise ValueError(f'Invalid JSON encoding type for value "{value}"')
+                return decode(encoded_value)
+    return value
+
+# Obsolete constants kept for backward compatibility with API v2
+
+FIELD_TYPE_STRING = str
+FIELD_TYPE_INTEGER = int
+FIELD_TYPE_FLOAT = float
+FIELD_TYPE_BOOLEAN = bool
+FIELD_TYPE_DATE = date
+FIELD_TYPE_DATETIME = datetime
+FIELD_TYPE_TIME = time
+FIELD_TYPE_JSON = dict
+FIELD_TYPE_LIST_STRING = list[str]
+FIELD_TYPE_LIST_INTEGER = list[int]
+FIELD_TYPE_LIST_FLOAT = list[float]
+FIELD_TYPE_LIST_BOOLEAN = list[bool]
+FIELD_TYPE_LIST_DATE = list[date]
+FIELD_TYPE_LIST_DATETIME = list[datetime]
+FIELD_TYPE_LIST_TIME = list[time]
+FIELD_TYPE_LIST_JSON = list[dict]
+
+ALL_TYPES = {FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN,
+             FIELD_TYPE_LIST_DATE, FIELD_TYPE_LIST_DATETIME,
+             FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON, FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT,
+             FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON}

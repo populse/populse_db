@@ -3,7 +3,8 @@ import dateutil
 import json
 import sqlite3
 
-from ..database import DatabaseSession, str_to_type, type_to_str
+from ..database import (DatabaseSession, DatabaseCollection, 
+    str_to_type, type_to_str, json_dumps, json_encode, json_decode)
 from ..filter import FilterToSQL, filter_parser
 
 '''
@@ -56,7 +57,7 @@ class SQLiteSession(DatabaseSession):
     def rollback(self):
         self.sqlite.rollback()
         
-    def get_settings(self, category, key, default=None):
+    def settings(self, category, key, default=None):
         try:
             sql = f'SELECT _json FROM [{self.populse_db_table}] WHERE category=? and key=?'
             cur = self.execute(sql, [category, key])
@@ -122,51 +123,8 @@ class SQLiteSession(DatabaseSession):
                 continue
             yield self[table]
 
-def json_dumps(value):
-    return json.dumps(value, separators=(',', ':'))
 
-_json_encodings = {
-    datetime: lambda d: f'{d.isoformat()}ℹdatetimeℹ',
-    date: lambda d: f'{d.isoformat()}ℹdateℹ',
-    time: lambda d: f'{d.isoformat()}ℹtimeℹ',
-    list: lambda l: [json_encode(i) for i in l],
-    dict: lambda d: dict((k, json_encode(v)) for k, v in d.items()),
-}
-
-_json_decodings = {
-    'datetime': lambda s: dateutil.parser.parse(s),
-    'date': lambda s: dateutil.parser.parse(s).date(),
-    'time': lambda s: dateutil.parser.parse(s).time(),
-}
-
-def json_encode(value):
-    global _json_encodings
-
-    type_ = type(value)
-    encode = _json_encodings.get(type_)
-    if encode is not None:
-        return encode(value)
-    return encode(value)
-
-def json_decode(value):
-    global _json_decodings
-
-    if isinstance(value, list):
-        return [json_decode(i) for i in value]
-    elif isinstance(value, dict):
-        return dict((k, json_decode(v)) for k, v in value.items())
-    elif isinstance(value, str):
-        if value.endswith('ℹ'):
-            l = value[:-1].rsplit('ℹ', 1)
-            if len(l) == 2:
-                encoded_value, decoding_name = l
-                decode = _json_decodings.get(decoding_name)
-                if decode is None:
-                    raise ValueError(f'Invalid JSON encoding type for value "{value}"')
-                return decode(encoded_value)
-    return value
-
-class SQLiteCollection:
+class SQLiteCollection(DatabaseCollection):
     _column_encodings = {
         datetime: (
             lambda d: (None if d is None else d.isoformat()),
@@ -191,13 +149,8 @@ class SQLiteCollection:
     }
 
     def __init__(self, session, name):
-        self.session = session
-        settings = self.session.get_settings('collection', name, {})
-        self.catchall_column = settings.get('catchall_column', '_catchall')
-        self.name = name
-        self.primary_key = {}
-        self.bad_json_fields = set()
-        self.fields = {}
+        super().__init__(session, name)
+        settings = self.session.settings('collection', name, {})
         sql = f'pragma table_info({self.name})'
         bad_table = True
         catchall_column_found = False
@@ -228,24 +181,6 @@ class SQLiteCollection:
             raise ValueError(f'No such database table: {name}')
         if self.catchall_column and not catchall_column_found:
             raise ValueError(f'table {name} must have a column {self.catchall_column}')
-
-    def settings(self):
-        return self.session.get_settings('collection', self.name, {})
-    
-    def set_settings(self, settings):
-        self.session.set_settings('collection', self.name, settings)
-
-    def document_id(self, document_id):
-        if not isinstance(document_id, (tuple, list)):
-            document_id = (document_id,)
-        if len(document_id) != len(self.primary_key):
-            raise KeyError(f'key for table {self.name} requires {len(self.primary_key)} value(s), {len(document_id)} given')
-        return document_id
-    
-    def update_settings(self, **kwargs):
-        settings = self.settings()
-        settings.update(kwargs)
-        self.set_settings(settings)
 
     def add_field(self, name, field_type, description=None,
                   index=False, bad_json=False):
@@ -286,30 +221,11 @@ class SQLiteCollection:
         # self.set_settings(settings)
         # self.fields.pop(name, None)
         # self.bad_json_fields.discard(name)
-
-    def field(self,name):
-        return self.fields[name]
-    
-    def fields(self):
-        return self.fields.values()
-
-    def update_document(self, document_id, partial_document):
-        document_id = self.document_id(document_id)
-        #TODO can be optimized
-        document = self[document_id]
-        if document is None:
-            raise ValueError(f'Collection {self.name} have no document with key {document_id}')
-        for field, value in partial_document.items():
-            if field in self.primary_key and value != document[field]:
-                raise ValueError(f'cannot change the value of the key field {field}')
-            document[field] = value
-        self[document_id] = document
     
     def has_document(self, document_id):
         document_id = self.document_id(document_id)
         sql = f'SELECT count(*) FROM [{self.name}] WHERE {" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
         return next(self.session.execute(sql, document_id))[0] != 0
-
     
     def _documents(self, where, where_data, fields, as_list):
         if fields:
@@ -372,9 +288,6 @@ class SQLiteCollection:
 
     def documents(self, fields=None, as_list=False):
         yield from self._documents(None, None, fields, as_list)
-
-    def __iter__(self):
-        return self.documents()
      
     def add(self, document, replace=False):
         document_id = tuple(document.get(i) for i in self.primary_key)
@@ -383,24 +296,6 @@ class SQLiteCollection:
     def __setitem__(self, document_id, document):
         document_id = self.document_id(document_id)
         self._set_document(document_id, document, replace=True)
-
-    def _encode_column_value(self, field, value):
-        encoding  = self.fields.get(field,{}).get('encoding')
-        if encoding:
-            encode, decode = encoding
-            try:
-                column_value = encode(value)
-            except TypeError:
-                # Error with JSON encoding
-                column_value = ...
-            if column_value is ...:
-                column_value = encode(json_encode(value))
-                self.bad_json_fields.add(field)
-                settings = self.settings()
-                settings.setdefault('fields', {}).setdefault(field,{})['bad_json'] = True
-                self.set_settings(settings)
-            return column_value
-        return value
 
     def _set_document(self, document_id, document, replace):
         columns = [i for i in self.primary_key]
@@ -454,9 +349,6 @@ class SQLiteCollection:
             replace = ''
         sql = f'INSERT{replace} INTO [{self.name}] ({",".join(f"[{i}]" for i in columns)}) values ({",".join("?" for i in data)})'
         self.session.execute(sql, data)
-
-    def __getitem__(self, document_id):
-        return self.document(document_id)
     
     def __delitem__(self, document_id):
         document_id = self.document_id(document_id)
@@ -473,7 +365,6 @@ class SQLiteCollection:
         else:
             return ParsedFilter(' '.join(where_filter))
     
-
     def filter(self, filter, fields=None, as_list=False):
         parsed_filter = self.parse_filter(filter)
         yield from self._documents(parsed_filter, None, fields=fields, as_list=as_list)
