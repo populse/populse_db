@@ -1,0 +1,575 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>populse_db.engine package &#8212; populse_db 3.0.0alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>populse_db 3.0.0alpha documentation</span></a></h1>
+        <h2 class="heading"><span>populse_db.engine package</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="module-populse_db.engine">
+<span id="populse-db-engine-package"></span><h1>populse_db.engine package<a class="headerlink" href="#module-populse_db.engine" title="Permalink to this headline">¶</a></h1>
+<p>This Python package contains engines that contains the minimum API to connect
+an external database engine to a Populse database.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="populse_db.engine.Engine">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.engine.</span></span><span class="sig-name descname"><span class="pre">Engine</span></span><a class="headerlink" href="#populse_db.engine.Engine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for database engines. All methods of this base class raise
+NotImplementedError. This class exists to list all the methods that
+must be implemented by an engine.</p>
+<p>Parameters passed to __init__ may differ between engine classes.
+It is up to engine_factory to extract appropriate parameter(s)
+from URL.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.add_collection">
+<span class="sig-name descname"><span class="pre">add_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.add_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new collection given the name of a field that will be created
+with a text type. This field is the primary key of each document. It
+means that, in a single collection, a value must uniquely identify a 
+document. In other word, two documents cannot have the same value for
+this field.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – collection name (str)</p></li>
+<li><p><strong>primary_key</strong> – name of the primary key field (str)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.add_field">
+<span class="sig-name descname"><span class="pre">add_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.add_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a new field in a collection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – collection name (str, must be existing)</p></li>
+<li><p><strong>field</strong> – new field name (str, must not be existing)</p></li>
+<li><p><strong>type</strong> – field type, in (‘string’, ‘int’, ‘float’, 
+‘boolean’, ‘date’, ‘datetime’, ‘time’, ‘json’, ‘list_string’,
+‘list_int’, ‘list_float’, ‘list_boolean’, ‘list_date’,
+‘list_datetime’, ‘list_time’, ‘list_json’)</p></li>
+<li><p><strong>description</strong> – field description (str or None)</p></li>
+<li><p><strong>index</strong> – boolean indicating if a database index must be created
+for this field to speed-ud queries involving values for this field.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Erase database data and schema.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.collection">
+<span class="sig-name descname"><span class="pre">collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a Row Object with at least the following items:
+collection_name: name of the collection
+primary_key: name of the primary key field
+More engine specific items may be present but they must
+not be used in the general API.
+Returns None if the collection does not exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>collection</strong> – collection name (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.collections">
+<span class="sig-name descname"><span class="pre">collections</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.collections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterable (e.g. list, generator, etc.) browsing the
+collections presents in the database. See collection() method
+for the format of each collection object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.commit">
+<span class="sig-name descname"><span class="pre">commit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.commit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store in the database all modifications done since the last call to
+either __enter__, commit or rollback.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.document">
+<span class="sig-name descname"><span class="pre">document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.document" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a Row Object corresponding to a document in the collection.
+The object has one item per selected fields. If fields is not given,
+fields returned by the fields() method are used.
+If as_list is True, a list of values is returned (one value per selected
+field).
+Returns None if the collection or document does not exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – collection name (str)</p></li>
+<li><p><strong>document_id</strong> – document identifier: the value of the primary
+key field (str)</p></li>
+<li><p><strong>fields</strong> – list of fields to get values from (other fields are
+ignored) (list of str or None)</p></li>
+<li><p><strong>as_list</strong> – if True, return a list of values insted of a Row Object (str)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.field">
+<span class="sig-name descname"><span class="pre">field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a Row Object corresponding to a collection field with at
+least the following items:
+collection_name: name of the collection
+field_name: field name
+field_type: type of values for this field
+description: text describing the field usage
+has_index: boolean indicating if an index was created for this field
+More engine specific items may be present but they must
+not be used in the general API.
+Returns None if the collection or the field does not exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – collection name (str)</p></li>
+<li><p><strong>field</strong> – field name (str)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.fields">
+<span class="sig-name descname"><span class="pre">fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterable (e.g. list, generator, etc.) browsing the
+fields presents in the given collection (or all collections if
+collection parameter is None). See field() method
+for the format of each field object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>collection</strong> – collection name (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.filter_documents">
+<span class="sig-name descname"><span class="pre">filter_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parsed_filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.filter_documents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over document selected by a filter. See document() method
+for the format of a document object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parsed_filter</strong> – internal object representing a filter on a
+collection (filter object returned by parse_filter())</p></li>
+<li><p><strong>fields</strong> – list of fields to get values from (other fields are
+ignored) (list of str or None)</p></li>
+<li><p><strong>as_list</strong> – if True, return a list of values insted of a Row Object (str)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.has_collection">
+<span class="sig-name descname"><span class="pre">has_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.has_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks existence of a collection. May be called often,
+must be fast.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>collection</strong> – collection name (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.has_document">
+<span class="sig-name descname"><span class="pre">has_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.has_document" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks existence of a document in a collection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – collection name (str)</p></li>
+<li><p><strong>document_id</strong> – document identifier: the value of the primary
+key field (str)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.has_field">
+<span class="sig-name descname"><span class="pre">has_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.has_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks existence of a field in a collection. May be called often,
+must be fast.
+Returns False if collection does not exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – collection name (str)</p></li>
+<li><p><strong>field</strong> – field name (str)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.has_value">
+<span class="sig-name descname"><span class="pre">has_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.has_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if a document has a not null value for a given field.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.parse_filter">
+<span class="sig-name descname"><span class="pre">parse_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.parse_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a filter string, return a internal query representation that
+can be used with filter_documents() to select documents</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – the collection for which the filter is intended 
+(str, must be existing)</p></li>
+<li><p><strong>filter</strong> – the selection string using the populse_db selection
+language.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.primary_key">
+<span class="sig-name descname"><span class="pre">primary_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.primary_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the name of the primary key of a collection.
+Returns None if the collection does not exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>collection</strong> – collection name (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.remove_collection">
+<span class="sig-name descname"><span class="pre">remove_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.remove_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a collection and its data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>collection</strong> – collection name (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.remove_document">
+<span class="sig-name descname"><span class="pre">remove_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.remove_document" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a document from a collection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – collection name (str)</p></li>
+<li><p><strong>document_id</strong> – document identifier: the value of the primary
+key field (str)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.remove_fields">
+<span class="sig-name descname"><span class="pre">remove_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.remove_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove given fields from a collection as well as all corresponding data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – collection name (str)</p></li>
+<li><p><strong>fields</strong> – field name (str)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.remove_value">
+<span class="sig-name descname"><span class="pre">remove_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.remove_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a value from a document (setting its value to None).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – collection name (str)</p></li>
+<li><p><strong>document_id</strong> – document identifier: the value of the primary
+key field (str)</p></li>
+<li><p><strong>fields</strong> – field name (str)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.rollback">
+<span class="sig-name descname"><span class="pre">rollback</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.rollback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store discards all database modifications done since the last call to
+either __enter__, commit or rollback.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.Engine.set_values">
+<span class="sig-name descname"><span class="pre">set_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.Engine.set_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change some values in an existing document.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – collection name (str)</p></li>
+<li><p><strong>document_id</strong> – document identifier: the value of the primary
+key field (str)</p></li>
+<li><p><strong>values</strong> – dictionary with field/value pairs (dict)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="module-populse_db.engine.sqlite">
+<span id="populse-db-engine-sqlite-module"></span><h2>populse_db.engine.sqlite module<a class="headerlink" href="#module-populse_db.engine.sqlite" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.ParsedFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.engine.sqlite.</span></span><span class="sig-name descname"><span class="pre">ParsedFilter</span></span><a class="headerlink" href="#populse_db.engine.sqlite.ParsedFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteCollection">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.engine.sqlite.</span></span><span class="sig-name descname"><span class="pre">SQLiteCollection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteCollection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="populse_db.html#populse_db.database.DatabaseCollection" title="populse_db.database.DatabaseCollection"><code class="xref py py-class docutils literal notranslate"><span class="pre">populse_db.database.DatabaseCollection</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteCollection.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteCollection.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteCollection.add_field">
+<span class="sig-name descname"><span class="pre">add_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bad_json</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteCollection.add_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a field to the database</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Field collection (str, must be existing)</p></li>
+<li><p><strong>name</strong> – Field name (str, must not be existing)</p></li>
+<li><p><strong>field_type</strong> – Field type, in (‘string’, ‘int’, ‘float’, ‘boolean’, ‘date’, ‘datetime’,
+‘time’, ‘json’, ‘list_string’, ‘list_int’, ‘list_float’, ‘list_boolean’, ‘list_date’,
+‘list_datetime’, ‘list_time’, ‘list_json’)</p></li>
+<li><p><strong>description</strong> – Field description (str or None) =&gt; None by default</p></li>
+<li><p><strong>index</strong> – Bool to know if indexing must be done =&gt; False by default</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
+<li><p>If the collection does not exist</p></li>
+<li><p>If the field already exists</p></li>
+<li><p>If the field name is invalid</p></li>
+<li><p>If the field type is invalid</p></li>
+<li><p>If the field description is invalid</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteCollection.document">
+<span class="sig-name descname"><span class="pre">document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteCollection.document" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteCollection.documents">
+<span class="sig-name descname"><span class="pre">documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteCollection.documents" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteCollection.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteCollection.filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterates over the collection documents selected by filter_query</p>
+<p>Each item yield is a row of the collection table returned</p>
+<p>filter_query can be the result of self.filter_query() or a string containing a filter
+(in this case self.fliter_query() is called to get the actual query)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Filter collection (str, must be existing)</p></li>
+<li><p><strong>filter_query</strong> – <p>Filter query (str)</p>
+<ul>
+<li><p>A filter row must be written this way: {&lt;field&gt;} &lt;operator&gt; “&lt;value&gt;”</p></li>
+<li><p>The operator must be in (‘==’, ‘!=’, ‘&lt;=’, ‘&gt;=’, ‘&lt;’, ‘&gt;’, ‘IN’, ‘ILIKE’, ‘LIKE’)</p></li>
+<li><p>The filter rows can be linked with ‘ AND ‘ or ‘ OR ‘</p></li>
+<li><p>Example: “((({BandWidth} == “50000”)) AND (({FileName} LIKE “%G1%”)))”</p></li>
+</ul>
+</p></li>
+<li><p><strong>fields</strong> – List of fields to retrieve in the document</p></li>
+<li><p><strong>as_list</strong> – If True, document values are returned in a list using
+fields order</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteCollection.has_document">
+<span class="sig-name descname"><span class="pre">has_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteCollection.has_document" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteCollection.parse_filter">
+<span class="sig-name descname"><span class="pre">parse_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteCollection.parse_filter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteCollection.remove_field">
+<span class="sig-name descname"><span class="pre">remove_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteCollection.remove_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes a field in the collection</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Field collection (str, must be existing)</p></li>
+<li><p><strong>field</strong> – Field name (str, must be existing))</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
+<li><p>If the collection does not exist</p></li>
+<li><p>If the field does not exist</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteSession">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.engine.sqlite.</span></span><span class="sig-name descname"><span class="pre">SQLiteSession</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sqlite_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteSession" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession" title="populse_db.database.DatabaseSession"><code class="xref py py-class docutils literal notranslate"><span class="pre">populse_db.database.DatabaseSession</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteSession.add_collection">
+<span class="sig-name descname"><span class="pre">add_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'primary_key'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">catchall_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_catchall'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteSession.add_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a collection</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – New collection name (str, must not be existing)</p></li>
+<li><p><strong>primary_key</strong> – New collection primary_key column (str) =&gt; “index” by default</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
+<li><p>If the collection is already existing</p></li>
+<li><p>If the collection name is invalid</p></li>
+<li><p>If the primary_key is invalid</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteSession.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteSession.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Erase the whole database content.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteSession.commit">
+<span class="sig-name descname"><span class="pre">commit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteSession.commit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteSession.execute">
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sql</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteSession.execute" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteSession.parse_url">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteSession.parse_url" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteSession.remove_collection">
+<span class="sig-name descname"><span class="pre">remove_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteSession.remove_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes a collection</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> – Collection to remove (str, must be existing)</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the collection does not exist</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteSession.rollback">
+<span class="sig-name descname"><span class="pre">rollback</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteSession.rollback" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteSession.set_settings">
+<span class="sig-name descname"><span class="pre">set_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">category</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteSession.set_settings" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.engine.sqlite.SQLiteSession.settings">
+<span class="sig-name descname"><span class="pre">settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">category</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.engine.sqlite.SQLiteSession.settings" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, populse team.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

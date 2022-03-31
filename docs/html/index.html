@@ -1,0 +1,237 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Introduction &#8212; populse_db 3.0.0alpha documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="#">
+          <span>populse_db 3.0.0alpha documentation</span></a></h1>
+        <h2 class="heading"><span>Introduction</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        <a class="uplink" href="#">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <div class="toctree-wrapper compound">
+</div>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 44%" />
+<col style="width: 36%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="./index.html">Index</a></p></td>
+<td><p><a class="reference external" href="./documentation.html">Documentation</a></p></td>
+<td><p><a class="reference external" href="https://github.com/populse/populse_db">GitHub</a></p></td>
+</tr>
+</tbody>
+</table>
+<section id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<p>populse_db is an open source Python module that sits in front of a database
+(<a class="reference external" href="https://sqlite.org">SQLite</a> or <a class="reference external" href="https://www.postgresql.org">Postgres</a>)
+and allows the storage and query of JSON documents. It brings together
+features from SQL and NOSQL databases and can be used without any database
+server thanks to its SQLite backend.</p>
+<section id="features">
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><strong>No server required</strong>: populse_db can be used with a database stored in a
+simple file or even in memory. This feature is simply a consequence of
+the possibility to use a SQLite database backend.</p></li>
+<li><p><strong>No schema required</strong>: populse_db can be used without thinking about
+database schema. But it is also possible to define some pieces of schema
+or to use an existing one to further optimize query performances.</p></li>
+<li><p><strong>Date and time support</strong>: populse_db support items of type <cite>datetime.time</cite>,
+<cite>datetime.date</cite> and <cite>datetime.datetime</cite> in JSON objects. These items are
+automatically encoded (resp. decoded) to (resp. from) strings using ISO
+format.</p></li>
+<li><p><strong>Query list elements</strong>: populse_db has a simple query language that
+allows to select objects by looking for items in list fields.</p></li>
+<li><p><strong>Transactions support</strong>: to ensure the consistency of the database,
+populse_db allows all modifications to be made within a transaction.
+Thus, in case of unexpected problem, the database will keep its initial
+state before the transaction.</p></li>
+<li><p><strong>Partitioning of JSON objects</strong>: populse_db allows to read or modify
+individually each stored object. But it also allows to define a
+partitioning of the objects offering a direct access to different parts of
+the same object.</p></li>
+</ul>
+</section>
+<section id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<p>Install tools take care of all the required dependencies for you but here is a
+summary of what populse_db needs:</p>
+<ul class="simple">
+<li><p>Python &gt;= 3.9. populse_db uses some features introduced in Python 3.9 (such
+as the possibility to subscript list type as in <code class="docutils literal notranslate"><span class="pre">list[str]</span></code>). Therefore it
+can’t work with Python 3.8 or earlier releases.</p></li>
+<li><p><a class="reference external" href="https://dateutil.readthedocs.io/">dateutil</a></p></li>
+<li><p><a class="reference external" href="https://github.com/lark-parser/lark/">Lark-parser</a> &gt;= 0.7.0.</p></li>
+<li><p><em>[optional]</em> <a class="reference external" href="https://www.psycopg.org/">Psycopg2</a> allows the connection to
+a Postgresql database.</p></li>
+<li><p><em>[optional]</em> <a class="reference external" href="https://www.sphinx-doc.org/">Sphinx</a> allows to build the
+documentation from source code.</p></li>
+</ul>
+</section>
+</section>
+<section id="get-started">
+<h1>Get started<a class="headerlink" href="#get-started" title="Permalink to this headline">¶</a></h1>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>Populse_db can be installed by standard Python tool. For instance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">populse_db</span>
+</pre></div>
+</div>
+<p>By default, only SQL backend is supported. If one wants to use Postgresql
+database, use the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">populse_db</span><span class="p">[</span><span class="n">postgres</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The documentation is embedded in the project. However, if one needs to rebuild
+the documentation, use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">populse_db</span><span class="p">[</span><span class="n">doc</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="basic-usage">
+<h2>Basic usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h2>
+<p>Populse_db is organized in <em>collections</em> and <em>documents</em>. A document is a JSON
+object represented by a dictionary in Python. A collection is a named container
+in which documents can be stored. Internally, collections correponds to
+database tables and documents are stored in table rows (one document per row).
+But  populse_db can hide this internal database stuff. The only thing user
+must do is to declare its collections if it uses an empty database. This is
+illustrated in the following example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
+<span class="kn">from</span> <span class="nn">populse_db</span> <span class="kn">import</span> <span class="n">Database</span>
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
+
+<span class="c1"># Connect to a new in memory database using SQLite</span>
+<span class="k">with</span> <span class="n">Database</span><span class="p">(</span><span class="s1">&#39;:memory:&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+   <span class="c1"># Since database is empty, declare collections that</span>
+   <span class="c1"># will be used to store documents.</span>
+   <span class="n">db</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="s1">&#39;subject&#39;</span><span class="p">)</span>
+   <span class="n">db</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="s1">&#39;acquisition&#39;</span><span class="p">)</span>
+
+   <span class="c1"># Store documents in the database</span>
+   <span class="n">db</span><span class="p">[</span><span class="s1">&#39;subject&#39;</span><span class="p">][</span><span class="s1">&#39;rbndt001&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;Eléa&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;sex&#39;</span><span class="p">:</span> <span class="s1">&#39;f&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;birth_date&#39;</span><span class="p">:</span> <span class="n">date</span><span class="p">(</span><span class="mi">1968</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+   <span class="p">}</span>
+   <span class="n">db</span><span class="p">[</span><span class="s1">&#39;subject&#39;</span><span class="p">][</span><span class="s1">&#39;rbndt002&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;Païkan&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;sex&#39;</span><span class="p">:</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;birth_date&#39;</span><span class="p">:</span> <span class="n">date</span><span class="p">(</span><span class="mi">1963</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
+   <span class="p">}</span>
+   <span class="n">db</span><span class="p">[</span><span class="s1">&#39;acquisition&#39;</span><span class="p">][</span><span class="s1">&#39;rbndt001_t1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="s1">&#39;subject&#39;</span><span class="p">:</span> <span class="s1">&#39;rbndt001&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;image&#39;</span><span class="p">,</span> <span class="s1">&#39;mri&#39;</span><span class="p">,</span> <span class="s1">&#39;T1&#39;</span><span class="p">],</span>
+      <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;DICOM&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;files&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s1">&#39;/somewhere/t1/acq0001.dcm&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;/somewhere/t1/acq0002.dcm&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;/somewhere/t1/acq0003.dcm&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;/somewhere/t1/acq0004.dcm&#39;</span><span class="p">,</span>
+      <span class="p">],</span>
+      <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="n">date</span><span class="p">(</span><span class="mi">2022</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">28</span><span class="p">),</span>
+   <span class="p">}</span>
+   <span class="n">db</span><span class="p">[</span><span class="s1">&#39;acquisition&#39;</span><span class="p">][</span><span class="s1">&#39;rbndt001_t2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="s1">&#39;subject&#39;</span><span class="p">:</span> <span class="s1">&#39;rbndt001&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;image&#39;</span><span class="p">,</span> <span class="s1">&#39;mri&#39;</span><span class="p">,</span> <span class="s1">&#39;T2&#39;</span><span class="p">],</span>
+      <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;DICOM&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;files&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s1">&#39;/somewhere/t2/acq0001.dcm&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;/somewhere/t2/acq0002.dcm&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;/somewhere/t2/acq0003.dcm&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;/somewhere/t2/acq0004.dcm&#39;</span><span class="p">,</span>
+      <span class="p">],</span>
+      <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="n">date</span><span class="p">(</span><span class="mi">2022</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">28</span><span class="p">),</span>
+   <span class="p">}</span>
+   <span class="n">db</span><span class="p">[</span><span class="s1">&#39;acquisition&#39;</span><span class="p">][</span><span class="s1">&#39;rbndt002_t1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="s1">&#39;subject&#39;</span><span class="p">:</span> <span class="s1">&#39;rbndt002&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;image&#39;</span><span class="p">,</span> <span class="s1">&#39;mri&#39;</span><span class="p">,</span> <span class="s1">&#39;T1&#39;</span><span class="p">],</span>
+      <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;NIFTI&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;files&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s1">&#39;/elsewhere/sub-rbndt001.nii&#39;</span><span class="p">,</span>
+      <span class="p">],</span>
+      <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="n">date</span><span class="p">(</span><span class="mi">2022</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">29</span><span class="p">),</span>
+   <span class="p">}</span>
+
+   <span class="c1"># Retrieve a single document from collection &#39;subject&#39;</span>
+   <span class="n">pprint</span><span class="p">(</span><span class="n">db</span><span class="p">[</span><span class="s1">&#39;subject&#39;</span><span class="p">][</span><span class="s1">&#39;rbndt001&#39;</span><span class="p">])</span>
+
+   <span class="c1"># Retrieve all documents from collection &#39;subject&#39; respecting the</span>
+   <span class="c1"># following conditions:</span>
+   <span class="c1">#   - the &quot;subject&quot; field equals to &quot;rbndt001&quot;</span>
+   <span class="c1">#   - the &quot;type&quot; field is a list containing tha value &quot;T1&quot;</span>
+   <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">db</span><span class="p">[</span><span class="s1">&#39;acquisition&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="s1">&#39;subject==&quot;rbndt001&quot; and &quot;T1&quot; in type&#39;</span><span class="p">):</span>
+      <span class="n">pprint</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The example shows how to use populse_db to store and retrieve JSON
+objects without wondering about the underlying SQL database engine. This script
+produces the following result:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;birth_date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">1968</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+ <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;Eléa&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;primary_key&#39;</span><span class="p">:</span> <span class="s1">&#39;rbndt001&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;sex&#39;</span><span class="p">:</span> <span class="s1">&#39;f&#39;</span><span class="p">}</span>
+<span class="p">{</span><span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2022</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">28</span><span class="p">),</span>
+ <span class="s1">&#39;files&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;/somewhere/t1/acq0001.dcm&#39;</span><span class="p">,</span>
+         <span class="s1">&#39;/somewhere/t1/acq0002.dcm&#39;</span><span class="p">,</span>
+         <span class="s1">&#39;/somewhere/t1/acq0003.dcm&#39;</span><span class="p">,</span>
+         <span class="s1">&#39;/somewhere/t1/acq0004.dcm&#39;</span><span class="p">],</span>
+ <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;DICOM&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;primary_key&#39;</span><span class="p">:</span> <span class="s1">&#39;rbndt001_t1&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;subject&#39;</span><span class="p">:</span> <span class="s1">&#39;rbndt001&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;image&#39;</span><span class="p">,</span> <span class="s1">&#39;mri&#39;</span><span class="p">,</span> <span class="s1">&#39;T1&#39;</span><span class="p">]}</span>
+</pre></div>
+</div>
+<p>To further understand how to use populse_db, see the <a class="reference external" href="./tutorial.html">tutorial</a></p>
+</section>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        <a class="uplink" href="#">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, populse team.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>
