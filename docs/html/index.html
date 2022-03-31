@@ -120,8 +120,7 @@ object represented by a dictionary in Python. A collection is a named container
 in which documents can be stored. Internally, collections correponds to
 database tables and documents are stored in table rows (one document per row).
 But  populse_db can hide this internal database stuff. The only thing user
-must do is to declare its collections if it uses an empty database. This is
-illustrated in the following example:</p>
+must do isto declare its collections if it uses an empty database.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span>
 <span class="kn">from</span> <span class="nn">populse_db</span> <span class="kn">import</span> <span class="n">Database</span>
 <span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
@@ -189,25 +188,24 @@ illustrated in the following example:</p>
       <span class="n">pprint</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The example shows how to use populse_db to store and retrieve JSON
+<p>The example above illustrate how to use populse_db to store and retrieve JSON
 objects without wondering about the underlying SQL database engine. This script
 produces the following result:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;birth_date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">1968</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
- <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;Eléa&#39;</span><span class="p">,</span>
- <span class="s1">&#39;primary_key&#39;</span><span class="p">:</span> <span class="s1">&#39;rbndt001&#39;</span><span class="p">,</span>
- <span class="s1">&#39;sex&#39;</span><span class="p">:</span> <span class="s1">&#39;f&#39;</span><span class="p">}</span>
+<span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;Eléa&#39;</span><span class="p">,</span>
+<span class="s1">&#39;primary_key&#39;</span><span class="p">:</span> <span class="s1">&#39;rbndt001&#39;</span><span class="p">,</span>
+<span class="s1">&#39;sex&#39;</span><span class="p">:</span> <span class="s1">&#39;f&#39;</span><span class="p">}</span>
 <span class="p">{</span><span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2022</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">28</span><span class="p">),</span>
- <span class="s1">&#39;files&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;/somewhere/t1/acq0001.dcm&#39;</span><span class="p">,</span>
+<span class="s1">&#39;files&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;/somewhere/t1/acq0001.dcm&#39;</span><span class="p">,</span>
          <span class="s1">&#39;/somewhere/t1/acq0002.dcm&#39;</span><span class="p">,</span>
          <span class="s1">&#39;/somewhere/t1/acq0003.dcm&#39;</span><span class="p">,</span>
          <span class="s1">&#39;/somewhere/t1/acq0004.dcm&#39;</span><span class="p">],</span>
- <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;DICOM&#39;</span><span class="p">,</span>
- <span class="s1">&#39;primary_key&#39;</span><span class="p">:</span> <span class="s1">&#39;rbndt001_t1&#39;</span><span class="p">,</span>
- <span class="s1">&#39;subject&#39;</span><span class="p">:</span> <span class="s1">&#39;rbndt001&#39;</span><span class="p">,</span>
- <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;image&#39;</span><span class="p">,</span> <span class="s1">&#39;mri&#39;</span><span class="p">,</span> <span class="s1">&#39;T1&#39;</span><span class="p">]}</span>
+<span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;DICOM&#39;</span><span class="p">,</span>
+<span class="s1">&#39;primary_key&#39;</span><span class="p">:</span> <span class="s1">&#39;rbndt001_t1&#39;</span><span class="p">,</span>
+<span class="s1">&#39;subject&#39;</span><span class="p">:</span> <span class="s1">&#39;rbndt001&#39;</span><span class="p">,</span>
+<span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;image&#39;</span><span class="p">,</span> <span class="s1">&#39;mri&#39;</span><span class="p">,</span> <span class="s1">&#39;T1&#39;</span><span class="p">]}</span>
 </pre></div>
 </div>
-<p>To further understand how to use populse_db, see the <a class="reference external" href="./tutorial.html">tutorial</a></p>
 </section>
 </section>
 <section id="indices-and-tables">

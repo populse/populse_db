@@ -34,23 +34,87 @@
 </div>
 <section id="tutorial">
 <h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
-<p>This is not the great populse_db tutorial.</p>
+<p>This tutorial illustrate the main populse_db features with code examples.
+It is the good place to start learnig populse_db.</p>
+</section>
+<section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>Populse_db can be installed, using <a class="reference external" href="https://pip.pypa.io/">the standard Python package manager</a>, either from source code of from release hosted
+on <a class="reference external" href="https://pypi.org/">Python Package Index</a>.</p>
+<section id="install-globally">
+<h2>Install globally<a class="headerlink" href="#install-globally" title="Permalink to this headline">¶</a></h2>
+<p>If you already have Python version 3.9 or greater, you can simply use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">populse_db</span>
+</pre></div>
+</div>
+<p>You will then be be able to run the tutorial codes with the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">populse_db</span><span class="o">.</span><span class="n">tutorial_01</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+</section>
+<section id="install-in-virtual-environement">
+<h2>Install in virtual environement<a class="headerlink" href="#install-in-virtual-environement" title="Permalink to this headline">¶</a></h2>
+<p>If you have the right Python version and want to install populse_db
+in its own isolated directory, you can use a <a class="reference external" href="https://docs.python.org/3/tutorial/venv.html">virtual environment</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>python -m venv $HOME/populse_db_venv
+$HOME/populse_db_venv/bin/pip install populse_db
+</pre></div>
+</div>
+<p>You will then be be able to run the tutorial codes with the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$HOME/populse_db/bin/python -m populse_db.tutorial_01.py
+</pre></div>
+</div>
+</section>
+<section id="install-using-another-python">
+<h2>Install using another Python<a class="headerlink" href="#install-using-another-python" title="Permalink to this headline">¶</a></h2>
+<p>If your system does not have the appropriate Python version, you can use a
+container technology and a <a class="reference external" href="https://docs.python.org/3/tutorial/venv.html">virtual environment</a> to have an install entirely
+independant of your system. For this, we recommend to use Singularity. Once
+Singularity is installed on your system you can install the environment and
+populse_db with the following commands:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># get latest Python
+singularity pull --disable-cache $HOME/python.sif docker://python
+
+# Create virtualenv
+$HOME/python.sif python -m venv $HOME/populse_db_venv
+
+# Install populse_db
+$HOME/python.sif $HOME/populse_db_venv/bin/pip install populse_db
+</pre></div>
+</div>
+<p>You will then be be able to run the tutorial codes with the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$HOME/python.sif $HOME/populse_db_venv/bin/python -m populse_db.tutorial_01.py
+</pre></div>
+</div>
+</section>
+<section id="install-options">
+<h2>Install options<a class="headerlink" href="#install-options" title="Permalink to this headline">¶</a></h2>
+<p>By default, only SQL backend is supported. If one wants to use Postgresql
+database, use the following install option:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">populse_db</span><span class="p">[</span><span class="n">postgres</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The documentation is embedded in the releases. However, if one needs to rebuild
+the documentation from sources, use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">populse_db</span><span class="p">[</span><span class="n">doc</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+</section>
 <section id="connection-to-database">
-<h2>Connection to database<a class="headerlink" href="#connection-to-database" title="Permalink to this headline">¶</a></h2>
-<p>hello</p>
+<h1>Connection to database<a class="headerlink" href="#connection-to-database" title="Permalink to this headline">¶</a></h1>
 </section>
 <section id="data-storage">
-<h2>Data storage<a class="headerlink" href="#data-storage" title="Permalink to this headline">¶</a></h2>
-<p>there</p>
+<h1>Data storage<a class="headerlink" href="#data-storage" title="Permalink to this headline">¶</a></h1>
 </section>
 <section id="document-fields-definition">
-<h2>Document fields definition<a class="headerlink" href="#document-fields-definition" title="Permalink to this headline">¶</a></h2>
-<p>here</p>
+<h1>Document fields definition<a class="headerlink" href="#document-fields-definition" title="Permalink to this headline">¶</a></h1>
 </section>
 <section id="query-documents">
-<h2>Query documents<a class="headerlink" href="#query-documents" title="Permalink to this headline">¶</a></h2>
-<p>the end</p>
+<h1>Query documents<a class="headerlink" href="#query-documents" title="Permalink to this headline">¶</a></h1>
 </section>
+<section id="transactions">
+<h1>Transactions<a class="headerlink" href="#transactions" title="Permalink to this headline">¶</a></h1>
 </section>
 
 
