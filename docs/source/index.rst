@@ -88,9 +88,8 @@ object represented by a dictionary in Python. A collection is a named container
 in which documents can be stored. Internally, collections correponds to
 database tables and documents are stored in table rows (one document per row).
 But  populse_db can hide this internal database stuff. The only thing user
-must do isto declare its collections if it uses an empty database.
-
-::
+must do is to declare its collections if it uses an empty database. This is
+illustrated in the following example::
 
    from datetime import date
    from populse_db import Database
@@ -158,25 +157,25 @@ must do isto declare its collections if it uses an empty database.
       for doc in db['acquisition'].filter('subject=="rbndt001" and "T1" in type'):
          pprint(doc)
 
-The example above illustrate how to use populse_db to store and retrieve JSON
+The example shows how to use populse_db to store and retrieve JSON
 objects without wondering about the underlying SQL database engine. This script
 produces the following result::
 
    {'birth_date': datetime.date(1968, 3, 3),
-   'name': 'Eléa',
-   'primary_key': 'rbndt001',
-   'sex': 'f'}
+    'name': 'Eléa',
+    'primary_key': 'rbndt001',
+    'sex': 'f'}
    {'date': datetime.date(2022, 3, 28),
-   'files': ['/somewhere/t1/acq0001.dcm',
+    'files': ['/somewhere/t1/acq0001.dcm',
             '/somewhere/t1/acq0002.dcm',
             '/somewhere/t1/acq0003.dcm',
             '/somewhere/t1/acq0004.dcm'],
-   'format': 'DICOM',
-   'primary_key': 'rbndt001_t1',
-   'subject': 'rbndt001',
-   'type': ['image', 'mri', 'T1']}
+    'format': 'DICOM',
+    'primary_key': 'rbndt001_t1',
+    'subject': 'rbndt001',
+    'type': ['image', 'mri', 'T1']}
 
-
+To further understand how to use populse_db, see the `tutorial <./tutorial.html>`_
 
 
 
