@@ -75,6 +75,9 @@ the documentation from sources, use::
 Connection to database
 ======================
 
+..include:: ../../python/populse_db/tutorial/tutorial_01.py
+    :literal:
+
 Data storage
 ============
 
