@@ -297,9 +297,9 @@ class SQLiteCollection(DatabaseCollection):
         document_id = self.document_id(document_id)
         self._set_document(document_id, document, replace=True)
 
-    def _set_document(self, document_id, document, replace):
-        columns = [i for i in self.primary_key]
-        data = [i for i in document_id]
+    def _dict_to_sql_update(self, document):
+        columns = []
+        data = []
         catchall = {}
         for field, value in document.items():
             if field in self.primary_key:
@@ -342,7 +342,13 @@ class SQLiteCollection(DatabaseCollection):
 
             else:
                 columns.append(self.catchall_column)
+        return columns, data
 
+    def _set_document(self, document_id, document, replace):
+        columns, data = self._dict_to_sql_update(document)
+
+        columns = [i for i in self.primary_key] + columns
+        data = [i for i in document_id] + data
         if replace:
             replace = ' OR REPLACE'
         else:
@@ -350,6 +356,21 @@ class SQLiteCollection(DatabaseCollection):
         sql = f'INSERT{replace} INTO [{self.name}] ({",".join(f"[{i}]" for i in columns)}) values ({",".join("?" for i in data)})'
         self.session.execute(sql, data)
     
+    def update_document(self, document_id, partial_document):
+        document_id = self.document_id(document_id)
+        if not all(y is None or x==y 
+                   for x,y in zip(document_id, 
+                                  (partial_document.get(i) for i in self.primary_key))):
+            raise ValueError("Modification of a document's primary key is not allowed")
+        columns, data = self._dict_to_sql_update(partial_document)
+
+        where = ' AND '.join(f'[{i}]=?' for i in self.primary_key)
+        data = data + [i for i in document_id]
+        sql = f'UPDATE [{self.name}] SET {",".join(f"[{i}]=?" for i in columns)} WHERE {where}'
+        cur = self.session.execute(sql, data)
+        if not cur.rowcount:
+            raise ValueError(f'Document with key {document_id} does not exist')
+
     def __delitem__(self, document_id):
         document_id = self.document_id(document_id)
         sql = f'DELETE FROM [{self.name}] WHERE {" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'

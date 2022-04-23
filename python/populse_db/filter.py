@@ -52,6 +52,7 @@ quoted_field_name.1 : QUOTED_FIELD_NAME
            | ESCAPED_STRING  -> string
            | SIGNED_NUMBER   -> number
            | list
+           | empty_list
 
 DATE.2 : INT "-" INT "-" INT
 TIME.2 : INT ":" INT (":" INT ("." INT)?)?
@@ -64,7 +65,8 @@ KEYWORD_LITERAL : "NuLL"i
 FIELD_NAME : ("_"|LETTER) ("_"|LETTER|DIGIT)*
 QUOTED_FIELD_NAME : "{" /[^}]/* "}"
 
-list : "[" [literal ("," literal)*] "]"
+empty_list : "[]"
+list : "[" literal ("," literal)* "]"
 
 _STRING_INNER: /(.|\\n)*?/
 _STRING_ESC_INNER: _STRING_INNER /(?<!\\\\)(\\\\\\\\)*?/
@@ -258,6 +260,9 @@ class FilterToSQL(Transformer):
 
     def keyword_literal(self, items):
         return self.keyword_literals[items[0].lower()]
+
+    def empty_list(self, items):
+        return []
 
     def list(self, items):
         return items
