@@ -37,6 +37,8 @@ class SQLiteSession(DatabaseSession):
             'BEGIN DEFERRED;'
         )
         self._collection_cache = {}
+        # Iterate on all collections to put them in cache
+        all(self)
 
     def has_collection(self, name):
         return name in self._collection_cache

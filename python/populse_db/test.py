@@ -1764,6 +1764,7 @@ def create_test_case(**database_creation_parameters):
             # Reopen the database to check that "titi" was commited
             database = self.create_database(clear=False)
             with database as session:
+                self.assertTrue(session.has_collection("collection1"))
                 names = [i["name"] for i in session.filter_documents("collection1", "all")]
                 self.assertEqual(names, ['titi'])
 
