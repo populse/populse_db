@@ -113,6 +113,7 @@ class DatabaseSession:
 
         - :py:meth:`add_collection`
         - :py:meth:`remove_collection`
+        - :py:meth:`has_collection`
         - :py:meth:`__getitem__`
         - :py:meth:`collections`
 
@@ -176,6 +177,12 @@ class DatabaseSession:
         :param name: Collection to remove (str, must be existing)
 
         :raise ValueError: If the collection does not exist
+        """
+        raise NotImplemented()
+
+    def has_collection(self, name):
+        """
+        Check if a collection with the given name exists.
         """
         raise NotImplemented()
 

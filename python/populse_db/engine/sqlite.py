@@ -38,6 +38,9 @@ class SQLiteSession(DatabaseSession):
         )
         self._collection_cache = {}
 
+    def has_collection(self, name):
+        return name in self._collection_cache
+    
     def __getitem__(self, collection_name):
         result = self._collection_cache.get(collection_name)
         if result is None:
@@ -109,6 +112,8 @@ class SQLiteSession(DatabaseSession):
             f'{catchall_column} dict,'
             f'PRIMARY KEY ({",".join(f"[{i}]" for i in primary_key.keys())}))')
         self.execute(sql)
+        # Accessing the collection to put it in cache
+        self[name]
 
     def remove_collection(self, name):
         sql = f'DROP TABLE [{name}]'

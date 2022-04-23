@@ -109,7 +109,6 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-
                 # Adding a collection
                 session.add_collection("collection1", "name")
 
@@ -771,9 +770,11 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-
+                
                 # Adding a first collection
+                self.assertFalse(session.has_collection("collection1"))
                 session.add_collection("collection1")
+                self.assertTrue(session.has_collection("collection1"))
 
                 # Checking values
                 collection = session.get_collection("collection1")
@@ -782,6 +783,7 @@ def create_test_case(**database_creation_parameters):
 
                 # Removing a collection
                 session.remove_collection("collection1")
+                self.assertFalse(session.has_collection("collection1"))
 
                 # Testing that it does not exist anymore
                 self.assertIsNone(session.get_collection("collection1"))
