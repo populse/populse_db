@@ -128,4 +128,8 @@ class Database:
                 session.rollback()
             session = None
         self.thread_local.populse_db = (session, depth)
-    
+
+# Import here to allow the followint import in external
+# modules:
+#   from populse_db import json_encode, json_decode
+from .database import json_encode, json_decode
