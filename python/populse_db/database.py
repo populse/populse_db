@@ -528,7 +528,7 @@ def json_encode(value):
     encode = _json_encodings.get(type_)
     if encode is not None:
         return encode(value)
-    return encode(value)
+    return value
 
 def json_decode(value):
     global _json_decodings
