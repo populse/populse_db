@@ -57,7 +57,7 @@ CLASSIFIERS = CLASSIFIERS
 PLATFORMS = 'OS Independent'
 REQUIRES = [
     'python-dateutil',
-    'lark'
+    'lark<1.0.0'
 ]
 EXTRA_REQUIRES = {
     'doc': [
