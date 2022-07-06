@@ -487,8 +487,6 @@ class DatabaseCollection:
         filter_query can be the result of self.filter_query() or a string containing a filter
         (in this case self.fliter_query() is called to get the actual query)
 
-        :param collection: Filter collection (str, must be existing)
-
         :param filter_query: Filter query (str)
 
                     - A filter row must be written this way: {<field>} <operator> "<value>"
@@ -501,6 +499,14 @@ class DatabaseCollection:
         :param as_list: If True, document values are returned in a list using
                         fields order
 
+        """
+        raise NotImplementedError()
+
+    def delete(self, filter):
+        """
+        Delete documents corresponding to the given filter
+
+        :param filter_query: Filter query (str)
         """
         raise NotImplementedError()
 

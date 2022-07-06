@@ -40,6 +40,9 @@ class SQLiteSession(DatabaseSession):
         # Iterate on all collections to put them in cache
         all(self)
 
+    def close(self):
+        self.sqlite.close()
+
     def has_collection(self, name):
         return name in self._collection_cache
     
@@ -396,3 +399,13 @@ class SQLiteCollection(DatabaseCollection):
     def filter(self, filter, fields=None, as_list=False):
         parsed_filter = self.parse_filter(filter)
         yield from self._documents(parsed_filter, None, fields=fields, as_list=as_list)
+
+
+    def delete(self, filter):
+        where = self.parse_filter(filter)
+        sql = f'DELETE FROM [{self.name}]'
+        if where:
+            sql += f' WHERE {where}'
+        cur = self.session.execute(sql)
+        return cur.rowcount
+ 

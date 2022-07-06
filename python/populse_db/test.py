@@ -1820,6 +1820,59 @@ def create_test_case(**database_creation_parameters):
                 session.add_document('test', doc)
                 stored_doc = session.get_document('test', 'test')
                 self.assertEqual(doc, stored_doc)
+
+        def test_delete(self):
+            """
+            Test automatic creation of fields with add_document
+            """
+            database = self.create_database()
+            with database as session:
+                session.add_collection('things', ('one', 'two'))
+                for one in range(10):
+                    for two in range(10):
+                        session['things'][(str(one), str(two))] = {
+                            'content': one * two,
+                        }
+                deleted = session['things'].delete('all')
+                self.assertEqual(deleted, 100)
+                deleted = session['things'].delete('{content} >= 4')
+                self.assertEqual(deleted, 0)
+                for one in range(10):
+                    for two in range(10):
+                        session['things'][(str(one), str(two))] = {
+                            'content': one * two,
+                        }
+                deleted = session['things'].delete('{one} == "5"')
+                self.assertEqual(deleted, 10)
+                deleted = session['things'].delete('{content} >= 4')
+                self.assertEqual(deleted, 67)
+                self.maxDiff = 1000
+                self.assertEqual(
+                    list(session['things'].documents()),
+                    [{'content': 0, 'one': 0, 'two': 0},
+                     {'content': 0, 'one': 0, 'two': 1},
+                     {'content': 0, 'one': 0, 'two': 2},
+                     {'content': 0, 'one': 0, 'two': 3},
+                     {'content': 0, 'one': 0, 'two': 4},
+                     {'content': 0, 'one': 0, 'two': 5},
+                     {'content': 0, 'one': 0, 'two': 6},
+                     {'content': 0, 'one': 0, 'two': 7},
+                     {'content': 0, 'one': 0, 'two': 8},
+                     {'content': 0, 'one': 0, 'two': 9},
+                     {'content': 0, 'one': 1, 'two': 0},
+                     {'content': 1, 'one': 1, 'two': 1},
+                     {'content': 2, 'one': 1, 'two': 2},
+                     {'content': 3, 'one': 1, 'two': 3},
+                     {'content': 0, 'one': 2, 'two': 0},
+                     {'content': 2, 'one': 2, 'two': 1},
+                     {'content': 0, 'one': 3, 'two': 0},
+                     {'content': 3, 'one': 3, 'two': 1},
+                     {'content': 0, 'one': 4, 'two': 0},
+                     {'content': 0, 'one': 6, 'two': 0},
+                     {'content': 0, 'one': 7, 'two': 0},
+                     {'content': 0, 'one': 8, 'two': 0},
+                     {'content': 0, 'one': 9, 'two': 0}])
+ 
     
     return TestDatabaseMethods
 

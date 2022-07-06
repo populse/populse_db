@@ -126,6 +126,7 @@ class Database:
                 session.commit()
             else:
                 session.rollback()
+            session.close()
             session = None
         self.thread_local.populse_db = (session, depth)
 
