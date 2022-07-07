@@ -596,6 +596,8 @@ def create_test_case(**database_creation_parameters):
                     "execution_context": {"tmp": "/tmp"}
                 }
                 collection["doc"] = doc
+                self.assertEqual(collection["doc"], doc)
+
                 collection.update_document("doc", {
                     "status": "running",
                     "other": "something"
@@ -619,6 +621,8 @@ def create_test_case(**database_creation_parameters):
                     "execution_context": {"tmp": "/tmp"}
                 }
                 collection["doc"] = doc
+                self.assertEqual(collection["doc"], doc)
+
                 collection.update_document("doc", {
                     "status": "running",
                     "other": "something"

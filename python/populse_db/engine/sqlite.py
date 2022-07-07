@@ -310,6 +310,8 @@ class SQLiteCollection(DatabaseCollection):
     def _dict_to_sql_update(self, document):
         columns = []
         data = []
+        catchall_column = None
+        catchall_data = None
         catchall = {}
         for field, value in document.items():
             if field in self.primary_key:
@@ -326,7 +328,7 @@ class SQLiteCollection(DatabaseCollection):
                 raise ValueError(f'Collection {self.name} cannot store the following unknown fields: {", ".join(catchall)}')
             bad_json = False
             try:
-                data.append(json_dumps(catchall))
+                catchall_data = json_dumps(catchall)
             except TypeError:
                 bad_json = True
             if bad_json:
@@ -347,18 +349,21 @@ class SQLiteCollection(DatabaseCollection):
                     else:
                         jsons.append((f'"{field}"', j))
                 if jsons:
-                    columns.append(self.catchall_column)
-                    data.append(f'{{{",".join(f"{i}:{j}" for i, j in jsons)}}}')
+                    catchall_column = self.catchall_column
+                    catchall_data = f'{{{",".join(f"{i}:{j}" for i, j in jsons)}}}'
 
             else:
-                columns.append(self.catchall_column)
-        return columns, data
+                catchall_column = self.catchall_column
+        return columns, data, catchall_column, catchall_data
 
     def _set_document(self, document_id, document, replace):
-        columns, data = self._dict_to_sql_update(document)
+        columns, data, catchall_column, catchall_data = self._dict_to_sql_update(document)
 
         columns = [i for i in self.primary_key] + columns
         data = [i for i in document_id] + data
+        if catchall_column:
+            columns.append(catchall_column)
+            data.append(catchall_data)
         if replace:
             replace = ' OR REPLACE'
         else:
@@ -372,11 +377,17 @@ class SQLiteCollection(DatabaseCollection):
                    for x,y in zip(document_id, 
                                   (partial_document.get(i) for i in self.primary_key))):
             raise ValueError("Modification of a document's primary key is not allowed")
-        columns, data = self._dict_to_sql_update(partial_document)
+        columns, data, catchall_column, catchall_data = self._dict_to_sql_update(partial_document)
 
+        if catchall_column:
+            catchall_update = [f'[{catchall_column}]=json_patch(IFNULL([{catchall_column}],"{{}}"),?)']
+            data.append(catchall_data)
+        else:
+            catchall_update = []
         where = ' AND '.join(f'[{i}]=?' for i in self.primary_key)
         data = data + [i for i in document_id]
-        sql = f'UPDATE [{self.name}] SET {",".join(f"[{i}]=?" for i in columns)} WHERE {where}'
+        affectations = [f"[{i}]=?" for i in columns] + catchall_update
+        sql = f'UPDATE [{self.name}] SET {",".join(affectations)} WHERE {where}'
         cur = self.session.execute(sql, data)
         if not cur.rowcount:
             raise ValueError(f'Document with key {document_id} does not exist')
