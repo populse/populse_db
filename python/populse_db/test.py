@@ -606,6 +606,29 @@ def create_test_case(**database_creation_parameters):
                 })
                 self.assertEqual(collection["doc"], doc)
 
+        def test_update_document_without_field(self):
+            database = self.create_database()
+            with database as session:
+                session.add_collection("collection")
+                collection = session["collection"]
+
+                doc = {
+                    "primary_key": "doc",
+                    "status": "submited",
+                    "executable": {"definition": "custom"},
+                    "execution_context": {"tmp": "/tmp"}
+                }
+                collection["doc"] = doc
+                collection.update_document("doc", {
+                    "status": "running",
+                    "other": "something"
+                })
+                doc.update({
+                    "status": "running",
+                    "other": "something"
+                })
+                self.assertEqual(collection["doc"], doc)
+
 
 
         def test_get_document(self):
