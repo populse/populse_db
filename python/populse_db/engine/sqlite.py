@@ -61,9 +61,12 @@ class SQLiteSession(DatabaseSession):
 
     def commit(self):
         self.sqlite.commit()
+        self.sqlite.execute('BEGIN DEFERRED')
+
 
     def rollback(self):
         self.sqlite.rollback()
+        self.sqlite.execute('BEGIN DEFERRED')
         
     def settings(self, category, key, default=None):
         try:

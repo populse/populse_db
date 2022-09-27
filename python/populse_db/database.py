@@ -65,6 +65,8 @@ def str_to_type(str):
     """
     global _str_to_type
 
+    if not str:
+        return None
     s = str.split('[',1)
     if len(s) == 1:
         return _str_to_type[s[0]]
