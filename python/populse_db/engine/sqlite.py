@@ -60,8 +60,8 @@ class SQLiteSession(DatabaseSession):
             else:
                 return self.sqlite.execute(sql)
         except sqlite3.OperationalError as e:
-            raise ValueError(f'Error in SQL request: {sql}') from e
-
+            raise sqlite3.OperationalError(f'Error in SQL request: {sql}') from e
+    
     def commit(self):
         self.sqlite.commit()
         self.sqlite.execute('BEGIN DEFERRED')
