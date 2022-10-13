@@ -54,10 +54,13 @@ class SQLiteSession(DatabaseSession):
         return result
     
     def execute(self, sql, data=None):
-        if data:
-            return self.sqlite.execute(sql, data)
-        else:
-            return self.sqlite.execute(sql)
+        try:
+            if data:
+                return self.sqlite.execute(sql, data)
+            else:
+                return self.sqlite.execute(sql)
+        except sqlite3.OperationalError as e:
+            raise ValueError(f'Error in SQL request: {sql}') from e
 
     def commit(self):
         self.sqlite.commit()
