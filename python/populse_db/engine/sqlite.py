@@ -393,6 +393,8 @@ class SQLiteCollection(DatabaseCollection):
         where = ' AND '.join(f'[{i}]=?' for i in self.primary_key)
         data = data + [i for i in document_id]
         affectations = [f"[{i}]=?" for i in columns] + catchall_update
+        if not affectations:
+            return
         sql = f'UPDATE [{self.name}] SET {",".join(affectations)} WHERE {where}'
         cur = self.session.execute(sql, data)
         if not cur.rowcount:
