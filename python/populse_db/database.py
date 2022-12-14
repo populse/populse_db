@@ -526,7 +526,7 @@ class DatabaseSession(object):
 
         :param new_value: New value
 
-        :param flush: unused obsolete parmeter
+        :param flush: unused obsolete parameter
 
         :raise ValueError: - If the collection does not exist
                            - If the field does not exist
@@ -548,7 +548,7 @@ class DatabaseSession(object):
 
         :param values: Dict of values (key=field, value=value)
 
-        :param flush: unused obsolete parmeter
+        :param flush: unused obsolete parameter
 
         :raise ValueError: - If the collection does not exist
                            - If the field does not exist
