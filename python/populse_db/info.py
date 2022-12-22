@@ -11,7 +11,7 @@ import sys
 
 # populse_db current version
 version_major = 2
-version_minor = 2
+version_minor = 3
 version_micro = 0
 version_extra = ""
 
