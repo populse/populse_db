@@ -163,7 +163,7 @@ class Engine:
         """
         Checks existence of a field in a collection. May be called often,
         must be fast.
-        Returns False if collection does not exists.
+        Returns False if collection does not exist.
 
         :param collection: collection name (str)
 
@@ -236,7 +236,7 @@ class Engine:
         fields returned by the fields() method are used.
         If as_list is True, a list of values is returned (one value per selected
         field).
-        Returns None if the collection or document does not exists.
+        Returns None if the collection or document does not exist.
 
         :param collection: collection name (str)
 
