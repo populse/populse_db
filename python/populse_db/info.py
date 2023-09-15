@@ -33,8 +33,8 @@ CLASSIFIERS = ['Development Status :: 5 - Production/Stable',
                ]
 
 # Project descriptions
-NAME = 'populse_db'
-DESCRIPTION = 'populse_db'
+NAME = 'populse-db'
+DESCRIPTION = 'populse-db'
 LONG_DESCRIPTION = '''
 ==========
 populse_db 
@@ -57,11 +57,11 @@ CLASSIFIERS = CLASSIFIERS
 PLATFORMS = 'OS Independent'
 REQUIRES = [
     'python-dateutil',
-    'lark<1.0.0'
+    'lark <1.0.0'
 ]
 EXTRA_REQUIRES = {
     'doc': [
-        'sphinx>=1.0',
+        'sphinx >=1.0',
     ],
     'postgres': [
         'psycopg2-binary',
