@@ -26,21 +26,26 @@ class SQLiteSession(DatabaseSession):
             args = (url.netloc,)
         return args, {}
     
-    def __init__(self, sqlite_file):
+    def __init__(self, sqlite_file, exclusive=False):
         self.sqlite = sqlite3.connect(sqlite_file,
             isolation_level=None,
             check_same_thread=False)
+        self.exclusive = exclusive
         self.sqlite.executescript(
             'PRAGMA synchronous=OFF;'
             'PRAGMA case_sensitive_like=ON;'
             'PRAGMA foreign_keys=ON;'
-            'BEGIN DEFERRED;'
+            f'BEGIN {("EXCLUSIVE" if self.exclusive else "DEFERRED")};'
         )
         self._collection_cache = {}
         # Iterate on all collections to put them in cache
         all(self)
 
-    def close(self):
+    def close(self, rollback=False):
+        if rollback:
+            self.sqlite.rollback()
+        else:
+            self.sqlite.commit()
         self.sqlite.close()
 
     def has_collection(self, name):
@@ -64,12 +69,12 @@ class SQLiteSession(DatabaseSession):
     
     def commit(self):
         self.sqlite.commit()
-        self.sqlite.execute('BEGIN DEFERRED')
+        self.sqlite.execute(f'BEGIN {("EXCLUSIVE" if self.exclusive else "DEFERRED")}')
 
 
     def rollback(self):
         self.sqlite.rollback()
-        self.sqlite.execute('BEGIN DEFERRED')
+        self.sqlite.execute(f'BEGIN {("EXCLUSIVE" if self.exclusive else "DEFERRED")}')
         
     def settings(self, category, key, default=None):
         try:

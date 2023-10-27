@@ -1,6 +1,6 @@
+from contextlib import contextmanager
 import threading
 from urllib.parse import urlparse
-
 from .engine.sqlite import SQLiteSession
 
 class Database:
@@ -27,7 +27,18 @@ class Database:
 
     Database modification within a ``with`` statement is done in a transaction.
     If an exception occurs before the end of the `with`, a rollback is done and
-    the database is not modified.
+    the database is not modified. By default, this transaction allows to read
+    the database in parallel. The first database modification will acquire an
+    exclusive access to the database. It is possible to request an exclusive
+    session (preventing any other access to the database by other processes
+    or threads) by using the `exclusive` property::
+
+        from populse_db import database
+
+        db = Database('sqlite:///tmp/populse_db.sqlite')
+        with db.exclusive as dbs:
+            # All other access to the database are blocked
+            # until the end of this "with" statement.
 
     :any:``Database`` is a reusable context manager. It means that it is allowed
     to use it in several consecutive ``with``::
@@ -69,7 +80,7 @@ class Database:
 
     methods:
         - __enter__: Creates a :any:`DatabaseSession` instance
-        - __exit__: Release resource used by the DatabaseSession
+        - __exit__: Release resource used by the :any:`DatabaseSession`
     """
 
     def __init__(self, database_url):
@@ -81,20 +92,46 @@ class Database:
             To date dialect can only be ``sqlite`` but ``postgresql`` is planned.
 
             Examples:
+                    - /somewhere/a_file.popdb
                     - ``sqlite:///foo.db``
                     - ``postgresql://scott:tiger@localhost/test``
         """
 
+        self.thread_local = threading.local()
         self.url = urlparse(database_url)
         if self.url.scheme in ('', 'sqlite'):
             self.session_class = SQLiteSession
         else:
             raise ValueError(f'Invalid datbase type in database URL: {database_url}')
         self.session_parameters = self.session_class.parse_url(self.url)
-        self.thread_local = threading.local()
-        session = None
-        depth = 0
+
+
+    def session(self,exclusive=False):
+        args, kwargs = self.session_parameters
+        return self.session_class(*args, exclusive=exclusive, **kwargs)
+
+
+    def begin_session(self, exclusive):
+        session_depth = getattr(self.thread_local, 'populse_db', None)
+        if session_depth is None:
+            session = self.session(exclusive=exclusive)
+            depth = 0
+        else:
+            session, depth = session_depth
+        depth += 1
         self.thread_local.populse_db = (session, depth)
+        return session
+    
+
+    def end_session(self, rollback):
+        session, depth = self.thread_local.populse_db
+        depth -= 1
+        if depth == 0:
+            session.close(rollback=rollback)
+            del self.thread_local.populse_db
+        else:
+            self.thread_local.populse_db = (session, depth)
+
 
     def __enter__(self):
         """
@@ -110,25 +147,24 @@ class Database:
         outermost __enter__/__exit__ pair (i.e. by the outermost with
         statement).
         """
-        session, depth = self.thread_local.populse_db
-        if session is None:
-            args, kwargs = self.session_parameters
-            session = self.session_class(*args, **kwargs)
-        depth += 1
-        self.thread_local.populse_db = (session, depth)
-        return session
+        return self.begin_session(exclusive=False)
     
+
     def __exit__(self, exc_type, exc_val, exc_tb):
-        session, depth = self.thread_local.populse_db
-        depth -= 1
-        if depth == 0:
-            if exc_type is None:
-                session.commit()
-            else:
-                session.rollback()
-            session.close()
-            session = None
-        self.thread_local.populse_db = (session, depth)
+        self.end_session(rollback=(exc_type is not None))
+
+
+    @property
+    @contextmanager
+    def exclusive(self):
+        try:
+            session = self.begin_session(exclusive=True)
+            yield session
+            self.end_session(rollback=False)
+        except Exception:
+            self.end_session(rollback=True)
+            raise
+        
 
 # Import here to allow the followint import in external
 # modules:
