@@ -26,11 +26,13 @@ class SQLiteSession(DatabaseSession):
             args = (url.netloc,)
         return args, {}
     
-    def __init__(self, sqlite_file, exclusive=False):
+    def __init__(self, sqlite_file, exclusive=False, timeout=None):
         self.sqlite = sqlite3.connect(sqlite_file,
             isolation_level=None,
             check_same_thread=False)
         self.exclusive = exclusive
+        if timeout:
+            self.sqlite.execute(f'PRAGMA busy_timeout={timeout}')
         self.sqlite.executescript(
             'PRAGMA synchronous=OFF;'
             'PRAGMA case_sensitive_like=ON;'
