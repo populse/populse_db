@@ -1504,7 +1504,7 @@ def create_test_case(**database_creation_parameters):
                         ),
 
                         ('strings == null',
-                         {}),
+                         set()),
 
                         ('strings != NULL',
                          {
