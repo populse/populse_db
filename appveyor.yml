@@ -2,23 +2,13 @@ environment:
 
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      PYTHON: "C:\\Python27"
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       PYTHON: "C:\\Python37"
       
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-      PYTHON: "Python2.7"
-#      APPVEYOR_SSH_KEY:
-#      APPVEYOR_SSH_BLOCK: true
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       PYTHON: "Python3.7"
 #      APPVEYOR_SSH_KEY:
 #      APPVEYOR_SSH_BLOCK: true
 
-    - APPVEYOR_BUILD_WORKER_IMAGE: macos
-      PYTHON: "Python2.7"
-#      APPVEYOR_SSH_KEY:
-#      APPVEYOR_SSH_BLOCK: true
     - APPVEYOR_BUILD_WORKER_IMAGE: macos
       PYTHON: "Python3.7"
 
