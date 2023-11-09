@@ -85,7 +85,7 @@ Basic usage
 
 Populse_db is organized in *collections* and *documents*. A document is a JSON
 object represented by a dictionary in Python. A collection is a named container
-in which documents can be stored. Internally, collections correponds to
+in which documents can be stored. Internally, collections corresponds to
 database tables and documents are stored in table rows (one document per row).
 But  populse_db can hide this internal database stuff. The only thing user
 must do isto declare its collections if it uses an empty database.
@@ -154,7 +154,7 @@ must do isto declare its collections if it uses an empty database.
       # Retrieve all documents from collection 'subject' respecting the
       # following conditions:
       #   - the "subject" field equals to "rbndt001"
-      #   - the "type" field is a list containing tha value "T1"
+      #   - the "type" field is a list containing the value "T1"
       for doc in db['acquisition'].filter('subject=="rbndt001" and "T1" in type'):
          pprint(doc)
 

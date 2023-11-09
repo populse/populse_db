@@ -22,8 +22,8 @@ You will then be be able to run the tutorial codes with the following command::
 
     python -m populse_db.tutorial_01.py
 
-Install in virtual environement
--------------------------------
+Install in virtual environment
+------------------------------
 
 If you have the right Python version and want to install populse_db
 in its own isolated directory, you can use a `virtual environment 
@@ -42,7 +42,7 @@ Install using another Python
 If your system does not have the appropriate Python version, you can use a 
 container technology and a `virtual environment 
 <https://docs.python.org/3/tutorial/venv.html>`_ to have an install entirely
-independant of your system. For this, we recommend to use Singularity. Once
+independent of your system. For this, we recommend to use Singularity. Once
 Singularity is installed on your system you can install the environment and
 populse_db with the following commands::
 

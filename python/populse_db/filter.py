@@ -320,7 +320,7 @@ class FilterToSQL(Transformer):
         constant list value
 
         :param field: field object as returned by Database.get_field
-        :param list_value: Pyton list containing literals
+        :param list_value: Python list containing literals
         '''
         if None in list_value:
             list_value.remove(None)
