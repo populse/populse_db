@@ -14,7 +14,7 @@
 Introduction
 ============
 
-populse_db is an open source Python module that sits in front of a database 
+populse_db is an open source Python module that sits in front of a database
 (`SQLite <https://sqlite.org>`_ or `Postgres <https://www.postgresql.org>`_)
 and allows the storage and query of JSON documents. It brings together
 features from SQL and NOSQL databases and can be used without any database
@@ -32,13 +32,13 @@ Features
 * **Date and time support**: populse_db support items of type `datetime.time`,
   `datetime.date` and `datetime.datetime` in JSON objects. These items are
   automatically encoded (resp. decoded) to (resp. from) strings using ISO
-  format. 
+  format.
 * **Query list elements**: populse_db has a simple query language that
   allows to select objects by looking for items in list fields.
-* **Transactions support**: to ensure the consistency of the database, 
+* **Transactions support**: to ensure the consistency of the database,
   populse_db allows all modifications to be made within a transaction.
   Thus, in case of unexpected problem, the database will keep its initial
-  state before the transaction. 
+  state before the transaction.
 * **Partitioning of JSON objects**: populse_db allows to read or modify
   individually each stored object. But it also allows to define a
   partitioning of the objects offering a direct access to different parts of

@@ -8,7 +8,7 @@ version_micro = 0
 version_extra = "alpha"
 
 # Expected by setup.py: string of form "X.Y.Z"
-__version__ = "{0}.{1}.{2}".format(version_major, version_minor, version_micro)
+__version__ = f"{version_major}.{version_minor}.{version_micro}"
 
 # Expected by setup.py: the status of the project
 CLASSIFIERS = ['Development Status :: 5 - Production/Stable',
@@ -26,7 +26,7 @@ NAME = 'populse-db'
 DESCRIPTION = 'populse-db'
 LONG_DESCRIPTION = '''
 ==========
-populse_db 
+populse_db
 ==========
 
 The meta-data storage and query system for Populse.
@@ -42,7 +42,6 @@ AUTHOR_EMAIL = 'yann@cointepas.net'
 URL = 'http://populse.github.io/populse_db/'
 LICENSE = 'CeCILL-B'
 VERSION = __version__
-CLASSIFIERS = CLASSIFIERS
 PLATFORMS = 'OS Independent'
 REQUIRES = [
     'python-dateutil',

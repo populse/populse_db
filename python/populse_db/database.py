@@ -39,7 +39,7 @@ def check_value_type(value, field_type):
 
 def type_to_str(type):
     """Convert a Python type to a string.
-    
+
     Examples:
 
         - ``type_to_str(str) == 'str'``
@@ -101,7 +101,7 @@ class DatabaseSession:
     methods:
 
         *Database related methods:*
-        
+
         - :py:meth:`execute`
         - :py:meth:`commit`
         - :py:meth:`rollback`
@@ -142,7 +142,7 @@ class DatabaseSession:
     """
     populse_db_table = 'populse_db'
     default_primary_key = 'primary_key'
-    
+
     def execute(self, *args, **kwargs):
         raise NotImplementedError()
 
@@ -157,7 +157,7 @@ class DatabaseSession:
 
     def set_settings(self, category, key, value):
         raise NotImplementedError()
-    
+
     def add_collection(self, name, primary_key=default_primary_key):
         """
         Adds a collection
@@ -218,7 +218,7 @@ class DatabaseSession:
             Use :py:meth:`collections()` instead
         """
         return self.collections()
-    
+
     def get_collections_names(self):
         """
         .. deprecated:: 3.0
@@ -233,7 +233,7 @@ class DatabaseSession:
             Use ``db_session[collection].add_field(...)`` instead.
             See :py:meth:`DatabaseCollection.add_field`.
         """
-        self[collection].add_field(name, field_type, description=description, 
+        self[collection].add_field(name, field_type, description=description,
                                    index=index)
 
     def remove_field(self, collection, field):
@@ -254,7 +254,7 @@ class DatabaseSession:
             return self[collection].fields.get(name)
         except ValueError:
             return None
-    
+
     def get_fields_names(self, collection):
         """
         .. deprecated:: 3.0
@@ -272,7 +272,7 @@ class DatabaseSession:
             Use ``db_session[collection].fields.values()`` instead.
             See :py:attr:`DatabaseCollection.fields`.
         """
-        try:     
+        try:
             return self[collection].fields.values()
         except ValueError:
             return ()
@@ -284,7 +284,7 @@ class DatabaseSession:
             See :py:meth:`DatabaseCollection.update_document`.
         """
         self[collection].update_document(document_id, values)
-            
+
     def has_document(self, collection, document_id):
         """
         .. deprecated:: 3.0
@@ -305,7 +305,7 @@ class DatabaseSession:
         except ValueError:
             return None
         return collection.document(document_id, fields, as_list)
-    
+
     def get_documents_ids(self, collection):
         """
         .. deprecated:: 3.0
@@ -344,8 +344,8 @@ class DatabaseSession:
             See :py:meth:`DatabaseCollection.__delitem__`.
         """
         del self[collection][document_id]
-    
-    
+
+
     def add_document(self, collection, document):
         """
         .. deprecated:: 3.0
@@ -353,7 +353,7 @@ class DatabaseSession:
             See :py:meth:`DatabaseCollection.add`.
         """
         self[collection].add(document)
-        
+
 
     def filter_documents(self, collection, filter_query, fields=None, as_list=False):
         """
@@ -375,7 +375,7 @@ class DatabaseCollection:
 
     def settings(self):
         return self.session.settings('collection', self.name, {})
-    
+
     def set_settings(self, settings):
         self.session.set_settings('collection', self.name, settings)
 
@@ -385,7 +385,7 @@ class DatabaseCollection:
         if len(document_id) != len(self.primary_key):
             raise KeyError(f'key for table {self.name} requires {len(self.primary_key)} value(s), {len(document_id)} given')
         return document_id
-    
+
     def update_settings(self, **kwargs):
         settings = self.settings()
         settings.update(kwargs)
@@ -415,7 +415,7 @@ class DatabaseCollection:
                            - If the field description is invalid
         """
         raise NotImplementedError()
-    
+
     def remove_field(self, name):
         """
         Removes a field in the collection
@@ -431,10 +431,10 @@ class DatabaseCollection:
 
     def update_document(self, document_id, partial_document):
         raise NotImplementedError()
-    
+
     def has_document(self, document_id):
         raise NotImplementedError()
-      
+
     def document(self, document_id, fields=None, as_list=False):
         raise NotImplementedError()
 
@@ -446,7 +446,7 @@ class DatabaseCollection:
 
     def __iter__(self):
         return self.documents()
-     
+
     def add(self, document, replace=False):
         raise NotImplementedError()
 
@@ -473,13 +473,13 @@ class DatabaseCollection:
 
     def __getitem__(self, document_id):
         return self.document(document_id)
-    
+
     def __delitem__(self, document_id):
         raise NotImplementedError()
-    
+
     def parse_filter(self, filter):
         raise NotImplementedError()
-    
+
     def filter(self, filter, fields=None, as_list=False):
         """
         Iterates over the collection documents selected by filter_query

@@ -24,19 +24,19 @@ class Engine:
         This method is called at the beginning of a database modification
         session before any other method (normally within a "with" statement).
         Typically, it creates a connection with the database system, starts a
-        session then checks the existence of the base schema and creates it if 
+        session then checks the existence of the base schema and creates it if
         necessary.
         """
         raise NotImplementedError()
 
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
         This method is called when the user do not need to use the engine
         anymore. After this call, all database resources are freed and a
         call to __enter__ is necessary to be able to reuse the engine.
         Parameters are the exception information as for a "with" statement.
-        It must call commit() if exc_type is None or else rollback(). 
+        It must call commit() if exc_type is None or else rollback().
         """
         raise NotImplementedError()
 
@@ -56,14 +56,14 @@ class Engine:
         """
         raise NotImplementedError()
 
-    
+
     def clear(self):
         """
         Erase database data and schema.
         """
         raise NotImplementedError()
 
-        
+
     def has_collection(self, collection):
         """
         Checks existence of a collection. May be called often,
@@ -78,7 +78,7 @@ class Engine:
         """
         Create a new collection given the name of a field that will be created
         with a text type. This field is the primary key of each document. It
-        means that, in a single collection, a value must uniquely identify a 
+        means that, in a single collection, a value must uniquely identify a
         document. In other word, two documents cannot have the same value for
         this field.
 
@@ -88,7 +88,7 @@ class Engine:
         """
         raise NotImplementedError()
 
-        
+
     def collection(self, collection):
         """
         Returns a Row Object with at least the following items:
@@ -102,7 +102,7 @@ class Engine:
         """
         raise NotImplementedError()
 
-    
+
     def primary_key(self, collection):
         """
         Return the name of the primary key of a collection.
@@ -112,7 +112,7 @@ class Engine:
         """
         raise NotImplementedError()
 
-    
+
     def remove_collection(self, collection):
         """
         Delete a collection and its data.
@@ -137,7 +137,7 @@ class Engine:
 
         :param collection: collection name (str, must be existing)
         :param field: new field name (str, must not be existing)
-        :param type: field type, in ('string', 'int', 'float', 
+        :param type: field type, in ('string', 'int', 'float',
            'boolean', 'date', 'datetime', 'time', 'json', 'list_string',
            'list_int', 'list_float', 'list_boolean', 'list_date',
            'list_datetime', 'list_time', 'list_json')
@@ -147,7 +147,7 @@ class Engine:
         """
         raise NotImplementedError()
 
-            
+
     def has_field(self, collection, field):
         """
         Checks existence of a field in a collection. May be called often,
@@ -160,7 +160,7 @@ class Engine:
         """
         raise NotImplementedError()
 
-    
+
     def field(self, collection, field):
         """
         Returns a Row Object corresponding to a collection field with at
@@ -192,7 +192,7 @@ class Engine:
         """
         raise NotImplementedError()
 
-    
+
     def remove_fields(self, collection ,fields):
         """
         Remove given fields from a collection as well as all corresponding data.
@@ -203,7 +203,7 @@ class Engine:
         """
         raise NotImplementedError()
 
-    
+
     def has_document(self, collection, document_id):
         """
         Checks existence of a document in a collection.
@@ -239,14 +239,14 @@ class Engine:
         """
         raise NotImplementedError()
 
-    
+
     def has_value(self, collection, document_id, field):
         """
         Check if a document has a not null value for a given field.
         """
         raise NotImplementedError()
 
-        
+
     def set_values(self, collection, document_id, values):
         """
         Change some values in an existing document.
@@ -273,7 +273,7 @@ class Engine:
         :param fields: field name (str)
         """
         raise NotImplementedError()
-        
+
 
     def remove_document(self, collection, document_id):
         """
@@ -286,16 +286,16 @@ class Engine:
         """
         raise NotImplementedError()
 
-        
+
     def parse_filter(self, collection, filter):
         """
         Given a filter string, return a internal query representation that
         can be used with filter_documents() to select documents
 
 
-        :param collection: the collection for which the filter is intended 
+        :param collection: the collection for which the filter is intended
                (str, must be existing)
-        
+
         :param filter: the selection string using the populse_db selection
                        language.
         """
