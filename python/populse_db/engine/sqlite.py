@@ -112,7 +112,7 @@ class SQLiteSession(DatabaseSession):
         Erase the whole database content.
         """
 
-        sql = f'SELECT name FROM sqlite_master'
+        sql = 'SELECT name FROM sqlite_master'
         tables = [i[0] for i in self.execute(sql)]
         for table in tables:
             sql = f'DROP TABLE {table}'
@@ -139,7 +139,7 @@ class SQLiteSession(DatabaseSession):
         self._collection_cache.pop(name, None)
     
     def __iter__(self):
-        sql = f"SELECT name FROM sqlite_master WHERE type='table'"
+        sql = "SELECT name FROM sqlite_master WHERE type='table'"
         for row in self.execute(sql):
             table = row[0]
             if table == self.populse_db_table:

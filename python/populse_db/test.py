@@ -1,7 +1,5 @@
-from dataclasses import replace
 from datetime import datetime, date, time
 import os
-from pydoc import doc
 import shutil
 import tempfile
 import unittest
@@ -1140,19 +1138,19 @@ def create_test_case(**database_creation_parameters):
 
                 files = ('abc', 'bcd', 'def', 'xyz')
                 for file in files:
-                    for date in list_datetime:
+                    for dt in list_datetime:
                         for format, ext in (('NIFTI', 'nii'),
                                             ('DICOM', 'dcm'),
                                             ('Freesurfer', 'mgz')):
                             document = dict(
-                                name='/%s_%d.%s' % (file, date.year, ext),
+                                name='/%s_%d.%s' % (file, dt.year, ext),
                                 format=format,
                                 strings=list(file),
-                                datetime=date,
+                                datetime=dt,
                                 has_format=True,
                             )
                             session.add_document("collection1", document)
-                        document = '/%s_%d.none' % (file, date.year)
+                        document = '/%s_%d.none' % (file, dt.year)
                         d = dict(name=document, strings=list(file))
                         session.add_document("collection1", d)
 
@@ -1737,8 +1735,8 @@ def create_test_case(**database_creation_parameters):
                 'FALSE': False,
                 'false': False,
                 'Null': None,
+                'NULL': None,
                 'null': None,
-                'Null': None,
                 '0': 0,
                 '123456789101112': 123456789101112,
                 '-45': -45,
