@@ -3,14 +3,14 @@ import dateutil
 import json
 import sqlite3
 
-from ..database import (DatabaseSession, DatabaseCollection, 
+from ..database import (DatabaseSession, DatabaseCollection,
     str_to_type, type_to_str, json_dumps, json_encode, json_decode)
 from ..filter import FilterToSQL, filter_parser
 
 '''
 SQLite3 implementation of populse_db engine.
 
-A populse_db engine is created when a DatabaseSession object is created 
+A populse_db engine is created when a DatabaseSession object is created
 (typically within a "with" statement)
 '''
 
@@ -25,7 +25,7 @@ class SQLiteSession(DatabaseSession):
         elif url.netloc:
             args = (url.netloc,)
         return args, {}
-    
+
     def __init__(self, sqlite_file, exclusive=False, timeout=None):
         self.sqlite = sqlite3.connect(sqlite_file,
             isolation_level=None,
@@ -52,14 +52,14 @@ class SQLiteSession(DatabaseSession):
 
     def has_collection(self, name):
         return name in self._collection_cache
-    
+
     def __getitem__(self, collection_name):
         result = self._collection_cache.get(collection_name)
         if result is None:
             result = SQLiteCollection(self, collection_name)
             self._collection_cache[collection_name] = result
         return result
-    
+
     def execute(self, sql, data=None):
         try:
             if data:
@@ -68,7 +68,7 @@ class SQLiteSession(DatabaseSession):
                 return self.sqlite.execute(sql)
         except sqlite3.OperationalError as e:
             raise sqlite3.OperationalError(f'Error in SQL request: {sql}') from e
-    
+
     def commit(self):
         self.sqlite.commit()
         self.sqlite.execute(f'BEGIN {("EXCLUSIVE" if self.exclusive else "DEFERRED")}')
@@ -77,7 +77,7 @@ class SQLiteSession(DatabaseSession):
     def rollback(self):
         self.sqlite.rollback()
         self.sqlite.execute(f'BEGIN {("EXCLUSIVE" if self.exclusive else "DEFERRED")}')
-        
+
     def settings(self, category, key, default=None):
         try:
             sql = f'SELECT _json FROM [{self.populse_db_table}] WHERE category=? and key=?'
@@ -118,8 +118,8 @@ class SQLiteSession(DatabaseSession):
             sql = f'DROP TABLE {table}'
             self.execute(sql)
         self._collection_cache = {}
-    
-    def add_collection(self, name, primary_key=DatabaseSession.default_primary_key, 
+
+    def add_collection(self, name, primary_key=DatabaseSession.default_primary_key,
                        catchall_column='_catchall'):
         if isinstance(primary_key, str):
             primary_key = {primary_key: str}
@@ -137,7 +137,7 @@ class SQLiteSession(DatabaseSession):
         sql = f'DROP TABLE [{name}]'
         self.execute(sql)
         self._collection_cache.pop(name, None)
-    
+
     def __iter__(self):
         sql = f"SELECT name FROM sqlite_master WHERE type='table'"
         for row in self.execute(sql):
@@ -232,7 +232,7 @@ class SQLiteCollection(DatabaseCollection):
         self.fields[name] = field
         if bad_json:
             self.bad_json_fields.add(name)
-    
+
     def remove_field(self, name):
         if name in self.primary_key:
             raise ValueError('Cannot remove a key field')
@@ -244,12 +244,12 @@ class SQLiteCollection(DatabaseCollection):
         # self.set_settings(settings)
         # self.fields.pop(name, None)
         # self.bad_json_fields.discard(name)
-    
+
     def has_document(self, document_id):
         document_id = self.document_id(document_id)
         sql = f'SELECT count(*) FROM [{self.name}] WHERE {" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
         return next(self.session.execute(sql, document_id))[0] != 0
-    
+
     def _documents(self, where, where_data, fields, as_list):
         if fields:
             columns = []
@@ -261,7 +261,7 @@ class SQLiteCollection(DatabaseCollection):
                     catchall_fields.add(field)
         else:
             columns = list(self.fields)
-            catchall_fields = bool(self.catchall_column)        
+            catchall_fields = bool(self.catchall_column)
         if catchall_fields:
             if not self.catchall_column and isinstance(catchall_fields, set):
                 raise ValueError(f'Collection {self.name} do not have the following fields: {",".join(catchall_fields)}')
@@ -300,7 +300,7 @@ class SQLiteCollection(DatabaseCollection):
                 yield [document[i] for i in fields]
             else:
                 yield document
-      
+
     def document(self, document_id, fields=None, as_list=False):
         document_id = self.document_id(document_id)
         where = f'{" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
@@ -311,7 +311,7 @@ class SQLiteCollection(DatabaseCollection):
 
     def documents(self, fields=None, as_list=False):
         yield from self._documents(None, None, fields, as_list)
-     
+
     def add(self, document, replace=False):
         document_id = tuple(document.get(i) for i in self.primary_key)
         self._set_document(document_id, document, replace=replace)
@@ -383,11 +383,11 @@ class SQLiteCollection(DatabaseCollection):
             replace = ''
         sql = f'INSERT{replace} INTO [{self.name}] ({",".join(f"[{i}]" for i in columns)}) values ({",".join("?" for i in data)})'
         self.session.execute(sql, data)
-    
+
     def update_document(self, document_id, partial_document):
         document_id = self.document_id(document_id)
-        if not all(y is None or x==y 
-                   for x,y in zip(document_id, 
+        if not all(y is None or x==y
+                   for x,y in zip(document_id,
                                   (partial_document.get(i) for i in self.primary_key))):
             raise ValueError("Modification of a document's primary key is not allowed")
         columns, data, catchall_column, catchall_data = self._dict_to_sql_update(partial_document)
@@ -411,7 +411,7 @@ class SQLiteCollection(DatabaseCollection):
         document_id = self.document_id(document_id)
         sql = f'DELETE FROM [{self.name}] WHERE {" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
         self.session.execute(sql, document_id)
-    
+
     def parse_filter(self, filter):
         if filter is None or isinstance(filter, ParsedFilter):
             return filter
@@ -421,7 +421,7 @@ class SQLiteCollection(DatabaseCollection):
             return None
         else:
             return ParsedFilter(' '.join(where_filter))
-    
+
     def filter(self, filter, fields=None, as_list=False):
         parsed_filter = self.parse_filter(filter)
         yield from self._documents(parsed_filter, None, fields=fields, as_list=as_list)
@@ -434,4 +434,3 @@ class SQLiteCollection(DatabaseCollection):
             sql += f' WHERE {where}'
         cur = self.session.execute(sql)
         return cur.rowcount
- 

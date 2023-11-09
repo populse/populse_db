@@ -26,7 +26,7 @@ NAME = 'populse-db'
 DESCRIPTION = 'populse-db'
 LONG_DESCRIPTION = '''
 ==========
-populse_db 
+populse_db
 ==========
 
 The meta-data storage and query system for Populse.

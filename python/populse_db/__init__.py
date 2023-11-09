@@ -9,8 +9,8 @@ class Database:
 
     Creating a :any:`Database` doesn't connect to the database engine. It just
     parses the URL (ensuring that it corresponds to a valid engine) and stores
-    it. The :any:`Database` is a Python context manager that must be using a 
-    ``with`` statement that connects to the database and creates a database 
+    it. The :any:`Database` is a Python context manager that must be using a
+    ``with`` statement that connects to the database and creates a database
     specific object that implements the API of :any:`DatabaseSession`.
 
     Example::
@@ -48,13 +48,13 @@ class Database:
         db = Database('sqlite:///tmp/populse_db.sqlite')
         with db as dbs:
             dbs.add_collection('my collection')
-        
+
         with db as dbs:
             dbs['my collection']['my document'] = {}
 
     :any:`Database` is a reentrant context manager. It is possible to use a
-    ``with`` statement within another ``with`` that already use the same 
-    :any:`Database`. In that case, the same context is returned and the 
+    ``with`` statement within another ``with`` that already use the same
+    :any:`Database`. In that case, the same context is returned and the
     transaction is not ended in any of the inner context, it is terminated
     when the outer context exits::
 
@@ -68,8 +68,8 @@ class Database:
                 # here: dbs1 is dbs2 == True
                 # No new connection to the database is done
                 dbs['my collection']['my document'] = {}
-            # After the inner with, connection to the database is not 
-            # closed and transaction is ongoing (no commit nor rollback 
+            # After the inner with, connection to the database is not
+            # closed and transaction is ongoing (no commit nor rollback
             # is done)
         # After the end of the outer with, transaction is terminated and
         # connection to the database is closed.
@@ -87,7 +87,7 @@ class Database:
         """Creates a :any:`Database` instance.
 
         :param database_url: URL defining database engine and its parameters. The
-            engine URL must have the following pattern: 
+            engine URL must have the following pattern:
             dialect://user:password@host/dbname[?key=value..].
             To date dialect can only be ``sqlite`` but ``postgresql`` is planned.
 
@@ -113,8 +113,8 @@ class Database:
     def session(self,exclusive=False):
         args, kwargs = self.session_parameters
         return self.session_class(
-            *args, 
-            exclusive=exclusive, 
+            *args,
+            exclusive=exclusive,
             timeout=self.timeout,
             **kwargs)
 
@@ -129,7 +129,7 @@ class Database:
         depth += 1
         self.thread_local.populse_db = (session, depth)
         return session
-    
+
 
     def end_session(self, rollback):
         session, depth = self.thread_local.populse_db
@@ -145,10 +145,10 @@ class Database:
         """
         Return a DatabaseSession instance for using the database. This is
         supposed to be called using a "with" statement:
-        
+
         with database as session:
            session.add_document(...)
-           
+
         Therefore __exit__ must be called to get rid of the session.
         When called recursively, the underlying database session returned
         is the same. The commit/rollback of the session is done only by the
@@ -156,7 +156,7 @@ class Database:
         statement).
         """
         return self.begin_session(exclusive=False)
-    
+
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.end_session(rollback=(exc_type is not None))
@@ -172,7 +172,7 @@ class Database:
         except Exception:
             self.end_session(rollback=True)
             raise
-        
+
 
 # Import here to allow the following import in external
 # modules:
