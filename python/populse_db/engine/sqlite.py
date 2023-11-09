@@ -1,3 +1,6 @@
+from datetime import time, date, datetime
+import dateutil
+import inspect
 import json
 import sqlite3
 from datetime import date, datetime, time
@@ -451,6 +454,10 @@ class SQLiteCollection(DatabaseCollection):
     def parse_filter(self, filter):
         if filter is None or isinstance(filter, ParsedFilter):
             return filter
+        if inspect.isfunction(filter):
+            result = ParsedFilter(lambda_to_sql(self, filter))
+            print('!2!', result)
+            return result
         tree = filter_parser().parse(filter)
         where_filter = FilterToSQL(self).transform(tree)
         if where_filter is None:
