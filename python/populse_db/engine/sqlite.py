@@ -456,7 +456,6 @@ class SQLiteCollection(DatabaseCollection):
             return filter
         if inspect.isfunction(filter):
             result = ParsedFilter(lambda_to_sql(self, filter))
-            print('!2!', result)
             return result
         tree = filter_parser().parse(filter)
         where_filter = FilterToSQL(self).transform(tree)
