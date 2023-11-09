@@ -316,4 +316,3 @@ class Engine:
         :param as_list: if True, return a list of values instead of a Row Object (str)
         """
         raise NotImplementedError()
-

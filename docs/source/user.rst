@@ -128,4 +128,3 @@ As you can see in the field table, the three fields First name, Last name, and A
 As you can see in the collection profile table, the two profiles Jules CESAR and Louis XIV have been created.
 
 .. image:: ../pictures/test_db_profile.png
-
