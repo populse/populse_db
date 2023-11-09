@@ -42,7 +42,6 @@ AUTHOR_EMAIL = 'yann@cointepas.net'
 URL = 'http://populse.github.io/populse_db/'
 LICENSE = 'CeCILL-B'
 VERSION = __version__
-CLASSIFIERS = CLASSIFIERS
 PLATFORMS = 'OS Independent'
 REQUIRES = [
     'python-dateutil',

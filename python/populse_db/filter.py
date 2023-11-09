@@ -109,22 +109,29 @@ def literal_parser():
     return Lark(filter_grammar, parser='lalr', start='literal')
 
 
-type_to_sql = {
+def _list_to_sql(l):
+    s = ",".join(f'"{x}"' if isinstance(x, str) else to_sql(x) for x in l)
+    return f"'[{s}]'"
+
+
+_type_to_sql = {
     type(None): lambda x: 'NULL',
     str: lambda x: f"'{x}'",
-    int: lambda x: str(x),
-    float: lambda x: str(x),
+    int: str,
+    float: str,
     # datetime.time: lambda x: f"'{x.isoformat()}'",
     # datetime.datetime: lambda x: f"'{x.isoformat()}'",
     # datetime.date: lambda x: f"'{x.isoformat()}'",
     bool: lambda x: ('1' if x else '0'),
-    list: lambda x: f"'[{','.join((chr(34)+f'{i}'+chr(34) if isinstance(i,str) else to_sql(i)) for i in x)}]'"
+    list: _list_to_sql,
 }
 
-def to_sql(value):
-    global type_to_sql
 
-    return type_to_sql[type(value)](value)
+def to_sql(value):
+    global _type_to_sql
+
+    return _type_to_sql[type(value)](value)
+
 
 class Field(str):
     pass
