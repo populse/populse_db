@@ -72,7 +72,7 @@ def create_test_case(**database_creation_parameters):
                 shutil.rmtree(self.temp_folder)
                 del self.database_creation_parameters['database_url']
             self.temp_folder = None
-            
+
         def create_database(self, clear=True):
             """
             Opens the database
@@ -86,7 +86,7 @@ def create_test_case(**database_creation_parameters):
                     raise unittest.SkipTest(str(e))
                 raise
             except ImportError as e:
-                if ('psycopg2' in str(e) and 
+                if ('psycopg2' in str(e) and
                     self.database_creation_parameters['database_url'].startswith('postgresql')):
                     raise unittest.SkipTest(str(e))
                 raise
@@ -652,7 +652,7 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing that a document is returned if it exists
                 self.assertIsNotNone(session.get_document("collection1", "document1"))
-                
+
                 # Testing that None is returned if the document does not exist
                 self.assertIsNone(session.get_document("collection1", "document3"))
 
@@ -797,7 +797,7 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-                
+
                 # Adding a first collection
                 self.assertFalse(session.has_collection("collection1"))
                 session.add_collection("collection1")
@@ -1093,14 +1093,14 @@ def create_test_case(**database_creation_parameters):
 
                 # Adding fields
                 session.add_field("collection1", "json", dict)
-                
+
                 session.add_document("collection1", doc)
                 self.assertEqual(doc, session.get_document("collection1", "the_name"))
                 self.assertIsNone(session.get_document("collection1", "not_a_valid_name"))
             with database as session:
                 self.assertEqual(doc, session.get_document("collection1", "the_name"))
                 self.assertIsNone(session.get_document("collection1", "not_a_valid_name"))
-                
+
         def test_filter_documents(self):
             """
             Tests the method applying the filter
@@ -1726,7 +1726,7 @@ def create_test_case(**database_creation_parameters):
         def test_filter_literals(self):
             """
             Test the Python values returned (internally) for literals by the
-            interpreter of filter expression 
+            interpreter of filter expression
             """
 
             literals = {
@@ -1806,7 +1806,7 @@ def create_test_case(**database_creation_parameters):
             # Check that previous session was committed and released.
             with database as session4:
                 self.assertIsNot(session, session4)
-        
+
             # Destroy the database and create a new one
             database = self.create_database(clear=False)
 
@@ -1815,7 +1815,7 @@ def create_test_case(**database_creation_parameters):
             with database as session5:
                 self.assertIsNot(session, session5)
                 self.assertEqual(len(list(session5.get_documents('collection1'))), 2)
-        
+
         def test_automatic_fields_creation(self):
             """
             Test automatic creation of fields with add_document
@@ -1899,8 +1899,8 @@ def create_test_case(**database_creation_parameters):
                      {'content': 0, 'one': 7, 'two': 0},
                      {'content': 0, 'one': 8, 'two': 0},
                      {'content': 0, 'one': 9, 'two': 0}])
- 
-    
+
+
     return TestDatabaseMethods
 
 def load_tests(loader, standard_tests, pattern):

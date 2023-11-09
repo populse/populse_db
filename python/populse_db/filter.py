@@ -15,7 +15,7 @@ filter_grammar = '''
 
 ?conditions : condition (BOOLEAN_OPERATOR filter)*
 
-                   
+
 negation : "NOT"i condition
          | "NOT"i "(" filter ")"
 
@@ -44,7 +44,7 @@ field_name.1 : FIELD_NAME
 quoted_field_name.1 : QUOTED_FIELD_NAME
 
 
-         
+
 ?literal.2 : KEYWORD_LITERAL -> keyword_literal
            | DATE            -> date
            | DATETIME        -> datetime
@@ -61,7 +61,7 @@ DATETIME.2 : DATE "T" TIME
 KEYWORD_LITERAL : "NuLL"i
                 | "TRUE"i
                 | "FaLSE"i
-                  
+
 FIELD_NAME : ("_"|LETTER) ("_"|LETTER|DIGIT)*
 QUOTED_FIELD_NAME : "{" /[^}]/* "}"
 
@@ -142,9 +142,9 @@ class FilterToSQL(Transformer):
     selection filter string in order to create an object that can be used to
     select items from the database. FilterToSQL implements methods that are
     common to all engines and does not produce anything because the query
-    objectis specific to each engine. Therefore, engine class must use a 
+    objectis specific to each engine. Therefore, engine class must use a
     subclass of FilterToSQL that implements the following methods:
-    
+
         build_condition_all
         build_condition_literal_in_list_field
         build_condition_field_in_list_field
@@ -166,7 +166,7 @@ class FilterToSQL(Transformer):
         '!=': 'IS NOT',
         'ilike': 'LIKE',
     }
-    
+
 
     no_list_operators = {'>', '<', '>=', '<=', 'like', 'ilike'}
 
@@ -301,9 +301,9 @@ class FilterToSQL(Transformer):
     def build_condition_literal_in_list_field(self, value, list_field):
         '''
         Builds a condition checking if a constant value is in a list field
-        
+
         :param value: Python literal
-        
+
         :param list_field: field object as returned by Database.get_field
 
         '''
@@ -314,7 +314,7 @@ class FilterToSQL(Transformer):
         '''
         Builds a condition checking if a field value is in another
         list field value
-        
+
         :param field: field object as returned by Database.get_field
         :param list_field: field object as returned by Database.get_field
         '''
@@ -341,7 +341,7 @@ class FilterToSQL(Transformer):
         else:
             where.append(f'IN ({",".join(to_sql(i) for i in list_value)})')
         return where
-    
+
 
     def build_condition_field_op_field(self, left_field, operator_str, right_field):
         '''
@@ -357,7 +357,7 @@ class FilterToSQL(Transformer):
             return [f'UPPER({left_field}) {sql_operator} UPPER({right_field})']
         else:
             return [f'{left_field} {sql_operator} {right_field}']
-    
+
 
     def build_condition_field_op_value(self, field, operator_str, value):
         '''
@@ -380,7 +380,7 @@ class FilterToSQL(Transformer):
             field = f'{field}'
         sql_operator = self.sql_operators.get(operator_str, operator_str)
         return [f'{field} {sql_operator} {to_sql(value)}']
-    
+
 
     def build_condition_value_op_field(self, value, operator_str, field):
         '''
@@ -407,25 +407,25 @@ class FilterToSQL(Transformer):
         '''
         Builds a condition inverting another condition.
 
-        :param condition: condition object returned by one of the 
-                          build_condition_*() method (except 
+        :param condition: condition object returned by one of the
+                          build_condition_*() method (except
                           build_condition_all)
         '''
         if condition is None:
             return ['0']
         return ['NOT', '(' ] + condition + [')']
-    
+
     def build_condition_combine_conditions(self, left_condition, operator_str, right_condition):
         '''
         Builds a condition that combines two conditions with an operator.
 
-        :param left_condition: condition object returned by one of the 
-                               build_condition_*() method (except 
+        :param left_condition: condition object returned by one of the
+                               build_condition_*() method (except
                                build_condition_all)
         :param operator_str: string containing one of the BOOLEAN_OPERATOR
                              defined in the grammar (in lowercase)
-        :param right_condition: condition object returned by one of the 
-                                build_condition_*() method (except 
+        :param right_condition: condition object returned by one of the
+                                build_condition_*() method (except
                                 build_condition_all)
         '''
         return ['('] + left_condition + [')', operator_str, '('] + right_condition + [')']

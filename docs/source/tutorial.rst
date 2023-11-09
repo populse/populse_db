@@ -8,9 +8,9 @@ It is the good place to start learnig populse_db.
 
 Installation
 ============
-Populse_db can be installed, using `the standard Python package manager 
+Populse_db can be installed, using `the standard Python package manager
 <https://pip.pypa.io/>`_, either from source code of from release hosted
-on `Python Package Index <https://pypi.org/>`_. 
+on `Python Package Index <https://pypi.org/>`_.
 
 Install globally
 ----------------
@@ -26,28 +26,28 @@ Install in virtual environment
 ------------------------------
 
 If you have the right Python version and want to install populse_db
-in its own isolated directory, you can use a `virtual environment 
+in its own isolated directory, you can use a `virtual environment
 <https://docs.python.org/3/tutorial/venv.html>`_::
 
     python -m venv $HOME/populse_db_venv
     $HOME/populse_db_venv/bin/pip install populse_db
 
 You will then be be able to run the tutorial codes with the following command::
-    
+
     $HOME/populse_db/bin/python -m populse_db.tutorial_01.py
 
 Install using another Python
 ----------------------------
 
-If your system does not have the appropriate Python version, you can use a 
-container technology and a `virtual environment 
+If your system does not have the appropriate Python version, you can use a
+container technology and a `virtual environment
 <https://docs.python.org/3/tutorial/venv.html>`_ to have an install entirely
 independent of your system. For this, we recommend to use Singularity. Once
 Singularity is installed on your system you can install the environment and
 populse_db with the following commands::
 
     # get latest Python
-    singularity pull --disable-cache $HOME/python.sif docker://python 
+    singularity pull --disable-cache $HOME/python.sif docker://python
 
     # Create virtualenv
     $HOME/python.sif python -m venv $HOME/populse_db_venv
@@ -56,7 +56,7 @@ populse_db with the following commands::
     $HOME/python.sif $HOME/populse_db_venv/bin/pip install populse_db
 
 You will then be be able to run the tutorial codes with the following command::
-    
+
     $HOME/python.sif $HOME/populse_db_venv/bin/python -m populse_db.tutorial_01.py
 
 Install options
