@@ -106,7 +106,7 @@ class Database:
         if self.url.scheme in ('', 'sqlite'):
             self.session_class = SQLiteSession
         else:
-            raise ValueError(f'Invalid datbase type in database URL: {database_url}')
+            raise ValueError(f'Invalid database type in database URL: {database_url}')
         self.session_parameters = self.session_class.parse_url(self.url)
 
 
@@ -174,7 +174,7 @@ class Database:
             raise
         
 
-# Import here to allow the followint import in external
+# Import here to allow the following import in external
 # modules:
 #   from populse_db import json_encode, json_decode
 from .database import json_encode, json_decode

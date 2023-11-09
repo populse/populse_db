@@ -591,7 +591,7 @@ def create_test_case(**database_creation_parameters):
 
                 doc = {
                     "primary_key": "doc",
-                    "status": "submited",
+                    "status": "submitted",
                     "executable": {"definition": "custom"},
                     "execution_context": {"tmp": "/tmp"}
                 }
@@ -616,7 +616,7 @@ def create_test_case(**database_creation_parameters):
 
                 doc = {
                     "primary_key": "doc",
-                    "status": "submited",
+                    "status": "submitted",
                     "executable": {"definition": "custom"},
                     "execution_context": {"tmp": "/tmp"}
                 }
@@ -1725,8 +1725,8 @@ def create_test_case(**database_creation_parameters):
 
         def test_filter_literals(self):
             """
-            Test the Python values returned (internaly) for literals by the
-            interpretor of filter expression 
+            Test the Python values returned (internally) for literals by the
+            interpreter of filter expression 
             """
 
             literals = {
@@ -1788,7 +1788,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
                 session.add_document("collection1", {"name": "titi"})
 
-            # Reopen the database to check that "titi" was commited
+            # Reopen the database to check that "titi" was committed
             database = self.create_database(clear=False)
             with database as session:
                 self.assertTrue(session.has_collection("collection1"))
@@ -1803,7 +1803,7 @@ def create_test_case(**database_creation_parameters):
                         self.assertIs(session, session3)
                         session.add_document("collection1", {"name": "toto"})
 
-            # Check that previous session was commited and released.
+            # Check that previous session was committed and released.
             with database as session4:
                 self.assertIsNot(session, session4)
         
@@ -1920,7 +1920,7 @@ def load_tests(loader, standard_tests, pattern):
     tests = loader.loadTestsFromTestCase(create_test_case())
     suite.addTests(tests)
 
-    # Tests with postgresql. All the tests will be skiped if
+    # Tests with postgresql. All the tests will be skipped if
     # it is not possible to connect to populse_db_tests database.
     #tests = loader.loadTestsFromTestCase(create_test_case(
         #database_url='postgresql:///populse_db_tests',

@@ -21,10 +21,10 @@ class Engine:
 
     def __enter__(self):
         """
-        This method is called at the begining of a database modification
+        This method is called at the beginning of a database modification
         session before any other method (normally within a "with" statement).
         Typically, it creates a connection with the database system, starts a
-        session then checks the existance of the base schema and creates it if 
+        session then checks the existence of the base schema and creates it if 
         necessary.
         """
         raise NotImplementedError()
@@ -33,7 +33,7 @@ class Engine:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
         This method is called when the user do not need to use the engine
-        anymore. After this call, all database ressources are freed and a
+        anymore. After this call, all database resources are freed and a
         call to __enter__ is necessary to be able to reuse the engine.
         Parameters are the exception information as for a "with" statement.
         It must call commit() if exc_type is None or else rollback(). 
@@ -235,7 +235,7 @@ class Engine:
         :param fields: list of fields to get values from (other fields are
             ignored) (list of str or None)
 
-        :param as_list: if True, return a list of values insted of a Row Object (str)
+        :param as_list: if True, return a list of values instead of a Row Object (str)
         """
         raise NotImplementedError()
 
@@ -313,7 +313,7 @@ class Engine:
         :param fields: list of fields to get values from (other fields are
             ignored) (list of str or None)
 
-        :param as_list: if True, return a list of values insted of a Row Object (str)
+        :param as_list: if True, return a list of values instead of a Row Object (str)
         """
         raise NotImplementedError()
 
