@@ -2,6 +2,7 @@ from datetime import date, time, datetime
 import dateutil
 import json
 
+
 def check_value_type(value, field_type):
     """
     Checks the type of a value
@@ -18,7 +19,7 @@ def check_value_type(value, field_type):
         return False
     if value is None:
         return True
-    origin = getattr(field_type, '__origin__', None)
+    origin = getattr(field_type, "__origin__", None)
     if origin:
         # field_type is a parameterized type such as list[str]
         # origin is the parent type (e.g. list)
@@ -37,6 +38,7 @@ def check_value_type(value, field_type):
         return isinstance(value, field_type)
     return False
 
+
 def type_to_str(type):
     """Convert a Python type to a string.
 
@@ -45,15 +47,18 @@ def type_to_str(type):
         - ``type_to_str(str) == 'str'``
         - ``type_to_str(list[str]) == 'list[str]'``
     """
-    args = getattr(type, '__args__', None)
+    args = getattr(type, "__args__", None)
     if args:
         return f'{type.__name__}[{",".join(type_to_str(i) for i in args)}]'
     else:
         return type.__name__
 
-_str_to_type = dict((type_to_str(i), i) for i in (
-    str, int, float, bool, date, datetime, time, dict, list
-))
+
+_str_to_type = dict(
+    (type_to_str(i), i)
+    for i in (str, int, float, bool, date, datetime, time, dict, list)
+)
+
 
 def str_to_type(str):
     """Convert a string to a Python type.
@@ -67,12 +72,13 @@ def str_to_type(str):
 
     if not str:
         return None
-    s = str.split('[',1)
+    s = str.split("[", 1)
     if len(s) == 1:
         return _str_to_type[s[0]]
     else:
         args = tuple(str_to_type(i) for i in s[1][:-1].split(","))
         return _str_to_type[s[0]][args]
+
 
 def python_value_type(value):
     """
@@ -140,15 +146,16 @@ class DatabaseSession:
 
     .. automethod:: __getitem__
     """
-    populse_db_table = 'populse_db'
-    default_primary_key = 'primary_key'
+
+    populse_db_table = "populse_db"
+    default_primary_key = "primary_key"
 
     def execute(self, *args, **kwargs):
         raise NotImplementedError()
 
     def commit(self):
         raise NotImplementedError()
-    
+
     def rollback(self):
         raise NotImplementedError()
 
@@ -189,8 +196,7 @@ class DatabaseSession:
         raise NotImplementedError()
 
     def __getitem__(self, collection_name):
-        """Return a collection object given its name.
-        """
+        """Return a collection object given its name."""
         raise NotImplementedError()
 
     def collections(self):
@@ -226,15 +232,15 @@ class DatabaseSession:
         """
         return (i.name for i in self)
 
-    def add_field(self, collection, name, field_type, description=None,
-                  index=False):
+    def add_field(self, collection, name, field_type, description=None, index=False):
         """
         .. deprecated:: 3.0
             Use ``db_session[collection].add_field(...)`` instead.
             See :py:meth:`DatabaseCollection.add_field`.
         """
-        self[collection].add_field(name, field_type, description=description,
-                                   index=index)
+        self[collection].add_field(
+            name, field_type, description=description, index=index
+        )
 
     def remove_field(self, collection, field):
         """
@@ -293,8 +299,7 @@ class DatabaseSession:
         """
         return self[collection].has_document(document_id)
 
-    def get_document(self, collection, document_id, fields=None,
-                     as_list=False):
+    def get_document(self, collection, document_id, fields=None, as_list=False):
         """
         .. deprecated:: 3.0
             Use ``db_session[collection].document(...)`` instead.
@@ -318,8 +323,7 @@ class DatabaseSession:
             return
         yield from c.documents_ids()
 
-    def get_documents(self, collection, fields=None, as_list=False,
-                      document_ids=None):
+    def get_documents(self, collection, fields=None, as_list=False, document_ids=None):
         """
         .. deprecated:: 3.0
             Use ``db_session[collection].documents_ids(...)`` instead.
@@ -345,7 +349,6 @@ class DatabaseSession:
         """
         del self[collection][document_id]
 
-
     def add_document(self, collection, document):
         """
         .. deprecated:: 3.0
@@ -353,7 +356,6 @@ class DatabaseSession:
             See :py:meth:`DatabaseCollection.add`.
         """
         self[collection].add(document)
-
 
     def filter_documents(self, collection, filter_query, fields=None, as_list=False):
         """
@@ -368,22 +370,24 @@ class DatabaseCollection:
     def __init__(self, session, name):
         self.session = session
         self.name = name
-        self.catchall_column = self.settings().get('catchall_column', '_catchall')
+        self.catchall_column = self.settings().get("catchall_column", "_catchall")
         self.primary_key = {}
         self.bad_json_fields = set()
         self.fields = {}
 
     def settings(self):
-        return self.session.settings('collection', self.name, {})
+        return self.session.settings("collection", self.name, {})
 
     def set_settings(self, settings):
-        self.session.set_settings('collection', self.name, settings)
+        self.session.set_settings("collection", self.name, settings)
 
     def document_id(self, document_id):
         if not isinstance(document_id, (tuple, list)):
             document_id = (document_id,)
         if len(document_id) != len(self.primary_key):
-            raise KeyError(f'key for table {self.name} requires {len(self.primary_key)} value(s), {len(document_id)} given')
+            raise KeyError(
+                f"key for table {self.name} requires {len(self.primary_key)} value(s), {len(document_id)} given"
+            )
         return document_id
 
     def update_settings(self, **kwargs):
@@ -391,8 +395,9 @@ class DatabaseCollection:
         settings.update(kwargs)
         self.set_settings(settings)
 
-    def add_field(self, name, field_type, description=None,
-                  index=False, bad_json=False):
+    def add_field(
+        self, name, field_type, description=None, index=False, bad_json=False
+    ):
         """
         Adds a field to the database
 
@@ -442,7 +447,9 @@ class DatabaseCollection:
         raise NotImplementedError()
 
     def documents_ids(self):
-        yield from (i for i in self.documents(fields=tuple(self.primary_key), as_list=True))
+        yield from (
+            i for i in self.documents(fields=tuple(self.primary_key), as_list=True)
+        )
 
     def __iter__(self):
         return self.documents()
@@ -454,7 +461,7 @@ class DatabaseCollection:
         raise NotImplementedError()
 
     def _encode_column_value(self, field, value):
-        encoding  = self.fields.get(field,{}).get('encoding')
+        encoding = self.fields.get(field, {}).get("encoding")
         if encoding:
             encode, decode = encoding
             try:
@@ -466,7 +473,9 @@ class DatabaseCollection:
                 column_value = encode(json_encode(value))
                 self.bad_json_fields.add(field)
                 settings = self.settings()
-                settings.setdefault('fields', {}).setdefault(field,{})['bad_json'] = True
+                settings.setdefault("fields", {}).setdefault(field, {})[
+                    "bad_json"
+                ] = True
                 self.set_settings(settings)
             return column_value
         return value
@@ -512,22 +521,25 @@ class DatabaseCollection:
         """
         raise NotImplementedError()
 
+
 def json_dumps(value):
-    return json.dumps(value, separators=(',', ':'))
+    return json.dumps(value, separators=(",", ":"))
+
 
 _json_encodings = {
-    datetime: lambda d: f'{d.isoformat()}ℹdatetimeℹ',
-    date: lambda d: f'{d.isoformat()}ℹdateℹ',
-    time: lambda d: f'{d.isoformat()}ℹtimeℹ',
+    datetime: lambda d: f"{d.isoformat()}ℹdatetimeℹ",
+    date: lambda d: f"{d.isoformat()}ℹdateℹ",
+    time: lambda d: f"{d.isoformat()}ℹtimeℹ",
     list: lambda l: [json_encode(i) for i in l],
     dict: lambda d: dict((k, json_encode(v)) for k, v in d.items()),
 }
 
 _json_decodings = {
-    'datetime': lambda s: dateutil.parser.parse(s),
-    'date': lambda s: dateutil.parser.parse(s).date(),
-    'time': lambda s: dateutil.parser.parse(s).time(),
+    "datetime": lambda s: dateutil.parser.parse(s),
+    "date": lambda s: dateutil.parser.parse(s).date(),
+    "time": lambda s: dateutil.parser.parse(s).time(),
 }
+
 
 def json_encode(value):
     global _json_encodings
@@ -538,6 +550,7 @@ def json_encode(value):
         return encode(value)
     return value
 
+
 def json_decode(value):
     global _json_decodings
 
@@ -546,8 +559,8 @@ def json_decode(value):
     elif isinstance(value, dict):
         return dict((k, json_decode(v)) for k, v in value.items())
     elif isinstance(value, str):
-        if value.endswith('ℹ'):
-            l = value[:-1].rsplit('ℹ', 1)
+        if value.endswith("ℹ"):
+            l = value[:-1].rsplit("ℹ", 1)
             if len(l) == 2:
                 encoded_value, decoding_name = l
                 decode = _json_decodings.get(decoding_name)
@@ -555,6 +568,7 @@ def json_decode(value):
                     raise ValueError(f'Invalid JSON encoding type for value "{value}"')
                 return decode(encoded_value)
     return value
+
 
 # Obsolete constants kept for backward compatibility with API v2
 
@@ -575,7 +589,21 @@ FIELD_TYPE_LIST_DATETIME = list[datetime]
 FIELD_TYPE_LIST_TIME = list[time]
 FIELD_TYPE_LIST_JSON = list[dict]
 
-ALL_TYPES = {FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN,
-             FIELD_TYPE_LIST_DATE, FIELD_TYPE_LIST_DATETIME,
-             FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON, FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT,
-             FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON}
+ALL_TYPES = {
+    FIELD_TYPE_LIST_STRING,
+    FIELD_TYPE_LIST_INTEGER,
+    FIELD_TYPE_LIST_FLOAT,
+    FIELD_TYPE_LIST_BOOLEAN,
+    FIELD_TYPE_LIST_DATE,
+    FIELD_TYPE_LIST_DATETIME,
+    FIELD_TYPE_LIST_TIME,
+    FIELD_TYPE_LIST_JSON,
+    FIELD_TYPE_STRING,
+    FIELD_TYPE_INTEGER,
+    FIELD_TYPE_FLOAT,
+    FIELD_TYPE_BOOLEAN,
+    FIELD_TYPE_DATE,
+    FIELD_TYPE_DATETIME,
+    FIELD_TYPE_TIME,
+    FIELD_TYPE_JSON,
+}

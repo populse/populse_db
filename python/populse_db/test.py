@@ -13,33 +13,34 @@ from populse_db.engine.sqlite import SQLiteSession
 class TestsSQLiteInMemory(unittest.TestCase):
     def test_add_get_document(self):
         now = datetime.now()
-        db = Database('sqlite://:memory:')
+        db = Database("sqlite://:memory:")
         with db as dbs:
-            dbs.add_collection('test', 'index')
+            dbs.add_collection("test", "index")
             base_doc = {
-                'string': 'string',
-                'int': 1,
-                'float': 1.4,
-                'boolean': True,
-                'datetime': now,
-                'date': now.date(),
-                'time': now.time(),
-                'dict': {
-                    'string': 'string',
-                    'int': 1,
-                    'float': 1.4,
-                    'boolean': True,
-                }
+                "string": "string",
+                "int": 1,
+                "float": 1.4,
+                "boolean": True,
+                "datetime": now,
+                "date": now.date(),
+                "time": now.time(),
+                "dict": {
+                    "string": "string",
+                    "int": 1,
+                    "float": 1.4,
+                    "boolean": True,
+                },
             }
             doc = base_doc.copy()
             for k, v in base_doc.items():
-                lk = 'list_%s' % k
+                lk = "list_%s" % k
                 doc[lk] = [v]
-            doc['index'] = 'test'
-            dbs.add_document('test', doc)
-            stored_doc = dbs.get_document('test', 'test')
+            doc["index"] = "test"
+            dbs.add_document("test", doc)
+            stored_doc = dbs.get_document("test", "test")
             self.maxDiff = None
             self.assertEqual(doc, stored_doc)
+
 
 def create_test_case(**database_creation_parameters):
     class TestDatabaseMethods(unittest.TestCase):
@@ -53,13 +54,13 @@ def create_test_case(**database_creation_parameters):
             Creates a temporary folder containing the database file that will be used for the test
             """
             self.database_creation_parameters = dict(database_creation_parameters)
-            if 'database_url' not in self.database_creation_parameters:
-                self.temp_folder = tempfile.mkdtemp(prefix='populse_db')
+            if "database_url" not in self.database_creation_parameters:
+                self.temp_folder = tempfile.mkdtemp(prefix="populse_db")
                 path = os.path.join(self.temp_folder, "test.db")
-                self.database_creation_parameters['database_url'] = 'sqlite://' + path
+                self.database_creation_parameters["database_url"] = "sqlite://" + path
             else:
                 self.temp_folder = None
-            self.database_url = self.database_creation_parameters['database_url']
+            self.database_url = self.database_creation_parameters["database_url"]
 
         def tearDown(self):
             """
@@ -68,7 +69,7 @@ def create_test_case(**database_creation_parameters):
             """
             if self.temp_folder:
                 shutil.rmtree(self.temp_folder)
-                del self.database_creation_parameters['database_url']
+                del self.database_creation_parameters["database_url"]
             self.temp_folder = None
 
         def create_database(self, clear=True):
@@ -80,12 +81,15 @@ def create_test_case(**database_creation_parameters):
             try:
                 db = Database(**self.database_creation_parameters)
             except Exception as e:
-                if self.database_creation_parameters['database_url'].startswith('postgresql'):
+                if self.database_creation_parameters["database_url"].startswith(
+                    "postgresql"
+                ):
                     raise unittest.SkipTest(str(e))
                 raise
             except ImportError as e:
-                if ('psycopg2' in str(e) and
-                    self.database_creation_parameters['database_url'].startswith('postgresql')):
+                if "psycopg2" in str(e) and self.database_creation_parameters[
+                    "database_url"
+                ].startswith("postgresql"):
                     raise unittest.SkipTest(str(e))
                 raise
             if clear:
@@ -98,7 +102,9 @@ def create_test_case(**database_creation_parameters):
             Tests the parameters of the Database class constructor
             """
             # Testing with wrong engine
-            self.assertRaises(ValueError, lambda : Database("engine://something").__enter__())
+            self.assertRaises(
+                ValueError, lambda: Database("engine://something").__enter__()
+            )
 
         def test_add_field(self):
             """
@@ -111,52 +117,75 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Testing with a first field
-                session.add_field("collection1", "PatientName", str,
-                                  description="Name of the patient")
+                session.add_field(
+                    "collection1", "PatientName", str, description="Name of the patient"
+                )
 
                 # Checking the field properties
                 field = session.get_field("collection1", "PatientName")
                 self.assertEqual(field["name"], "PatientName")
-                self.assertEqual(field["type"],str)
+                self.assertEqual(field["type"], str)
                 self.assertEqual(field["description"], "Name of the patient")
                 self.assertEqual(field["collection"], "collection1")
 
                 # Testing with a field that already exists
-                self.assertRaises(Exception, lambda : session.add_field("collection1", "PatientName", str,
-                                      "Name of the patient"))
+                self.assertRaises(
+                    Exception,
+                    lambda: session.add_field(
+                        "collection1", "PatientName", str, "Name of the patient"
+                    ),
+                )
 
                 # Testing with several field types
                 session.add_field("collection1", "BandWidth", float, None)
                 session.add_field("collection1", "AcquisitionTime", time, None)
                 session.add_field("collection1", "AcquisitionDate", datetime, None)
-                session.add_field("collection1", "Dataset dimensions", list[int],
-                                  None)
+                session.add_field("collection1", "Dataset dimensions", list[int], None)
                 session.add_field("collection1", "Boolean", bool, None)
                 session.add_field("collection1", "Boolean list", list[bool], None)
 
                 # Testing with close field names
                 session.add_field("collection1", "Bits per voxel", int, "with space")
-                session.add_field("collection1", "Bitspervoxel", int,
-                                  "without space")
+                session.add_field("collection1", "Bitspervoxel", int, "without space")
                 with self.assertRaises(Exception):
-                    session.add_field("collection1", "bitspervoxel", int,
-                                    "lower case")
-                self.assertEqual(session.get_field(
-                    "collection1", "Bitspervoxel")["description"], "without space")
-                self.assertEqual(session.get_field(
-                    "collection1", "Bits per voxel")["description"], "with space")
+                    session.add_field("collection1", "bitspervoxel", int, "lower case")
+                self.assertEqual(
+                    session.get_field("collection1", "Bitspervoxel")["description"],
+                    "without space",
+                )
+                self.assertEqual(
+                    session.get_field("collection1", "Bits per voxel")["description"],
+                    "with space",
+                )
                 with self.assertRaises(Exception):
-                    self.assertEqual(session.get_field(
-                        "collection1", "bitspervoxel")["description"], "lower case")
+                    self.assertEqual(
+                        session.get_field("collection1", "bitspervoxel")["description"],
+                        "lower case",
+                    )
 
                 # Testing with wrong parameters
-                self.assertRaises(ValueError, lambda : session.add_field("collection_not_existing", "Field", list[int],
-                                      None))
-                self.assertRaises(ValueError, lambda : session.add_field(True, "Field", list[int], None))
-                self.assertRaises(Exception, lambda : session.add_field("collection1", "Patient Name", None, None))
+                self.assertRaises(
+                    ValueError,
+                    lambda: session.add_field(
+                        "collection_not_existing", "Field", list[int], None
+                    ),
+                )
+                self.assertRaises(
+                    ValueError,
+                    lambda: session.add_field(True, "Field", list[int], None),
+                )
+                self.assertRaises(
+                    Exception,
+                    lambda: session.add_field(
+                        "collection1", "Patient Name", None, None
+                    ),
+                )
 
                 # Testing that the document primary key field is taken
-                self.assertRaises(Exception, lambda : session.add_field("collection1", "name", str, None))
+                self.assertRaises(
+                    Exception,
+                    lambda: session.add_field("collection1", "name", str, None),
+                )
 
                 with self.assertRaises(Exception):
                     session.remove_field("collection", "name")
@@ -181,7 +210,6 @@ def create_test_case(**database_creation_parameters):
                 self.assertTrue("First name" in collection_fields)
                 self.assertTrue("Last name" in collection_fields)
 
-
         def test_remove_field(self):
             """
             Tests the method removing a field
@@ -194,8 +222,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("current", "name")
 
                 # Adding fields
-                session.add_field("current", "PatientName", str,
-                                  "Name of the patient")
+                session.add_field("current", "PatientName", str, "Name of the patient")
                 session.add_field("current", "SequenceName", str, None)
                 session.add_field("current", "Dataset dimensions", list[int], None)
 
@@ -207,7 +234,7 @@ def create_test_case(**database_creation_parameters):
                     "name": "document2",
                     "PatientName": "Guerbet",
                     "SequenceName": "RARE",
-                    "Dataset dimensions": [1, 2]
+                    "Dataset dimensions": [1, 2],
                 }
                 document["name"] = "document2"
                 session.add_document("current", document)
@@ -222,22 +249,30 @@ def create_test_case(**database_creation_parameters):
 
                     # Testing that the field does not exist anymore
                     self.assertIsNone(session.get_field("current", "PatientName"))
-                    self.assertIsNone(session.get_field("current", "Dataset dimensions"))
+                    self.assertIsNone(
+                        session.get_field("current", "Dataset dimensions")
+                    )
 
                     # Testing that the field values are removed
-                    self.assertIsNone(session.get_value("current", "document1", "PatientName"))
-                    self.assertEqual(session.get_value(
-                        "current", "document1", "SequenceName"), "RARE")
-                    self.assertIsNone(session.get_value(
-                        "current", "document1", "Dataset dimensions"))
+                    self.assertIsNone(
+                        session.get_value("current", "document1", "PatientName")
+                    )
+                    self.assertEqual(
+                        session.get_value("current", "document1", "SequenceName"),
+                        "RARE",
+                    )
+                    self.assertIsNone(
+                        session.get_value("current", "document1", "Dataset dimensions")
+                    )
 
                     # Testing with list of fields
                     session.remove_field("current", ["SequenceName"])
                     self.assertIsNone(session.get_field("current", "SequenceName"))
 
                     # Adding fields again
-                    session.add_field("current", "PatientName", str,
-                                    "Name of the patient")
+                    session.add_field(
+                        "current", "PatientName", str, "Name of the patient"
+                    )
                     session.add_field("current", "SequenceName", str, None)
                     session.add_field("current", "Dataset dimensions", list[int], None)
 
@@ -247,15 +282,35 @@ def create_test_case(**database_creation_parameters):
                     self.assertIsNone(session.get_field("current", "PatientName"))
 
                     # Testing with a field not existing
-                    self.assertRaises(ValueError, lambda : session.remove_field("not_existing", "document1"))
-                    self.assertRaises(ValueError, lambda : session.remove_field(1, "NotExisting"))
-                    self.assertRaises(ValueError, lambda : session.remove_field("current", "NotExisting"))
-                    self.assertRaises(ValueError, lambda : session.remove_field("current", "Dataset dimension"))
-                    self.assertRaises(ValueError, lambda : session.remove_field("current", ["SequenceName", "PatientName", "Not_Existing"]))
+                    self.assertRaises(
+                        ValueError,
+                        lambda: session.remove_field("not_existing", "document1"),
+                    )
+                    self.assertRaises(
+                        ValueError, lambda: session.remove_field(1, "NotExisting")
+                    )
+                    self.assertRaises(
+                        ValueError,
+                        lambda: session.remove_field("current", "NotExisting"),
+                    )
+                    self.assertRaises(
+                        ValueError,
+                        lambda: session.remove_field("current", "Dataset dimension"),
+                    )
+                    self.assertRaises(
+                        ValueError,
+                        lambda: session.remove_field(
+                            "current", ["SequenceName", "PatientName", "Not_Existing"]
+                        ),
+                    )
 
                     # Testing with wrong parameters
-                    self.assertRaises(Exception, lambda : session.remove_field("current", 1))
-                    self.assertRaises(Exception, lambda : session.remove_field("current", None))
+                    self.assertRaises(
+                        Exception, lambda: session.remove_field("current", 1)
+                    )
+                    self.assertRaises(
+                        Exception, lambda: session.remove_field("current", None)
+                    )
 
                     # Removing list of fields with list type
                     session.add_field("current", "list1", list[int], None)
@@ -275,8 +330,9 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding a field
-                session.add_field("collection1", "PatientName", str,
-                                  "Name of the patient")
+                session.add_field(
+                    "collection1", "PatientName", str, "Name of the patient"
+                )
 
                 # Testing that the field is returned if it exists
                 self.assertIsNotNone(session.get_field("collection1", "PatientName"))
@@ -285,7 +341,9 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(session.get_field("collection1", "Test"))
 
                 # Testing that None is returned if the collection does not exist
-                self.assertIsNone(session.get_field("collection_not_existing", "PatientName"))
+                self.assertIsNone(
+                    session.get_field("collection_not_existing", "PatientName")
+                )
 
                 # Testing that None is returned if both collection and field do not exist
                 self.assertIsNone(session.get_field("collection_not_existing", "Test"))
@@ -301,14 +359,16 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding a field
-                session.add_field("collection1", "PatientName", str,
-                                  "Name of the patient")
+                session.add_field(
+                    "collection1", "PatientName", str, "Name of the patient"
+                )
 
                 fields = session.get_fields("collection1")
                 self.assertEqual(len(fields), 2)
 
-                session.add_field("collection1", "SequenceName", str,
-                                  "Name of the patient")
+                session.add_field(
+                    "collection1", "SequenceName", str, "Name of the patient"
+                )
 
                 fields = session.get_fields("collection1")
                 self.assertEqual(len(fields), 3)
@@ -320,8 +380,9 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(len(fields), 3)
 
                 # Testing with a collection not existing
-                self.assertEqual(list(session.get_fields("collection_not_existing")), [])
-
+                self.assertEqual(
+                    list(session.get_fields("collection_not_existing")), []
+                )
 
         def test_set_values(self):
             """
@@ -364,10 +425,7 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(document1["BandWidth"], 25000)
 
                 # Testing that the primary_key cannot be set
-                values = {
-                    "primary_key" :"document3",
-                    "BandWidth": 25000
-                }
+                values = {"primary_key": "document3", "BandWidth": 25000}
                 with self.assertRaises(ValueError):
                     session.set_values("collection1", "document1", values)
 
@@ -383,20 +441,28 @@ def create_test_case(**database_creation_parameters):
                 values["PatientName"] = 50
                 values["BandWidth"] = 25000
                 session.set_values("collection1", "document1", values)
-                self.assertRaises(Exception, lambda: session.set_values("collection1", "document1", True))
+                self.assertRaises(
+                    Exception,
+                    lambda: session.set_values("collection1", "document1", True),
+                )
 
                 # Trying with the collection not existing
                 values = {}
                 values["PatientName"] = "Guerbet"
                 values["BandWidth"] = 25000
-                self.assertRaises(ValueError, lambda : session.set_values("collection_not_existing", "document1", values))
+                self.assertRaises(
+                    ValueError,
+                    lambda: session.set_values(
+                        "collection_not_existing", "document1", values
+                    ),
+                )
 
                 # Trying with the document not existing
                 values = {}
                 values["PatientName"] = "Guerbet"
                 values["BandWidth"] = 25000
                 with self.assertRaises(ValueError):
-                     session.set_values("collection1", "document_not_existing", values)
+                    session.set_values("collection1", "document_not_existing", values)
 
                 # Testing with list values
                 session.add_field("collection1", "list1", list[str])
@@ -405,8 +471,12 @@ def create_test_case(**database_creation_parameters):
                 values["list1"] = ["a", "a", "a"]
                 values["list2"] = [1, 1, 1]
                 session.set_values("collection1", "document1", values)
-                self.assertEqual(session["collection1"]["document1"]["list1"], ["a", "a", "a"])
-                self.assertEqual(session["collection1"]["document1"]["list2"], [1, 1, 1])
+                self.assertEqual(
+                    session["collection1"]["document1"]["list1"], ["a", "a", "a"]
+                )
+                self.assertEqual(
+                    session["collection1"]["document1"]["list2"], [1, 1, 1]
+                )
 
         def test_get_field_names(self):
             """
@@ -419,16 +489,18 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding a field
-                session.add_field("collection1", "PatientName", str,
-                                  "Name of the patient")
+                session.add_field(
+                    "collection1", "PatientName", str, "Name of the patient"
+                )
 
                 fields = session.get_fields_names("collection1")
                 self.assertEqual(len(fields), 2)
                 self.assertTrue("name" in fields)
                 self.assertTrue("PatientName" in fields)
 
-                session.add_field("collection1", "SequenceName", str,
-                                  "Name of the patient")
+                session.add_field(
+                    "collection1", "SequenceName", str, "Name of the patient"
+                )
 
                 fields = session.get_fields_names("collection1")
                 self.assertEqual(len(fields), 3)
@@ -446,7 +518,9 @@ def create_test_case(**database_creation_parameters):
                 self.assertTrue("SequenceName" in fields)
 
                 # Testing with a collection not existing
-                self.assertEqual(list(session.get_fields_names("collection_not_existing")), [])
+                self.assertEqual(
+                    list(session.get_fields_names("collection_not_existing")), []
+                )
 
         def test_get_value(self):
             """
@@ -464,10 +538,10 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding fields
-                session.add_field("collection1", "PatientName", str,
-                                  "Name of the patient")
-                session.add_field("collection1", "Dataset dimensions", list[int],
-                                  None)
+                session.add_field(
+                    "collection1", "PatientName", str, "Name of the patient"
+                )
+                session.add_field("collection1", "Dataset dimensions", list[int], None)
                 session.add_field("collection1", "Bits per voxel", int, None)
                 session.add_field("collection1", "Grids spacing", list[float], None)
 
@@ -530,19 +604,17 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding fields
-                session.add_field("collection1", "PatientName", str,
-                                  "Name of the patient")
                 session.add_field(
-                    "collection1", "Bits per voxel", int, None)
+                    "collection1", "PatientName", str, "Name of the patient"
+                )
+                session.add_field("collection1", "Bits per voxel", int, None)
                 session.add_field("collection1", "BandWidth", float, None)
                 session.add_field("collection1", "AcquisitionTime", time, None)
                 session.add_field("collection1", "AcquisitionDate", datetime, None)
-                session.add_field("collection1", "Dataset dimensions", list[int],
-                                  None)
+                session.add_field("collection1", "Dataset dimensions", list[int], None)
                 session.add_field("collection1", "Grids spacing", list[float], None)
                 session.add_field("collection1", "Boolean", bool, None)
                 session.add_field("collection1", "Boolean list", list[bool], None)
-
 
                 # Adding values
                 collection1 = session["collection1"]
@@ -563,7 +635,6 @@ def create_test_case(**database_creation_parameters):
                 document2["Grids spacing"] = [0.234375, 0.234375, 0.4]
                 document2["BandWidth"] = 35.5
                 collection1["document2"] = document2
-
 
                 # Testing that the values are actually added
                 document1 = session["collection1"]["document1"]
@@ -591,19 +662,15 @@ def create_test_case(**database_creation_parameters):
                     "primary_key": "doc",
                     "status": "submitted",
                     "executable": {"definition": "custom"},
-                    "execution_context": {"tmp": "/tmp"}
+                    "execution_context": {"tmp": "/tmp"},
                 }
                 collection["doc"] = doc
                 self.assertEqual(collection["doc"], doc)
 
-                collection.update_document("doc", {
-                    "status": "running",
-                    "other": "something"
-                })
-                doc.update({
-                    "status": "running",
-                    "other": "something"
-                })
+                collection.update_document(
+                    "doc", {"status": "running", "other": "something"}
+                )
+                doc.update({"status": "running", "other": "something"})
                 self.assertEqual(collection["doc"], doc)
 
         def test_update_document_without_field(self):
@@ -616,22 +683,16 @@ def create_test_case(**database_creation_parameters):
                     "primary_key": "doc",
                     "status": "submitted",
                     "executable": {"definition": "custom"},
-                    "execution_context": {"tmp": "/tmp"}
+                    "execution_context": {"tmp": "/tmp"},
                 }
                 collection["doc"] = doc
                 self.assertEqual(collection["doc"], doc)
 
-                collection.update_document("doc", {
-                    "status": "running",
-                    "other": "something"
-                })
-                doc.update({
-                    "status": "running",
-                    "other": "something"
-                })
+                collection.update_document(
+                    "doc", {"status": "running", "other": "something"}
+                )
+                doc.update({"status": "running", "other": "something"})
                 self.assertEqual(collection["doc"], doc)
-
-
 
         def test_get_document(self):
             """
@@ -655,7 +716,9 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(session.get_document("collection1", "document3"))
 
                 # Testing that None is returned if the collection does not exist
-                self.assertIsNone(session.get_document("collection_not_existing", "document1"))
+                self.assertIsNone(
+                    session.get_document("collection_not_existing", "document1")
+                )
 
                 # Testing with wrong parameters
                 self.assertIsNone(session.get_document(False, "document1"))
@@ -681,8 +744,9 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("collection1", document)
 
                 # Adding a field
-                session.add_field("collection1", "PatientName", str,
-                                  "Name of the patient")
+                session.add_field(
+                    "collection1", "PatientName", str, "Name of the patient"
+                )
                 session.add_field("collection1", "FOV", list[int], None)
 
                 # Adding a value
@@ -698,7 +762,12 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(session.get_document("collection1", "document1"))
 
                 # Testing with a collection not existing
-                self.assertRaises(ValueError, lambda : session.remove_document("collection_not_existing", "document1"))
+                self.assertRaises(
+                    ValueError,
+                    lambda: session.remove_document(
+                        "collection_not_existing", "document1"
+                    ),
+                )
 
                 # Removing a document
                 session.remove_document("collection1", "document2")
@@ -739,9 +808,18 @@ def create_test_case(**database_creation_parameters):
                     session.add_document("collection1", document)
 
                 # Testing with invalid parameters
-                self.assertRaises(ValueError, lambda : session.add_document(15, "document1"))
-                self.assertRaises(ValueError, lambda : session.add_document("collection_not_existing", "document1"))
-                self.assertRaises(Exception, lambda : session.add_document("collection1", True))
+                self.assertRaises(
+                    ValueError, lambda: session.add_document(15, "document1")
+                )
+                self.assertRaises(
+                    ValueError,
+                    lambda: session.add_document(
+                        "collection_not_existing", "document1"
+                    ),
+                )
+                self.assertRaises(
+                    Exception, lambda: session.add_document("collection1", True)
+                )
 
                 # Testing the add of several documents
                 document = {}
@@ -779,14 +857,20 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(collection.primary_key, {"id": str})
 
                 # Trying with a collection already existing
-                self.assertRaises(Exception, lambda : session.add_collection("collection1"))
+                self.assertRaises(
+                    Exception, lambda: session.add_collection("collection1")
+                )
 
                 # Trying with table names already taken
-                session.add_field("collection1", "test", str, description='Test field')
-                self.assertRaises(Exception, lambda : session.add_collection(session.populse_db_table))
+                session.add_field("collection1", "test", str, description="Test field")
+                self.assertRaises(
+                    Exception, lambda: session.add_collection(session.populse_db_table)
+                )
 
                 # Trying with wrong types
-                self.assertRaises(Exception, lambda: session.add_collection("collection_valid", True))
+                self.assertRaises(
+                    Exception, lambda: session.add_collection("collection_valid", True)
+                )
 
         def test_remove_collection(self):
             """
@@ -853,8 +937,11 @@ def create_test_case(**database_creation_parameters):
                 self.assertIsNone(session.get_document("collection1", "document"))
 
                 # Testing with a collection not existing
-                self.assertRaises(Exception, lambda : session.remove_collection("collection_not_existing"))
-                self.assertRaises(Exception, lambda : session.remove_collection(True))
+                self.assertRaises(
+                    Exception,
+                    lambda: session.remove_collection("collection_not_existing"),
+                )
+                self.assertRaises(Exception, lambda: session.remove_collection(True))
 
         def test_get_collection(self):
             """
@@ -881,7 +968,6 @@ def create_test_case(**database_creation_parameters):
 
                 # Trying with a collection not existing
                 self.assertIsNone(session.get_collection("collection3"))
-
 
         def test_get_collections(self):
             """
@@ -960,7 +1046,9 @@ def create_test_case(**database_creation_parameters):
                 self.assertEqual(len(documents2), 2)
 
                 # Testing with a collection not existing
-                self.assertEqual(list(session.get_documents("collection_not_existing")), [])
+                self.assertEqual(
+                    list(session.get_documents("collection_not_existing")), []
+                )
                 self.assertEqual(list(session.get_documents("collection")), [])
                 self.assertEqual(list(session.get_documents(None)), [])
 
@@ -991,7 +1079,9 @@ def create_test_case(**database_creation_parameters):
                 self.assertTrue(["document4"] in documents2)
 
                 # Testing with a collection not existing
-                self.assertEqual(list(session.get_documents_ids("collection_not_existing")), [])
+                self.assertEqual(
+                    list(session.get_documents_ids("collection_not_existing")), []
+                )
                 self.assertEqual(list(session.get_documents_ids("collection")), [])
                 self.assertEqual(list(session.get_documents_ids(None)), [])
 
@@ -1007,11 +1097,11 @@ def create_test_case(**database_creation_parameters):
                 session.add_collection("collection1", "name")
 
                 # Adding fields
-                session.add_field("collection1", "PatientName", str,
-                                  "Name of the patient")
+                session.add_field(
+                    "collection1", "PatientName", str, "Name of the patient"
+                )
                 session.add_field("collection1", "Bits per voxel", int)
-                session.add_field("collection1", "Dataset dimensions",
-                                  list[int], None)
+                session.add_field("collection1", "Dataset dimensions", list[int], None)
 
                 # Adding a document
                 doc = {
@@ -1020,7 +1110,6 @@ def create_test_case(**database_creation_parameters):
                     "Bits per voxel": 42,
                 }
                 session["collection1"]["document1"] = doc
-
 
                 doc["Bits per voxel"] = "space_field"
                 # SQLite allows to store any type in columns
@@ -1034,7 +1123,6 @@ def create_test_case(**database_creation_parameters):
                 del doc["Bits per voxel"]
                 del doc["Dataset dimensions"]
                 session["collection1"]["document1"] = doc
-
 
                 # Testing that the values are actually removed
                 doc = session["collection1"]["document1"]
@@ -1064,8 +1152,10 @@ def create_test_case(**database_creation_parameters):
 
                 list_date = [date(2018, 5, 23), date(1899, 12, 31)]
                 list_time = [time(12, 41, 33, 540), time(1, 2, 3)]
-                list_datetime = [datetime(2018, 5, 23, 12, 41, 33, 540),
-                                 datetime(1899, 12, 31, 1, 2, 3)]
+                list_datetime = [
+                    datetime(2018, 5, 23, 12, 41, 33, 540),
+                    datetime(1899, 12, 31, 1, 2, 3),
+                ]
 
                 document["list_date"] = list_date
                 document["list_time"] = list_time
@@ -1082,8 +1172,7 @@ def create_test_case(**database_creation_parameters):
             Tests the storage and retrieval of fields of type JSON
             """
 
-            doc = {"name": "the_name",
-                   "json": {"key": [1, 2, "three"]}}
+            doc = {"name": "the_name", "json": {"key": [1, 2, "three"]}}
             database = self.create_database()
             with database as session:
                 # Adding a collection
@@ -1094,10 +1183,14 @@ def create_test_case(**database_creation_parameters):
 
                 session.add_document("collection1", doc)
                 self.assertEqual(doc, session.get_document("collection1", "the_name"))
-                self.assertIsNone(session.get_document("collection1", "not_a_valid_name"))
+                self.assertIsNone(
+                    session.get_document("collection1", "not_a_valid_name")
+                )
             with database as session:
                 self.assertEqual(doc, session.get_document("collection1", "the_name"))
-                self.assertIsNone(session.get_document("collection1", "not_a_valid_name"))
+                self.assertIsNone(
+                    session.get_document("collection1", "not_a_valid_name")
+                )
 
         def test_filter_documents(self):
             """
@@ -1112,614 +1205,678 @@ def create_test_case(**database_creation_parameters):
                 session["collection_test"]["document_test"] = {}
 
                 # Checking with invalid collection
-                self.assertRaises(ValueError, lambda : set(document["primary_key"] for document in session.filter_documents("collection_not_existing", None)))
+                self.assertRaises(
+                    ValueError,
+                    lambda: set(
+                        document["primary_key"]
+                        for document in session.filter_documents(
+                            "collection_not_existing", None
+                        )
+                    ),
+                )
 
                 # Checking that every document is returned if there is no filter
-                documents = set(document["primary_key"] for document in session.filter_documents("collection_test", None))
-                self.assertEqual(documents, set(['document_test']))
+                documents = set(
+                    document["primary_key"]
+                    for document in session.filter_documents("collection_test", None)
+                )
+                self.assertEqual(documents, set(["document_test"]))
 
         def test_filters(self):
-            list_datetime = [datetime(2018, 5, 23, 12, 41, 33, 540),
-                             datetime(1981, 5, 8, 20, 0),
-                             datetime(1899, 12, 31, 1, 2, 3)]
+            list_datetime = [
+                datetime(2018, 5, 23, 12, 41, 33, 540),
+                datetime(1981, 5, 8, 20, 0),
+                datetime(1899, 12, 31, 1, 2, 3),
+            ]
 
             database = self.create_database()
             with database as session:
                 session.add_collection("collection1", "name")
 
-                session.add_field("collection1", 'format', field_type=str,
-                                  description=None, index=True)
-                session.add_field("collection1", 'strings', field_type=list[str],
-                                  description=None)
-                session.add_field("collection1", 'datetime', field_type=datetime,
-                                  description=None)
-                session.add_field("collection1", 'has_format', field_type=bool,
-                                  description=None)
+                session.add_field(
+                    "collection1",
+                    "format",
+                    field_type=str,
+                    description=None,
+                    index=True,
+                )
+                session.add_field(
+                    "collection1", "strings", field_type=list[str], description=None
+                )
+                session.add_field(
+                    "collection1", "datetime", field_type=datetime, description=None
+                )
+                session.add_field(
+                    "collection1", "has_format", field_type=bool, description=None
+                )
 
-                files = ('abc', 'bcd', 'def', 'xyz')
+                files = ("abc", "bcd", "def", "xyz")
                 for file in files:
                     for dt in list_datetime:
-                        for format, ext in (('NIFTI', 'nii'),
-                                            ('DICOM', 'dcm'),
-                                            ('Freesurfer', 'mgz')):
+                        for format, ext in (
+                            ("NIFTI", "nii"),
+                            ("DICOM", "dcm"),
+                            ("Freesurfer", "mgz"),
+                        ):
                             document = dict(
-                                name='/%s_%d.%s' % (file, dt.year, ext),
+                                name="/%s_%d.%s" % (file, dt.year, ext),
                                 format=format,
                                 strings=list(file),
                                 datetime=dt,
                                 has_format=True,
                             )
                             session.add_document("collection1", document)
-                        document = '/%s_%d.none' % (file, dt.year)
+                        document = "/%s_%d.none" % (file, dt.year)
                         d = dict(name=document, strings=list(file))
                         session.add_document("collection1", d)
 
                 for filter, expected in (
-                        ('format == "NIFTI"',
-                         {
-                             '/xyz_1899.nii',
-                             '/xyz_2018.nii',
-                             '/abc_2018.nii',
-                             '/bcd_1899.nii',
-                             '/bcd_2018.nii',
-                             '/def_1899.nii',
-                             '/abc_1981.nii',
-                             '/def_2018.nii',
-                             '/def_1981.nii',
-                             '/bcd_1981.nii',
-                             '/abc_1899.nii',
-                             '/xyz_1981.nii'
-                         }
-                        ),
-
-                        ('"b" IN strings',
-                         {
-                             '/bcd_2018.mgz',
-                             '/abc_1899.mgz',
-                             '/abc_1899.dcm',
-                             '/bcd_1981.dcm',
-                             '/abc_1981.dcm',
-                             '/bcd_1981.mgz',
-                             '/bcd_1899.mgz',
-                             '/abc_1981.mgz',
-                             '/abc_2018.mgz',
-                             '/abc_2018.dcm',
-                             '/bcd_2018.dcm',
-                             '/bcd_1899.dcm',
-                             '/abc_2018.nii',
-                             '/bcd_1899.nii',
-                             '/abc_1981.nii',
-                             '/bcd_1981.nii',
-                             '/abc_1899.nii',
-                             '/bcd_2018.nii',
-                             '/abc_1899.none',
-                             '/bcd_1899.none',
-                             '/bcd_1981.none',
-                             '/abc_2018.none',
-                             '/bcd_2018.none',
-                             '/abc_1981.none'
-                         }
-                        ),
-
-                        ('(format == "NIFTI" OR NOT format == "DICOM")',
-                         {
-                             '/xyz_1899.nii',
-                             '/xyz_1899.mgz',
-                             '/bcd_2018.mgz',
-                             '/bcd_1899.nii',
-                             '/bcd_2018.nii',
-                             '/def_1899.nii',
-                             '/bcd_1981.mgz',
-                             '/abc_1981.nii',
-                             '/def_2018.mgz',
-                             '/abc_1899.nii',
-                             '/def_1899.mgz',
-                             '/xyz_1899.none',
-                             '/abc_2018.nii',
-                             '/def_1899.none',
-                             '/bcd_1899.mgz',
-                             '/def_2018.nii',
-                             '/abc_1981.mgz',
-                             '/abc_1899.none',
-                             '/xyz_1981.mgz',
-                             '/bcd_1981.nii',
-                             '/xyz_1981.nii',
-                             '/abc_2018.mgz',
-                             '/xyz_2018.nii',
-                             '/abc_1899.mgz',
-                             '/def_1981.nii',
-                             '/def_1981.mgz',
-                             '/bcd_1899.none',
-                             '/xyz_2018.mgz',
-                             '/bcd_1981.none',
-                             '/xyz_1981.none',
-                             '/abc_1981.none',
-                             '/def_2018.none',
-                             '/xyz_2018.none',
-                             '/abc_2018.none',
-                             '/def_1981.none',
-                             '/bcd_2018.none'
-                         }
-                        ),
-
-                        ('"a" IN strings',
-                         {
-                             '/abc_1899.none',
-                             '/abc_1899.nii',
-                             '/abc_2018.nii',
-                             '/abc_1899.mgz',
-                             '/abc_1899.dcm',
-                             '/abc_1981.dcm',
-                             '/abc_1981.nii',
-                             '/abc_1981.mgz',
-                             '/abc_2018.mgz',
-                             '/abc_2018.dcm',
-                             '/abc_2018.none',
-                             '/abc_1981.none'
-                         }
-                        ),
-
-                        ('NOT "b" IN strings',
-                         {
-                             '/xyz_1899.nii',
-                             '/xyz_2018.dcm',
-                             '/def_1981.dcm',
-                             '/xyz_2018.nii',
-                             '/xyz_1981.dcm',
-                             '/def_1899.none',
-                             '/xyz_1899.dcm',
-                             '/xyz_1981.nii',
-                             '/def_1899.dcm',
-                             '/def_1899.nii',
-                             '/def_2018.mgz',
-                             '/def_2018.nii',
-                             '/xyz_1899.mgz',
-                             '/def_2018.dcm',
-                             '/def_1899.mgz',
-                             '/def_1981.mgz',
-                             '/xyz_1981.mgz',
-                             '/xyz_2018.mgz',
-                             '/xyz_1899.none',
-                             '/def_1981.nii',
-                             '/xyz_2018.none',
-                             '/xyz_1981.none',
-                             '/def_2018.none',
-                             '/def_1981.none'
-                         }
-                        ),
-
-                        ('("a" IN strings OR NOT "b" IN strings)',
-                         {
-                             '/xyz_1899.nii',
-                             '/xyz_1899.mgz',
-                             '/def_1899.nii',
-                             '/abc_1981.nii',
-                             '/def_2018.mgz',
-                             '/abc_1899.nii',
-                             '/def_1899.mgz',
-                             '/abc_2018.dcm',
-                             '/xyz_1899.none',
-                             '/xyz_2018.dcm',
-                             '/def_1981.dcm',
-                             '/abc_2018.nii',
-                             '/def_1899.none',
-                             '/abc_1981.dcm',
-                             '/def_2018.nii',
-                             '/abc_1981.mgz',
-                             '/def_2018.dcm',
-                             '/abc_1899.none',
-                             '/xyz_1981.mgz',
-                             '/xyz_1899.dcm',
-                             '/abc_1899.dcm',
-                             '/def_1899.dcm',
-                             '/xyz_1981.nii',
-                             '/abc_2018.mgz',
-                             '/xyz_2018.nii',
-                             '/abc_1899.mgz',
-                             '/xyz_1981.dcm',
-                             '/def_1981.nii',
-                             '/def_1981.mgz',
-                             '/xyz_2018.mgz',
-                             '/xyz_1981.none',
-                             '/abc_1981.none',
-                             '/def_2018.none',
-                             '/xyz_2018.none',
-                             '/abc_2018.none',
-                             '/def_1981.none'
-                         }
-                        ),
-
-                        ('format IN ["DICOM", "NIFTI"]',
-                         {
-                             '/xyz_1899.nii',
-                             '/xyz_2018.dcm',
-                             '/bcd_1899.nii',
-                             '/def_1899.nii',
-                             '/abc_1981.nii',
-                             '/abc_1899.nii',
-                             '/bcd_2018.nii',
-                             '/abc_2018.dcm',
-                             '/bcd_1899.dcm',
-                             '/def_1981.dcm',
-                             '/abc_2018.nii',
-                             '/abc_1981.dcm',
-                             '/bcd_2018.dcm',
-                             '/def_2018.nii',
-                             '/def_2018.dcm',
-                             '/xyz_1899.dcm',
-                             '/abc_1899.dcm',
-                             '/def_1899.dcm',
-                             '/bcd_1981.nii',
-                             '/xyz_1981.nii',
-                             '/xyz_2018.nii',
-                             '/xyz_1981.dcm',
-                             '/def_1981.nii',
-                             '/bcd_1981.dcm',
-                         }
-                        ),
-
-                        ('(format == "NIFTI" OR NOT format == "DICOM") AND ("a" IN strings OR NOT "b" IN strings)',
-                         {
-                             '/abc_1899.none',
-                             '/xyz_1899.mgz',
-                             '/abc_1981.mgz',
-                             '/abc_2018.nii',
-                             '/xyz_1899.nii',
-                             '/abc_1899.mgz',
-                             '/def_1899.mgz',
-                             '/def_1899.nii',
-                             '/def_1899.none',
-                             '/abc_1981.nii',
-                             '/def_2018.nii',
-                             '/xyz_2018.nii',
-                             '/def_1981.nii',
-                             '/abc_1899.nii',
-                             '/xyz_1981.nii',
-                             '/abc_2018.mgz',
-                             '/def_1981.mgz',
-                             '/xyz_2018.mgz',
-                             '/xyz_1899.none',
-                             '/def_2018.mgz',
-                             '/xyz_1981.mgz',
-                             '/xyz_1981.none',
-                             '/abc_1981.none',
-                             '/def_2018.none',
-                             '/xyz_2018.none',
-                             '/abc_2018.none',
-                             '/def_1981.none'
-                         }
-                        ),
-
-                        ('format > "DICOM"',
-                         {
-                             '/xyz_1899.nii',
-                             '/xyz_1899.mgz',
-                             '/bcd_2018.mgz',
-                             '/bcd_1899.nii',
-                             '/bcd_2018.nii',
-                             '/def_1899.nii',
-                             '/bcd_1981.mgz',
-                             '/abc_1981.nii',
-                             '/def_2018.mgz',
-                             '/abc_1899.nii',
-                             '/def_1899.mgz',
-                             '/abc_2018.nii',
-                             '/def_2018.nii',
-                             '/abc_1981.mgz',
-                             '/xyz_1981.mgz',
-                             '/bcd_1981.nii',
-                             '/xyz_1981.nii',
-                             '/abc_2018.mgz',
-                             '/xyz_2018.nii',
-                             '/abc_1899.mgz',
-                             '/def_1981.nii',
-                             '/def_1981.mgz',
-                             '/bcd_1899.mgz',
-                             '/xyz_2018.mgz'
-                         }
-                        ),
-
-                        ('format <= "DICOM"',
-                         {
-                             '/abc_1981.dcm',
-                             '/def_1899.dcm',
-                             '/abc_2018.dcm',
-                             '/bcd_1899.dcm',
-                             '/def_1981.dcm',
-                             '/bcd_2018.dcm',
-                             '/def_2018.dcm',
-                             '/xyz_2018.dcm',
-                             '/xyz_1899.dcm',
-                             '/abc_1899.dcm',
-                             '/xyz_1981.dcm',
-                             '/bcd_1981.dcm',
-                         }
-                        ),
-
-                        ('format > "DICOM" AND strings != ["b", "c", "d"]',
-                         {
-                             '/xyz_1899.nii',
-                             '/xyz_1899.mgz',
-                             '/abc_1981.mgz',
-                             '/abc_2018.nii',
-                             '/xyz_2018.nii',
-                             '/abc_1899.mgz',
-                             '/def_1899.mgz',
-                             '/def_1899.nii',
-                             '/abc_1981.nii',
-                             '/def_2018.nii',
-                             '/def_1981.nii',
-                             '/abc_1899.nii',
-                             '/xyz_1981.nii',
-                             '/abc_2018.mgz',
-                             '/def_1981.mgz',
-                             '/xyz_2018.mgz',
-                             '/def_2018.mgz',
-                             '/xyz_1981.mgz'
-                         }
-                        ),
-
-                        ('format <= "DICOM" AND strings == ["b", "c", "d"]',
-                         {
-                             '/bcd_2018.dcm',
-                             '/bcd_1981.dcm',
-                             '/bcd_1899.dcm',
-                         }
-                        ),
-
-                        ('has_format in [false, null]',
-                         {
-                             '/def_1899.none',
-                             '/abc_1899.none',
-                             '/bcd_1899.none',
-                             '/xyz_1899.none',
-                             '/bcd_2018.none',
-                             '/abc_1981.none',
-                             '/def_2018.none',
-                             '/xyz_2018.none',
-                             '/abc_2018.none',
-                             '/def_1981.none',
-                             '/xyz_1981.none',
-                             '/bcd_1981.none',
-                         }
-                        ),
-
-                        ('format == null',
-                         {
-                             '/bcd_1981.none',
-                             '/abc_1899.none',
-                             '/def_1899.none',
-                             '/bcd_2018.none',
-                             '/abc_1981.none',
-                             '/def_2018.none',
-                             '/xyz_2018.none',
-                             '/abc_2018.none',
-                             '/def_1981.none',
-                             '/bcd_1899.none',
-                             '/xyz_1899.none',
-                             '/xyz_1981.none'
-                         }
-                        ),
-
-                        ('strings == null',
-                         set()),
-
-                        ('strings != NULL',
-                         {
-                             '/xyz_1899.nii',
-                             '/xyz_2018.dcm',
-                             '/xyz_1899.mgz',
-                             '/bcd_2018.mgz',
-                             '/bcd_1899.nii',
-                             '/def_2018.none',
-                             '/def_1899.mgz',
-                             '/def_1899.nii',
-                             '/bcd_1981.mgz',
-                             '/abc_1981.nii',
-                             '/def_2018.mgz',
-                             '/abc_1899.nii',
-                             '/bcd_2018.nii',
-                             '/abc_2018.dcm',
-                             '/xyz_1899.none',
-                             '/bcd_1899.dcm',
-                             '/bcd_1981.none',
-                             '/def_1981.dcm',
-                             '/abc_2018.nii',
-                             '/def_1899.none',
-                             '/xyz_1981.none',
-                             '/abc_1981.dcm',
-                             '/bcd_2018.dcm',
-                             '/def_2018.nii',
-                             '/abc_1981.mgz',
-                             '/def_2018.dcm',
-                             '/abc_1899.none',
-                             '/xyz_1981.mgz',
-                             '/xyz_1899.dcm',
-                             '/abc_1899.dcm',
-                             '/def_1899.dcm',
-                             '/bcd_1981.nii',
-                             '/def_1981.none',
-                             '/xyz_1981.nii',
-                             '/abc_2018.mgz',
-                             '/xyz_2018.none',
-                             '/xyz_2018.nii',
-                             '/abc_1899.mgz',
-                             '/bcd_1899.mgz',
-                             '/bcd_2018.none',
-                             '/abc_1981.none',
-                             '/xyz_1981.dcm',
-                             '/abc_2018.none',
-                             '/def_1981.nii',
-                             '/bcd_1981.dcm',
-                             '/def_1981.mgz',
-                             '/bcd_1899.none',
-                             '/xyz_2018.mgz'
-                         }
-                        ),
-
-                        ('format != NULL',
-                         {
-                             '/xyz_1899.nii',
-                             '/xyz_1899.mgz',
-                             '/bcd_2018.mgz',
-                             '/bcd_1899.nii',
-                             '/def_1899.mgz',
-                             '/def_1899.nii',
-                             '/bcd_1981.mgz',
-                             '/abc_1981.nii',
-                             '/def_2018.mgz',
-                             '/abc_1899.nii',
-                             '/bcd_2018.nii',
-                             '/abc_2018.dcm',
-                             '/xyz_1981.mgz',
-                             '/def_1981.dcm',
-                             '/abc_2018.nii',
-                             '/abc_1981.dcm',
-                             '/bcd_2018.dcm',
-                             '/def_2018.nii',
-                             '/bcd_1981.nii',
-                             '/abc_1981.mgz',
-                             '/def_2018.dcm',
-                             '/bcd_1899.dcm',
-                             '/xyz_2018.dcm',
-                             '/xyz_1899.dcm',
-                             '/abc_1899.dcm',
-                             '/def_1899.dcm',
-                             '/bcd_1899.mgz',
-                             '/xyz_1981.nii',
-                             '/abc_2018.mgz',
-                             '/xyz_2018.nii',
-                             '/abc_1899.mgz',
-                             '/xyz_1981.dcm',
-                             '/def_1981.nii',
-                             '/bcd_1981.dcm',
-                             '/def_1981.mgz',
-                             '/xyz_2018.mgz'
-                         }
-                        ),
-
-                        ('name like "%.nii"',
-                         {
-                             '/xyz_1899.nii',
-                             '/xyz_2018.nii',
-                             '/abc_2018.nii',
-                             '/bcd_1899.nii',
-                             '/bcd_2018.nii',
-                             '/def_1899.nii',
-                             '/abc_1981.nii',
-                             '/def_2018.nii',
-                             '/def_1981.nii',
-                             '/bcd_1981.nii',
-                             '/abc_1899.nii',
-                             '/xyz_1981.nii'
-                         }
-                        ),
-
-                        ('name ilike "%A%"',
-                         {
-                             '/abc_1899.none',
-                             '/abc_1899.nii',
-                             '/abc_2018.nii',
-                             '/abc_1899.mgz',
-                             '/abc_1899.dcm',
-                             '/abc_1981.dcm',
-                             '/abc_1981.nii',
-                             '/abc_1981.mgz',
-                             '/abc_2018.mgz',
-                             '/abc_2018.dcm',
-                             '/abc_2018.none',
-                             '/abc_1981.none'
-                         }
-                        ),
-
-                        ('all',
-                         {
-                             '/xyz_1899.nii',
-                             '/xyz_2018.dcm',
-                             '/xyz_1899.mgz',
-                             '/bcd_2018.mgz',
-                             '/bcd_1899.nii',
-                             '/def_2018.none',
-                             '/def_1899.mgz',
-                             '/def_1899.nii',
-                             '/bcd_1981.mgz',
-                             '/abc_1981.nii',
-                             '/def_2018.mgz',
-                             '/abc_1899.nii',
-                             '/bcd_2018.nii',
-                             '/abc_2018.dcm',
-                             '/xyz_1899.none',
-                             '/bcd_1899.dcm',
-                             '/bcd_1981.none',
-                             '/def_1981.dcm',
-                             '/abc_2018.nii',
-                             '/def_1899.none',
-                             '/xyz_1981.none',
-                             '/abc_1981.dcm',
-                             '/bcd_2018.dcm',
-                             '/def_2018.nii',
-                             '/abc_1981.mgz',
-                             '/def_2018.dcm',
-                             '/abc_1899.none',
-                             '/xyz_1981.mgz',
-                             '/xyz_1899.dcm',
-                             '/abc_1899.dcm',
-                             '/def_1899.dcm',
-                             '/bcd_1981.nii',
-                             '/def_1981.none',
-                             '/xyz_1981.nii',
-                             '/abc_2018.mgz',
-                             '/xyz_2018.none',
-                             '/xyz_2018.nii',
-                             '/abc_1899.mgz',
-                             '/bcd_1899.mgz',
-                             '/bcd_2018.none',
-                             '/abc_1981.none',
-                             '/xyz_1981.dcm',
-                             '/abc_2018.none',
-                             '/def_1981.nii',
-                             '/bcd_1981.dcm',
-                             '/def_1981.mgz',
-                             '/bcd_1899.none',
-                             '/xyz_2018.mgz'
-                         }
-                        )):
-                    for tested_filter in (filter, '(%s) AND ALL' % filter, 'ALL AND (%s)' % filter):
+                    (
+                        'format == "NIFTI"',
+                        {
+                            "/xyz_1899.nii",
+                            "/xyz_2018.nii",
+                            "/abc_2018.nii",
+                            "/bcd_1899.nii",
+                            "/bcd_2018.nii",
+                            "/def_1899.nii",
+                            "/abc_1981.nii",
+                            "/def_2018.nii",
+                            "/def_1981.nii",
+                            "/bcd_1981.nii",
+                            "/abc_1899.nii",
+                            "/xyz_1981.nii",
+                        },
+                    ),
+                    (
+                        '"b" IN strings',
+                        {
+                            "/bcd_2018.mgz",
+                            "/abc_1899.mgz",
+                            "/abc_1899.dcm",
+                            "/bcd_1981.dcm",
+                            "/abc_1981.dcm",
+                            "/bcd_1981.mgz",
+                            "/bcd_1899.mgz",
+                            "/abc_1981.mgz",
+                            "/abc_2018.mgz",
+                            "/abc_2018.dcm",
+                            "/bcd_2018.dcm",
+                            "/bcd_1899.dcm",
+                            "/abc_2018.nii",
+                            "/bcd_1899.nii",
+                            "/abc_1981.nii",
+                            "/bcd_1981.nii",
+                            "/abc_1899.nii",
+                            "/bcd_2018.nii",
+                            "/abc_1899.none",
+                            "/bcd_1899.none",
+                            "/bcd_1981.none",
+                            "/abc_2018.none",
+                            "/bcd_2018.none",
+                            "/abc_1981.none",
+                        },
+                    ),
+                    (
+                        '(format == "NIFTI" OR NOT format == "DICOM")',
+                        {
+                            "/xyz_1899.nii",
+                            "/xyz_1899.mgz",
+                            "/bcd_2018.mgz",
+                            "/bcd_1899.nii",
+                            "/bcd_2018.nii",
+                            "/def_1899.nii",
+                            "/bcd_1981.mgz",
+                            "/abc_1981.nii",
+                            "/def_2018.mgz",
+                            "/abc_1899.nii",
+                            "/def_1899.mgz",
+                            "/xyz_1899.none",
+                            "/abc_2018.nii",
+                            "/def_1899.none",
+                            "/bcd_1899.mgz",
+                            "/def_2018.nii",
+                            "/abc_1981.mgz",
+                            "/abc_1899.none",
+                            "/xyz_1981.mgz",
+                            "/bcd_1981.nii",
+                            "/xyz_1981.nii",
+                            "/abc_2018.mgz",
+                            "/xyz_2018.nii",
+                            "/abc_1899.mgz",
+                            "/def_1981.nii",
+                            "/def_1981.mgz",
+                            "/bcd_1899.none",
+                            "/xyz_2018.mgz",
+                            "/bcd_1981.none",
+                            "/xyz_1981.none",
+                            "/abc_1981.none",
+                            "/def_2018.none",
+                            "/xyz_2018.none",
+                            "/abc_2018.none",
+                            "/def_1981.none",
+                            "/bcd_2018.none",
+                        },
+                    ),
+                    (
+                        '"a" IN strings',
+                        {
+                            "/abc_1899.none",
+                            "/abc_1899.nii",
+                            "/abc_2018.nii",
+                            "/abc_1899.mgz",
+                            "/abc_1899.dcm",
+                            "/abc_1981.dcm",
+                            "/abc_1981.nii",
+                            "/abc_1981.mgz",
+                            "/abc_2018.mgz",
+                            "/abc_2018.dcm",
+                            "/abc_2018.none",
+                            "/abc_1981.none",
+                        },
+                    ),
+                    (
+                        'NOT "b" IN strings',
+                        {
+                            "/xyz_1899.nii",
+                            "/xyz_2018.dcm",
+                            "/def_1981.dcm",
+                            "/xyz_2018.nii",
+                            "/xyz_1981.dcm",
+                            "/def_1899.none",
+                            "/xyz_1899.dcm",
+                            "/xyz_1981.nii",
+                            "/def_1899.dcm",
+                            "/def_1899.nii",
+                            "/def_2018.mgz",
+                            "/def_2018.nii",
+                            "/xyz_1899.mgz",
+                            "/def_2018.dcm",
+                            "/def_1899.mgz",
+                            "/def_1981.mgz",
+                            "/xyz_1981.mgz",
+                            "/xyz_2018.mgz",
+                            "/xyz_1899.none",
+                            "/def_1981.nii",
+                            "/xyz_2018.none",
+                            "/xyz_1981.none",
+                            "/def_2018.none",
+                            "/def_1981.none",
+                        },
+                    ),
+                    (
+                        '("a" IN strings OR NOT "b" IN strings)',
+                        {
+                            "/xyz_1899.nii",
+                            "/xyz_1899.mgz",
+                            "/def_1899.nii",
+                            "/abc_1981.nii",
+                            "/def_2018.mgz",
+                            "/abc_1899.nii",
+                            "/def_1899.mgz",
+                            "/abc_2018.dcm",
+                            "/xyz_1899.none",
+                            "/xyz_2018.dcm",
+                            "/def_1981.dcm",
+                            "/abc_2018.nii",
+                            "/def_1899.none",
+                            "/abc_1981.dcm",
+                            "/def_2018.nii",
+                            "/abc_1981.mgz",
+                            "/def_2018.dcm",
+                            "/abc_1899.none",
+                            "/xyz_1981.mgz",
+                            "/xyz_1899.dcm",
+                            "/abc_1899.dcm",
+                            "/def_1899.dcm",
+                            "/xyz_1981.nii",
+                            "/abc_2018.mgz",
+                            "/xyz_2018.nii",
+                            "/abc_1899.mgz",
+                            "/xyz_1981.dcm",
+                            "/def_1981.nii",
+                            "/def_1981.mgz",
+                            "/xyz_2018.mgz",
+                            "/xyz_1981.none",
+                            "/abc_1981.none",
+                            "/def_2018.none",
+                            "/xyz_2018.none",
+                            "/abc_2018.none",
+                            "/def_1981.none",
+                        },
+                    ),
+                    (
+                        'format IN ["DICOM", "NIFTI"]',
+                        {
+                            "/xyz_1899.nii",
+                            "/xyz_2018.dcm",
+                            "/bcd_1899.nii",
+                            "/def_1899.nii",
+                            "/abc_1981.nii",
+                            "/abc_1899.nii",
+                            "/bcd_2018.nii",
+                            "/abc_2018.dcm",
+                            "/bcd_1899.dcm",
+                            "/def_1981.dcm",
+                            "/abc_2018.nii",
+                            "/abc_1981.dcm",
+                            "/bcd_2018.dcm",
+                            "/def_2018.nii",
+                            "/def_2018.dcm",
+                            "/xyz_1899.dcm",
+                            "/abc_1899.dcm",
+                            "/def_1899.dcm",
+                            "/bcd_1981.nii",
+                            "/xyz_1981.nii",
+                            "/xyz_2018.nii",
+                            "/xyz_1981.dcm",
+                            "/def_1981.nii",
+                            "/bcd_1981.dcm",
+                        },
+                    ),
+                    (
+                        '(format == "NIFTI" OR NOT format == "DICOM") AND ("a" IN strings OR NOT "b" IN strings)',
+                        {
+                            "/abc_1899.none",
+                            "/xyz_1899.mgz",
+                            "/abc_1981.mgz",
+                            "/abc_2018.nii",
+                            "/xyz_1899.nii",
+                            "/abc_1899.mgz",
+                            "/def_1899.mgz",
+                            "/def_1899.nii",
+                            "/def_1899.none",
+                            "/abc_1981.nii",
+                            "/def_2018.nii",
+                            "/xyz_2018.nii",
+                            "/def_1981.nii",
+                            "/abc_1899.nii",
+                            "/xyz_1981.nii",
+                            "/abc_2018.mgz",
+                            "/def_1981.mgz",
+                            "/xyz_2018.mgz",
+                            "/xyz_1899.none",
+                            "/def_2018.mgz",
+                            "/xyz_1981.mgz",
+                            "/xyz_1981.none",
+                            "/abc_1981.none",
+                            "/def_2018.none",
+                            "/xyz_2018.none",
+                            "/abc_2018.none",
+                            "/def_1981.none",
+                        },
+                    ),
+                    (
+                        'format > "DICOM"',
+                        {
+                            "/xyz_1899.nii",
+                            "/xyz_1899.mgz",
+                            "/bcd_2018.mgz",
+                            "/bcd_1899.nii",
+                            "/bcd_2018.nii",
+                            "/def_1899.nii",
+                            "/bcd_1981.mgz",
+                            "/abc_1981.nii",
+                            "/def_2018.mgz",
+                            "/abc_1899.nii",
+                            "/def_1899.mgz",
+                            "/abc_2018.nii",
+                            "/def_2018.nii",
+                            "/abc_1981.mgz",
+                            "/xyz_1981.mgz",
+                            "/bcd_1981.nii",
+                            "/xyz_1981.nii",
+                            "/abc_2018.mgz",
+                            "/xyz_2018.nii",
+                            "/abc_1899.mgz",
+                            "/def_1981.nii",
+                            "/def_1981.mgz",
+                            "/bcd_1899.mgz",
+                            "/xyz_2018.mgz",
+                        },
+                    ),
+                    (
+                        'format <= "DICOM"',
+                        {
+                            "/abc_1981.dcm",
+                            "/def_1899.dcm",
+                            "/abc_2018.dcm",
+                            "/bcd_1899.dcm",
+                            "/def_1981.dcm",
+                            "/bcd_2018.dcm",
+                            "/def_2018.dcm",
+                            "/xyz_2018.dcm",
+                            "/xyz_1899.dcm",
+                            "/abc_1899.dcm",
+                            "/xyz_1981.dcm",
+                            "/bcd_1981.dcm",
+                        },
+                    ),
+                    (
+                        'format > "DICOM" AND strings != ["b", "c", "d"]',
+                        {
+                            "/xyz_1899.nii",
+                            "/xyz_1899.mgz",
+                            "/abc_1981.mgz",
+                            "/abc_2018.nii",
+                            "/xyz_2018.nii",
+                            "/abc_1899.mgz",
+                            "/def_1899.mgz",
+                            "/def_1899.nii",
+                            "/abc_1981.nii",
+                            "/def_2018.nii",
+                            "/def_1981.nii",
+                            "/abc_1899.nii",
+                            "/xyz_1981.nii",
+                            "/abc_2018.mgz",
+                            "/def_1981.mgz",
+                            "/xyz_2018.mgz",
+                            "/def_2018.mgz",
+                            "/xyz_1981.mgz",
+                        },
+                    ),
+                    (
+                        'format <= "DICOM" AND strings == ["b", "c", "d"]',
+                        {
+                            "/bcd_2018.dcm",
+                            "/bcd_1981.dcm",
+                            "/bcd_1899.dcm",
+                        },
+                    ),
+                    (
+                        "has_format in [false, null]",
+                        {
+                            "/def_1899.none",
+                            "/abc_1899.none",
+                            "/bcd_1899.none",
+                            "/xyz_1899.none",
+                            "/bcd_2018.none",
+                            "/abc_1981.none",
+                            "/def_2018.none",
+                            "/xyz_2018.none",
+                            "/abc_2018.none",
+                            "/def_1981.none",
+                            "/xyz_1981.none",
+                            "/bcd_1981.none",
+                        },
+                    ),
+                    (
+                        "format == null",
+                        {
+                            "/bcd_1981.none",
+                            "/abc_1899.none",
+                            "/def_1899.none",
+                            "/bcd_2018.none",
+                            "/abc_1981.none",
+                            "/def_2018.none",
+                            "/xyz_2018.none",
+                            "/abc_2018.none",
+                            "/def_1981.none",
+                            "/bcd_1899.none",
+                            "/xyz_1899.none",
+                            "/xyz_1981.none",
+                        },
+                    ),
+                    ("strings == null", set()),
+                    (
+                        "strings != NULL",
+                        {
+                            "/xyz_1899.nii",
+                            "/xyz_2018.dcm",
+                            "/xyz_1899.mgz",
+                            "/bcd_2018.mgz",
+                            "/bcd_1899.nii",
+                            "/def_2018.none",
+                            "/def_1899.mgz",
+                            "/def_1899.nii",
+                            "/bcd_1981.mgz",
+                            "/abc_1981.nii",
+                            "/def_2018.mgz",
+                            "/abc_1899.nii",
+                            "/bcd_2018.nii",
+                            "/abc_2018.dcm",
+                            "/xyz_1899.none",
+                            "/bcd_1899.dcm",
+                            "/bcd_1981.none",
+                            "/def_1981.dcm",
+                            "/abc_2018.nii",
+                            "/def_1899.none",
+                            "/xyz_1981.none",
+                            "/abc_1981.dcm",
+                            "/bcd_2018.dcm",
+                            "/def_2018.nii",
+                            "/abc_1981.mgz",
+                            "/def_2018.dcm",
+                            "/abc_1899.none",
+                            "/xyz_1981.mgz",
+                            "/xyz_1899.dcm",
+                            "/abc_1899.dcm",
+                            "/def_1899.dcm",
+                            "/bcd_1981.nii",
+                            "/def_1981.none",
+                            "/xyz_1981.nii",
+                            "/abc_2018.mgz",
+                            "/xyz_2018.none",
+                            "/xyz_2018.nii",
+                            "/abc_1899.mgz",
+                            "/bcd_1899.mgz",
+                            "/bcd_2018.none",
+                            "/abc_1981.none",
+                            "/xyz_1981.dcm",
+                            "/abc_2018.none",
+                            "/def_1981.nii",
+                            "/bcd_1981.dcm",
+                            "/def_1981.mgz",
+                            "/bcd_1899.none",
+                            "/xyz_2018.mgz",
+                        },
+                    ),
+                    (
+                        "format != NULL",
+                        {
+                            "/xyz_1899.nii",
+                            "/xyz_1899.mgz",
+                            "/bcd_2018.mgz",
+                            "/bcd_1899.nii",
+                            "/def_1899.mgz",
+                            "/def_1899.nii",
+                            "/bcd_1981.mgz",
+                            "/abc_1981.nii",
+                            "/def_2018.mgz",
+                            "/abc_1899.nii",
+                            "/bcd_2018.nii",
+                            "/abc_2018.dcm",
+                            "/xyz_1981.mgz",
+                            "/def_1981.dcm",
+                            "/abc_2018.nii",
+                            "/abc_1981.dcm",
+                            "/bcd_2018.dcm",
+                            "/def_2018.nii",
+                            "/bcd_1981.nii",
+                            "/abc_1981.mgz",
+                            "/def_2018.dcm",
+                            "/bcd_1899.dcm",
+                            "/xyz_2018.dcm",
+                            "/xyz_1899.dcm",
+                            "/abc_1899.dcm",
+                            "/def_1899.dcm",
+                            "/bcd_1899.mgz",
+                            "/xyz_1981.nii",
+                            "/abc_2018.mgz",
+                            "/xyz_2018.nii",
+                            "/abc_1899.mgz",
+                            "/xyz_1981.dcm",
+                            "/def_1981.nii",
+                            "/bcd_1981.dcm",
+                            "/def_1981.mgz",
+                            "/xyz_2018.mgz",
+                        },
+                    ),
+                    (
+                        'name like "%.nii"',
+                        {
+                            "/xyz_1899.nii",
+                            "/xyz_2018.nii",
+                            "/abc_2018.nii",
+                            "/bcd_1899.nii",
+                            "/bcd_2018.nii",
+                            "/def_1899.nii",
+                            "/abc_1981.nii",
+                            "/def_2018.nii",
+                            "/def_1981.nii",
+                            "/bcd_1981.nii",
+                            "/abc_1899.nii",
+                            "/xyz_1981.nii",
+                        },
+                    ),
+                    (
+                        'name ilike "%A%"',
+                        {
+                            "/abc_1899.none",
+                            "/abc_1899.nii",
+                            "/abc_2018.nii",
+                            "/abc_1899.mgz",
+                            "/abc_1899.dcm",
+                            "/abc_1981.dcm",
+                            "/abc_1981.nii",
+                            "/abc_1981.mgz",
+                            "/abc_2018.mgz",
+                            "/abc_2018.dcm",
+                            "/abc_2018.none",
+                            "/abc_1981.none",
+                        },
+                    ),
+                    (
+                        "all",
+                        {
+                            "/xyz_1899.nii",
+                            "/xyz_2018.dcm",
+                            "/xyz_1899.mgz",
+                            "/bcd_2018.mgz",
+                            "/bcd_1899.nii",
+                            "/def_2018.none",
+                            "/def_1899.mgz",
+                            "/def_1899.nii",
+                            "/bcd_1981.mgz",
+                            "/abc_1981.nii",
+                            "/def_2018.mgz",
+                            "/abc_1899.nii",
+                            "/bcd_2018.nii",
+                            "/abc_2018.dcm",
+                            "/xyz_1899.none",
+                            "/bcd_1899.dcm",
+                            "/bcd_1981.none",
+                            "/def_1981.dcm",
+                            "/abc_2018.nii",
+                            "/def_1899.none",
+                            "/xyz_1981.none",
+                            "/abc_1981.dcm",
+                            "/bcd_2018.dcm",
+                            "/def_2018.nii",
+                            "/abc_1981.mgz",
+                            "/def_2018.dcm",
+                            "/abc_1899.none",
+                            "/xyz_1981.mgz",
+                            "/xyz_1899.dcm",
+                            "/abc_1899.dcm",
+                            "/def_1899.dcm",
+                            "/bcd_1981.nii",
+                            "/def_1981.none",
+                            "/xyz_1981.nii",
+                            "/abc_2018.mgz",
+                            "/xyz_2018.none",
+                            "/xyz_2018.nii",
+                            "/abc_1899.mgz",
+                            "/bcd_1899.mgz",
+                            "/bcd_2018.none",
+                            "/abc_1981.none",
+                            "/xyz_1981.dcm",
+                            "/abc_2018.none",
+                            "/def_1981.nii",
+                            "/bcd_1981.dcm",
+                            "/def_1981.mgz",
+                            "/bcd_1899.none",
+                            "/xyz_2018.mgz",
+                        },
+                    ),
+                ):
+                    for tested_filter in (
+                        filter,
+                        "(%s) AND ALL" % filter,
+                        "ALL AND (%s)" % filter,
+                    ):
                         try:
-                            documents = set(document["name"] for document in session.filter_documents("collection1", tested_filter))
+                            documents = set(
+                                document["name"]
+                                for document in session.filter_documents(
+                                    "collection1", tested_filter
+                                )
+                            )
                             self.assertEqual(documents, expected)
                         except Exception as e:
-                            raise Exception(f'Error while testing filter : {tested_filter}') from e
-                    all_documents = set(document["name"] for document in session.filter_documents("collection1", 'ALL'))
-                    for tested_filter in ('(%s) OR ALL' % filter, 'ALL OR (%s)' % filter):
+                            raise Exception(
+                                f"Error while testing filter : {tested_filter}"
+                            ) from e
+                    all_documents = set(
+                        document["name"]
+                        for document in session.filter_documents("collection1", "ALL")
+                    )
+                    for tested_filter in (
+                        "(%s) OR ALL" % filter,
+                        "ALL OR (%s)" % filter,
+                    ):
                         try:
-                            documents = set(document["name"] for document in session.filter_documents("collection1", tested_filter))
+                            documents = set(
+                                document["name"]
+                                for document in session.filter_documents(
+                                    "collection1", tested_filter
+                                )
+                            )
                             self.assertEqual(documents, all_documents)
                         except Exception as e:
-                            raise Exception(f'Error while testing filter : {tested_filter}') from e
+                            raise Exception(
+                                f"Error while testing filter : {tested_filter}"
+                            ) from e
 
         def test_modify_list_field(self):
             database = self.create_database()
             with database as session:
                 session.add_collection("collection1", "name")
-                session.add_field("collection1", 'strings', field_type=list[str],
-                                  description=None)
-                session["collection1"]['test'] = {
-                    'strings': ['a', 'b', 'c']
-                }
-                names = list(document["name"] for document in session.filter_documents("collection1", '"b" IN strings'))
-                self.assertEqual(names, ['test'])
+                session.add_field(
+                    "collection1", "strings", field_type=list[str], description=None
+                )
+                session["collection1"]["test"] = {"strings": ["a", "b", "c"]}
+                names = list(
+                    document["name"]
+                    for document in session.filter_documents(
+                        "collection1", '"b" IN strings'
+                    )
+                )
+                self.assertEqual(names, ["test"])
 
-                session["collection1"]['test'] = {
-                    'strings': ['x', 'y', 'z']
-                }
-                names = list(document["name"] for document in session.filter_documents("collection1", '"b" IN strings'))
+                session["collection1"]["test"] = {"strings": ["x", "y", "z"]}
+                names = list(
+                    document["name"]
+                    for document in session.filter_documents(
+                        "collection1", '"b" IN strings'
+                    )
+                )
                 self.assertEqual(names, [])
-                names = list(document["name"] for document in session.filter_documents("collection1", '"z" IN strings'))
-                self.assertEqual(names, ['test'])
+                names = list(
+                    document["name"]
+                    for document in session.filter_documents(
+                        "collection1", '"z" IN strings'
+                    )
+                )
+                self.assertEqual(names, ["test"])
 
-                session["collection1"]['test'] = {}
-                names = list(document["name"] for document in session.filter_documents("collection1", '"y" IN strings'))
+                session["collection1"]["test"] = {}
+                names = list(
+                    document["name"]
+                    for document in session.filter_documents(
+                        "collection1", '"y" IN strings'
+                    )
+                )
                 self.assertEqual(names, [])
 
         def test_filter_literals(self):
@@ -1729,36 +1886,36 @@ def create_test_case(**database_creation_parameters):
             """
 
             literals = {
-                'True': True,
-                'TRUE': True,
-                'true': True,
-                'False': False,
-                'FALSE': False,
-                'false': False,
-                'Null': None,
-                'NULL': None,
-                'null': None,
-                '0': 0,
-                '123456789101112': 123456789101112,
-                '-45': -45,
-                '-46.8': -46.8,
-                '1.5654353456363e-15': 1.5654353456363e-15,
-                '""': '',
-                '"2018-05-25"': '2018-05-25',
-                '"a\n b\n  c"': 'a\n b\n  c',
+                "True": True,
+                "TRUE": True,
+                "true": True,
+                "False": False,
+                "FALSE": False,
+                "false": False,
+                "Null": None,
+                "NULL": None,
+                "null": None,
+                "0": 0,
+                "123456789101112": 123456789101112,
+                "-45": -45,
+                "-46.8": -46.8,
+                "1.5654353456363e-15": 1.5654353456363e-15,
+                '""': "",
+                '"2018-05-25"': "2018-05-25",
+                '"a\n b\n  c"': "a\n b\n  c",
                 '"\\""': '"',
-                '2018-05-25': date(2018, 5, 25),
-                '2018-5-25': date(2018, 5, 25),
-                '12:54': time(12, 54),
-                '02:4:9': time(2, 4, 9),
+                "2018-05-25": date(2018, 5, 25),
+                "2018-5-25": date(2018, 5, 25),
+                "12:54": time(12, 54),
+                "02:4:9": time(2, 4, 9),
                 # The following interpretation of microsecond is a strange
                 # behavior of datetime.strptime that expect up to 6 digits
                 # with zeroes padded on the right !?
-                '12:34:56.789': time(12, 34, 56, 789000),
-                '12:34:56.000789': time(12, 34, 56, 789),
-                '2018-05-25T12:34:56.000789': datetime(2018, 5, 25, 12, 34, 56, 789),
-                '2018-5-25T12:34': datetime(2018, 5, 25, 12, 34),
-                '[]': [],
+                "12:34:56.789": time(12, 34, 56, 789000),
+                "12:34:56.000789": time(12, 34, 56, 789),
+                "2018-05-25T12:34:56.000789": datetime(2018, 5, 25, 12, 34, 56, 789),
+                "2018-5-25T12:34": datetime(2018, 5, 25, 12, 34),
+                "[]": [],
             }
             # Adds the literal for a list of all elements in the dictionary
             literals[f'[{",".join(literals.keys())}]'] = list(literals.values())
@@ -1791,8 +1948,10 @@ def create_test_case(**database_creation_parameters):
             database = self.create_database(clear=False)
             with database as session:
                 self.assertTrue(session.has_collection("collection1"))
-                names = [i["name"] for i in session.filter_documents("collection1", "all")]
-                self.assertEqual(names, ['titi'])
+                names = [
+                    i["name"] for i in session.filter_documents("collection1", "all")
+                ]
+                self.assertEqual(names, ["titi"])
 
                 # Check that recursive session creation always return the
                 # same object
@@ -1813,7 +1972,7 @@ def create_test_case(**database_creation_parameters):
             # a new one is created.
             with database as session5:
                 self.assertIsNot(session, session5)
-                self.assertEqual(len(list(session5.get_documents('collection1'))), 2)
+                self.assertEqual(len(list(session5.get_documents("collection1"))), 2)
 
         def test_automatic_fields_creation(self):
             """
@@ -1822,29 +1981,29 @@ def create_test_case(**database_creation_parameters):
             database = self.create_database()
             with database as session:
                 now = datetime.now()
-                session.add_collection('test')
+                session.add_collection("test")
                 base_doc = {
-                    'string': 'string',
-                    'int': 1,
-                    'float': 1.4,
-                    'boolean': True,
-                    'datetime': now,
-                    'date': now.date(),
-                    'time': now.time(),
-                    'dict': {
-                        'string': 'string',
-                        'int': 1,
-                        'float': 1.4,
-                        'boolean': True,
-                    }
+                    "string": "string",
+                    "int": 1,
+                    "float": 1.4,
+                    "boolean": True,
+                    "datetime": now,
+                    "date": now.date(),
+                    "time": now.time(),
+                    "dict": {
+                        "string": "string",
+                        "int": 1,
+                        "float": 1.4,
+                        "boolean": True,
+                    },
                 }
                 doc = base_doc.copy()
                 for k, v in base_doc.items():
-                    lk = 'list_%s' % k
+                    lk = "list_%s" % k
                     doc[lk] = [v]
-                doc['primary_key'] = 'test'
-                session.add_document('test', doc)
-                stored_doc = session.get_document('test', 'test')
+                doc["primary_key"] = "test"
+                session.add_document("test", doc)
+                stored_doc = session.get_document("test", "test")
                 self.assertEqual(doc, stored_doc)
 
         def test_delete(self):
@@ -1853,54 +2012,57 @@ def create_test_case(**database_creation_parameters):
             """
             database = self.create_database()
             with database as session:
-                session.add_collection('things', ('one', 'two'))
+                session.add_collection("things", ("one", "two"))
                 for one in range(10):
                     for two in range(10):
-                        session['things'][(str(one), str(two))] = {
-                            'content': one * two,
+                        session["things"][(str(one), str(two))] = {
+                            "content": one * two,
                         }
-                deleted = session['things'].delete('all')
+                deleted = session["things"].delete("all")
                 self.assertEqual(deleted, 100)
-                deleted = session['things'].delete('{content} >= 4')
+                deleted = session["things"].delete("{content} >= 4")
                 self.assertEqual(deleted, 0)
                 for one in range(10):
                     for two in range(10):
-                        session['things'][(str(one), str(two))] = {
-                            'content': one * two,
+                        session["things"][(str(one), str(two))] = {
+                            "content": one * two,
                         }
-                deleted = session['things'].delete('{one} == "5"')
+                deleted = session["things"].delete('{one} == "5"')
                 self.assertEqual(deleted, 10)
-                deleted = session['things'].delete('{content} >= 4')
+                deleted = session["things"].delete("{content} >= 4")
                 self.assertEqual(deleted, 67)
                 self.maxDiff = 1000
                 self.assertEqual(
-                    list(session['things'].documents()),
-                    [{'content': 0, 'one': 0, 'two': 0},
-                     {'content': 0, 'one': 0, 'two': 1},
-                     {'content': 0, 'one': 0, 'two': 2},
-                     {'content': 0, 'one': 0, 'two': 3},
-                     {'content': 0, 'one': 0, 'two': 4},
-                     {'content': 0, 'one': 0, 'two': 5},
-                     {'content': 0, 'one': 0, 'two': 6},
-                     {'content': 0, 'one': 0, 'two': 7},
-                     {'content': 0, 'one': 0, 'two': 8},
-                     {'content': 0, 'one': 0, 'two': 9},
-                     {'content': 0, 'one': 1, 'two': 0},
-                     {'content': 1, 'one': 1, 'two': 1},
-                     {'content': 2, 'one': 1, 'two': 2},
-                     {'content': 3, 'one': 1, 'two': 3},
-                     {'content': 0, 'one': 2, 'two': 0},
-                     {'content': 2, 'one': 2, 'two': 1},
-                     {'content': 0, 'one': 3, 'two': 0},
-                     {'content': 3, 'one': 3, 'two': 1},
-                     {'content': 0, 'one': 4, 'two': 0},
-                     {'content': 0, 'one': 6, 'two': 0},
-                     {'content': 0, 'one': 7, 'two': 0},
-                     {'content': 0, 'one': 8, 'two': 0},
-                     {'content': 0, 'one': 9, 'two': 0}])
-
+                    list(session["things"].documents()),
+                    [
+                        {"content": 0, "one": 0, "two": 0},
+                        {"content": 0, "one": 0, "two": 1},
+                        {"content": 0, "one": 0, "two": 2},
+                        {"content": 0, "one": 0, "two": 3},
+                        {"content": 0, "one": 0, "two": 4},
+                        {"content": 0, "one": 0, "two": 5},
+                        {"content": 0, "one": 0, "two": 6},
+                        {"content": 0, "one": 0, "two": 7},
+                        {"content": 0, "one": 0, "two": 8},
+                        {"content": 0, "one": 0, "two": 9},
+                        {"content": 0, "one": 1, "two": 0},
+                        {"content": 1, "one": 1, "two": 1},
+                        {"content": 2, "one": 1, "two": 2},
+                        {"content": 3, "one": 1, "two": 3},
+                        {"content": 0, "one": 2, "two": 0},
+                        {"content": 2, "one": 2, "two": 1},
+                        {"content": 0, "one": 3, "two": 0},
+                        {"content": 3, "one": 3, "two": 1},
+                        {"content": 0, "one": 4, "two": 0},
+                        {"content": 0, "one": 6, "two": 0},
+                        {"content": 0, "one": 7, "two": 0},
+                        {"content": 0, "one": 8, "two": 0},
+                        {"content": 0, "one": 9, "two": 0},
+                    ],
+                )
 
     return TestDatabaseMethods
+
 
 def load_tests(loader, standard_tests, pattern):
     """
@@ -1921,17 +2083,17 @@ def load_tests(loader, standard_tests, pattern):
 
     # Tests with postgresql. All the tests will be skipped if
     # it is not possible to connect to populse_db_tests database.
-    #tests = loader.loadTestsFromTestCase(create_test_case(
-        #database_url='postgresql:///populse_db_tests',
-        #caches=False,
-        #list_tables=True,
-        #query_type='mixed'))
-    #suite.addTests(tests)
+    # tests = loader.loadTestsFromTestCase(create_test_case(
+    # database_url='postgresql:///populse_db_tests',
+    # caches=False,
+    # list_tables=True,
+    # query_type='mixed'))
+    # suite.addTests(tests)
 
     return suite
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # Working from the scripts directory
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
