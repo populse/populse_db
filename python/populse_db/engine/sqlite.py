@@ -178,8 +178,8 @@ class SQLiteCollection(DatabaseCollection):
             lambda s: (None if s is None else dateutil.parser.parse(s).time()),
         ),
         list: (
-            lambda l: (None if l is None else json_dumps(l)),
-            lambda l: (None if l is None else json.loads(l)),
+            lambda l: (None if l is None else json_dumps(l)),  # noqa: E741
+            lambda l: (None if l is None else json.loads(l)),  # noqa: E741
         ),
         dict: (
             lambda d: (None if d is None else json_dumps(d)),

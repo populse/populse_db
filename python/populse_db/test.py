@@ -197,7 +197,6 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-
                 # Adding a collection
                 session.add_collection("collection1")
 
@@ -217,7 +216,6 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-
                 # Adding a collection
                 session.add_collection("current", "name")
 
@@ -391,7 +389,6 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-
                 # Adding a collection
                 session.add_collection("collection1")
 
@@ -591,7 +588,6 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-
                 # Adding a collection
                 session.add_collection("collection1", "name")
 
@@ -731,7 +727,6 @@ def create_test_case(**database_creation_parameters):
             """
             database = self.create_database()
             with database as session:
-
                 # Adding a collection
                 session.add_collection("collection1", "name")
 
@@ -782,7 +777,6 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-
                 # Adding a collection
                 session.add_collection("collection1", "name")
 
@@ -839,7 +833,6 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-
                 # Adding a first collection
                 session.add_collection("collection1")
 
@@ -879,7 +872,6 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-
                 # Adding a first collection
                 self.assertFalse(session.has_collection("collection1"))
                 session.add_collection("collection1")
@@ -1092,7 +1084,6 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-
                 # Adding a collection
                 session.add_collection("collection1", "name")
 
@@ -1199,7 +1190,6 @@ def create_test_case(**database_creation_parameters):
 
             database = self.create_database()
             with database as session:
-
                 session.add_collection("collection_test")
                 session.add_field("collection_test", "field_test", str, None)
                 session["collection_test"]["document_test"] = {}
@@ -2094,7 +2084,6 @@ def load_tests(loader, standard_tests, pattern):
 
 
 if __name__ == "__main__":
-
     # Working from the scripts directory
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 

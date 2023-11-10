@@ -180,9 +180,7 @@ class FilterToSQL(Transformer):
         left_operand, operator, right_operand = items
         operator_str = str(operator).lower()
         if operator_str == "in":
-
             if isinstance(right_operand, Field):
-
                 if isinstance(
                     left_operand,
                     (

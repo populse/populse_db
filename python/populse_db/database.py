@@ -530,7 +530,7 @@ _json_encodings = {
     datetime: lambda d: f"{d.isoformat()}ℹdatetimeℹ",
     date: lambda d: f"{d.isoformat()}ℹdateℹ",
     time: lambda d: f"{d.isoformat()}ℹtimeℹ",
-    list: lambda l: [json_encode(i) for i in l],
+    list: lambda l: [json_encode(i) for i in l],  # noqa: E741
     dict: lambda d: dict((k, json_encode(v)) for k, v in d.items()),
 }
 
