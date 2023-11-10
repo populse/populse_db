@@ -144,19 +144,19 @@ class DatabaseSession:
     default_primary_key = 'primary_key'
 
     def execute(self, *args, **kwargs):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def commit(self):
-        raise NotImplemented()
-
+        raise NotImplementedError()
+    
     def rollback(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def settings(self, category, key, default=None):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def set_settings(self, category, key, value):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def add_collection(self, name, primary_key=default_primary_key):
         """
@@ -170,7 +170,7 @@ class DatabaseSession:
                            - If the collection name is invalid
                            - If the primary_key is invalid
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def remove_collection(self, name):
         """
@@ -180,18 +180,18 @@ class DatabaseSession:
 
         :raise ValueError: If the collection does not exist
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def has_collection(self, name):
         """
         Check if a collection with the given name exists.
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def __getitem__(self, collection_name):
         """Return a collection object given its name.
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def collections(self):
         """
