@@ -10,6 +10,7 @@ class Engine:
     NotImplementedError. This class exists to list all the methods that
     must be implemented by an engine.
     """
+
     def __init__(self):
         """
         Parameters passed to __init__ may differ between engine classes.
@@ -17,7 +18,6 @@ class Engine:
         from URL.
         """
         raise NotImplementedError()
-
 
     def __enter__(self):
         """
@@ -29,7 +29,6 @@ class Engine:
         """
         raise NotImplementedError()
 
-
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
         This method is called when the user do not need to use the engine
@@ -40,14 +39,12 @@ class Engine:
         """
         raise NotImplementedError()
 
-
     def commit(self):
         """
         Store in the database all modifications done since the last call to
         either __enter__, commit or rollback.
         """
         raise NotImplementedError()
-
 
     def rollback(self):
         """
@@ -56,13 +53,11 @@ class Engine:
         """
         raise NotImplementedError()
 
-
     def clear(self):
         """
         Erase database data and schema.
         """
         raise NotImplementedError()
-
 
     def has_collection(self, collection):
         """
@@ -72,7 +67,6 @@ class Engine:
         :param collection: collection name (str)
         """
         raise NotImplementedError()
-
 
     def add_collection(self, collection, primary_key):
         """
@@ -88,7 +82,6 @@ class Engine:
         """
         raise NotImplementedError()
 
-
     def collection(self, collection):
         """
         Returns a Row Object with at least the following items:
@@ -102,7 +95,6 @@ class Engine:
         """
         raise NotImplementedError()
 
-
     def primary_key(self, collection):
         """
         Return the name of the primary key of a collection.
@@ -112,7 +104,6 @@ class Engine:
         """
         raise NotImplementedError()
 
-
     def remove_collection(self, collection):
         """
         Delete a collection and its data.
@@ -121,7 +112,6 @@ class Engine:
         """
         raise NotImplementedError()
 
-
     def collections(self):
         """
         Return an iterable (e.g. list, generator, etc.) browsing the
@@ -129,7 +119,6 @@ class Engine:
         for the format of each collection object.
         """
         raise NotImplementedError()
-
 
     def add_field(self, collection, field, type, description, index):
         """
@@ -147,7 +136,6 @@ class Engine:
         """
         raise NotImplementedError()
 
-
     def has_field(self, collection, field):
         """
         Checks existence of a field in a collection. May be called often,
@@ -159,7 +147,6 @@ class Engine:
         :param field: field name (str)
         """
         raise NotImplementedError()
-
 
     def field(self, collection, field):
         """
@@ -180,7 +167,6 @@ class Engine:
         """
         raise NotImplementedError()
 
-
     def fields(self, collection=None):
         """
         Return an iterable (e.g. list, generator, etc.) browsing the
@@ -192,8 +178,7 @@ class Engine:
         """
         raise NotImplementedError()
 
-
-    def remove_fields(self, collection ,fields):
+    def remove_fields(self, collection, fields):
         """
         Remove given fields from a collection as well as all corresponding data.
 
@@ -202,7 +187,6 @@ class Engine:
         :param fields: field name (str)
         """
         raise NotImplementedError()
-
 
     def has_document(self, collection, document_id):
         """
@@ -216,9 +200,7 @@ class Engine:
         """
         raise NotImplementedError()
 
-
-    def document(self, collection, document_id,
-                 fields=None, as_list=False):
+    def document(self, collection, document_id, fields=None, as_list=False):
         """
         Returns a Row Object corresponding to a document in the collection.
         The object has one item per selected fields. If fields is not given,
@@ -239,13 +221,11 @@ class Engine:
         """
         raise NotImplementedError()
 
-
     def has_value(self, collection, document_id, field):
         """
         Check if a document has a not null value for a given field.
         """
         raise NotImplementedError()
-
 
     def set_values(self, collection, document_id, values):
         """
@@ -260,7 +240,6 @@ class Engine:
         """
         raise NotImplementedError()
 
-
     def remove_value(self, collection, document_id, field):
         """
         Remove a value from a document (setting its value to None).
@@ -274,7 +253,6 @@ class Engine:
         """
         raise NotImplementedError()
 
-
     def remove_document(self, collection, document_id):
         """
         Remove a document from a collection.
@@ -285,7 +263,6 @@ class Engine:
             key field (str)
         """
         raise NotImplementedError()
-
 
     def parse_filter(self, collection, filter):
         """
@@ -300,7 +277,6 @@ class Engine:
                        language.
         """
         raise NotImplementedError()
-
 
     def filter_documents(self, parsed_filter, fields=None, as_list=False):
         """

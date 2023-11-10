@@ -3,6 +3,7 @@ import threading
 from urllib.parse import urlparse
 from .engine.sqlite import SQLiteSession
 
+
 class Database:
     """Entrypoint of populse_db for creating :any:`DatabaseSession` object given
     an URL that identify the underlying database engine.
@@ -103,24 +104,20 @@ class Database:
             self.timeout = int(timeout)
         else:
             self.timeout = None
-        if self.url.scheme in ('', 'sqlite'):
+        if self.url.scheme in ("", "sqlite"):
             self.session_class = SQLiteSession
         else:
-            raise ValueError(f'Invalid database type in database URL: {database_url}')
+            raise ValueError(f"Invalid database type in database URL: {database_url}")
         self.session_parameters = self.session_class.parse_url(self.url)
 
-
-    def session(self,exclusive=False):
+    def session(self, exclusive=False):
         args, kwargs = self.session_parameters
         return self.session_class(
-            *args,
-            exclusive=exclusive,
-            timeout=self.timeout,
-            **kwargs)
-
+            *args, exclusive=exclusive, timeout=self.timeout, **kwargs
+        )
 
     def begin_session(self, exclusive):
-        session_depth = getattr(self.thread_local, 'populse_db', None)
+        session_depth = getattr(self.thread_local, "populse_db", None)
         if session_depth is None:
             session = self.session(exclusive=exclusive)
             depth = 0
@@ -130,7 +127,6 @@ class Database:
         self.thread_local.populse_db = (session, depth)
         return session
 
-
     def end_session(self, rollback):
         session, depth = self.thread_local.populse_db
         depth -= 1
@@ -139,7 +135,6 @@ class Database:
             del self.thread_local.populse_db
         else:
             self.thread_local.populse_db = (session, depth)
-
 
     def __enter__(self):
         """
@@ -157,10 +152,8 @@ class Database:
         """
         return self.begin_session(exclusive=False)
 
-
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.end_session(rollback=(exc_type is not None))
-
 
     @property
     @contextmanager
@@ -177,4 +170,4 @@ class Database:
 # Import here to allow the following import in external
 # modules:
 #   from populse_db import json_encode, json_decode
-from .database import json_encode, json_decode  # noqa: E402
+from .database import json_encode, json_decode  # noqa: F401, E402

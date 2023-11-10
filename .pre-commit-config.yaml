@@ -1,6 +1,8 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v4.5.0
     hooks:
     -   id: check-added-large-files
     -   id: check-case-conflict
@@ -9,17 +11,19 @@ repos:
     -   id: check-merge-conflict
     -   id: check-shebang-scripts-are-executable
     -   id: check-symlinks
+    -   id: check-toml
     -   id: check-xml
     -   id: check-yaml
     -   id: debug-statements
     -   id: destroyed-symlinks
     -   id: end-of-file-fixer
     -   id: fix-byte-order-marker
-#
-#-   repo: https://github.com/pycqa/flake8
-#    rev: 3.9.2
-#    hooks:
-#    -   id: flake8
-#        name: flake8 under python3
-#        language_version: python3
-#        exclude: ^doc/sphinx/sphinxext/
+-   repo: https://github.com/psf/black
+    rev: 23.11.0
+    hooks:
+      - id: black
+        exclude: docs
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.5
+    hooks:
+    -   id: ruff
