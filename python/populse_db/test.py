@@ -53,7 +53,7 @@ def create_test_case(**database_creation_parameters):
             Called before every unit test
             Creates a temporary folder containing the database file that will be used for the test
             """
-            self.database_creation_parameters = dict(database_creation_parameters)
+            self.database_creation_parameters = database_creation_parameters.copy()
             if "database_url" not in self.database_creation_parameters:
                 self.temp_folder = tempfile.mkdtemp(prefix="populse_db")
                 path = os.path.join(self.temp_folder, "test.db")
