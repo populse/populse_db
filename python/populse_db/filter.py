@@ -109,8 +109,8 @@ def literal_parser():
     return Lark(filter_grammar, parser="lalr", start="literal")
 
 
-def _list_to_sql(l):
-    s = ",".join(f'"{x}"' if isinstance(x, str) else to_sql(x) for x in l)
+def _list_to_sql(value):
+    s = ",".join(f'"{x}"' if isinstance(x, str) else to_sql(x) for x in value)
     return f"'[{s}]'"
 
 

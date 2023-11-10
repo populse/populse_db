@@ -560,9 +560,9 @@ def json_decode(value):
         return dict((k, json_decode(v)) for k, v in value.items())
     elif isinstance(value, str):
         if value.endswith("ℹ"):
-            l = value[:-1].rsplit("ℹ", 1)
-            if len(l) == 2:
-                encoded_value, decoding_name = l
+            split_value = value[:-1].rsplit("ℹ", 1)
+            if len(split_value) == 2:
+                encoded_value, decoding_name = split_value
                 decode = _json_decodings.get(decoding_name)
                 if decode is None:
                     raise ValueError(f'Invalid JSON encoding type for value "{value}"')

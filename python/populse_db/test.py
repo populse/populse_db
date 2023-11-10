@@ -565,7 +565,7 @@ def create_test_case(**database_creation_parameters):
             """
 
             database = self.create_database()
-            with database as session:
+            with database as _:
                 self.assertTrue(check_value_type("string", str))
                 self.assertFalse(check_value_type(1, str))
                 self.assertTrue(check_value_type(None, str))

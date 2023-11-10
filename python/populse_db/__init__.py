@@ -170,4 +170,4 @@ class Database:
 # Import here to allow the following import in external
 # modules:
 #   from populse_db import json_encode, json_decode
-from .database import json_encode, json_decode  # noqa: E402
+from .database import json_encode, json_decode  # noqa: F401, E402
