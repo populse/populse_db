@@ -316,7 +316,7 @@ if __name__ == "__main__":
     with store.data as d:
         d.last_update = datetime.now()
         print(d.last_update.get())
-        d.dataset.directory.set('/somewhere')
+        d.dataset.directory.set("/somewhere")
         print(d.dataset.directory.get())
 
         d.snapshots = []

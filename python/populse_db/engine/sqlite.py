@@ -374,7 +374,7 @@ class SQLiteCollection(DatabaseCollection):
         if catchall is not ...:
             if not self.catchall_column:
                 raise ValueError(
-                    f'Collection {self.name} cannot store this value: {catchall}'
+                    f"Collection {self.name} cannot store this value: {catchall}"
                 )
             bad_json = False
             try:
