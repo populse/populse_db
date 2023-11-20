@@ -314,17 +314,20 @@ class SQLiteCollection(DatabaseCollection):
             if columns[-1] == self.catchall_column:
                 columns = columns[:-1]
             document = catchall
-            document.update(zip(columns, row))
-            for field, value in document.items():
-                encoding = self.fields.get(field, {}).get("encoding")
-                if encoding:
-                    encode, decode = encoding
-                    value = decode(value)
-                if field in self.bad_json_fields:
-                    value = json_decode(value)
-                document[field] = value
-            if as_list:
-                yield [document[i] for i in fields]
+            if isinstance(document, dict):
+                document.update(zip(columns, row))
+                for field, value in document.items():
+                    encoding = self.fields.get(field, {}).get("encoding")
+                    if encoding:
+                        encode, decode = encoding
+                        value = decode(value)
+                    if field in self.bad_json_fields:
+                        value = json_decode(value)
+                    document[field] = value
+                if as_list:
+                    yield [document[i] for i in fields]
+                else:
+                    yield document
             else:
                 yield document
 
@@ -352,27 +355,35 @@ class SQLiteCollection(DatabaseCollection):
         data = []
         catchall_column = None
         catchall_data = None
-        catchall = {}
-        for field, value in document.items():
-            if field in self.primary_key:
-                continue
-            if field in self.bad_json_fields:
-                value = json_encode(value)
-            if field in self.fields:
-                columns.append(field)
-                data.append(self._encode_column_value(field, value))
-            else:
-                catchall[field] = value
-        if catchall:
+        catchall = ...
+        if isinstance(document, dict):
+            catchall = {}
+            for field, value in document.items():
+                if field in self.primary_key:
+                    continue
+                if field in self.bad_json_fields:
+                    value = json_encode(value)
+                if field in self.fields:
+                    columns.append(field)
+                    data.append(self._encode_column_value(field, value))
+                else:
+                    catchall[field] = value
+        else:
+            catchall_column = self.catchall_column
+            catchall_data = json_dumps(document)
+        if catchall is not ...:
             if not self.catchall_column:
                 raise ValueError(
-                    f'Collection {self.name} cannot store the following unknown fields: {", ".join(catchall)}'
+                    f'Collection {self.name} cannot store this value: {catchall}'
                 )
             bad_json = False
             try:
                 catchall_data = json_dumps(catchall)
             except TypeError:
-                bad_json = True
+                if isinstance(catchall, dict):
+                    bad_json = True
+                else:
+                    raise
             if bad_json:
                 jsons = []
                 for field, value in catchall.items():
@@ -454,9 +465,6 @@ class SQLiteCollection(DatabaseCollection):
     def parse_filter(self, filter):
         if filter is None or isinstance(filter, ParsedFilter):
             return filter
-        if inspect.isfunction(filter):
-            result = ParsedFilter(lambda_to_sql(self, filter))
-            return result
         tree = filter_parser().parse(filter)
         where_filter = FilterToSQL(self).transform(tree)
         if where_filter is None:
