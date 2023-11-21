@@ -54,10 +54,9 @@ def type_to_str(type):
         return type.__name__
 
 
-_str_to_type = dict(
-    (type_to_str(i), i)
-    for i in (str, int, float, bool, date, datetime, time, dict, list)
-)
+_str_to_type = {
+    type_to_str(i): i for i in (str, int, float, bool, date, datetime, time, dict, list)
+}
 
 
 def str_to_type(str):
@@ -531,7 +530,7 @@ _json_encodings = {
     date: lambda d: f"{d.isoformat()}ℹdateℹ",
     time: lambda d: f"{d.isoformat()}ℹtimeℹ",
     list: lambda l: [json_encode(i) for i in l],  # noqa: E741
-    dict: lambda d: dict((k, json_encode(v)) for k, v in d.items()),
+    dict: lambda d: {k: json_encode(v) for k, v in d.items()},
 }
 
 _json_decodings = {
@@ -557,7 +556,7 @@ def json_decode(value):
     if isinstance(value, list):
         return [json_decode(i) for i in value]
     elif isinstance(value, dict):
-        return dict((k, json_decode(v)) for k, v in value.items())
+        return {k: json_decode(v) for k, v in value.items()}
     elif isinstance(value, str):
         if value.endswith("ℹ"):
             split_value = value[:-1].rsplit("ℹ", 1)

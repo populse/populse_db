@@ -138,7 +138,7 @@ class SQLiteSession(DatabaseSession):
         if isinstance(primary_key, str):
             primary_key = {primary_key: str}
         elif isinstance(primary_key, (list, tuple)):
-            primary_key = dict((i, str) for i in primary_key)
+            primary_key = {i: str for i in primary_key}
         sql = (
             f"CREATE TABLE [{name}] ("
             f'{",".join(f"[{n}] {type_to_str(t)} NOT NULL" for n, t in primary_key.items())},'
@@ -301,7 +301,7 @@ class SQLiteCollection(DatabaseCollection):
                 if row[-1] is not None:
                     catchall = json.loads(row[-1])
                     if isinstance(catchall_fields, set):
-                        catchall = dict((i, catchall[i]) for i in catchall_fields)
+                        catchall = {i: catchall[i] for i in catchall_fields}
                 else:
                     catchall = {}
                 row = row[:-1]
