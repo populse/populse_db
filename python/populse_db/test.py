@@ -1,13 +1,13 @@
-from datetime import datetime, date, time
 import os
 import shutil
 import tempfile
 import unittest
+from datetime import date, datetime, time
 
 from populse_db import Database
 from populse_db.database import check_value_type
-from populse_db.filter import literal_parser, FilterToSQL
 from populse_db.engine.sqlite import SQLiteSession
+from populse_db.filter import FilterToSQL, literal_parser
 
 
 class TestsSQLiteInMemory(unittest.TestCase):

@@ -1,6 +1,7 @@
-from contextlib import contextmanager
 import threading
+from contextlib import contextmanager
 from urllib.parse import urlparse
+
 from .engine.sqlite import SQLiteSession
 
 
@@ -170,4 +171,4 @@ class Database:
 # Import here to allow the following import in external
 # modules:
 #   from populse_db import json_encode, json_decode
-from .database import json_encode, json_decode  # noqa: F401, E402
+from .database import json_decode, json_encode  # noqa: F401, E402

@@ -12,13 +12,14 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
+import sys
+
 from populse_db.info import (
-    version_major,
-    version_minor,
-    version_micro,
     version_extra,
+    version_major,
+    version_micro,
+    version_minor,
 )
 
 # If extensions (or modules to document with autodoc) are in another directory,
