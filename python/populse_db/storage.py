@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from populse_db import Database
 from populse_db.database import str_to_type
 
 
@@ -234,7 +235,11 @@ class StorageDocumentField:
 
     def __getitem__(self, key):
         return StorageDocumentField(
-            self._db, self._collection, self._document_id, self._path + (key,)
+            self._db,
+            self._collection,
+            self._document_id,
+            self._field,
+            self._path + (key,),
         )
 
     def __getattr__(self, key):
@@ -273,13 +278,28 @@ class StorageDocumentField:
             value = db_value
         return value
 
+    def append(self, item):
+        value = self.get()
+        value.append(item)
+        self.set(value)
+
 
 if __name__ == "__main__":
+    import json
     import os
     from datetime import datetime
     from populse_db import Database
 
     from pprint import pprint
+
+    with open("/home/yann/dev/snapcheck/database_brainvisa/snapshots.js") as f:
+        f.readline()
+        snapshots = json.loads(f.read(11560057))
+    select = {}
+    for s in snapshots:
+        select[(s["subject"], s["time_point"])] = s
+    snapshots = list(select.values())
+    del select
 
     # A schema can be defined in a class deriving from
     # Storage
@@ -302,15 +322,28 @@ if __name__ == "__main__":
                 }
             ],
             # A collection of executions to track data provenance
-            # "execution": [{}],
+            "execution": [
+                {
+                    "execution_id": ["str", {"primary_key": True}],
+                    "start_time": "datetime",
+                    "end_time": datetime,
+                    "status": str,
+                    "capsul_executable": str,
+                    "capsul_parameters": dict,
+                    "software": str,
+                    "software_module": str,
+                    "software_version": str,
+                }
+            ],
+            # A collection of snapshots requir
             "snapshots": [
                 {
+                    "subject": ["str", {"primary_key": True}],
+                    "time_point": ["str", {"primary_key": True}],
                     "image": str,
                     "top": "list[int]",
                     "size": list[float],
-                    "subject": ["str", {"primary_key": True}],
-                    "time_point": ["str", {"primary_key": True}],
-                    "software": "str",
+                    "execution": "str",
                     "data_type": "str",
                     "side": "str",
                 }
@@ -319,40 +352,55 @@ if __name__ == "__main__":
 
     if os.path.exists("/tmp/test.sqlite"):
         os.remove("/tmp/test.sqlite")
+
+    # store = Storage("/tmp/test.sqlite")
+    # with store.data as data:
+    #     store.dataset = {}
+    #     store.snapshots = []
     store = MyStorage("/tmp/test.sqlite")
-    pprint(store.get_schema())
+
     store.create()
     store.create()
-    with store.database as dbs:
-        for collection in dbs.collections():
-            print(collection.name)
-            print(
-                "  fields:",
-                dict((f["name"], f["type"]) for f in collection.fields.values()),
-            )
-            print("  primary key:", collection.primary_key)
-            print("  catchall:", collection.catchall_column)
 
     with store.data as d:
+        # Set a global value
         d.last_update = datetime.now()
-        print(d.last_update.get())
-        d.dataset = {}
-        d.dataset.directory.set("/somewhere")
-        print(d.dataset.directory.get())
+        d.last_update.set(datetime.now())
 
-        d.snapshots = []
-        d.snapshots.append(
-            {
-                "orientation": "coronal",
-                "top": [0.0, 0.0],
-                "size": [872.0, 887.0],
-                "dataset": "database_brainvisa",
-                "software": "morphologist",
-                "time_point": "M0",
-                "data_type": "greywhite",
-                "side": "both",
-                "image": "/home/yann/dev/snapcheck/database_brainvisa/snapshots/morphologist/M0/greywhite/snapshot_greywhite_0001017COG_M0.png",
-                "subject": "0001017COG",
-            },
-        )
-        pprint(d.snapshots.get())
+        # Read a global value
+        print(d.last_update.get())
+
+        # Set single document fields
+        d.dataset.directory = "/somewhere"
+        d.dataset.schema.set("BIDS")
+        # Following field is not in schema
+        d.dataset.my_data = {"creation_date": datetime.now(), "manager": "me"}
+        pprint(d.dataset.directory.get())
+
+        # Adds many documents in a collection
+        for snapshot in snapshots:
+            d.snapshots.append(snapshot)
+
+        # Select one document from a collection
+        pprint(d.snapshots["0001292COG", "M0"].get())
+
+        # Select one document field from a collection
+        pprint(d.snapshots["0001292COG", "M0"].image.get())
+
+    with store.database as dbs:
+        for collection in dbs.collections():
+            print("=" * 40)
+            print(collection.name)
+            print("=" * 40)
+            for f in collection.fields.values():
+                print(f["name"], ":", f["type"])
+            print()
+            print("primary key:", list(collection.primary_key))
+            print("catchall:", collection.catchall_column)
+            print("-" * 40)
+            columns = list(collection.fields)
+            columns.append(collection.catchall_column)
+            for row in dbs.sqlite.execute(
+                f"SELECT {','.join('['+i+']' for i in columns)} FROM [{collection.name}]"
+            ):
+                print(row)
