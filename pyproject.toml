@@ -1,3 +1,6 @@
+[tool.black]
+force-exclude = "docs"
+
 [tool.ruff]
 select = ["E", "F", "I", "UP", "W"]
 ignore = ["E501"] # do not complain about long documentation lines
