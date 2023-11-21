@@ -55,8 +55,7 @@ def type_to_str(type):
 
 
 _str_to_type = {
-    type_to_str(i): i
-    for i in (str, int, float, bool, date, datetime, time, dict, list)
+    type_to_str(i): i for i in (str, int, float, bool, date, datetime, time, dict, list)
 }
 
 
