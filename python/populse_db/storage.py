@@ -134,12 +134,16 @@ class Storage:
 
 
 class StorageGlobal:
-    def __init__(self, db, collection=None):
+    def __init__(self, db):
         super().__setattr__("_db", db)
 
     def __getitem__(self, key):
         if self._db.has_collection(key):
-            return StorageCollection(self._db, key)
+            collection = self._db[key]
+            if collection:
+                if Storage.default_field in collection.primary_key:
+                    return StorageDocument(self._db, key, Storage.default_document_id)
+                return StorageCollection(self._db, key)
         return StorageDocumentField(
             self._db,
             Storage.default_collection,
@@ -230,7 +234,7 @@ class StorageDocumentField:
 
     def __getitem__(self, key):
         return StorageDocumentField(
-            self._db, self._collection, self._key, self._path + (key,)
+            self._db, self._collection, self._document_id, self._path + (key,)
         )
 
     def __getattr__(self, key):
@@ -277,12 +281,28 @@ if __name__ == "__main__":
 
     from pprint import pprint
 
-    class MyStore(Storage):
+    # A schema can be defined in a class deriving from
+    # Storage
+    class MyStorage(Storage):
         schema = {
+            # A global value
             "last_update": datetime,
+            # A single document (i.e. not in a collection)
             "dataset": {
                 "directory": str,
+                "schema": str,
             },
+            # A collection of metadata associated to a path.
+            "metadata": [
+                {
+                    "path": [str, {"primary_key": True}],
+                    "subject": str,
+                    "time_point": str,
+                    "history": list[str],  # contains a list of execution_id
+                }
+            ],
+            # A collection of executions to track data provenance
+            # "execution": [{}],
             "snapshots": [
                 {
                     "image": str,
@@ -299,7 +319,7 @@ if __name__ == "__main__":
 
     if os.path.exists("/tmp/test.sqlite"):
         os.remove("/tmp/test.sqlite")
-    store = MyStore("/tmp/test.sqlite")
+    store = MyStorage("/tmp/test.sqlite")
     pprint(store.get_schema())
     store.create()
     store.create()
@@ -316,6 +336,7 @@ if __name__ == "__main__":
     with store.data as d:
         d.last_update = datetime.now()
         print(d.last_update.get())
+        d.dataset = {}
         d.dataset.directory.set("/somewhere")
         print(d.dataset.directory.get())
 
