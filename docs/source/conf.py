@@ -12,9 +12,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
-from populse_db.info import (
+import sys
+
+from populse_db.info import (  # isort:skip
     version_major,
     version_minor,
     version_micro,

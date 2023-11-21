@@ -1,7 +1,7 @@
 import ast
 import datetime
-import dateutil.parser
 
+import dateutil.parser
 from lark import Lark, Transformer
 
 # The grammar (in Lark format) used to parse filter strings:
