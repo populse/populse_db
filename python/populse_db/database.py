@@ -1,6 +1,7 @@
-from datetime import date, time, datetime
-import dateutil
 import json
+from datetime import date, datetime, time
+
+import dateutil
 
 
 def check_value_type(value, field_type):
