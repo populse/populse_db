@@ -1197,20 +1197,20 @@ def create_test_case(**database_creation_parameters):
                 # Checking with invalid collection
                 self.assertRaises(
                     ValueError,
-                    lambda: set(
+                    lambda: {
                         document["primary_key"]
                         for document in session.filter_documents(
                             "collection_not_existing", None
                         )
-                    ),
+                    },
                 )
 
                 # Checking that every document is returned if there is no filter
-                documents = set(
+                documents = {
                     document["primary_key"]
                     for document in session.filter_documents("collection_test", None)
-                )
-                self.assertEqual(documents, set(["document_test"]))
+                }
+                self.assertEqual(documents, {"document_test"})
 
         def test_filters(self):
             list_datetime = [
@@ -1796,32 +1796,32 @@ def create_test_case(**database_creation_parameters):
                         "ALL AND (%s)" % filter,
                     ):
                         try:
-                            documents = set(
+                            documents = {
                                 document["name"]
                                 for document in session.filter_documents(
                                     "collection1", tested_filter
                                 )
-                            )
+                            }
                             self.assertEqual(documents, expected)
                         except Exception as e:
                             raise Exception(
                                 f"Error while testing filter : {tested_filter}"
                             ) from e
-                    all_documents = set(
+                    all_documents = {
                         document["name"]
                         for document in session.filter_documents("collection1", "ALL")
-                    )
+                    }
                     for tested_filter in (
                         "(%s) OR ALL" % filter,
                         "ALL OR (%s)" % filter,
                     ):
                         try:
-                            documents = set(
+                            documents = {
                                 document["name"]
                                 for document in session.filter_documents(
                                     "collection1", tested_filter
                                 )
-                            )
+                            }
                             self.assertEqual(documents, all_documents)
                         except Exception as e:
                             raise Exception(
