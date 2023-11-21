@@ -25,6 +25,7 @@ with open(os.path.join(python_dir, "populse_db", "info.py")) as f:
 
 # Build the setup
 setup(
+    python_requires='>=3.7',
     name=release_info["NAME"],
     description=release_info["DESCRIPTION"],
     long_description=release_info["LONG_DESCRIPTION"],
