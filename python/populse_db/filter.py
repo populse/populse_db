@@ -181,14 +181,13 @@ class FilterToSQL(Transformer):
         operator_str = str(operator).lower()
         if operator_str == "in":
             if isinstance(right_operand, Field):
-                if isinstance(
+                if left_operand is None or isinstance(
                     left_operand,
                     (
                         str,
                         int,
                         float,
                         bool,
-                        type(None),
                         datetime.date,
                         datetime.time,
                         datetime.datetime,
