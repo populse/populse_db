@@ -1,36 +1,23 @@
 from contextlib import contextmanager
-from populse_db import Database
-from populse_db.database import str_to_type
+from . import Database
+from .storage_server import StorageServer
 
 
 class Storage:
-    default_collection = "_"
-    default_field = "_"
-    default_document_id = "_"
-
     def __init__(self, *args, **kwargs):
-        self.database = Database(*args, **kwargs)
+        self.server = StorageServer(*args, **kwargs)
 
-    @property
     @contextmanager
-    def data(self):
+    def session(self, exclusive=False):
+        token = self.server.access_rights("TODO")
+        connection_id = self.server.connect(
+            token, self.get_schema(), exclusive=exclusive
+        )
         try:
-            session = self.database.begin_session(exclusive=False)
-            yield StorageGlobal(session)
-            self.database.end_session(rollback=False)
+            yield StorageSession(self.server, connection_id)
+            self.server.disconnect(connection_id, rollback=False)
         except Exception:
-            self.database.end_session(rollback=True)
-            raise
-
-    @property
-    @contextmanager
-    def data_exclusive(self):
-        try:
-            session = self.database.begin_session(exclusive=True)
-            yield StorageGlobal(session)
-            self.database.end_session(rollback=False)
-        except Exception:
-            self.end_session(rollback=True)
+            self.server.disconnect(connection_id, rollback=True)
             raise
 
     @classmethod
@@ -60,235 +47,39 @@ class Storage:
                 self.update_schema(schema, s)
         return schema
 
-    def _create_collection(self, dbs, collection_name, definition):
-        primary_key = []
-        collection_fields = {}
-        for kk, vv in definition.items():
-            if isinstance(vv, type):
-                collection_fields[kk] = (vv, {})
-            elif isinstance(vv, str):
-                collection_fields[kk] = (str_to_type(vv), {})
-            elif isinstance(vv, list) and len(vv) == 2:
-                if isinstance(vv[0], type):
-                    t = vv[0]
-                else:
-                    t = str_to_type(vv[0])
-                kwargs = vv[1].copy()
-                if kwargs.pop("primary_key"):
-                    primary_key.append(kk)
-                collection_fields[kk] = (t, kwargs)
-        if not dbs.has_collection(collection_name):
-            if not primary_key:
-                raise ValueError(
-                    f"invalid schema, collection {collection_name} must have at least a primary key"
-                )
-            dbs.add_collection(collection_name, primary_key)
-        collection = dbs[collection_name]
-        if primary_key and list(collection.primary_key) != primary_key:
-            raise ValueError(
-                f"primary key of collection {collection_name} is {list(collection.primary_key)} in database but is {primary_key} in schema"
-            )
-        for n, d in collection_fields.items():
-            f = collection.fields.get(n)
-            t, kwargs = d
-            if f:
-                if f["type"] != t:
-                    raise ValueError(
-                        f"type of field {collection_name}.{n} is {f['type']} in database but is {t} in schema"
-                    )
-            else:
-                collection.add_field(n, t, **kwargs)
 
-    def create(self):
-        schema = self.get_schema()
-        with self.database.exclusive as dbs:
-            if not dbs.has_collection(self.default_collection):
-                dbs.add_collection(self.default_collection, self.default_field)
-            default_collection = dbs[self.default_collection]
-            for k, v in schema.items():
-                if isinstance(v, dict):
-                    # Create the collection first to set its primary key
-                    self._create_collection(
-                        dbs, k, {self.default_field: [str, {"primary_key": True}]}
-                    )
-                    # Then call create again to add fields from schema definition
-                    # and raise an error if a primary key is defined.
-                    self._create_collection(dbs, k, v)
-                    # Create an empty singleton document
-                    dbs[k][Storage.default_document_id] = {}
-                elif isinstance(v, list) and len(v) == 1 and isinstance(v[0], dict):
-                    self._create_collection(dbs, k, v[0])
-                elif isinstance(v, (type, str)):
-                    if isinstance(v, str):
-                        v = str_to_type(v)
-                    f = default_collection.fields.get(k)
-                    if f:
-                        if f["type"] != v:
-                            raise ValueError(
-                                f"type of field {k} is {f['type']} in database but is {v} in schema"
-                            )
-                    else:
-                        default_collection.add_field(k, v)
-                else:
-                    raise ValueError(f"invalid schema definition for field {k}: {v}")
-            dbs[self.default_collection][self.default_document_id] = {}
-
-
-class StorageGlobal:
-    def __init__(self, db):
-        super().__setattr__("_db", db)
-
-    def __getitem__(self, key):
-        if self._db.has_collection(key):
-            collection = self._db[key]
-            if collection:
-                if Storage.default_field in collection.primary_key:
-                    return StorageDocument(self._db, key, Storage.default_document_id)
-                return StorageCollection(self._db, key)
-        return StorageDocumentField(
-            self._db,
-            Storage.default_collection,
-            Storage.default_document_id,
-            key,
-        )
-
-    def __getattr__(self, key):
-        return self[key]
-
-    def __setitem__(self, key, value):
-        self[key].set(value)
-
-    def __setattr__(self, key, value):
-        self[key] = value
-
-
-class StorageCollection:
-    def __init__(self, db, collection):
-        super().__setattr__("_db", db)
-        super().__setattr__("_collection", collection)
-
-    def __getitem__(self, key):
-        if Storage.default_field in self._db[self._collection].primary_key:
-            return StorageDocumentField(
-                self._db, self._collection, Storage.default_document_id, key
-            )
-        else:
-            return StorageDocument(self._db, self._collection, key)
-
-    def __getattr__(self, key):
-        return self[key]
-
-    def __setitem__(self, key, value):
-        self[key].set(value)
-
-    def __setattr__(self, key, value):
-        self[key] = value
-
-    def append(self, document, replace=False):
-        self._db[self._collection].add(document, replace=replace)
-
-    def __iter__(self):
-        return self._db[self._collection].documents()
-
-    def get(self):
-        return list(self)
-
-    def set(self, value):
-        collection = self._db[self._collection]
-        collection.delete(None)
-        for document in value:
-            collection.add(document)
-
-
-class StorageDocument:
-    def __init__(self, db, collection, document_id):
-        super().__setattr__("_db", db)
-        super().__setattr__("_collection", collection)
-        super().__setattr__("_document_id", document_id)
-
-    def __getitem__(self, key):
-        return StorageDocumentField(self._db, self._collection, self._document_id, key)
-
-    def __getattr__(self, key):
-        return self[key]
-
-    def __setitem__(self, key, value):
-        self[key].set(value)
-
-    def __setattr__(self, key, value):
-        self[key] = value
-
-    def get(self):
-        return self._db[self._collection][self._document_id]
-
-    def set(self, value):
-        self._db[self._collection][self._document_id] = value
-
-
-class StorageDocumentField:
-    def __init__(self, db, collection, document_id, field, path=()):
-        super().__setattr__("_db", db)
-        super().__setattr__("_collection", collection)
-        super().__setattr__("_document_id", document_id)
-        super().__setattr__("_field", field)
+class StorageSession:
+    def __init__(self, server, connection_id, path=[]):
+        super().__setattr__("_server", server)
+        super().__setattr__("_connection_id", connection_id)
         super().__setattr__("_path", path)
 
     def __getitem__(self, key):
-        return StorageDocumentField(
-            self._db,
-            self._collection,
-            self._document_id,
-            self._field,
-            self._path + (key,),
-        )
+        return self.__class__(self._server, self._connection_id, self._path + [key])
 
     def __getattr__(self, key):
         return self[key]
 
     def __setitem__(self, key, value):
-        self[key].set(value)
+        self._server.set(self._connection_id, self._path + [key], value)
 
     def __setattr__(self, key, value):
         self[key] = value
 
     def set(self, value):
-        if self._path:
-            db_value = self._db[self._collection].document(
-                self._document_id, fields=[self._field], as_list=True
-            )[0]
-            container = db_value
-            for i in self._path[:-1]:
-                container = container[i]
-            container[self._path[-1]] = value
-        else:
-            db_value = value
-        self._db[self._collection].update_document(
-            self._document_id, {self._field: db_value}
-        )
+        self._server.set(self._connection_id, self._path, value)
 
     def get(self):
-        db_value = self._db[self._collection].document(
-            self._document_id, fields=[self._field], as_list=True
-        )[0]
-        if self._path:
-            value = db_value
-            for i in self._path:
-                value = value[i]
-        else:
-            value = db_value
-        return value
+        return self._server.get(self._connection_id, self._path)
 
-    def append(self, item):
-        value = self.get()
-        value.append(item)
-        self.set(value)
+    def append(self, value):
+        return self._server.append(self._connection_id, self._path, value)
 
 
 if __name__ == "__main__":
     import json
     import os
     from datetime import datetime
-    from populse_db import Database
 
     from pprint import pprint
 
@@ -354,15 +145,12 @@ if __name__ == "__main__":
         os.remove("/tmp/test.sqlite")
 
     # store = Storage("/tmp/test.sqlite")
-    # with store.data as data:
-    #     store.dataset = {}
-    #     store.snapshots = []
+    # with store.session(exclusive=True) as d:
+    #     d.dataset = {}
+    #     d.snapshots = []
     store = MyStorage("/tmp/test.sqlite")
 
-    store.create()
-    store.create()
-
-    with store.data as d:
+    with store.session() as d:
         # Set a global value
         d.last_update = datetime.now()
         d.last_update.set(datetime.now())
@@ -381,13 +169,17 @@ if __name__ == "__main__":
         for snapshot in snapshots:
             d.snapshots.append(snapshot)
 
-        # Select one document from a collection
-        pprint(d.snapshots["0001292COG", "M0"].get())
+        try:
+            # Select one document from a collection
+            pprint(d.snapshots["0001292COG", "M0"].get())
 
-        # Select one document field from a collection
-        pprint(d.snapshots["0001292COG", "M0"].image.get())
+            # Select one document field from a collection
+            pprint(d.snapshots["0001292COG", "M0"].image.get())
+        except TypeError:
+            # Acces via primary_key values cannot work without schema
+            pass
 
-    with store.database as dbs:
+    with store.server.database as dbs:
         for collection in dbs.collections():
             print("=" * 40)
             print(collection.name)
