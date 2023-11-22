@@ -55,9 +55,7 @@ class StorageServerRead:
         primary_key = []
         collection_fields = {}
         for kk, vv in definition.items():
-            if isinstance(vv, type):
-                collection_fields[kk] = (vv, {})
-            elif isinstance(vv, str):
+            if isinstance(vv, str):
                 collection_fields[kk] = (str_to_type(vv), {})
             elif isinstance(vv, list) and len(vv) == 2:
                 if isinstance(vv[0], type):
@@ -126,9 +124,8 @@ class StorageServerRead:
                         )
             elif isinstance(v, list) and len(v) == 1 and isinstance(v[0], dict):
                 self._check_collection(k, v[0], create)
-            elif isinstance(v, (type, str)):
-                if isinstance(v, str):
-                    v = str_to_type(v)
+            elif isinstance(v, str):
+                v = str_to_type(v)
                 f = default_collection.fields.get(k)
                 if f:
                     if f["type"] != v:
@@ -157,13 +154,8 @@ class StorageServerRead:
             path = path[1:]
         else:
             collection = self._dbs[StorageServer.default_collection]
-            path.insert(0, StorageServer.default_document_id)
         if StorageServer.default_field in collection.primary_key:
-            if not path:
-                document_id = StorageServer.default_document_id
-            else:
-                document_id = path[0]
-                path = path[1:]
+            document_id = StorageServer.default_document_id
         else:
             if not path:
                 return (collection, None, None, None)
@@ -185,7 +177,10 @@ class StorageServerRead:
                 value = value[i]
             return value
         elif document_id:
-            return collection[document_id]
+            document = collection[document_id]
+            if document_id == StorageServer.default_document_id:
+                del document[document_id]
+            return document
         else:
             return list(collection.documents())
 

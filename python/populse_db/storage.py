@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from . import Database
+from .database import type_to_str
 from .storage_server import StorageServer
 
 
@@ -26,9 +26,26 @@ class Storage:
             mine = result.get(k)
             if mine is None:
                 if isinstance(v, dict):
-                    v = v.copy()
-                elif isinstance(v, list) and len(v) == 1 and isinstance(v[0], dict):
-                    v = [v[0].copy()]
+                    v = {
+                        k: (type_to_str(i) if isinstance(i, type) else i)
+                        for k, i in v.items()
+                    }
+                elif isinstance(v, list):
+                    if len(v) == 1 and isinstance(v[0], dict):
+                        inner = {}
+                        cls.update_schema(inner, v[0])
+                        v = [inner]
+                    elif (
+                        len(v) == 2
+                        and isinstance(v[0], (str, type))
+                        and isinstance(v[1], dict)
+                    ):
+                        if isinstance(v[0], type):
+                            v = [type_to_str(v[0]), v[1]]
+                    else:
+                        raise ValueError("invalid schema definition for field {k}: {v}")
+                if isinstance(v, type):
+                    v = type_to_str(v)
                 result[k] = v
             else:
                 if isinstance(v, dict):
@@ -37,6 +54,8 @@ class Storage:
                     if v and isinstance(v[0], dict):
                         result[k][0].update(v)
                 else:
+                    if isinstance(v, type):
+                        v = type_to_str(v)
                     result[k] = v
 
     def get_schema(self):
@@ -149,6 +168,8 @@ if __name__ == "__main__":
     #     d.dataset = {}
     #     d.snapshots = []
     store = MyStorage("/tmp/test.sqlite")
+
+    pprint(store.get_schema())
 
     with store.session() as d:
         # Set a global value

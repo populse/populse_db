@@ -62,14 +62,14 @@ if args.s:
     pytest_command += ["-s"]
 module_src = Path(__file__).parent.parent
 if args.html:
-    Path(args.html).mkdir(exist_ok=True)
+    # Path(args.html).mkdir(exist_ok=True)
     pytest_command += ["--cov=populse_db", f"--html={args.html}/tests.html"]
     coverage_command = [sys.executable, "-m", "coverage", "html", "-d", args.html]
     env = os.environ.copy()
     print(" ".join("'{}'".format(i) for i in pytest_command))
     subprocess.check_call(pytest_command, env=env, cwd=module_src)
     print(" ".join("'{}'".format(i) for i in coverage_command))
-    subprocess.check_call(coverage_command)
+    subprocess.check_call(coverage_command, cwd=module_src)
 else:
     print(" ".join("'{}'".format(i) for i in pytest_command))
     subprocess.check_call(pytest_command, cwd=module_src)
