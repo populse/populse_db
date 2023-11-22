@@ -1,10 +1,8 @@
-from datetime import time, date, datetime
+from datetime import date, datetime, time
 import dateutil
 import json
 import sqlite3
-from datetime import date, datetime, time
 
-import dateutil
 
 from ..database import (
     DatabaseCollection,
