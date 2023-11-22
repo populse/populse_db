@@ -2081,10 +2081,3 @@ def load_tests(loader, standard_tests, pattern):
     # suite.addTests(tests)
 
     return suite
-
-
-if __name__ == "__main__":
-    # Working from the scripts directory
-    os.chdir(os.path.dirname(os.path.realpath(__file__)))
-
-    unittest.main()
