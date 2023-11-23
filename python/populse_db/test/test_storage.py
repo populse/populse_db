@@ -209,3 +209,9 @@ def test_storage():
         assert [
             {k: v for k, v in d.items() if v is not None} for d in d.snapshots.get()
         ] == snapshots
+
+        # Search in a collection
+        assert [
+            {k: v for k, v in d.items() if v is not None}
+            for d in d.snapshots.search('subject LIKE "%7%"')
+        ] == snapshots[1:2]
