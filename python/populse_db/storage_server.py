@@ -42,9 +42,9 @@ class StorageServer:
     def append(self, connection_id, path, value):
         self.connections[connection_id].append(path, value)
 
-
     def search(self, connection_id, path, query):
         return self.connections[connection_id].search(path, query)
+
 
 class StorageServerRead:
     def __init__(self, database, schema, exclusive):
@@ -190,7 +190,7 @@ class StorageServerRead:
     def search(self, path, query):
         collection, document_id, field, path = self._parse_path(path)
         if path or field or document_id:
-            raise ValueError('only collections can be searched')
+            raise ValueError("only collections can be searched")
         return list(collection.filter(query))
 
 
