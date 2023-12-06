@@ -2054,37 +2054,32 @@ def create_test_case(**database_creation_parameters):
     return TestDatabaseMethods
 
 
-def load_tests(loader, standard_tests, pattern):
-    """
-    Prepares the tests parameters
+TestDatabaseMethods = create_test_case()
 
-    :param loader:
+# def load_tests(loader, standard_tests, pattern):
+#     """
+#     Prepares the tests parameters
 
-    :param standard_tests:
+#     :param loader:
 
-    :param pattern:
+#     :param standard_tests:
 
-    :return: A test suite
-    """
-    suite = unittest.TestSuite()
-    suite.addTests(loader.loadTestsFromTestCase(TestsSQLiteInMemory))
-    tests = loader.loadTestsFromTestCase(create_test_case())
-    suite.addTests(tests)
+#     :param pattern:
 
-    # Tests with postgresql. All the tests will be skipped if
-    # it is not possible to connect to populse_db_tests database.
-    # tests = loader.loadTestsFromTestCase(create_test_case(
-    # database_url='postgresql:///populse_db_tests',
-    # caches=False,
-    # list_tables=True,
-    # query_type='mixed'))
-    # suite.addTests(tests)
+#     :return: A test suite
+#     """
+#     suite = unittest.TestSuite()
+#     suite.addTests(loader.loadTestsFromTestCase(TestsSQLiteInMemory))
+#     tests = loader.loadTestsFromTestCase(create_test_case())
+#     suite.addTests(tests)
 
-    return suite
+#     # Tests with postgresql. All the tests will be skipped if
+#     # it is not possible to connect to populse_db_tests database.
+#     # tests = loader.loadTestsFromTestCase(create_test_case(
+#     # database_url='postgresql:///populse_db_tests',
+#     # caches=False,
+#     # list_tables=True,
+#     # query_type='mixed'))
+#     # suite.addTests(tests)
 
-
-if __name__ == "__main__":
-    # Working from the scripts directory
-    os.chdir(os.path.dirname(os.path.realpath(__file__)))
-
-    unittest.main()
+#     return suite
