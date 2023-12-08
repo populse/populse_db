@@ -1,8 +1,8 @@
 import argparse
 import os
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 parser = argparse.ArgumentParser(
     prog="Test populse_db module", description="Run populse_db test suite"
@@ -66,10 +66,10 @@ if args.html:
     pytest_command += ["--cov=populse_db", f"--html={args.html}/tests.html"]
     coverage_command = [sys.executable, "-m", "coverage", "html", "-d", args.html]
     env = os.environ.copy()
-    print(" ".join("'{}'".format(i) for i in pytest_command))
+    print(" ".join(f"'{i}'" for i in pytest_command))
     subprocess.check_call(pytest_command, env=env, cwd=module_src)
-    print(" ".join("'{}'".format(i) for i in coverage_command))
+    print(" ".join(f"'{i}'" for i in coverage_command))
     subprocess.check_call(coverage_command, cwd=module_src)
 else:
-    print(" ".join("'{}'".format(i) for i in pytest_command))
+    print(" ".join(f"'{i}'" for i in pytest_command))
     subprocess.check_call(pytest_command, cwd=module_src)

@@ -1,6 +1,8 @@
 from uuid import uuid4
-from . import Database
+
 from populse_db.database import str_to_type
+
+from . import Database
 
 
 class StorageServer:
