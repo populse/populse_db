@@ -81,7 +81,7 @@ Using populse_db
     # Generating the database in a temp directory
     temp_folder = tempfile.mkdtemp()
     path = os.path.join(temp_folder, "test.db")
-    database_url = 'sqlite:///' + path
+    database_url = f"sqlite:///{path}"
     database = Database(database_url)
 
     # Creating the session and working with it
