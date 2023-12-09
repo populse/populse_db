@@ -28,6 +28,7 @@ install:
   - python -m pip install pip --upgrade
   - pip -V
   - pip install setuptools --upgrade
+  - pip install pytest
   - pip install -e .[postgres]
   - pip install codecov
 
