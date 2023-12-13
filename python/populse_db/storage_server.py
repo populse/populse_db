@@ -47,6 +47,9 @@ class StorageServer:
     def search(self, connection_id, path, query):
         return self.connections[connection_id].search(path, query)
 
+    def distinct_values(self, connection_id, path, field):
+        return self.connections[connection_id].distinct_values(path, field)
+
 
 class StorageServerRead:
     def __init__(self, database, schema, exclusive):
@@ -68,7 +71,7 @@ class StorageServerRead:
                 else:
                     t = str_to_type(vv[0])
                 kwargs = vv[1].copy()
-                if kwargs.pop("primary_key"):
+                if kwargs.pop("primary_key", None):
                     primary_key.append(kk)
                 collection_fields[kk] = (t, kwargs)
         if not self._dbs.has_collection(collection_name):
@@ -195,6 +198,13 @@ class StorageServerRead:
             raise ValueError("only collections can be searched")
         return list(collection.filter(query))
 
+
+    def distinct_values(self, path, field):
+        collection, document_id, f, path = self._parse_path(path)
+        if path or f or document_id:
+            raise ValueError("only collections support distinct values searching")
+        for row in collection.documents(fields=[field], as_list=True, distinct=True):
+            yield row[0]
 
 class StorageServerWrite(StorageServerRead):
     def __init__(self, database, schema, exclusive):

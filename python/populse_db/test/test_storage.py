@@ -40,6 +40,17 @@ snapshots = [
         "image": "/home/yann/dev/snapcheck/database_brainvisa/snapshots/morphologist/M0/greywhite/snapshot_greywhite_0001235COG_M0.png",
         "subject": "0001235COG",
     },
+    {
+        "orientation": "axial",
+        "top": [1.0, 0.0],
+        "size": [2.0, 3.0],
+        "dataset": "test",
+        "software": "none",
+        "time_point": "first",
+        "data_type": "void",
+        "image": "/somewhere/something.png",
+        "subject": "john doe",
+    },
 ]
 
 
@@ -78,7 +89,7 @@ def test_storage():
                     "software_version": str,
                 }
             ],
-            # A collection of snapshots requir
+            # A collection of snapshots
             "snapshots": [
                 {
                     "subject": ["str", {"primary_key": True}],
@@ -215,3 +226,6 @@ def test_storage():
             {k: v for k, v in d.items() if v is not None}
             for d in d.snapshots.search('subject LIKE "%7%"')
         ] == snapshots[1:2]
+
+        # Find all unique values
+        assert sorted(d.snapshots.distinct_values("data_type")) == ["greywhite", "void"]

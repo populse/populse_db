@@ -270,7 +270,7 @@ class SQLiteCollection(DatabaseCollection):
         sql = f'SELECT count(*) FROM [{self.name}] WHERE {" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
         return next(self.session.execute(sql, document_id))[0] != 0
 
-    def _documents(self, where, where_data, fields, as_list):
+    def _documents(self, where, where_data, fields, as_list, distinct):
         if fields:
             columns = []
             catchall_fields = set()
@@ -289,7 +289,7 @@ class SQLiteCollection(DatabaseCollection):
                 )
             columns.append(self.catchall_column)
 
-        sql = f'SELECT {",".join(f"[{i}]" for i in columns)} FROM [{self.name}]'
+        sql = f'SELECT {("DISTINCT " if distinct else "")}{",".join(f"[{i}]" for i in columns)} FROM [{self.name}]'
         if where:
             sql += f" WHERE {where}"
         cur = self.session.execute(sql, where_data)
@@ -332,12 +332,12 @@ class SQLiteCollection(DatabaseCollection):
         document_id = self.document_id(document_id)
         where = f'{" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
         try:
-            return next(self._documents(where, document_id, fields, as_list))
+            return next(self._documents(where, document_id, fields, as_list, False))
         except StopIteration:
             return None
 
-    def documents(self, fields=None, as_list=False):
-        yield from self._documents(None, None, fields, as_list)
+    def documents(self, fields=None, as_list=False, distinct=False):
+        yield from self._documents(None, None, fields, as_list, distinct)
 
     def add(self, document, replace=False):
         document_id = tuple(document.get(i) for i in self.primary_key)
@@ -469,9 +469,11 @@ class SQLiteCollection(DatabaseCollection):
         else:
             return ParsedFilter(" ".join(where_filter))
 
-    def filter(self, filter, fields=None, as_list=False):
+    def filter(self, filter, fields=None, as_list=False, distinct=False):
         parsed_filter = self.parse_filter(filter)
-        yield from self._documents(parsed_filter, None, fields=fields, as_list=as_list)
+        yield from self._documents(
+            parsed_filter, None, fields=fields, as_list=as_list, distinct=distinct
+        )
 
     def delete(self, filter):
         where = self.parse_filter(filter)
