@@ -7,9 +7,12 @@ from .engine.sqlite import SQLiteSession
 
 
 try:
-    __version__ = importlib.metadata.__version__ = importlib.metadata.version("populse_db")
+    __version__ = importlib.metadata.__version__ = importlib.metadata.version(
+        "populse_db"
+    )
 except importlib.metadata.PackageNotFoundError:
     __version__ = None
+
 
 class Database:
     """Entrypoint of populse_db for creating :any:`DatabaseSession` object given
