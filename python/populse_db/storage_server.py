@@ -198,13 +198,13 @@ class StorageServerRead:
             raise ValueError("only collections can be searched")
         return list(collection.filter(query))
 
-
     def distinct_values(self, path, field):
         collection, document_id, f, path = self._parse_path(path)
         if path or f or document_id:
             raise ValueError("only collections support distinct values searching")
         for row in collection.documents(fields=[field], as_list=True, distinct=True):
             yield row[0]
+
 
 class StorageServerWrite(StorageServerRead):
     def __init__(self, database, schema, exclusive):
