@@ -278,7 +278,7 @@ class Engine:
         """
         raise NotImplementedError()
 
-    def filter_documents(self, parsed_filter, fields=None, as_list=False):
+    def filter_documents(self, parsed_filter, fields=None, as_list=False, distinct=False):
         """
         Iterate over document selected by a filter. See document() method
         for the format of a document object.
@@ -290,5 +290,7 @@ class Engine:
             ignored) (list of str or None)
 
         :param as_list: if True, return a list of values instead of a Row Object (str)
+
+        :param distinct: if True, return only a series of different values.
         """
         raise NotImplementedError()

@@ -97,3 +97,6 @@ class StorageSession:
 
     def search(self, query):
         return self._server.search(self._connection_id, self._path, query)
+
+    def distinct_values(self, field):
+        return self._server.distinct_values(self._connection_id, self._path, field)
