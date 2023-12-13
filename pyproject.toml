@@ -2,7 +2,7 @@
 name = "populse-db"
 version = "3.0.0"
 authors = [
-    {name = "Populse", email = "yann@cointepas.net"},
+    {name = "Popolse Team", email = "contact@brainvisa.info"},
 ]
 description = "populse-db"
 readme = "README.md"
