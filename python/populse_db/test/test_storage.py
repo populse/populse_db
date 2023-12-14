@@ -1,8 +1,9 @@
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 
-from populse_db import Storage
+import pytest
 
+from populse_db import Storage
 snapshots = [
     {
         "orientation": "coronal",
@@ -148,7 +149,7 @@ def test_storage():
     tmp = NamedTemporaryFile()
     store = MyStorage(tmp.name)
     assert store.get_schema() == json_schema
-    with store.session() as d:
+    with store.session(write=True) as d:
         now = datetime.now()
 
         # Set a global value
@@ -229,3 +230,12 @@ def test_storage():
 
         # Find all unique values
         assert sorted(d.snapshots.distinct_values("data_type")) == ["greywhite", "void"]
+
+    # Test read only session
+    with store.session(write=False) as d:
+        with pytest.raises(PermissionError):
+            d.last_update = now
+
+        with pytest.raises(PermissionError):
+            for snapshot in snapshots:
+                d.snapshots.append(snapshot)

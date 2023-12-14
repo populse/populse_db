@@ -17,10 +17,10 @@ class StorageServer:
     def access_rights(self, access_token):
         return "write"
 
-    def connect(self, access_token, schema, exclusive):
+    def connect(self, access_token, schema, exclusive, write):
         connection_id = str(uuid4())
         access_rights = self.access_rights(access_token)
-        if access_rights == "read":
+        if not write and access_rights in ("read", "write"):
             self.connections[connection_id] = StorageServerRead(
                 self.database, schema, exclusive
             )
@@ -29,7 +29,7 @@ class StorageServer:
                 self.database, schema, exclusive
             )
         else:
-            raise PermissionError("invalid access token")
+            raise PermissionError(f"database access refused")
         return connection_id
 
     def disconnect(self, connection_id, rollback):
@@ -52,6 +52,8 @@ class StorageServer:
 
 
 class StorageServerRead:
+    _read_only_error = "database is read-only"
+
     def __init__(self, database, schema, exclusive):
         self._dbs = database.session(exclusive=exclusive)
         self._check_schema(schema, create=False)
@@ -198,13 +200,19 @@ class StorageServerRead:
             raise ValueError("only collections can be searched")
         return list(collection.filter(query))
 
-
     def distinct_values(self, path, field):
         collection, document_id, f, path = self._parse_path(path)
         if path or f or document_id:
             raise ValueError("only collections support distinct values searching")
         for row in collection.documents(fields=[field], as_list=True, distinct=True):
             yield row[0]
+
+    def append(self, path, value):
+        raise PermissionError(self._read_only_error)
+
+    def set(self, path, value):
+        raise PermissionError(self._read_only_error)
+
 
 class StorageServerWrite(StorageServerRead):
     def __init__(self, database, schema, exclusive):
