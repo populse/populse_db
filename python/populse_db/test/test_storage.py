@@ -4,6 +4,7 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 from populse_db import Storage
+
 snapshots = [
     {
         "orientation": "coronal",

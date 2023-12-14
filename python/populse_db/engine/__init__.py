@@ -278,7 +278,9 @@ class Engine:
         """
         raise NotImplementedError()
 
-    def filter_documents(self, parsed_filter, fields=None, as_list=False, distinct=False):
+    def filter_documents(
+        self, parsed_filter, fields=None, as_list=False, distinct=False
+    ):
         """
         Iterate over document selected by a filter. See document() method
         for the format of a document object.
