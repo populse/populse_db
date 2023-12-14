@@ -9,10 +9,10 @@ class Storage:
         self.server = StorageServer(*args, **kwargs)
 
     @contextmanager
-    def session(self, exclusive=False):
+    def session(self, exclusive=False, write=False):
         token = self.server.access_rights("TODO")
         connection_id = self.server.connect(
-            token, self.get_schema(), exclusive=exclusive
+            token, self.get_schema(), exclusive=exclusive, write=write
         )
         try:
             yield StorageSession(self.server, connection_id)
