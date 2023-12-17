@@ -56,100 +56,69 @@ snapshots = [
 ]
 
 
-def test_storage():
-    # A schema can be defined in a class deriving from
-    # Storage
-    class MyStorage(Storage):
-        schema = {
-            # A global value
-            "last_update": datetime,
-            # A single document (i.e. not in a collection)
-            "dataset": {
-                "directory": str,
-                "schema": "str",
-            },
-            # A collection of metadata associated to a path.
-            "metadata": [
-                {
-                    "path": [str, {"primary_key": True}],
-                    "subject": str,
-                    "time_point": str,
-                    "history": list[str],  # contains a list of execution_id
-                }
-            ],
-            # A collection of executions to track data provenance
-            "execution": [
-                {
-                    "execution_id": ["str", {"primary_key": True}],
-                    "start_time": "datetime",
-                    "end_time": datetime,
-                    "status": str,
-                    "capsul_executable": str,
-                    "capsul_parameters": dict,
-                    "software": str,
-                    "software_module": str,
-                    "software_version": str,
-                }
-            ],
-            # A collection of snapshots
-            "snapshots": [
-                {
-                    "subject": ["str", {"primary_key": True}],
-                    "time_point": ["str", {"primary_key": True}],
-                    "image": str,
-                    "top": "list[int]",
-                    "size": list[float],
-                    "execution": "str",
-                    "data_type": "str",
-                    "side": "str",
-                }
-            ],
-        }
-
-    json_schema = {
-        "last_update": "datetime",
-        "dataset": {
-            "directory": "str",
-            "schema": "str",
-        },
-        "metadata": [
-            {
-                "path": ["str", {"primary_key": True}],
-                "subject": "str",
-                "time_point": "str",
-                "history": "list[str]",
-            }
-        ],
-        "execution": [
-            {
-                "execution_id": ["str", {"primary_key": True}],
-                "start_time": "datetime",
-                "end_time": "datetime",
-                "status": "str",
-                "capsul_executable": "str",
-                "capsul_parameters": "dict",
-                "software": "str",
-                "software_module": "str",
-                "software_version": "str",
-            }
-        ],
-        "snapshots": [
-            {
+def test_storage_schema():
+    snapshot_1_0_1 = {
+        "name": "populse_db.test.schema.snapshot",
+        "version": "1.0.1",
+        "collections": {
+            "snapshots": {
+                "data_type": ["str", {"primary_key": True}],
+                "execution": ["str", {"index": True}],
+                "image": ["str", {}],
+                "side": ["str", {}],
+                "size": ["list[float]", {}],
                 "subject": ["str", {"primary_key": True}],
                 "time_point": ["str", {"primary_key": True}],
-                "image": "str",
-                "top": "list[int]",
-                "size": "list[float]",
-                "execution": "str",
-                "data_type": "str",
-                "side": "str",
+                "top": ["list[int]", {}],
             }
-        ],
+        },
+    }
+    snapshot_1_0_0 = {
+        "name": "populse_db.test.schema.snapshot",
+        "version": "1.0.0",
+        "collections": {
+            "snapshots": {
+                "data_type": ["str", {"primary_key": True}],
+                "image": ["str", {}],
+                "side": ["str", {}],
+                "size": ["list[float]", {}],
+                "subject": ["str", {"primary_key": True}],
+                "time_point": ["str", {"primary_key": True}],
+                "top": ["list[int]", {}],
+            }
+        },
+    }
+    schema = Storage.find_schema("populse_db.test.schema.snapshot")
+    assert schema == snapshot_1_0_1
+    schema = Storage.find_schema("populse_db.test.schema.snapshot", "1.0.1")
+    assert schema == snapshot_1_0_1
+    schema = Storage.find_schema("populse_db.test.schema.snapshot", "1.0.0")
+    assert schema == snapshot_1_0_0
+    schema = Storage.find_schema("populse_db.test.schema.snapshot", "1.0")
+    assert schema == snapshot_1_0_1
+    assert Storage.find_schema("populse_db.test.schema.snapshot", "1") == None
+    assert Storage.find_schema("populse_db.test.schema.snapshot", "1.1") == None
+
+    import populse_db.test.test_schema
+
+    assert set(populse_db.test.schema.snapshot._schemas_to_collections) == {
+        "1.0.1",
+        "1.0.0",
+        "1.0",
+        None,
     }
 
+    with pytest.raises(ModuleNotFoundError):
+        Storage.find_schema("populse_db.test.schema.non_existing")
+
+
+def test_storage():
     tmp = NamedTemporaryFile()
-    store = MyStorage(tmp.name)
-    assert store.get_schema() == json_schema
+    store = Storage(tmp.name)
+    store.add_schema("populse_db.test.schema.dataset")
+    store.add_schema("populse_db.test.schema.snapshot")
+    store.add_schema("populse_db.test.schema.processing")
+
     with store.session(write=True) as d:
         now = datetime.now()
 
@@ -192,12 +161,12 @@ def test_storage():
         # Select one document from a collection (ignore fields with None value)
         assert {
             k: v
-            for k, v in d.snapshots["0001292COG", "M0"].get().items()
+            for k, v in d.snapshots["0001292COG", "M0", "greywhite"].get().items()
             if v is not None
         } == snapshots[0]
 
         # Select one document field from a collection
-        d.snapshots["0001292COG", "M0"].image.get() == snapshots[0]["image"]
+        d.snapshots["0001292COG", "M0", "greywhite"].image.get() == snapshots[0]["image"]
 
         # Select all documents from a collection (ignore fields with None value)
         assert [
@@ -207,11 +176,11 @@ def test_storage():
         # Set a full document content
         modified_snapshot = snapshots[0].copy()
         modified_snapshot["software"] = "something"
-        del modified_snapshot["data_type"]
-        d.snapshots["0001292COG", "M0"] = modified_snapshot
+        del modified_snapshot["dataset"]
+        d.snapshots["0001292COG", "M0", "greywhite"] = modified_snapshot
         assert {
             k: v
-            for k, v in d.snapshots["0001292COG", "M0"].get().items()
+            for k, v in d.snapshots["0001292COG", "M0", "greywhite"].get().items()
             if v is not None
         } == modified_snapshot
 
