@@ -166,7 +166,9 @@ def test_storage():
         } == snapshots[0]
 
         # Select one document field from a collection
-        d.snapshots["0001292COG", "M0", "greywhite"].image.get() == snapshots[0]["image"]
+        d.snapshots["0001292COG", "M0", "greywhite"].image.get() == snapshots[0][
+            "image"
+        ]
 
         # Select all documents from a collection (ignore fields with None value)
         assert [
