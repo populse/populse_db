@@ -30,14 +30,19 @@ install:
   - pip install setuptools --upgrade
   - pip install -e .[postgres]
   - pip install codecov
+  - sh: if [[ $(uname -s) == Linux ]]; then pip install coverage[toml]; fi
 
 test_script:
   - cmd: python -m populse_db.test -v
   - sh: python ./python/populse_db/test.py -v
-  - sh: if [[ $(uname -s) == Linux ]] && [[ $PYTHON == Python3.7 ]]; then coverage run ./python/populse_db/test.py -v; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then coverage run ./python/populse_db/test.py -v; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then coverage xml; fi
 
 after_test:
-  - sh: if [[ $(uname -s) == Linux ]] && [[ $PYTHON == Python3.7 ]]; then codecov; fi
+  #- sh: if [[ $(uname -s) == Linux ]]; then codecov; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then curl -Os https://uploader.codecov.io/latest/linux/codecov; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then chmod +x codecov; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then ./codecov -f "coverage.xml" -t "b88bf18b-b29e-412e-96fe-e0f00832c173"; fi
 
 notifications:
   - provider: Email
