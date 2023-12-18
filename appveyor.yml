@@ -1,16 +1,16 @@
 environment:
 
   matrix:
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      PYTHON: "C:\\Python37"
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+      PYTHON: "C:\\Python39-x64"
 
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-      PYTHON: "Python3.7"
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
+      PYTHON: "$HOME/venv3.9"
 #      APPVEYOR_SSH_KEY:
 #      APPVEYOR_SSH_BLOCK: true
 
-    - APPVEYOR_BUILD_WORKER_IMAGE: macos
-      PYTHON: "Python3.7"
+    - APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
+      PYTHON: "~/venv3.9"
 
 build: off
 
@@ -22,7 +22,7 @@ install:
 #  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
 
   - cmd: SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
-  - sh: if [[ $PYTHON == Python3.7 ]]; then export PATH=~/venv3.7/bin:~/venv3.7/lib:$PATH; fi
+  - sh: if [[ $PYTHON == Python3.9 ]]; then export PATH=~/venv3.9/bin:~/venv3.9/lib:$PATH; fi
 
   - python --version
   - python -m pip install pip --upgrade
