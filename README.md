@@ -3,8 +3,8 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/exyixo4o0osns6tn/branch/master?svg=true)](https://ci.appveyor.com/project/populse/populse-db-6gndf/branch/master)
 [![codecov](https://codecov.io/gh/populse/populse_db/branch/master/graph/badge.svg?token=sTgorGiZ7w)](https://codecov.io/gh/populse/populse_db)
 [![](https://img.shields.io/badge/license-CeCILL--B-blue.svg)](https://github.com/populse/populse_db/blob/master/LICENSE.en)
-[![](https://img.shields.io/pypi/v/populse_db.svg)](https://pypi.python.org/pypi/populse_db/)
-[![](https://img.shields.io/pypi/status/populse_db.svg)](https://pypi.python.org/pypi/populse_db/)
+[![](https://img.shields.io/pypi/v/populse_db.svg)](https://pypi.org/pypi/populse_db/)
+[![](https://img.shields.io/pypi/status/populse_db.svg)](https://pypi.org/pypi/populse_db/)
 [![](https://img.shields.io/badge/python-3.9%2C%203.10%2C%203.11-yellow.svg)](#)
 [![](https://img.shields.io/badge/platform-Linux%2C%20OSX%2C%20Windows-orange.svg)](#)
 
