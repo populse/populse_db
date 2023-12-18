@@ -47,5 +47,3 @@ populse\_db.test module
     :members:
     :undoc-members:
     :show-inheritance:
-
-

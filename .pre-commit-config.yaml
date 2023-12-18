@@ -1,0 +1,48 @@
+repos:
+
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks: # general hooks
+    -   id: check-added-large-files
+    -   id: check-ast
+    -   id: check-case-conflict
+    -   id: check-docstring-first
+    -   id: check-json
+    -   id: check-merge-conflict
+    -   id: check-toml
+    -   id: check-xml
+    -   id: check-yaml
+    -   id: debug-statements
+    -   id: end-of-file-fixer
+    -   id: fix-encoding-pragma
+    -   id: name-tests-test
+    -   id: trailing-whitespace
+
+-   repo: https://github.com/psf/black
+    rev: 23.11.0
+    hooks: # code formatter
+    -   id: black
+        language: python
+        args: ["--line-length=79"]
+
+-   repo: https://github.com/pycqa/isort
+    rev: 5.13.0
+    hooks: # imports sorting
+    -   id: isort
+        name: isort (python)
+
+-   repo: https://github.com/econchick/interrogate
+    rev: 1.5.0
+    hooks: # documentation checker
+    -   id: interrogate
+        args: [--config=pyproject.toml]
+        pass_filenames: false
+
+-   repo: https://github.com/PyCQA/flake8
+    rev: 6.1.0
+    hooks:
+    -   id: flake8
+        name: flake8 under python3
+        language_version: python3
+
+exclude: 'docs/doctrees/.*|docs/html/.*|processes/.*'

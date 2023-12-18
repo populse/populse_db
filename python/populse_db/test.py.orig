@@ -87,7 +87,7 @@ def create_test_case(**database_creation_parameters):
             if self.temp_folder:
                 shutil.rmtree(self.temp_folder)
                 del database_creation_parameters['database_url']
-            
+
 =======
 
             shutil.rmtree(self.temp_folder)
@@ -114,7 +114,7 @@ def create_test_case(**database_creation_parameters):
                     raise unittest.SkipTest(str(e))
                 raise
             except ImportError as e:
-                if ('psycopg2' in str(e) and 
+                if ('psycopg2' in str(e) and
 <<<<<<< HEAD
                     database_creation_parameters['database_url'].startswith('postgresql')):
 =======
@@ -770,7 +770,7 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing that a document is returned if it exists
                 self.assertIsNotNone(session.get_document("collection1", "document1"))
-                
+
                 # Testing that None is returned if the document does not exist
                 self.assertIsNone(session.get_document("collection1", "document3"))
 
@@ -1232,7 +1232,7 @@ def create_test_case(**database_creation_parameters):
 
                 # Adding fields
                 session.add_field("collection1", "json", FIELD_TYPE_JSON)
-                
+
                 session.add_document("collection1", doc)
                 self.assertEqual(doc, session.get_document("collection1", "the_name")._dict())
                 self.assertIsNone(session.get_document("collection1", "not_a_valid_name"))
@@ -1240,7 +1240,7 @@ def create_test_case(**database_creation_parameters):
             with database as session:
                 self.assertEqual(doc, session.get_document("collection1", "the_name")._dict())
                 self.assertIsNone(session.get_document("collection1", "not_a_valid_name"))
-                
+
         def test_filter_documents(self):
             """
             Tests the method applying the filter
@@ -1867,7 +1867,7 @@ def create_test_case(**database_creation_parameters):
         def test_filter_literals(self):
             """
             Test the Python values returned (internaly) for literals by the
-            interpretor of filter expression 
+            interpretor of filter expression
             """
 
             literals = {
@@ -1947,7 +1947,7 @@ def create_test_case(**database_creation_parameters):
             # as long as the database is not destroyed.
             with database as session4:
                 self.assertIs(session, session4)
-        
+
             # Destroy the database and create a new one
             database = self.create_database(clear=False)
 
@@ -1956,7 +1956,7 @@ def create_test_case(**database_creation_parameters):
             with database as session5:
                 self.assertIsNot(session, session5)
                 self.assertEqual(len(session5.get_documents('collection1')), 2)
-        
+
         def test_automatic_fields_creation(self):
             """
             Test automatic creation of fields with add_document
@@ -1988,7 +1988,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_document('test', doc)
                 stored_doc = session.get_document('test', 'test')._dict()
                 self.assertEqual(doc, stored_doc)
-    
+
     return TestDatabaseMethods
 
 def load_tests(loader, standard_tests, pattern):

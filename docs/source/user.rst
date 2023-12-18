@@ -15,13 +15,13 @@ Installation
 * From `PyPI <https://pypi.org/project/populse-db/>`_:
 
 .. code-block:: python
-   
+
    # A compatible version of Python and Pip must be installed
-   
+
    To install pip:
    sudo apt-get install python-pip # Python2
    sudo apt-get install python3-pip # Python3
-   
+
    # To install the module:
    sudo pip install populse-db # Beware that it is the Pip version corresponding to the good Python version
    sudo pipx.x install populse-db # With a precise Pip version
@@ -30,7 +30,7 @@ Installation
 * From source:
 
 .. code-block:: python
-   
+
    # A compatible version of Python must be installed
    sudo apt-get install git
    git clone https://github.com/populse/populse_db.git /tmp/populse_db
@@ -45,7 +45,7 @@ Usage
 Import examples:
 
 .. code-block:: python
-   
+
    import populse_db
    from populse_db.database import Database
    import populse_db.database
@@ -59,7 +59,7 @@ Tests
 * The script of tests is python/populse_db/test.py, so the following command launches the tests:
 
 .. code-block:: python
-   
+
    python test.py # (if python/populse_db/ directory has been added to $PATH, or if $PWD in the terminal)
    python python/populse_db/test.py # (from populse_db root directory)
    python -m populse_db.test
@@ -70,7 +70,7 @@ Using populse_db
 * Small script to show the initialization and some examples of calls:
 
 .. code-block:: python
-   
+
     import os
     import tempfile
 
@@ -128,4 +128,3 @@ As you can see in the field table, the three fields First name, Last name, and A
 As you can see in the collection profile table, the two profiles Jules CESAR and Louis XIV have been created.
 
 .. image:: ../pictures/test_db_profile.png
-
