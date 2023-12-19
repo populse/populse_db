@@ -1,32 +1,21 @@
+<!DOCTYPE html>
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en" data-content_root="./">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>populse_db package &#8212; populse_db 1.0.1 documentation</title>
-    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.0.1',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>populse_db package &#8212; populse_db 2.5.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css?v=e491ac2d" />
+    <script src="_static/documentation_options.js?v=3c4615cf"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
-  </head>
-  <body>
+  </head><body>
       <div class="header" role="banner"><h1 class="heading"><a href="index.html">
-          <span>populse_db 1.0.1 documentation</span></a></h1>
+          <span>populse_db 2.5.0 documentation</span></a></h1>
         <h2 class="heading"><span>populse_db package</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -36,720 +25,749 @@
         </p>
 
       </div>
-      <div class="content">
+      <div class="content" role="main">
         
         
-  <div class="section" id="module-populse_db">
-<span id="populse-db-package"></span><h1>populse_db package<a class="headerlink" href="#module-populse_db" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="subpackages">
-<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+  <section id="module-populse_db">
+<span id="populse-db-package"></span><h1>populse_db package<a class="headerlink" href="#module-populse_db" title="Link to this heading">¶</a></h1>
+<p>The database API of the populse project.</p>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="populse_db.engine.html">populse_db.engine package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine"><code class="docutils literal notranslate"><span class="pre">Engine</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.add_collection"><code class="docutils literal notranslate"><span class="pre">Engine.add_collection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.add_field"><code class="docutils literal notranslate"><span class="pre">Engine.add_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.clear"><code class="docutils literal notranslate"><span class="pre">Engine.clear()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.collection"><code class="docutils literal notranslate"><span class="pre">Engine.collection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.collections"><code class="docutils literal notranslate"><span class="pre">Engine.collections()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.commit"><code class="docutils literal notranslate"><span class="pre">Engine.commit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.document"><code class="docutils literal notranslate"><span class="pre">Engine.document()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.field"><code class="docutils literal notranslate"><span class="pre">Engine.field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.fields"><code class="docutils literal notranslate"><span class="pre">Engine.fields()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.filter_documents"><code class="docutils literal notranslate"><span class="pre">Engine.filter_documents()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.has_collection"><code class="docutils literal notranslate"><span class="pre">Engine.has_collection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.has_document"><code class="docutils literal notranslate"><span class="pre">Engine.has_document()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.has_field"><code class="docutils literal notranslate"><span class="pre">Engine.has_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.has_value"><code class="docutils literal notranslate"><span class="pre">Engine.has_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.parse_filter"><code class="docutils literal notranslate"><span class="pre">Engine.parse_filter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.primary_key"><code class="docutils literal notranslate"><span class="pre">Engine.primary_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.remove_collection"><code class="docutils literal notranslate"><span class="pre">Engine.remove_collection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.remove_document"><code class="docutils literal notranslate"><span class="pre">Engine.remove_document()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.remove_fields"><code class="docutils literal notranslate"><span class="pre">Engine.remove_fields()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.remove_value"><code class="docutils literal notranslate"><span class="pre">Engine.remove_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.rollback"><code class="docutils literal notranslate"><span class="pre">Engine.rollback()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.set_values"><code class="docutils literal notranslate"><span class="pre">Engine.set_values()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.engine_factory"><code class="docutils literal notranslate"><span class="pre">engine_factory()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="populse_db.engine.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="populse_db.engine.html#module-populse_db.engine.sqlite">populse_db.engine.sqlite module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="populse_db.engine.html#module-populse_db.engine.sqlite">populse_db.engine.sqlite module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.FilterToSqliteQuery"><code class="docutils literal notranslate"><span class="pre">FilterToSqliteQuery</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.FilterToSqliteQuery.build_condition_all"><code class="docutils literal notranslate"><span class="pre">FilterToSqliteQuery.build_condition_all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.FilterToSqliteQuery.build_condition_combine_conditions"><code class="docutils literal notranslate"><span class="pre">FilterToSqliteQuery.build_condition_combine_conditions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.FilterToSqliteQuery.build_condition_field_in_list"><code class="docutils literal notranslate"><span class="pre">FilterToSqliteQuery.build_condition_field_in_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.FilterToSqliteQuery.build_condition_field_in_list_field"><code class="docutils literal notranslate"><span class="pre">FilterToSqliteQuery.build_condition_field_in_list_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.FilterToSqliteQuery.build_condition_field_op_field"><code class="docutils literal notranslate"><span class="pre">FilterToSqliteQuery.build_condition_field_op_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.FilterToSqliteQuery.build_condition_field_op_value"><code class="docutils literal notranslate"><span class="pre">FilterToSqliteQuery.build_condition_field_op_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.FilterToSqliteQuery.build_condition_literal_in_list_field"><code class="docutils literal notranslate"><span class="pre">FilterToSqliteQuery.build_condition_literal_in_list_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.FilterToSqliteQuery.build_condition_negation"><code class="docutils literal notranslate"><span class="pre">FilterToSqliteQuery.build_condition_negation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.FilterToSqliteQuery.build_condition_value_op_field"><code class="docutils literal notranslate"><span class="pre">FilterToSqliteQuery.build_condition_value_op_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.FilterToSqliteQuery.get_column"><code class="docutils literal notranslate"><span class="pre">FilterToSqliteQuery.get_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.FilterToSqliteQuery.get_column_value"><code class="docutils literal notranslate"><span class="pre">FilterToSqliteQuery.get_column_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.FilterToSqliteQuery.no_list_operator"><code class="docutils literal notranslate"><span class="pre">FilterToSqliteQuery.no_list_operator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.FilterToSqliteQuery.sql_operators"><code class="docutils literal notranslate"><span class="pre">FilterToSqliteQuery.sql_operators</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.add_collection"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.add_collection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.add_document"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.add_document()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.add_field"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.add_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.clear"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.clear()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.collection"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.collection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.collections"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.collections()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.column_to_python"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.column_to_python()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.commit"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.commit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.document"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.document()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.field"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.fields"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.fields()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.filter_documents"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.filter_documents()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.has_collection"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.has_collection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.has_document"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.has_document()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.has_field"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.has_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.has_table"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.has_table()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.has_value"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.has_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.list_hash"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.list_hash()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.name_to_sql"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.name_to_sql()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.parse_filter"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.parse_filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.primary_key"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.primary_key()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.python_to_column"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.python_to_column()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.remove_collection"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.remove_collection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.remove_document"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.remove_document()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.remove_fields"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.remove_fields()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.remove_value"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.remove_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.rollback"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.rollback()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.set_values"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.set_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.sql_type"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.sql_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteEngine.type_to_sql"><code class="docutils literal notranslate"><span class="pre">SQLiteEngine.type_to_sql</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
 </div>
-</div>
-<div class="section" id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="module-populse_db.database">
-<span id="populse-db-database-module"></span><h2>populse_db.database module<a class="headerlink" href="#module-populse_db.database" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="populse_db.database.Database">
-<em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">Database</code><span class="sig-paren">(</span><em>database_url</em>, <em>caches=None</em>, <em>list_tables=None</em>, <em>query_type=None</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.Database" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-populse_db.database">
+<span id="populse-db-database-module"></span><h2>populse_db.database module<a class="headerlink" href="#module-populse_db.database" title="Link to this heading">¶</a></h2>
+<p>Bla bla bla</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="populse_db.database.Database">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">Database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">caches</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_tables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.Database" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Database API</p>
-<dl class="docutils">
-<dt>attributes:</dt>
-<dd><ul class="first last simple">
-<li>string_engine: String engine of the database</li>
-<li>engine: database engine</li>
+<dl class="simple">
+<dt>attributes:</dt><dd><ul class="simple">
+<li><p>string_engine: String engine of the database</p></li>
+<li><p>engine: database engine</p></li>
 </ul>
 </dd>
-<dt>methods:</dt>
-<dd><ul class="first last simple">
-<li>__enter__: Creates or gets a DatabaseSession instance</li>
-<li>__exit__: Releases the latest created DatabaseSession</li>
-<li>clear: Clears the database</li>
+<dt>methods:</dt><dd><ul class="simple">
+<li><p>__enter__: Creates or gets a DatabaseSession instance</p></li>
+<li><p>__exit__: Releases the latest created DatabaseSession</p></li>
+<li><p>clear: Clears the database</p></li>
 </ul>
 </dd>
 </dl>
-<p>Initialization of the database</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>database_url</strong> – <p>Database engine</p>
-<p>The engine is constructed this way: dialect://user:password&#64;host/dbname[?key=value..]</p>
-<p>The dialect can be sqlite or postgresql</p>
-<p>For sqlite databases, the file can be not existing yet, it will be created in this case</p>
-<dl class="docutils">
-<dt>Examples:</dt>
-<dd><ul class="first last">
-<li>”sqlite:///foo.db”</li>
-<li>”postgresql://scott:tiger&#64;localhost/test”</li>
+<p>Initialization of the database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>database_url</strong> – <p>Database engine.
+The engine is constructed this way:
+dialect://user:password&#64;host/dbname[?key=value…]</p>
+<blockquote>
+<div><p>The dialect can be sqlite or postgresql.</p>
+<p>For sqlite databases, the file can be not
+existing yet, it will be created in this case</p>
+<dl class="simple">
+<dt>Examples:</dt><dd><ul>
+<li><p>”sqlite:///foo.db”</p></li>
+<li><p>”postgresql://scott:tiger&#64;localhost/test”</p></li>
 </ul>
 </dd>
 </dl>
-</li>
-<li><strong>caches</strong> – obsolete parameter kept for backward compatibility</li>
-<li><strong>list_tables</strong> – obsolete parameter kept for backward compatibility</li>
-<li><strong>query_type</strong> – obsolete parameter kept for backward compatibility</li>
+</div></blockquote>
+</p></li>
+<li><p><strong>caches</strong> – obsolete parameter kept for backward compatibility</p></li>
+<li><p><strong>list_tables</strong> – obsolete parameter kept for backward compatibility</p></li>
+<li><p><strong>query_type</strong> – obsolete parameter kept for backward compatibility</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
-<li>If database_url is invalid</li>
-<li>If the schema is not coherent with the API (the database is not a populse_db database)</li>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
+<li><p>If database_url is invalid</p></li>
+<li><p>If the schema is not coherent with the API (the
+database is not a populse_db database)</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="populse_db.database.Database.clear">
-<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.Database.clear" title="Permalink to this definition">¶</a></dt>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.Database.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.Database.clear" title="Link to this definition">¶</a></dt>
 <dd><p>Removes all documents and collections in the database</p>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="populse_db.database.Database.database_session_class">
-<code class="descname">database_session_class</code><a class="headerlink" href="#populse_db.database.Database.database_session_class" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#populse_db.database.DatabaseSession" title="populse_db.database.DatabaseSession"><code class="xref py py-class docutils literal"><span class="pre">DatabaseSession</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="populse_db.database.Database.database_session_class">
+<span class="sig-name descname"><span class="pre">database_session_class</span></span><a class="headerlink" href="#populse_db.database.Database.database_session_class" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#populse_db.database.DatabaseSession" title="populse_db.database.DatabaseSession"><code class="xref py py-class docutils literal notranslate"><span class="pre">DatabaseSession</span></code></a></p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="populse_db.database.DatabaseSession">
-<em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">DatabaseSession</code><span class="sig-paren">(</span><em>database</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">DatabaseSession</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>DatabaseSession API</p>
-<dl class="docutils">
-<dt>attributes:</dt>
-<dd><ul class="first last simple">
-<li>database: Database instance</li>
-<li>session: Session related to the database</li>
-<li>table_classes: List of all table classes, generated automatically</li>
-<li>base: Database base</li>
-<li>metadata: Database metadata</li>
+<dl class="simple">
+<dt>attributes:</dt><dd><ul class="simple">
+<li><p>database: Database instance</p></li>
+<li><p>session: Session related to the database</p></li>
+<li><p>table_classes: List of all table classes, generated automatically</p></li>
+<li><p>base: Database base</p></li>
+<li><p>metadata: Database metadata</p></li>
 </ul>
 </dd>
-<dt>methods:</dt>
-<dd><ul class="first last simple">
-<li>add_collection: Adds a collection</li>
-<li>remove_collection: Removes a collection</li>
-<li>get_collection: Gives the collection row</li>
-<li>get_collections: Gives all collection rows</li>
-<li>get_collections_names: Gives all collection names</li>
-<li>add_field: Adds a field to a collection</li>
-<li>add_fields: Adds a list of fields to a collection</li>
-<li>remove_field: Removes a field from a collection</li>
-<li>get_field: Gives all fields rows given a collection</li>
-<li>get_fields_names: Gives all fields names given a collection
-to the name</li>
-<li>get_value: Gives the value of &lt;collection, document, field&gt;</li>
-<li>set_value: Sets the value of &lt;collection, document, field&gt;</li>
-<li>set_values: Sets several values of &lt;collection, document, field&gt;</li>
-<li>remove_value: Removes the value of &lt;collection, document, field&gt;</li>
-<li>add_value: Adds a value to &lt;collection, document, field&gt;</li>
-<li>get_document: Gives the document row given a document name and a collection</li>
-<li>get_documents: Gives all document rows given a collection</li>
-<li>get_documents_names: Gives all document names given a collection</li>
-<li>add_document: Adds a document to a collection</li>
-<li>remove_document: Removes a document from a collection</li>
-<li>save_modifications: Saves the pending modifications</li>
-<li>unsave_modifications: Unsaves the pending modifications</li>
-<li>has_unsaved_modifications: To know if there are unsaved
-modifications</li>
-<li>filter_documents: Gives the list of documents matching the filter</li>
+<dt>methods:</dt><dd><ul class="simple">
+<li><p>add_collection: Adds a collection</p></li>
+<li><p>remove_collection: Removes a collection</p></li>
+<li><p>get_collection: Gives the collection row</p></li>
+<li><p>get_collections: Gives all collection rows</p></li>
+<li><p>get_collections_names: Gives all collection names</p></li>
+<li><p>add_field: Adds a field to a collection</p></li>
+<li><p>add_fields: Adds a list of fields to a collection</p></li>
+<li><p>remove_field: Removes a field from a collection</p></li>
+<li><p>get_field: Gives all fields rows given a collection</p></li>
+<li><p>get_fields_names: Gives all fields names given a collection
+to the name</p></li>
+<li><p>get_value: Gives the value of &lt;collection, document, field&gt;</p></li>
+<li><p>set_value: Sets the value of &lt;collection, document, field&gt;</p></li>
+<li><p>set_values: Sets several values of &lt;collection, document, field&gt;</p></li>
+<li><p>remove_value: Removes the value of &lt;collection, document, field&gt;</p></li>
+<li><p>add_value: Adds a value to &lt;collection, document, field&gt;</p></li>
+<li><dl class="simple">
+<dt>get_document: Gives the document row given a document name and</dt><dd><p>a collection</p>
+</dd>
+</dl>
+</li>
+<li><p>get_documents: Gives all document rows given a collection</p></li>
+<li><p>get_documents_names: Gives all document names given a collection</p></li>
+<li><p>add_document: Adds a document to a collection</p></li>
+<li><p>remove_document: Removes a document from a collection</p></li>
+<li><p>save_modifications: Saves the pending modifications</p></li>
+<li><p>unsave_modifications: Unsaves the pending modifications</p></li>
+<li><p>has_unsaved_modifications: To know if there are unsaved
+modifications</p></li>
+<li><p>filter_documents: Gives the list of documents matching the filter</p></li>
 </ul>
 </dd>
 </dl>
 <p>Creates a session API of the Database instance</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>database</strong> – Database instance to take into account</td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.add_collection">
-<code class="descname">add_collection</code><span class="sig-paren">(</span><em>name</em>, <em>primary_key='index'</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_collection" title="Permalink to this definition">¶</a></dt>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>database</strong> – Database instance to take into account</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.add_collection">
+<span class="sig-name descname"><span class="pre">add_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'index'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_collection" title="Link to this definition">¶</a></dt>
 <dd><p>Adds a collection</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>name</strong> – New collection name (str, must not be existing)</li>
-<li><strong>primary_key</strong> – New collection primary_key column (str) =&gt; “index” by default</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – New collection name (str, must not be existing)</p></li>
+<li><p><strong>primary_key</strong> – New collection primary_key column (str) =&gt; “index”
+by default</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
-<li>If the collection is already existing</li>
-<li>If the collection name is invalid</li>
-<li>If the primary_key is invalid</li>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
+<li><p>If the collection is already existing</p></li>
+<li><p>If the collection name is invalid</p></li>
+<li><p>If the primary_key is invalid</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.add_document">
-<code class="descname">add_document</code><span class="sig-paren">(</span><em>collection</em>, <em>document</em>, <em>create_missing_fields=True</em>, <em>flush=None</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_document" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.add_document">
+<span class="sig-name descname"><span class="pre">add_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_missing_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flush</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_document" title="Link to this definition">¶</a></dt>
 <dd><p>Adds a document to a collection</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> – Document collection (str, must be existing)</li>
-<li><strong>document</strong> – <p>Dictionary of document values (dict), or document primary_key (str)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Document collection (str, must be existing)</p></li>
+<li><p><strong>document</strong> – <p>Dictionary of document values (dict), or document
+primary_key (str)</p>
+<blockquote>
+<div><ul>
+<li><p>The primary_key must not be existing</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>create_missing_fields</strong> – <dl class="simple">
+<dt>Boolean to know if the missing fields</dt><dd><p>must be created</p>
+</dd>
+</dl>
 <ul>
-<li>The primary_key must not be existing</li>
+<li><p>If True, fields that are in the document but not in the
+collection are created if the type can be guessed from the value
+in the document (possible for all valid values
+except None and []).</p></li>
 </ul>
-</li>
-<li><strong>create_missing_fields</strong> – <p>Boolean to know if the missing fields must be created</p>
-<ul>
-<li>If True, fields that are in the document but not in the collection are created if the type can be guessed from the value in the document
-(possible for all valid values except None and []).</li>
+</p></li>
+<li><p><strong>flush</strong> – ignored obsolete parameter</p></li>
 </ul>
-</li>
-<li><strong>flush</strong> – ignored obsolete parameter</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
-<li>If the collection does not exist</li>
-<li>If the document already exists</li>
-<li>If document is invalid (invalid name or no primary_key)</li>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
+<li><p>If the collection does not exist</p></li>
+<li><p>If the document already exists</p></li>
+<li><p>If document is invalid (invalid name or
+no primary_key)</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.add_field">
-<code class="descname">add_field</code><span class="sig-paren">(</span><em>collection</em>, <em>name</em>, <em>field_type</em>, <em>description=None</em>, <em>index=False</em>, <em>flush=None</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_field" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.add_field">
+<span class="sig-name descname"><span class="pre">add_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flush</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_field" title="Link to this definition">¶</a></dt>
 <dd><p>Adds a field to the database</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> – Field collection (str, must be existing)</li>
-<li><strong>name</strong> – Field name (str, must not be existing)</li>
-<li><strong>field_type</strong> – Field type, in (‘string’, ‘int’, ‘float’, ‘boolean’, ‘date’, ‘datetime’,
-‘time’, ‘json’, ‘list_string’, ‘list_int’, ‘list_float’, ‘list_boolean’, ‘list_date’,
-‘list_datetime’, ‘list_time’, ‘list_json’)</li>
-<li><strong>description</strong> – Field description (str or None) =&gt; None by default</li>
-<li><strong>index</strong> – Bool to know if indexing must be done =&gt; False by default</li>
-<li><strong>flush</strong> – obsolete parameter kept for backward compatibility</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Field collection (str, must be existing)</p></li>
+<li><p><strong>name</strong> – Field name (str, must not be existing)</p></li>
+<li><p><strong>field_type</strong> – Field type, in (‘string’, ‘int’, ‘float’, ‘boolean’,
+‘date’, ‘datetime’, ‘time’, ‘json’, ‘list_string’,
+‘list_int’, ‘list_float’, ‘list_boolean’,
+‘list_date’, ‘list_datetime’, ‘list_time’,
+‘list_json’)</p></li>
+<li><p><strong>description</strong> – Field description (str or None) =&gt; None by default</p></li>
+<li><p><strong>index</strong> – Bool to know if indexing must be done =&gt; False by default</p></li>
+<li><p><strong>flush</strong> – obsolete parameter kept for backward compatibility</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
-<li>If the collection does not exist</li>
-<li>If the field already exists</li>
-<li>If the field name is invalid</li>
-<li>If the field type is invalid</li>
-<li>If the field description is invalid</li>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
+<li><p>If the collection does not exist</p></li>
+<li><p>If the field already exists</p></li>
+<li><p>If the field name is invalid</p></li>
+<li><p>If the field type is invalid</p></li>
+<li><p>If the field description is invalid</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.add_fields">
-<code class="descname">add_fields</code><span class="sig-paren">(</span><em>fields</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_fields" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.add_fields">
+<span class="sig-name descname"><span class="pre">add_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_fields" title="Link to this definition">¶</a></dt>
 <dd><p>Adds the list of fields</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fields</strong> – List of fields: [collection, name, type, description]</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fields</strong> – List of fields: [collection, name, type, description]</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.add_value">
-<code class="descname">add_value</code><span class="sig-paren">(</span><em>collection</em>, <em>document_id</em>, <em>field</em>, <em>value</em>, <em>checks=True</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_value" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.add_value">
+<span class="sig-name descname"><span class="pre">add_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_value" title="Link to this definition">¶</a></dt>
 <dd><p>Adds a value for &lt;collection, document_id, field&gt;</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> – Document collection (str, must be existing)</li>
-<li><strong>document_id</strong> – Document name (str, must be existing)</li>
-<li><strong>field</strong> – Field name (str, must be existing)</li>
-<li><strong>value</strong> – Value to add</li>
-<li><strong>checks</strong> – if False, do not perform any type or value checking</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Document collection (str, must be existing)</p></li>
+<li><p><strong>document_id</strong> – Document name (str, must be existing)</p></li>
+<li><p><strong>field</strong> – Field name (str, must be existing)</p></li>
+<li><p><strong>value</strong> – Value to add</p></li>
+<li><p><strong>checks</strong> – if False, do not perform any type or value checking</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
-<li>If the collection does not exist</li>
-<li>If the field does not exist</li>
-<li>If the document does not exist</li>
-<li>If the value is invalid</li>
-<li>If &lt;collection, document_id, field&gt; already has a value</li>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
+<li><p>If the collection does not exist</p></li>
+<li><p>If the field does not exist</p></li>
+<li><p>If the document does not exist</p></li>
+<li><p>If the value is invalid</p></li>
+<li><p>If &lt;collection, document_id, field&gt; already has
+a value</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="classmethod">
-<dt id="populse_db.database.DatabaseSession.check_value_type">
-<em class="property">classmethod </em><code class="descname">check_value_type</code><span class="sig-paren">(</span><em>value</em>, <em>field_type</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.check_value_type" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.check_value_type">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">check_value_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.check_value_type" title="Link to this definition">¶</a></dt>
 <dd><p>Checks the type of the value</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>value</strong> – Value</li>
-<li><strong>field_type</strong> – Type that the value is supposed to have</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> – Value</p></li>
+<li><p><strong>field_type</strong> – Type that the value is supposed to have</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">True if the value is None or has a valid type, False otherwise</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the value is None or has a valid type, False otherwise</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.commit">
-<code class="descname">commit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.commit" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.commit">
+<span class="sig-name descname"><span class="pre">commit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.commit" title="Link to this definition">¶</a></dt>
+<dd><p>Store in the database all modifications done since the last call</p>
+</dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.filter_documents">
-<code class="descname">filter_documents</code><span class="sig-paren">(</span><em>collection</em>, <em>filter_query</em>, <em>fields=None</em>, <em>as_list=False</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.filter_documents" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.filter_documents">
+<span class="sig-name descname"><span class="pre">filter_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.filter_documents" title="Link to this definition">¶</a></dt>
 <dd><p>Iterates over the collection documents selected by filter_query</p>
 <p>Each item yield is a row of the collection table returned</p>
-<p>filter_query can be the result of self.filter_query() or a string containing a filter
-(in this case self.fliter_query() is called to get the actual query)</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>collection</strong> – Filter collection (str, must be existing)</li>
-<li><strong>filter_query</strong> – <p>Filter query (str)</p>
+<p>filter_query can be the result of self.filter_query() or a string
+containing a filter (in this case self.filter_query() is called to
+get the actual query)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Filter collection (str, must be existing)</p></li>
+<li><p><strong>filter_query</strong> – <p>Filter query (str)</p>
 <ul>
-<li>A filter row must be written this way: {&lt;field&gt;} &lt;operator&gt; “&lt;value&gt;”</li>
-<li>The operator must be in (‘==’, ‘!=’, ‘&lt;=’, ‘&gt;=’, ‘&lt;’, ‘&gt;’, ‘IN’, ‘ILIKE’, ‘LIKE’)</li>
-<li>The filter rows can be linked with ‘ AND ‘ or ‘ OR ‘</li>
-<li>Example: “((({BandWidth} == “50000”)) AND (({FileName} LIKE “%G1%”)))”</li>
+<li><p>A filter row must be written this way:
+{&lt;field&gt;} &lt;operator&gt; “&lt;value&gt;”</p></li>
+<li><p>The operator must be in
+(‘==’, ‘!=’, ‘&lt;=’, ‘&gt;=’, ‘&lt;’, ‘&gt;’, ‘IN’, ‘ILIKE’, ‘LIKE’)</p></li>
+<li><p>The filter rows can be linked with ‘ AND ‘ or ‘ OR ‘</p></li>
+<li><p>Example:
+“((({BandWidth} == “50000”)) AND (({FileName} LIKE “%G1%”)))”</p></li>
 </ul>
-</li>
+</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.get_collection">
-<code class="descname">get_collection</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collection" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_collection">
+<span class="sig-name descname"><span class="pre">get_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collection" title="Link to this definition">¶</a></dt>
 <dd><p>Returns the collection row of the collection</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> – Collection name (str, must be existing)</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The collection row if it exists, None otherwise</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> – Collection name (str, must be existing)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The collection row if it exists, None otherwise</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.get_collections">
-<code class="descname">get_collections</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collections" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_collections">
+<span class="sig-name descname"><span class="pre">get_collections</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collections" title="Link to this definition">¶</a></dt>
 <dd><p>Gives the list of all collection rows</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">List of all collection rows</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of all collection rows</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.get_collections_names">
-<code class="descname">get_collections_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collections_names" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_collections_names">
+<span class="sig-name descname"><span class="pre">get_collections_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collections_names" title="Link to this definition">¶</a></dt>
 <dd><p>Gives the list of all collection names</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">List of all collection names</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of all collection names</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.get_document">
-<code class="descname">get_document</code><span class="sig-paren">(</span><em>collection</em>, <em>document_id</em>, <em>fields=None</em>, <em>as_list=False</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_document" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_document">
+<span class="sig-name descname"><span class="pre">get_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_document" title="Link to this definition">¶</a></dt>
 <dd><p>Gives a Document instance given a collection and a document identifier</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> – Document collection (str, must be existing)</li>
-<li><strong>document_id</strong> – Document name (str, must be existing)</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Document collection (str, must be existing)</p></li>
+<li><p><strong>document_id</strong> – Document name (str, must be existing)</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The document row if the document exists, None otherwise</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The document row if the document exists, None otherwise</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.get_documents">
-<code class="descname">get_documents</code><span class="sig-paren">(</span><em>collection</em>, <em>fields=None</em>, <em>as_list=False</em>, <em>document_ids=None</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_documents" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_documents">
+<span class="sig-name descname"><span class="pre">get_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_documents" title="Link to this definition">¶</a></dt>
 <dd><p>Gives the list of all document rows, given a collection</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> – Documents collection (str, must be existing)</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all document rows of the collection if it exists, None otherwise</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>collection</strong> – Documents collection (str, must be existing)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of all document rows of the collection if it exists,
+None otherwise</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.get_documents_names">
-<code class="descname">get_documents_names</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_documents_names" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_documents_names">
+<span class="sig-name descname"><span class="pre">get_documents_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_documents_names" title="Link to this definition">¶</a></dt>
 <dd><p>Gives the list of all document names, given a collection</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> – Documents collection (str, must be existing)</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all document names of the collection if it exists, None otherwise</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>collection</strong> – Documents collection (str, must be existing)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of all document names of the collection if it exists,
+None otherwise</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.get_field">
-<code class="descname">get_field</code><span class="sig-paren">(</span><em>collection</em>, <em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_field" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_field">
+<span class="sig-name descname"><span class="pre">get_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_field" title="Link to this definition">¶</a></dt>
 <dd><p>Gives the field row, given a field name and a collection</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> – Document collection (str, must be existing)</li>
-<li><strong>name</strong> – Field name (str, must be existing)</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Document collection (str, must be existing)</p></li>
+<li><p><strong>name</strong> – Field name (str, must be existing)</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The field row if the field exists, None otherwise</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The field row if the field exists, None otherwise</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.get_fields">
-<code class="descname">get_fields</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_fields" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_fields">
+<span class="sig-name descname"><span class="pre">get_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_fields" title="Link to this definition">¶</a></dt>
 <dd><p>Gives the list of all fields rows, given a collection</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> – Fields collection (str, must be existing)</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all fields rows of the collection if it exists, None otherwise</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>collection</strong> – Fields collection (str, must be existing)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of all fields rows of the collection if it exists,
+None otherwise</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.get_fields_names">
-<code class="descname">get_fields_names</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_fields_names" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_fields_names">
+<span class="sig-name descname"><span class="pre">get_fields_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_fields_names" title="Link to this definition">¶</a></dt>
 <dd><p>Gives the list of all fields, given a collection</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>collection</strong> – Fields collection (str, must be existing)</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of all fields names of the collection if it exists, None otherwise</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>collection</strong> – Fields collection (str, must be existing)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of all fields names of the collection if it exists,
+None otherwise</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.get_value">
-<code class="descname">get_value</code><span class="sig-paren">(</span><em>collection</em>, <em>document_id</em>, <em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_value" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_value">
+<span class="sig-name descname"><span class="pre">get_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_value" title="Link to this definition">¶</a></dt>
 <dd><p>Gives the current value of &lt;collection, document, field&gt;</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> – Document collection (str, must be existing)</li>
-<li><strong>document_id</strong> – Document name (str, must be existing)</li>
-<li><strong>field</strong> – Field name (str, must be existing)</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Document collection (str, must be existing)</p></li>
+<li><p><strong>document_id</strong> – Document name (str, must be existing)</p></li>
+<li><p><strong>field</strong> – Field name (str, must be existing)</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The current value of &lt;collection, document, field&gt; if it exists, None otherwise</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The current value of &lt;collection, document, field&gt; if it
+exists, None otherwise</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.has_document">
-<code class="descname">has_document</code><span class="sig-paren">(</span><em>collection</em>, <em>document_id</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.has_document" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.has_document">
+<span class="sig-name descname"><span class="pre">has_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.has_document" title="Link to this definition">¶</a></dt>
+<dd><p>Checks existence of a document in a collection.</p>
+</dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.remove_collection">
-<code class="descname">remove_collection</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_collection" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.remove_collection">
+<span class="sig-name descname"><span class="pre">remove_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_collection" title="Link to this definition">¶</a></dt>
 <dd><p>Removes a collection</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> – Collection to remove (str, must be existing)</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><strong>ValueError</strong> – If the collection does not exist</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> – Collection to remove (str, must be existing)</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the collection does not exist</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.remove_document">
-<code class="descname">remove_document</code><span class="sig-paren">(</span><em>collection</em>, <em>document_id</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_document" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.remove_document">
+<span class="sig-name descname"><span class="pre">remove_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_document" title="Link to this definition">¶</a></dt>
 <dd><p>Removes a document in the collection</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> – Document collection (str, must be existing)</li>
-<li><strong>document_id</strong> – Document name (str, must be existing)</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Document collection (str, must be existing)</p></li>
+<li><p><strong>document_id</strong> – Document name (str, must be existing)</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
-<li>If the collection does not exist</li>
-<li>If the document does not exist</li>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
+<li><p>If the collection does not exist</p></li>
+<li><p>If the document does not exist</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.remove_field">
-<code class="descname">remove_field</code><span class="sig-paren">(</span><em>collection</em>, <em>fields</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_field" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.remove_field">
+<span class="sig-name descname"><span class="pre">remove_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_field" title="Link to this definition">¶</a></dt>
 <dd><p>Removes a field in the collection</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> – Field collection (str, must be existing)</li>
-<li><strong>field</strong> – Field name (str, must be existing), or list of fields (list of str, must all be existing)</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Field collection (str, must be existing)</p></li>
+<li><p><strong>field</strong> – Field name (str, must be existing), or list of fields
+(list of str, must all be existing)</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
-<li>If the collection does not exist</li>
-<li>If the field does not exist</li>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
+<li><p>If the collection does not exist</p></li>
+<li><p>If the field does not exist</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.remove_value">
-<code class="descname">remove_value</code><span class="sig-paren">(</span><em>collection</em>, <em>document_id</em>, <em>field</em>, <em>flush=None</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_value" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.remove_value">
+<span class="sig-name descname"><span class="pre">remove_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flush</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_value" title="Link to this definition">¶</a></dt>
 <dd><p>Removes the value &lt;collection, document, field&gt; if it exists</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> – Document collection (str, must be existing)</li>
-<li><strong>document_id</strong> – Document name (str, must be existing)</li>
-<li><strong>field</strong> – Field name (str, must be existing)</li>
-<li><strong>flush</strong> – unused obsolete parameter</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Document collection (str, must be existing)</p></li>
+<li><p><strong>document_id</strong> – Document name (str, must be existing)</p></li>
+<li><p><strong>field</strong> – Field name (str, must be existing)</p></li>
+<li><p><strong>flush</strong> – unused obsolete parameter</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
-<li>If the collection does not exist</li>
-<li>If the field does not exist</li>
-<li>If the document does not exist</li>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
+<li><p>If the collection does not exist</p></li>
+<li><p>If the field does not exist</p></li>
+<li><p>If the document does not exist</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.rollback">
-<code class="descname">rollback</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.rollback" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.rollback">
+<span class="sig-name descname"><span class="pre">rollback</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.rollback" title="Link to this definition">¶</a></dt>
+<dd><p>Rejects all changes made to the database since the last call</p>
+</dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.set_value">
-<code class="descname">set_value</code><span class="sig-paren">(</span><em>collection</em>, <em>document_id</em>, <em>field</em>, <em>new_value</em>, <em>flush=None</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.set_value" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.set_value">
+<span class="sig-name descname"><span class="pre">set_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flush</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.set_value" title="Link to this definition">¶</a></dt>
 <dd><p>Sets the value associated to &lt;collection, document, field&gt; if it exists</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> – Document collection (str, must be existing)</li>
-<li><strong>document_id</strong> – Document name (str, must be existing)</li>
-<li><strong>field</strong> – Field name (str, must be existing)</li>
-<li><strong>new_value</strong> – New value</li>
-<li><strong>flush</strong> – unused obsolete parmeter</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Document collection (str, must be existing)</p></li>
+<li><p><strong>document_id</strong> – Document name (str, must be existing)</p></li>
+<li><p><strong>field</strong> – Field name (str, must be existing)</p></li>
+<li><p><strong>new_value</strong> – New value</p></li>
+<li><p><strong>flush</strong> – unused obsolete parameter</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
-<li>If the collection does not exist</li>
-<li>If the field does not exist</li>
-<li>If the document does not exist</li>
-<li>If the value is invalid</li>
-<li>If trying to set the primary_key</li>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
+<li><p>If the collection does not exist</p></li>
+<li><p>If the field does not exist</p></li>
+<li><p>If the document does not exist</p></li>
+<li><p>If the value is invalid</p></li>
+<li><p>If trying to set the primary_key</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.database.DatabaseSession.set_values">
-<code class="descname">set_values</code><span class="sig-paren">(</span><em>collection</em>, <em>document_id</em>, <em>values</em>, <em>flush=None</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.set_values" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.set_values">
+<span class="sig-name descname"><span class="pre">set_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flush</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.set_values" title="Link to this definition">¶</a></dt>
 <dd><p>Sets the values of a &lt;collection, document, field&gt; if it exists</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>collection</strong> – Document collection (str, must be existing)</li>
-<li><strong>document_id</strong> – Document name (str, must be existing)</li>
-<li><strong>values</strong> – Dict of values (key=field, value=value)</li>
-<li><strong>flush</strong> – unused obsolete parmeter</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection</strong> – Document collection (str, must be existing)</p></li>
+<li><p><strong>document_id</strong> – Document name (str, must be existing)</p></li>
+<li><p><strong>values</strong> – Dict of values (key=field, value=value)</p></li>
+<li><p><strong>flush</strong> – unused obsolete parameter</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – <ul class="simple">
-<li>If the collection does not exist</li>
-<li>If the field does not exist</li>
-<li>If the document does not exist</li>
-<li>If the values are invalid</li>
-<li>If trying to set the primary_key</li>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
+<li><p>If the collection does not exist</p></li>
+<li><p>If the field does not exist</p></li>
+<li><p>If the document does not exist</p></li>
+<li><p>If the values are invalid</p></li>
+<li><p>If trying to set the primary_key</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="populse_db.database.DictList">
-<em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">DictList</code><span class="sig-paren">(</span><em>keys</em>, <em>values</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DictList" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#populse_db.database.ListWithKeys" title="populse_db.database.ListWithKeys"><code class="xref py py-class docutils literal"><span class="pre">populse_db.database.ListWithKeys</span></code></a></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="populse_db.database.DictList">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">DictList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DictList" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#populse_db.database.ListWithKeys" title="populse_db.database.ListWithKeys"><code class="xref py py-class docutils literal notranslate"><span class="pre">ListWithKeys</span></code></a></p>
+<p>Bla bla bla</p>
+<p>Initialize values with their position (args)
+or name (kwargs)</p>
 </dd></dl>
 
-<dl class="class">
-<dt id="populse_db.database.ListWithKeys">
-<em class="property">class </em><code class="descclassname">populse_db.database.</code><code class="descname">ListWithKeys</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.ListWithKeys" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
-<p>Reprsents a list of value of fixed size with a key string for each value.
+<dl class="py class">
+<dt class="sig sig-object py" id="populse_db.database.ListWithKeys">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">ListWithKeys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.ListWithKeys" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Represents a list of value of fixed size with a key string for each value.
 It allows to access to values with their index or with their key.
-It is also possible to acess to values as attributes.
+It is also possible to access to values as attributes.
 The function list_with_keys() is used to create derived classes
 with a fixed set of item names.</p>
 <p>Initialize values with their position (args)
 or name (kwargs)</p>
-<dl class="classmethod">
-<dt id="populse_db.database.ListWithKeys.keys">
-<em class="property">classmethod </em><code class="descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.ListWithKeys.keys" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.ListWithKeys.keys">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.ListWithKeys.keys" title="Link to this definition">¶</a></dt>
+<dd><p>Return the keys</p>
+</dd></dl>
 
 </dd></dl>
 
-<dl class="function">
-<dt id="populse_db.database.list_with_keys">
-<code class="descclassname">populse_db.database.</code><code class="descname">list_with_keys</code><span class="sig-paren">(</span><em>name</em>, <em>keys</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.list_with_keys" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="populse_db.database.list_with_keys">
+<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">list_with_keys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.list_with_keys" title="Link to this definition">¶</a></dt>
 <dd><p>Return a new instance of ListWithNames with
 a given list of keys</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="populse_db.database.python_value_type">
-<code class="descclassname">populse_db.database.</code><code class="descname">python_value_type</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.python_value_type" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="populse_db.database.python_value_type">
+<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">python_value_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.python_value_type" title="Link to this definition">¶</a></dt>
 <dd><p>Returns the field type corresponding to a Python value.
 This type can be used in add_field(s) method.
 For list values, only the first item is considered to get the type.
@@ -757,355 +775,355 @@ Type cannot be determined for empty list.
 If value is None, the result is None.</p>
 </dd></dl>
 
-</div>
-<div class="section" id="module-populse_db.filter">
-<span id="populse-db-filter-module"></span><h2>populse_db.filter module<a class="headerlink" href="#module-populse_db.filter" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="populse_db.filter.FilterToQuery">
-<em class="property">class </em><code class="descclassname">populse_db.filter.</code><code class="descname">FilterToQuery</code><span class="sig-paren">(</span><em>engine</em>, <em>collection</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">lark.visitors.Transformer</span></code></p>
+</section>
+<section id="module-populse_db.filter">
+<span id="populse-db-filter-module"></span><h2>populse_db.filter module<a class="headerlink" href="#module-populse_db.filter" title="Link to this heading">¶</a></h2>
+<p>Bla bla bla</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.filter.</span></span><span class="sig-name descname"><span class="pre">FilterToQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Transformer</span></code></p>
 <p>Instance of this class are passed to Lark parser when parsing a document
 selection filter string in order to create an object that can be used to
 select items from the database. FilterToQuery implements methods that are
 common to all engines and does not produce anything because the query
-objectis specific to each engine. Therefore, engine class must use a 
+objectis specific to each engine. Therefore, engine class must use a
 subclass of FilterToQuery that implements the following methods:</p>
 <blockquote>
-<div>build_condition_all
+<div><p>build_condition_all
 build_condition_literal_in_list_field
 build_condition_field_in_list_field
 build_condition_field_in_list
 build_condition_field_op_field
 build_condition_value_op_field
 build_condition_negation
-build_condition_combine_conditions</div></blockquote>
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.all">
-<code class="descname">all</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.all" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+build_condition_combine_conditions</p>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.all">
+<span class="sig-name descname"><span class="pre">all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.all" title="Link to this definition">¶</a></dt>
+<dd><p>Return a selection query that select all documents.</p>
+</dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.build_condition_all">
-<code class="descname">build_condition_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_all" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.build_condition_all">
+<span class="sig-name descname"><span class="pre">build_condition_all</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_all" title="Link to this definition">¶</a></dt>
 <dd><p>Return a selection query that select all documents. This query
 is directly given to the engine and never combined with other
 queries.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.build_condition_combine_conditions">
-<code class="descname">build_condition_combine_conditions</code><span class="sig-paren">(</span><em>left_condition</em>, <em>operator_str</em>, <em>right_condition</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_combine_conditions" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.build_condition_combine_conditions">
+<span class="sig-name descname"><span class="pre">build_condition_combine_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_condition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_condition</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_combine_conditions" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition that combines two conditions with an operator.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>left_condition</strong> – condition object returned by one of the 
-build_condition_*() method (except 
-build_condition_all)</li>
-<li><strong>operator_str</strong> – string containing one of the BOOLEAN_OPERATOR
-defined in the grammar (in lowercase)</li>
-<li><strong>right_condition</strong> – condition object returned by one of the 
-build_condition_*() method (except 
-build_condition_all)</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>left_condition</strong> – condition object returned by one of the
+build_condition_*() method (except
+build_condition_all)</p></li>
+<li><p><strong>operator_str</strong> – string containing one of the BOOLEAN_OPERATOR
+defined in the grammar (in lowercase)</p></li>
+<li><p><strong>right_condition</strong> – condition object returned by one of the
+build_condition_*() method (except
+build_condition_all)</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.build_condition_field_in_list">
-<code class="descname">build_condition_field_in_list</code><span class="sig-paren">(</span><em>field</em>, <em>list_value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_field_in_list" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.build_condition_field_in_list">
+<span class="sig-name descname"><span class="pre">build_condition_field_in_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_field_in_list" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition checking if a field value is a
 constant list value</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>field</strong> – field object as returned by Database.get_field</li>
-<li><strong>list_value</strong> – Pyton list containing literals</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field</strong> – field object as returned by Database.get_field</p></li>
+<li><p><strong>list_value</strong> – Pyton list containing literals</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.build_condition_field_in_list_field">
-<code class="descname">build_condition_field_in_list_field</code><span class="sig-paren">(</span><em>field</em>, <em>list_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_field_in_list_field" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.build_condition_field_in_list_field">
+<span class="sig-name descname"><span class="pre">build_condition_field_in_list_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_field_in_list_field" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition checking if a field value is in another
 list field value</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>field</strong> – field object as returned by Database.get_field</li>
-<li><strong>list_field</strong> – field object as returned by Database.get_field</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field</strong> – field object as returned by Database.get_field</p></li>
+<li><p><strong>list_field</strong> – field object as returned by Database.get_field</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.build_condition_field_op_field">
-<code class="descname">build_condition_field_op_field</code><span class="sig-paren">(</span><em>left_field</em>, <em>operator_str</em>, <em>right_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_field_op_field" title="Permalink to this definition">¶</a></dt>
-<dd><p>Builds a condition comparing the content of two fields with an operator.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>left_field</strong> – field object as returned by Database.get_field</li>
-<li><strong>operator</strong> – string containing one of the CONDITION_OPERATOR
-defined in the grammar (in lowercase)</li>
-<li><strong>right_field</strong> – field object as returned by Database.get_field</li>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.build_condition_field_op_field">
+<span class="sig-name descname"><span class="pre">build_condition_field_op_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_field_op_field" title="Link to this definition">¶</a></dt>
+<dd><p>Builds a condition comparing the content of two fields
+with an operator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>left_field</strong> – field object as returned by Database.get_field</p></li>
+<li><p><strong>operator</strong> – string containing one of the CONDITION_OPERATOR
+defined in the grammar (in lowercase)</p></li>
+<li><p><strong>right_field</strong> – field object as returned by Database.get_field</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.build_condition_field_op_value">
-<code class="descname">build_condition_field_op_value</code><span class="sig-paren">(</span><em>field</em>, <em>operator_str</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_field_op_value" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.build_condition_field_op_value">
+<span class="sig-name descname"><span class="pre">build_condition_field_op_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_field_op_value" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition comparing the content of a field with a constant
 value using an operator.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>field</strong> – field object as returned by Database.get_field</li>
-<li><strong>operator_str</strong> – string containing one of the CONDITION_OPERATOR
-defined in the grammar (in lowercase)</li>
-<li><strong>value</strong> – Python value (None, string number, boolean or date/time)</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field</strong> – field object as returned by Database.get_field</p></li>
+<li><p><strong>operator_str</strong> – string containing one of the CONDITION_OPERATOR
+defined in the grammar (in lowercase)</p></li>
+<li><p><strong>value</strong> – Python value (None, string number, boolean or date/time)</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.build_condition_literal_in_list_field">
-<code class="descname">build_condition_literal_in_list_field</code><span class="sig-paren">(</span><em>value</em>, <em>list_field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_literal_in_list_field" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.build_condition_literal_in_list_field">
+<span class="sig-name descname"><span class="pre">build_condition_literal_in_list_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_literal_in_list_field" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition checking if a constant value is in a list field</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>value</strong> – Python literal</li>
-<li><strong>list_field</strong> – field object as returned by Database.get_field</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> – Python literal</p></li>
+<li><p><strong>list_field</strong> – field object as returned by Database.get_field</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.build_condition_negation">
-<code class="descname">build_condition_negation</code><span class="sig-paren">(</span><em>condition</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_negation" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.build_condition_negation">
+<span class="sig-name descname"><span class="pre">build_condition_negation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_negation" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition inverting another condition.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>condition</strong> – condition object returned by one of the 
-build_condition_*() method (except 
-build_condition_all)</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>condition</strong> – condition object returned by one of the
+build_condition_*() method (except
+build_condition_all)</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.build_condition_value_op_field">
-<code class="descname">build_condition_value_op_field</code><span class="sig-paren">(</span><em>value</em>, <em>operator_str</em>, <em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_value_op_field" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.build_condition_value_op_field">
+<span class="sig-name descname"><span class="pre">build_condition_value_op_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.build_condition_value_op_field" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition comparing a constant value with the content of a
 field withusing an operator.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>value</strong> – Python value (None, string number, boolean or date/time)</li>
-<li><strong>operator_str</strong> – string containing one of the CONDITION_OPERATOR
-defined in the grammar (in lowercase)</li>
-<li><strong>field</strong> – field object as returned by Database.get_field</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> – Python value (None, string number, boolean or date/time)</p></li>
+<li><p><strong>operator_str</strong> – string containing one of the CONDITION_OPERATOR
+defined in the grammar (in lowercase)</p></li>
+<li><p><strong>field</strong> – field object as returned by Database.get_field</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.condition">
-<code class="descname">condition</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.condition" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.condition">
+<span class="sig-name descname"><span class="pre">condition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.condition" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.conditions">
-<code class="descname">conditions</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.conditions" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.conditions">
+<span class="sig-name descname"><span class="pre">conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.conditions" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.date">
-<code class="descname">date</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.date" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.date">
+<span class="sig-name descname"><span class="pre">date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.date" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.datetime">
-<code class="descname">datetime</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.datetime" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.datetime">
+<span class="sig-name descname"><span class="pre">datetime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.datetime" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.field_name">
-<code class="descname">field_name</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.field_name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.empty_list">
+<span class="sig-name descname"><span class="pre">empty_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.empty_list" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
 
-<dl class="staticmethod">
-<dt id="populse_db.filter.FilterToQuery.is_field">
-<em class="property">static </em><code class="descname">is_field</code><span class="sig-paren">(</span><em>object</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.is_field" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.field_name">
+<span class="sig-name descname"><span class="pre">field_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.field_name" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.is_field">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.is_field" title="Link to this definition">¶</a></dt>
 <dd><p>Checks if an object is a populse_db.database column object</p>
 </dd></dl>
 
-<dl class="staticmethod">
-<dt id="populse_db.filter.FilterToQuery.is_list_field">
-<em class="property">static </em><code class="descname">is_list_field</code><span class="sig-paren">(</span><em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.is_list_field" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.is_list_field">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_list_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.is_list_field" title="Link to this definition">¶</a></dt>
+<dd><p>Check if the field is a list.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.keyword_literal">
+<span class="sig-name descname"><span class="pre">keyword_literal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literal" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.keyword_literals">
+<span class="sig-name descname"><span class="pre">keyword_literals</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'false':</span> <span class="pre">False,</span> <span class="pre">'null':</span> <span class="pre">None,</span> <span class="pre">'true':</span> <span class="pre">True}</span></em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.keyword_literal">
-<code class="descname">keyword_literal</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literal" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.list">
+<span class="sig-name descname"><span class="pre">list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.list" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
 
-<dl class="attribute">
-<dt id="populse_db.filter.FilterToQuery.keyword_literals">
-<code class="descname">keyword_literals</code><em class="property"> = {'false': False, 'null': None, 'true': True}</em><a class="headerlink" href="#populse_db.filter.FilterToQuery.keyword_literals" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.negation">
+<span class="sig-name descname"><span class="pre">negation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.negation" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.list">
-<code class="descname">list</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.list" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.number">
+<span class="sig-name descname"><span class="pre">number</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.number" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.negation">
-<code class="descname">negation</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.negation" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.quoted_field_name">
+<span class="sig-name descname"><span class="pre">quoted_field_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.quoted_field_name" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.number">
-<code class="descname">number</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.number" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.string">
+<span class="sig-name descname"><span class="pre">string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.string" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
 
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.quoted_field_name">
-<code class="descname">quoted_field_name</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.quoted_field_name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.string">
-<code class="descname">string</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.string" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="populse_db.filter.FilterToQuery.time">
-<code class="descname">time</code><span class="sig-paren">(</span><em>items</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.time" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToQuery.time">
+<span class="sig-name descname"><span class="pre">time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToQuery.time" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
 
 </dd></dl>
 
-<dl class="function">
-<dt id="populse_db.filter.filter_parser">
-<code class="descclassname">populse_db.filter.</code><code class="descname">filter_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.filter_parser" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A singleton instance of Lark grammar parser for filter expression</td>
-</tr>
-</tbody>
-</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="populse_db.filter.filter_parser">
+<span class="sig-prename descclassname"><span class="pre">populse_db.filter.</span></span><span class="sig-name descname"><span class="pre">filter_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.filter_parser" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A singleton instance of Lark grammar parser for filter expression</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="populse_db.filter.literal_parser">
-<code class="descclassname">populse_db.filter.</code><code class="descname">literal_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.literal_parser" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="populse_db.filter.literal_parser">
+<span class="sig-prename descclassname"><span class="pre">populse_db.filter.</span></span><span class="sig-name descname"><span class="pre">literal_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.literal_parser" title="Link to this definition">¶</a></dt>
 <dd><p>This is used to test literals parsing</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An instance of Lark grammar parser for parsing only a literal
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An instance of Lark grammar parser for parsing only a literal
 value (int, string, list, date, etc.) from a filter expression. This
-is used for testing the parsing of these literals.</td>
-</tr>
-</tbody>
-</table>
+is used for testing the parsing of these literals.</p>
+</dd>
+</dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-populse_db.info">
-<span id="populse-db-info-module"></span><h2>populse_db.info module<a class="headerlink" href="#module-populse_db.info" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="module-populse_db.test">
-<span id="populse-db-test-module"></span><h2>populse_db.test module<a class="headerlink" href="#module-populse_db.test" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="populse_db.test.TestsSQLiteInMemory">
-<em class="property">class </em><code class="descclassname">populse_db.test.</code><code class="descname">TestsSQLiteInMemory</code><span class="sig-paren">(</span><em>methodName='runTest'</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.TestsSQLiteInMemory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></code></p>
+</section>
+<section id="module-populse_db.info">
+<span id="populse-db-info-module"></span><h2>populse_db.info module<a class="headerlink" href="#module-populse_db.info" title="Link to this heading">¶</a></h2>
+<p>The module dedicated to the main information on populse_db.</p>
+<p>The info.py module is mainly used by the setup.py module.</p>
+</section>
+<section id="module-populse_db.test">
+<span id="populse-db-test-module"></span><h2>populse_db.test module<a class="headerlink" href="#module-populse_db.test" title="Link to this heading">¶</a></h2>
+<p>This module is dedicated to populse_db unit tests.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Contains<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="field-list simple">
+<dt class="field-odd">Class<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p>TestsSQLiteInMemory</p></li>
+<li><p>TestDatabaseMethods</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="populse_db.test.TestsSQLiteInMemory">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.test.</span></span><span class="sig-name descname"><span class="pre">TestsSQLiteInMemory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">methodName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'runTest'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.TestsSQLiteInMemory" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TestCase</span></code></p>
+<p>Bla bla bla</p>
 <p>Create an instance of the class that will use the named test
 method when executed. Raises a ValueError if the instance does
 not have a method with the specified name.</p>
-<dl class="method">
-<dt id="populse_db.test.TestsSQLiteInMemory.test_add_get_document">
-<code class="descname">test_add_get_document</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.TestsSQLiteInMemory.test_add_get_document" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.test.TestsSQLiteInMemory.test_add_get_document">
+<span class="sig-name descname"><span class="pre">test_add_get_document</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.TestsSQLiteInMemory.test_add_get_document" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
 
 </dd></dl>
 
-<dl class="function">
-<dt id="populse_db.test.create_test_case">
-<code class="descclassname">populse_db.test.</code><code class="descname">create_test_case</code><span class="sig-paren">(</span><em>**database_creation_parameters</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.create_test_case" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="populse_db.test.create_test_case">
+<span class="sig-prename descclassname"><span class="pre">populse_db.test.</span></span><span class="sig-name descname"><span class="pre">create_test_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">database_creation_parameters</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.create_test_case" title="Link to this definition">¶</a></dt>
+<dd><p>Bla bla bla</p>
+</dd></dl>
 
-<dl class="function">
-<dt id="populse_db.test.load_tests">
-<code class="descclassname">populse_db.test.</code><code class="descname">load_tests</code><span class="sig-paren">(</span><em>loader</em>, <em>standard_tests</em>, <em>pattern</em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.load_tests" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="populse_db.test.load_tests">
+<span class="sig-prename descclassname"><span class="pre">populse_db.test.</span></span><span class="sig-name descname"><span class="pre">load_tests</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standard_tests</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.load_tests" title="Link to this definition">¶</a></dt>
 <dd><p>Prepares the tests parameters</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>loader</strong> – </li>
-<li><strong>standard_tests</strong> – </li>
-<li><strong>pattern</strong> – </li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>loader</strong> – </p></li>
+<li><p><strong>standard_tests</strong> – </p></li>
+<li><p><strong>pattern</strong> – </p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A test suite</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A test suite</p>
+</dd>
+</dl>
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
       </div>
@@ -1118,8 +1136,8 @@ not have a method with the specified name.</p>
       </div>
 
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2018, populse.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.7.
+    &#169; Copyright 2024, populse.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

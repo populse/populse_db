@@ -1,32 +1,21 @@
+<!DOCTYPE html>
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en" data-content_root="./">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>populse_db &#8212; populse_db 1.0.1 documentation</title>
-    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.0.1',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>populse_db &#8212; populse_db 2.5.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css?v=e491ac2d" />
+    <script src="_static/documentation_options.js?v=3c4615cf"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
-  </head>
-  <body>
+  </head><body>
       <div class="header" role="banner"><h1 class="heading"><a href="index.html">
-          <span>populse_db 1.0.1 documentation</span></a></h1>
+          <span>populse_db 2.5.0 documentation</span></a></h1>
         <h2 class="heading"><span>populse_db</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -36,16 +25,18 @@
         </p>
 
       </div>
-      <div class="content">
+      <div class="content" role="main">
         
         
-  <div class="section" id="populse-db">
-<h1>populse_db<a class="headerlink" href="#populse-db" title="Permalink to this headline">¶</a></h1>
+  <section id="populse-db">
+<h1>populse_db<a class="headerlink" href="#populse-db" title="Link to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="populse_db.html">populse_db package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="populse_db.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html">populse_db.engine package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine"><code class="docutils literal notranslate"><span class="pre">Engine</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.engine_factory"><code class="docutils literal notranslate"><span class="pre">engine_factory()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#module-populse_db.engine.sqlite">populse_db.engine.sqlite module</a></li>
 </ul>
@@ -53,15 +44,99 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="populse_db.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="populse_db.html#module-populse_db.database">populse_db.database module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="populse_db.html#module-populse_db.filter">populse_db.filter module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="populse_db.html#module-populse_db.database">populse_db.database module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.html#populse_db.database.Database"><code class="docutils literal notranslate"><span class="pre">Database</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.Database.clear"><code class="docutils literal notranslate"><span class="pre">Database.clear()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.Database.database_session_class"><code class="docutils literal notranslate"><span class="pre">Database.database_session_class</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession"><code class="docutils literal notranslate"><span class="pre">DatabaseSession</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.add_collection"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.add_collection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.add_document"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.add_document()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.add_field"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.add_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.add_fields"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.add_fields()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.add_value"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.add_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.check_value_type"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.check_value_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.commit"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.commit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.filter_documents"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.filter_documents()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.get_collection"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.get_collection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.get_collections"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.get_collections()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.get_collections_names"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.get_collections_names()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.get_document"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.get_document()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.get_documents"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.get_documents()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.get_documents_names"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.get_documents_names()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.get_field"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.get_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.get_fields"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.get_fields()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.get_fields_names"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.get_fields_names()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.get_value"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.get_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.has_document"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.has_document()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.remove_collection"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.remove_collection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.remove_document"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.remove_document()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.remove_field"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.remove_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.remove_value"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.remove_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.rollback"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.rollback()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.set_value"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.DatabaseSession.set_values"><code class="docutils literal notranslate"><span class="pre">DatabaseSession.set_values()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.html#populse_db.database.DictList"><code class="docutils literal notranslate"><span class="pre">DictList</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.html#populse_db.database.ListWithKeys"><code class="docutils literal notranslate"><span class="pre">ListWithKeys</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.database.ListWithKeys.keys"><code class="docutils literal notranslate"><span class="pre">ListWithKeys.keys()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.html#populse_db.database.list_with_keys"><code class="docutils literal notranslate"><span class="pre">list_with_keys()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.html#populse_db.database.python_value_type"><code class="docutils literal notranslate"><span class="pre">python_value_type()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="populse_db.html#module-populse_db.filter">populse_db.filter module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery"><code class="docutils literal notranslate"><span class="pre">FilterToQuery</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.all"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.build_condition_all"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.build_condition_all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.build_condition_combine_conditions"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.build_condition_combine_conditions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.build_condition_field_in_list"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.build_condition_field_in_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.build_condition_field_in_list_field"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.build_condition_field_in_list_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.build_condition_field_op_field"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.build_condition_field_op_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.build_condition_field_op_value"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.build_condition_field_op_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.build_condition_literal_in_list_field"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.build_condition_literal_in_list_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.build_condition_negation"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.build_condition_negation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.build_condition_value_op_field"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.build_condition_value_op_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.condition"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.condition()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.conditions"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.conditions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.date"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.date()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.datetime"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.datetime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.empty_list"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.empty_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.field_name"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.field_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.is_field"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.is_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.is_list_field"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.is_list_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.keyword_literal"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.keyword_literal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.keyword_literals"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.keyword_literals</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.list"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.negation"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.negation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.number"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.number()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.quoted_field_name"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.quoted_field_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.string"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.string()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.filter.FilterToQuery.time"><code class="docutils literal notranslate"><span class="pre">FilterToQuery.time()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.html#populse_db.filter.filter_parser"><code class="docutils literal notranslate"><span class="pre">filter_parser()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.html#populse_db.filter.literal_parser"><code class="docutils literal notranslate"><span class="pre">literal_parser()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="populse_db.html#module-populse_db.info">populse_db.info module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="populse_db.html#module-populse_db.test">populse_db.test module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="populse_db.html#module-populse_db.test">populse_db.test module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.html#populse_db.test.TestsSQLiteInMemory"><code class="docutils literal notranslate"><span class="pre">TestsSQLiteInMemory</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.html#populse_db.test.TestsSQLiteInMemory.test_add_get_document"><code class="docutils literal notranslate"><span class="pre">TestsSQLiteInMemory.test_add_get_document()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.html#populse_db.test.create_test_case"><code class="docutils literal notranslate"><span class="pre">create_test_case()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.html#populse_db.test.load_tests"><code class="docutils literal notranslate"><span class="pre">load_tests()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
 </div>
-</div>
+</section>
 
 
       </div>
@@ -74,8 +149,8 @@
       </div>
 
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2018, populse.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.7.
+    &#169; Copyright 2024, populse.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

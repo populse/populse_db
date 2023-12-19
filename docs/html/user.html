@@ -1,32 +1,21 @@
+<!DOCTYPE html>
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en" data-content_root="./">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>User documentation &#8212; populse_db 1.0.1 documentation</title>
-    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.0.1',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>User documentation &#8212; populse_db 2.5.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css?v=e491ac2d" />
+    <script src="_static/documentation_options.js?v=3c4615cf"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
-  </head>
-  <body>
+  </head><body>
       <div class="header" role="banner"><h1 class="heading"><a href="index.html">
-          <span>populse_db 1.0.1 documentation</span></a></h1>
+          <span>populse_db 2.5.0 documentation</span></a></h1>
         <h2 class="heading"><span>User documentation</span></h2>
       </div>
       <div class="topnav" role="navigation" aria-label="top navigation">
@@ -36,32 +25,27 @@
         </p>
 
       </div>
-      <div class="content">
+      <div class="content" role="main">
         
         
   <div class="toctree-wrapper compound">
 </div>
-<table border="1" class="docutils">
-<colgroup>
-<col width="20%" />
-<col width="44%" />
-<col width="36%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference external" href="./index.html">Index</a></td>
-<td><a class="reference external" href="./documentation.html">Documentation</a></td>
-<td><a class="reference external" href="https://github.com/populse/populse_db">GitHub</a></td>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference external" href="./index.html">Index</a></p></td>
+<td><p><a class="reference external" href="./documentation.html">Documentation</a></p></td>
+<td><p><a class="reference external" href="https://github.com/populse/populse_db">GitHub</a></p></td>
 </tr>
 </tbody>
 </table>
-<div class="section" id="user-documentation">
-<h1>User documentation<a class="headerlink" href="#user-documentation" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<section id="user-documentation">
+<h1>User documentation<a class="headerlink" href="#user-documentation" title="Link to this heading">¶</a></h1>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li>From <a class="reference external" href="https://pypi.org/project/populse-db/">PyPI</a>:</li>
+<li><p>From <a class="reference external" href="https://pypi.org/project/populse-db/">PyPI</a>:</p></li>
 </ul>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># A compatible version of Python and Pip must be installed</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># A compatible version of Python and Pip must be installed</span>
 
 <span class="n">To</span> <span class="n">install</span> <span class="n">pip</span><span class="p">:</span>
 <span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python</span><span class="o">-</span><span class="n">pip</span> <span class="c1"># Python2</span>
@@ -74,9 +58,9 @@
 </pre></div>
 </div>
 <ul class="simple">
-<li>From source:</li>
+<li><p>From source:</p></li>
 </ul>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># A compatible version of Python must be installed</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># A compatible version of Python must be installed</span>
 <span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">git</span>
 <span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">populse</span><span class="o">/</span><span class="n">populse_db</span><span class="o">.</span><span class="n">git</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">populse_db</span>
 <span class="n">cd</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">populse_db</span>
@@ -85,36 +69,36 @@
 <span class="n">sudo</span> <span class="n">rm</span> <span class="o">-</span><span class="n">r</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">populse_db</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h2>
 <p>Import examples:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">populse_db</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">populse_db</span>
 <span class="kn">from</span> <span class="nn">populse_db.database</span> <span class="kn">import</span> <span class="n">Database</span>
 <span class="kn">import</span> <span class="nn">populse_db.database</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="tests">
-<h2>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="tests">
+<h2>Tests<a class="headerlink" href="#tests" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li>Unit tests have been written with the package unittest</li>
-<li>Continuous integration has been deployed with Travis (Linux, OSX), and AppVeyor (Windows)</li>
-<li>The code coverage is generated with the package codecov</li>
-<li>The script of tests is python/populse_db/test.py, so the following command launches the tests:</li>
+<li><p>Unit tests have been written with the package unittest</p></li>
+<li><p>Continuous integration has been deployed with Travis (Linux, OSX), and AppVeyor (Windows)</p></li>
+<li><p>The code coverage is generated with the package codecov</p></li>
+<li><p>The script of tests is python/populse_db/test.py, so the following command launches the tests:</p></li>
 </ul>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">test</span><span class="o">.</span><span class="n">py</span> <span class="c1"># (if python/populse_db/ directory has been added to $PATH, or if $PWD in the terminal)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">test</span><span class="o">.</span><span class="n">py</span> <span class="c1"># (if python/populse_db/ directory has been added to $PATH, or if $PWD in the terminal)</span>
 <span class="n">python</span> <span class="n">python</span><span class="o">/</span><span class="n">populse_db</span><span class="o">/</span><span class="n">test</span><span class="o">.</span><span class="n">py</span> <span class="c1"># (from populse_db root directory)</span>
 <span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">populse_db</span><span class="o">.</span><span class="n">test</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="using-populse-db">
-<h2>Using populse_db<a class="headerlink" href="#using-populse-db" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="using-populse-db">
+<h2>Using populse_db<a class="headerlink" href="#using-populse-db" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li>Small script to show the initialization and some examples of calls:</li>
+<li><p>Small script to show the initialization and some examples of calls:</p></li>
 </ul>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 
 <span class="kn">import</span> <span class="nn">shutil</span>
@@ -166,8 +150,8 @@
 <img alt="_images/test_db_field.png" src="_images/test_db_field.png" />
 <p>As you can see in the collection profile table, the two profiles Jules CESAR and Louis XIV have been created.</p>
 <img alt="_images/test_db_profile.png" src="_images/test_db_profile.png" />
-</div>
-</div>
+</section>
+</section>
 
 
       </div>
@@ -180,8 +164,8 @@
       </div>
 
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2018, populse.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.7.
+    &#169; Copyright 2024, populse.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>
