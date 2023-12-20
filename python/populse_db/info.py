@@ -19,7 +19,7 @@ import sys
 # populse_db current version
 version_major = 2
 version_minor = 5
-version_micro = 1
+version_micro = 2
 version_extra = ""
 
 # Expected by setup.py: string of form "X.Y.Z"
