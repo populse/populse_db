@@ -67,7 +67,7 @@ The script of tests is python/populse_db/test.py, so the following command launc
 
 # Requirements
 
-* lark-parser
+* lark
 * python-dateutil
 * sphinx
 * psycopg2
