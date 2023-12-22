@@ -49,4 +49,3 @@ where = ["python"]
 
 [tool.brainvisa-cmake]
 test_commands = ["python -m populse_db.test --verbose"]
-
