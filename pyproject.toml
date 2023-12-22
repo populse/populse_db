@@ -39,3 +39,14 @@ postgres = [
 [project.urls]
 homepage = "http://populse.github.io/populse_db/"
 repository = "https://github.com/populse/populse_db"
+
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["python"]
+
+[tool.brainvisa-cmake]
+test_commands = ["python -m populse_db.test --verbose"]
+
