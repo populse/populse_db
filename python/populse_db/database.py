@@ -16,7 +16,6 @@ from collections import OrderedDict
 from datetime import date, datetime, time
 
 import six
-
 from populse_db.engine import engine_factory
 
 # Field types
