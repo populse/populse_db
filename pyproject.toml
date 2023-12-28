@@ -1,40 +1,40 @@
-#[project]
-#name = "populse_db"
-#version = "2.5.0"
-#authors = [
-#    {name = "Populse team", email = "populse-support@univ-grenoble-alpes.fr"},
-#]
-#description = "populse_db"
-#readme = "README.md"
-#requires-python = ">=3.9"
-#license = {text = "CeCILL-B"}
-#classifiers = [
-#    "Development Status :: 5 - Production/Stable",
-#    "Environment :: Console",
-#    "Intended Audience :: Developers",
-#    "License :: OSI Approved",
-#    "Natural Language :: English",
-#    "Operating System :: OS Independent",
-#    "Programming Language :: Python :: 3 :: Only",
-#    "Programming Language :: Python :: 3.9",
-#    "Programming Language :: Python :: 3.10",
-#    "Programming Language :: Python :: 3.11",
-#    "Topic :: Software Development :: Libraries :: Python Modules",
-#]
-#dependencies = [
-#    "python-dateutil",
-#    "lark",
-#]
-#
-#[project.optional-dependencies]
-#doc = [
-#    "sphinx >=1.0",
-#    "psycopg2-binary",
-#]
-#
-#[project.urls]
-#homepage = "http://populse.github.io/populse_db/"
-#repository = "https://github.com/populse/populse_db"
+[project]
+name = "populse_db"
+version = "2.5.0"
+authors = [
+    {name = "Populse team", email = "populse-support@univ-grenoble-alpes.fr"},
+]
+description = "populse_db"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "CeCILL-B"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "python-dateutil",
+    "lark",
+]
+
+[project.optional-dependencies]
+doc = [
+    "sphinx >=1.0",
+    "psycopg2-binary",
+]
+
+[project.urls]
+homepage = "http://populse.github.io/populse_db/"
+repository = "https://github.com/populse/populse_db"
 
 [tool.black]
 line-length = 79
