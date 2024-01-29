@@ -643,9 +643,9 @@ class SQLiteEngine(Engine):
     # the list items.
     _python_to_sql_data = {
         pdb.FIELD_TYPE_DATE: lambda x: x.isoformat() if x is not None else x,
-        pdb.FIELD_TYPE_DATETIME: lambda x: x.isoformat()
-        if x is not None
-        else x,
+        pdb.FIELD_TYPE_DATETIME: lambda x: (
+            x.isoformat() if x is not None else x
+        ),
         pdb.FIELD_TYPE_TIME: lambda x: x.isoformat() if x is not None else x,
         pdb.FIELD_TYPE_BOOLEAN: lambda x: (1 if x else 0),
     }
