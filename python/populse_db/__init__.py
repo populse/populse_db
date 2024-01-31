@@ -1,8 +1,16 @@
+import importlib.metadata
 import threading
 from contextlib import contextmanager
 from urllib.parse import urlparse
 
 from .engine.sqlite import SQLiteSession
+
+try:
+    __version__ = importlib.metadata.__version__ = importlib.metadata.version(
+        "populse_db"
+    )
+except importlib.metadata.PackageNotFoundError:
+    __version__ = None
 
 
 class Database:

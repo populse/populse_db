@@ -1,5 +1,5 @@
-from contextlib import contextmanager
 import importlib
+from contextlib import contextmanager
 
 from .database import type_to_str
 from .storage_server import StorageClient
@@ -169,9 +169,7 @@ class Storage:
     @contextmanager
     def session(self, exclusive=False, write=False):
         token = self.server.access_rights("TODO")
-        connection_id = self.server.connect(
-            token, exclusive=exclusive, write=write
-        )
+        connection_id = self.server.connect(token, exclusive=exclusive, write=write)
         try:
             yield StorageSession(self.server, connection_id)
             self.server.disconnect(connection_id, rollback=False)
