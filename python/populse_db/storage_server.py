@@ -1,9 +1,9 @@
 from uuid import uuid4
 
+import populse_db.storage
 from populse_db.database import str_to_type
 
 from . import Database
-import populse_db.storage
 
 
 class StorageClient:
@@ -26,7 +26,7 @@ class StorageClient:
                 self.database, exclusive
             )
         else:
-            raise PermissionError(f"database access refused")
+            raise PermissionError("database access refused")
         return connection_id
 
     def add_schema_collections(self, connection_id, schema_to_collections):
@@ -61,101 +61,6 @@ class StorageServerRead:
 
     def _close(self, rollback):
         self._dbs.close(rollback=rollback)
-
-    # def _check_collection(self, collection_name, definition, create):
-    #     primary_key = []
-    #     collection_fields = {}
-    #     for kk, vv in definition.items():
-    #         if isinstance(vv, str):
-    #             collection_fields[kk] = (str_to_type(vv), {})
-    #         elif isinstance(vv, list) and len(vv) == 2:
-    #             if isinstance(vv[0], type):
-    #                 t = vv[0]
-    #             else:
-    #                 t = str_to_type(vv[0])
-    #             kwargs = vv[1].copy()
-    #             if kwargs.pop("primary_key", None):
-    #                 primary_key.append(kk)
-    #             collection_fields[kk] = (t, kwargs)
-    #     if not self._dbs.has_collection(collection_name):
-    #         if create:
-    #             if not primary_key:
-    #                 raise ValueError(
-    #                     f"invalid schema, collection {collection_name} is "
-    #                     "missing and cannot be created without primary key"
-    #                 )
-    #             self._dbs.add_collection(collection_name, primary_key)
-    #         else:
-    #             raise LookupError(
-    #                 f"collection {collection_name} is required in the schema but is not in the database"
-    #             )
-    #     collection = self._dbs[collection_name]
-    #     if primary_key and list(collection.primary_key) != primary_key:
-    #         raise ValueError(
-    #             f"primary key of collection {collection_name} is {list(collection.primary_key)} in database but is {primary_key} in schema"
-    #         )
-    #     for n, d in collection_fields.items():
-    #         f = collection.fields.get(n)
-    #         t, kwargs = d
-    #         if f:
-    #             if f["type"] != t:
-    #                 raise ValueError(
-    #                     f"type of field {collection_name}.{n} is {f['type']} in database but is {t} in schema"
-    #                 )
-    #         else:
-    #             collection.add_field(n, t, **kwargs)
-
-    # def _check_schema(self, schema, create):
-    #     if not self._dbs.has_collection(StorageServer.default_collection):
-    #         if create:
-    #             self._dbs.add_collection(
-    #                 StorageServer.default_collection, StorageServer.default_field
-    #             )
-    #         else:
-    #             raise LookupError("database was not properly initialized")
-    #     default_collection = self._dbs[StorageServer.default_collection]
-    #     for k, v in schema.items():
-    #         if isinstance(v, dict):
-    #             # Create the collection first to set its primary key
-    #             self._check_collection(
-    #                 k,
-    #                 {StorageServer.default_field: [str, {"primary_key": True}]},
-    #                 create,
-    #             )
-    #             # Then call create again to add fields from schema definition
-    #             # and raise an error if a primary key is defined.
-    #             self._check_collection(k, v, create)
-    #             if not self._dbs[k].has_document(StorageServer.default_document_id):
-    #                 if create:
-    #                     # Create an empty singleton document
-    #                     self._dbs[k][StorageServer.default_document_id] = {}
-    #                 else:
-    #                     raise LookupError(
-    #                         f"single document is missing from collection {k}"
-    #                     )
-    #         elif isinstance(v, list) and len(v) == 1 and isinstance(v[0], dict):
-    #             self._check_collection(k, v[0], create)
-    #         elif isinstance(v, str):
-    #             v = str_to_type(v)
-    #             f = default_collection.fields.get(k)
-    #             if f:
-    #                 if f["type"] != v:
-    #                     raise ValueError(
-    #                         f"type of field {k} is {f['type']} in database but is {v} in schema"
-    #                     )
-    #             else:
-    #                 default_collection.add_field(k, v)
-    #         else:
-    #             raise ValueError(f"invalid schema definition for field {k}: {v}")
-    #     if not self._dbs[StorageServer.default_collection].has_document(
-    #         StorageServer.default_document_id
-    #     ):
-    #         if create:
-    #             self._dbs[StorageServer.default_collection][
-    #                 StorageServer.default_document_id
-    #             ] = {}
-    #         else:
-    #             raise LookupError("global document is missing from database")
 
     def _parse_path(self, path):
         if not path:

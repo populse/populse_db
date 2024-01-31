@@ -96,8 +96,8 @@ def test_storage_schema():
     assert schema == snapshot_1_0_0
     schema = Storage.find_schema("populse_db.test.schema.snapshot", "1.0")
     assert schema == snapshot_1_0_1
-    assert Storage.find_schema("populse_db.test.schema.snapshot", "1") == None
-    assert Storage.find_schema("populse_db.test.schema.snapshot", "1.1") == None
+    assert Storage.find_schema("populse_db.test.schema.snapshot", "1") is None
+    assert Storage.find_schema("populse_db.test.schema.snapshot", "1.1") is None
 
     import populse_db.test.test_schema
 
