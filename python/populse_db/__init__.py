@@ -93,7 +93,7 @@ class Database:
         - __exit__: Release resource used by the :any:`DatabaseSession`
     """
 
-    def __init__(self, database_url, timeout=None):
+    def __init__(self, database_url, timeout=None, echo_sql=None):
         """Creates a :any:`Database` instance.
 
         :param database_url: URL defining database engine and its parameters. The
@@ -109,6 +109,7 @@ class Database:
 
         self.thread_local = threading.local()
         self.url = urlparse(database_url)
+        self.echo_sql = echo_sql
         if timeout:
             self.timeout = int(timeout)
         else:
@@ -122,7 +123,11 @@ class Database:
     def session(self, exclusive=False):
         args, kwargs = self.session_parameters
         return self.session_class(
-            *args, exclusive=exclusive, timeout=self.timeout, **kwargs
+            *args,
+            exclusive=exclusive,
+            timeout=self.timeout,
+            echo_sql=self.echo_sql,
+            **kwargs,
         )
 
     def begin_session(self, exclusive):

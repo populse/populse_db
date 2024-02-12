@@ -11,9 +11,41 @@ class Storage:
     default_field = "_"
     default_document_id = "_"
 
-    def __init__(self, *args, **kwargs):
-        self.server = StorageClient(*args, **kwargs)
+    def __init__(self, *args, timeout=10000, **kwargs):
+        self.server = StorageClient(*args, timeout=timeout, **kwargs)
 
+    @contextmanager
+    def data(self, exclusive=None, write=False):
+        token = self.server.access_rights("TODO")
+        connection_id = self.server.connect(token, exclusive=exclusive, write=write)
+        try:
+            yield StorageSession(self.server, connection_id)
+            self.server.disconnect(connection_id, rollback=False)
+        except Exception:
+            self.server.disconnect(connection_id, rollback=True)
+            raise
+
+    @contextmanager
+    def schema(self):
+        token = self.server.access_rights("TODO")
+        connection_id = self.server.connect(token, exclusive=True, write=True)
+        try:
+            yield SchemaSession(self.server, connection_id)
+            self.server.disconnect(connection_id, rollback=False)
+        except Exception:
+            self.server.disconnect(connection_id, rollback=True)
+            raise
+
+    def start_session(self, exclusive=None, write=False):
+        token = self.server.access_rights("TODO")
+        connection_id = self.server.connect(token, exclusive=exclusive, write=write)
+        return StorageSession(self.server, connection_id)
+
+    def end_session(self, storage_session, rollback=False):
+        self.server.disconnect(storage_session._connection_id, rollback=rollback)
+        
+
+class SchemaSession:
     @classmethod
     def find_schema(cls, name, version_selection=None):
         module = importlib.import_module(name)
@@ -131,51 +163,33 @@ class Storage:
                 fields[k] = [type_str, kwargs]
         return collections
 
-    @classmethod
-    def _check_schema(cls, schema):
-        result = {}
-        for k, v in schema.items():
-            if isinstance(v, dict):
-                v = {
-                    k: (type_to_str(i) if isinstance(i, type) else i)
-                    for k, i in v.items()
-                }
-            elif isinstance(v, list):
-                if len(v) == 1 and isinstance(v[0], dict):
-                    v = [cls._check_schema(v[0])]
-                elif (
-                    len(v) == 2
-                    and isinstance(v[0], (str, type))
-                    and isinstance(v[1], dict)
-                ):
-                    if isinstance(v[0], type):
-                        v = [type_to_str(v[0]), v[1]]
-                else:
-                    raise ValueError("invalid schema definition for field {k}: {v}")
-            if isinstance(v, type):
-                v = type_to_str(v)
-            result[k] = v
-        return result
+    def __init__(self, server, connection_id):
+        super().__setattr__("_server", server)
+        super().__setattr__("_connection_id", connection_id)
 
     def add_schema(self, name, version=None):
         schema_to_collections = self.find_schema(name, version)
         if not schema_to_collections:
             raise ValueError(f"cannot find schema {name} with version {version}")
-        with self.session(write=True, exclusive=True) as dbs:
-            dbs._server.add_schema_collections(
-                dbs._connection_id, schema_to_collections
-            )
+        self._server.add_schema_collections(self._connection_id, schema_to_collections)
 
-    @contextmanager
-    def session(self, exclusive=False, write=False):
-        token = self.server.access_rights("TODO")
-        connection_id = self.server.connect(token, exclusive=exclusive, write=write)
-        try:
-            yield StorageSession(self.server, connection_id)
-            self.server.disconnect(connection_id, rollback=False)
-        except Exception:
-            self.server.disconnect(connection_id, rollback=True)
-            raise
+    def add_collection(self, name, primary_key):
+        self._server.add_collection(self._connection_id, name, primary_key)
+
+    def add_field(
+        self, collection_name, field_name, field_type, description=None, index=False
+    ):
+        self._server.add_field(
+            self._connection_id,
+            collection_name,
+            field_name,
+            field_type,
+            description,
+            index,
+        )
+
+    def clear_database(self):
+        return self._server.clear_database(self._connection_id)
 
 
 class StorageSession:
@@ -205,33 +219,8 @@ class StorageSession:
     def append(self, value):
         return self._server.append(self._connection_id, self._path, value)
 
-    def search(self, query):
-        return self._server.search(self._connection_id, self._path, query)
+    def search(self, query, fields=None, as_list=None):
+        return self._server.search(self._connection_id, self._path, query, fields=fields, as_list=as_list)
 
     def distinct_values(self, field):
         return self._server.distinct_values(self._connection_id, self._path, field)
-
-    def add_schema(self, name, version_selection=None):
-        if self._path:
-            raise ValueError("add_schema is only allowed on database session")
-        schema_info = Storage.find_schema(name, version_selection)
-        if not schema_info:
-            raise ValueError(
-                f"cannot find schema {name} with version {version_selection}"
-            )
-        return self._server.add_schema(self._connection_id, schema_info)
-
-    # def ensure_schema(self, schema, version=None):
-    #     if self._path:
-    #         raise ValueError("ensure_schema is only allowed on database session")
-    #     return self._server.ensure_schema(self._connection_id, schema, version)
-
-    # def schema_names(self):
-    #     if self._path:
-    #         raise ValueError("schema_names is only allowed on database session")
-    #     return self._server.schema_names(self._connection_id)
-
-    # def schema(self, schema_name):
-    #     if self._path:
-    #         raise ValueError("schema is only allowed on database session")
-    #     return self._server.schema(self._connection_id, schema_name)

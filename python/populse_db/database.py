@@ -74,10 +74,15 @@ def str_to_type(str):
         return None
     s = str.split("[", 1)
     if len(s) == 1:
-        return _str_to_type[s[0]]
+        result = _str_to_type.get(s[0])
     else:
         args = tuple(str_to_type(i) for i in s[1][:-1].split(","))
-        return _str_to_type[s[0]][args]
+        result = _str_to_type.get(s[0])
+        if result:
+            result = result[args]
+    if not result:
+        raise ValueError(f'invalid type: "{str}"')
+    return result
 
 
 def python_value_type(value):

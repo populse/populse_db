@@ -4,6 +4,7 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 from populse_db import Storage
+from populse_db.storage import SchemaSession
 
 snapshots = [
     {
@@ -88,16 +89,16 @@ def test_storage_schema():
             }
         },
     }
-    schema = Storage.find_schema("populse_db.test.schema.snapshot")
+    schema = SchemaSession.find_schema("populse_db.test.schema.snapshot")
     assert schema == snapshot_1_0_1
-    schema = Storage.find_schema("populse_db.test.schema.snapshot", "1.0.1")
+    schema = SchemaSession.find_schema("populse_db.test.schema.snapshot", "1.0.1")
     assert schema == snapshot_1_0_1
-    schema = Storage.find_schema("populse_db.test.schema.snapshot", "1.0.0")
+    schema = SchemaSession.find_schema("populse_db.test.schema.snapshot", "1.0.0")
     assert schema == snapshot_1_0_0
-    schema = Storage.find_schema("populse_db.test.schema.snapshot", "1.0")
+    schema = SchemaSession.find_schema("populse_db.test.schema.snapshot", "1.0")
     assert schema == snapshot_1_0_1
-    assert Storage.find_schema("populse_db.test.schema.snapshot", "1") is None
-    assert Storage.find_schema("populse_db.test.schema.snapshot", "1.1") is None
+    assert SchemaSession.find_schema("populse_db.test.schema.snapshot", "1") is None
+    assert SchemaSession.find_schema("populse_db.test.schema.snapshot", "1.1") is None
 
     import populse_db.test.test_schema
 
@@ -109,24 +110,46 @@ def test_storage_schema():
     }
 
     with pytest.raises(ModuleNotFoundError):
-        Storage.find_schema("populse_db.test.schema.non_existing")
+        SchemaSession.find_schema("populse_db.test.schema.non_existing")
 
 
 def test_storage():
     tmp = NamedTemporaryFile()
     store = Storage(tmp.name)
-    store.add_schema("populse_db.test.schema.dataset")
-    store.add_schema("populse_db.test.schema.snapshot")
-    store.add_schema("populse_db.test.schema.processing")
+    with store.schema() as schema:
+        schema.add_collection("test_collection_1", "primary_key")
+        schema.add_collection("test_collection_1", "primary_key")
+        with pytest.raises(ValueError):
+            schema.add_collection("test_collection_1", "another_key")
+        schema.add_collection("test_collection_2", {"primary_key_1": "str", "primary_key_2": int})
+        schema.add_collection("test_collection_2", {"primary_key_1": "str", "primary_key_2": int})
+        with pytest.raises(ValueError):
+            schema.add_collection("test_collection_2", ("primary_key_1", "primary_key_2"))
+        with pytest.raises(ValueError):
+            schema.add_collection("test_collection_3", {"primary_key_1": "str", "primary_key_2": "what ?"})
+        
+        schema.add_field("test_collection_1", "test", list[int])
+        schema.add_field("test_collection_1", "test", list[int])
+        schema.add_field("test_collection_1", "test", "list[int]")
+        with pytest.raises(ValueError):
+            schema.add_field("test_collection_1", "test", list[float])
+        with pytest.raises(ValueError):
+            schema.add_field("test_collection_1", "test_2", "what ?")
+        schema.add_schema("populse_db.test.schema.dataset")
+        schema.add_schema("populse_db.test.schema.snapshot")
+        schema.add_schema("populse_db.test.schema.processing")
 
-    with store.session(write=True) as d:
+    with store.data(write=True) as d:
         now = datetime.now()
+
 
         # Set a global value
         d.last_update = now
 
         # Read a global value
         assert d.last_update.get() == now
+
+        assert d.does_not_exist.get() is None
 
         # Set single document fields
         d.dataset.directory = "/somewhere"
@@ -204,7 +227,7 @@ def test_storage():
         assert sorted(d.snapshots.distinct_values("data_type")) == ["greywhite", "void"]
 
     # Test read only session
-    with store.session(write=False) as d:
+    with store.data(write=False) as d:
         with pytest.raises(PermissionError):
             d.last_update = now
 

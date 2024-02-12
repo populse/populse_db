@@ -36,7 +36,8 @@ class SQLiteSession(DatabaseSession):
             args = (url.netloc,)
         return args, {}
 
-    def __init__(self, sqlite_file, exclusive=False, timeout=None):
+    def __init__(self, sqlite_file, exclusive=False, timeout=None, echo_sql=None):
+        self.echo_sql = echo_sql
         self.sqlite = sqlite3.connect(
             sqlite_file, isolation_level=None, check_same_thread=False
         )
@@ -63,6 +64,9 @@ class SQLiteSession(DatabaseSession):
     def has_collection(self, name):
         return name in self._collection_cache
 
+    def get_collection(self, name):
+        return self._collection_cache.get(name)
+
     def __getitem__(self, collection_name):
         result = self._collection_cache.get(collection_name)
         if result is None:
@@ -73,9 +77,15 @@ class SQLiteSession(DatabaseSession):
     def execute(self, sql, data=None):
         try:
             if data:
-                return self.sqlite.execute(sql, data)
+                result = self.sqlite.execute(sql, data)
+                if self.echo_sql:
+                    print(sql, data, file=self.echo_sql)
+                return result
             else:
-                return self.sqlite.execute(sql)
+                result = self.sqlite.execute(sql)
+                if self.echo_sql:
+                    print(sql, file=self.echo_sql)
+                return result
         except sqlite3.OperationalError as e:
             raise sqlite3.OperationalError(f"Error in SQL request: {sql}") from e
 
@@ -122,11 +132,10 @@ class SQLiteSession(DatabaseSession):
         """
         Erase the whole database content.
         """
-
-        sql = "SELECT name FROM sqlite_master"
+        sql = 'SELECT name FROM sqlite_master WHERE type = "table"'
         tables = [i[0] for i in self.execute(sql)]
         for table in tables:
-            sql = f"DROP TABLE {table}"
+            sql = f"DROP TABLE [{table}]"
             self.execute(sql)
         self._collection_cache = {}
 
@@ -137,14 +146,16 @@ class SQLiteSession(DatabaseSession):
         catchall_column="_catchall",
     ):
         if isinstance(primary_key, str):
-            primary_key = {primary_key: str}
+            dict_primary_key = {primary_key: "str"}
         elif isinstance(primary_key, (list, tuple)):
-            primary_key = {i: str for i in primary_key}
+            dict_primary_key = {i: "str" for i in primary_key}
+        else:
+            dict_primary_key = dict(((k, (type_to_str(str_to_type(v)) if isinstance(v, str) else type_to_str(v))) for k, v in primary_key.items()))
         sql = (
             f"CREATE TABLE [{name}] ("
-            f'{",".join(f"[{n}] {type_to_str(t)} NOT NULL" for n, t in primary_key.items())},'
+            f'{",".join(f"[{n}] {t} NOT NULL" for n, t in dict_primary_key.items())},'
             f"{catchall_column} dict,"
-            f'PRIMARY KEY ({",".join(f"[{i}]" for i in primary_key.keys())}))'
+            f'PRIMARY KEY ({",".join(f"[{i}]" for i in dict_primary_key.keys())}))'
         )
         self.execute(sql)
         # Accessing the collection to put it in cache
@@ -191,7 +202,7 @@ class SQLiteCollection(DatabaseCollection):
     def __init__(self, session, name):
         super().__init__(session, name)
         settings = self.session.settings("collection", name, {})
-        sql = f"pragma table_info({self.name})"
+        sql = f"pragma table_info([{self.name}])"
         bad_table = True
         catchall_column_found = False
         for row in self.session.execute(sql):
@@ -225,6 +236,8 @@ class SQLiteCollection(DatabaseCollection):
     def add_field(
         self, name, field_type, description=None, index=False, bad_json=False
     ):
+        if isinstance(field_type, str):
+            field_type = str_to_type(field_type)
         sql = f"ALTER TABLE [{self.name}] ADD COLUMN [{name}] {type_to_str(field_type)}"
         self.session.execute(sql)
         if index:
@@ -273,32 +286,31 @@ class SQLiteCollection(DatabaseCollection):
     def _documents(self, where, where_data, fields, as_list, distinct):
         if fields:
             columns = []
-            catchall_fields = set()
+            catchall_fields = False
             for field in fields:
                 if field in self.fields:
-                    columns.append(field)
+                    columns.append(f"[{field}]")
                 else:
-                    catchall_fields.add(field)
+                    columns.append(
+                        f"json_extract([{self.catchall_column}],'$.{field}')"
+                    )
         else:
-            columns = list(self.fields)
+            fields = self.fields
+            columns = [f"[{i}]" for i in fields]
             catchall_fields = bool(self.catchall_column)
-        if catchall_fields:
-            if not self.catchall_column and isinstance(catchall_fields, set):
-                raise ValueError(
-                    f'Collection {self.name} do not have the following fields: {",".join(catchall_fields)}'
-                )
-            columns.append(self.catchall_column)
+            if catchall_fields:
+                columns.append(self.catchall_column)
+                if as_list:
+                    raise ValueError(
+                        f"as_list=True cannot be used on {self.name} without a fields list because two documents can have different fields"
+                    )
 
-        sql = f'SELECT {("DISTINCT " if distinct else "")}{",".join(f"[{i}]" for i in columns)} FROM [{self.name}]'
+        sql = f'SELECT {("DISTINCT " if distinct else "")}{",".join(columns)} FROM [{self.name}]'
         if where:
             sql += f" WHERE {where}"
         cur = self.session.execute(sql, where_data)
         for row in cur:
             if catchall_fields:
-                if as_list and catchall_fields is True:
-                    raise ValueError(
-                        f"as_list=True cannot be used on {self.name} without a fields list because two documents can have different fields"
-                    )
                 if row[-1] is not None:
                     catchall = json.loads(row[-1])
                     if isinstance(catchall_fields, set):
@@ -312,7 +324,7 @@ class SQLiteCollection(DatabaseCollection):
                 columns = columns[:-1]
             document = catchall
             if isinstance(document, dict):
-                document.update(zip(columns, row))
+                document.update(zip(fields, row))
                 for field, value in document.items():
                     encoding = self.fields.get(field, {}).get("encoding")
                     if encoding:
