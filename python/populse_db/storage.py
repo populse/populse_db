@@ -193,10 +193,10 @@ class SchemaSession:
 
 
 class StorageSession:
-    def __init__(self, server, connection_id, path=[]):
+    def __init__(self, server, connection_id, path=None):
         super().__setattr__("_server", server)
         super().__setattr__("_connection_id", connection_id)
-        super().__setattr__("_path", path)
+        super().__setattr__("_path", path or [])
 
     def __getitem__(self, key):
         return self.__class__(self._server, self._connection_id, self._path + [key])
