@@ -43,7 +43,7 @@ class Storage:
 
     def end_session(self, storage_session, rollback=False):
         self.server.disconnect(storage_session._connection_id, rollback=rollback)
-        
+
 
 class SchemaSession:
     @classmethod

@@ -127,7 +127,7 @@ def test_storage():
             schema.add_collection("test_collection_2", ("primary_key_1", "primary_key_2"))
         with pytest.raises(ValueError):
             schema.add_collection("test_collection_3", {"primary_key_1": "str", "primary_key_2": "what ?"})
-        
+
         schema.add_field("test_collection_1", "test", list[int])
         schema.add_field("test_collection_1", "test", list[int])
         schema.add_field("test_collection_1", "test", "list[int]")
