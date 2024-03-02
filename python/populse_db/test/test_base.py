@@ -1926,7 +1926,8 @@ def create_test_case(**database_creation_parameters):
                 with database as session:
                     session.add_collection("collection1", "name")
                     session.add_document("collection1", {"name": "toto"})
-                    boom  # Raises an exception, modifications are rolled back
+                    # Raise an exception to roll back modifications
+                    boom  # noqa: B018
             except NameError:
                 pass
 
