@@ -478,9 +478,9 @@ class DatabaseCollection:
                 column_value = encode(json_encode(value))
                 self.bad_json_fields.add(field)
                 settings = self.settings()
-                settings.setdefault("fields", {}).setdefault(field, {})[
-                    "bad_json"
-                ] = True
+                settings.setdefault("fields", {}).setdefault(field, {})["bad_json"] = (
+                    True
+                )
                 self.set_settings(settings)
             return column_value
         return value
