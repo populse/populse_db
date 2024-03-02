@@ -84,13 +84,13 @@ def create_test_case(**database_creation_parameters):
                 if self.database_creation_parameters["database_url"].startswith(
                     "postgresql"
                 ):
-                    raise unittest.SkipTest(str(e))
+                    raise unittest.SkipTest(str(e)) from e
                 raise
             except ImportError as e:
                 if "psycopg2" in str(e) and self.database_creation_parameters[
                     "database_url"
                 ].startswith("postgresql"):
-                    raise unittest.SkipTest(str(e))
+                    raise unittest.SkipTest(str(e)) from e
                 raise
             if clear:
                 with db as dbs:
