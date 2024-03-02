@@ -121,12 +121,20 @@ def test_storage():
         schema.add_collection("test_collection_1", "primary_key")
         with pytest.raises(ValueError):
             schema.add_collection("test_collection_1", "another_key")
-        schema.add_collection("test_collection_2", {"primary_key_1": "str", "primary_key_2": int})
-        schema.add_collection("test_collection_2", {"primary_key_1": "str", "primary_key_2": int})
+        schema.add_collection(
+            "test_collection_2", {"primary_key_1": "str", "primary_key_2": int}
+        )
+        schema.add_collection(
+            "test_collection_2", {"primary_key_1": "str", "primary_key_2": int}
+        )
         with pytest.raises(ValueError):
-            schema.add_collection("test_collection_2", ("primary_key_1", "primary_key_2"))
+            schema.add_collection(
+                "test_collection_2", ("primary_key_1", "primary_key_2")
+            )
         with pytest.raises(ValueError):
-            schema.add_collection("test_collection_3", {"primary_key_1": "str", "primary_key_2": "what ?"})
+            schema.add_collection(
+                "test_collection_3", {"primary_key_1": "str", "primary_key_2": "what ?"}
+            )
 
         schema.add_field("test_collection_1", "test", list[int])
         schema.add_field("test_collection_1", "test", list[int])
@@ -141,7 +149,6 @@ def test_storage():
 
     with store.data(write=True) as d:
         now = datetime.now()
-
 
         # Set a global value
         d.last_update = now

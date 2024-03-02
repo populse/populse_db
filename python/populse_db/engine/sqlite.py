@@ -150,7 +150,14 @@ class SQLiteSession(DatabaseSession):
         elif isinstance(primary_key, (list, tuple)):
             dict_primary_key = {i: "str" for i in primary_key}
         else:
-            dict_primary_key = dict(((k, (type_to_str(str_to_type(v)) if isinstance(v, str) else type_to_str(v))) for k, v in primary_key.items()))
+            dict_primary_key = {
+                k: (
+                    type_to_str(str_to_type(v))
+                    if isinstance(v, str)
+                    else type_to_str(v)
+                )
+                for k, v in primary_key.items()
+            }
         sql = (
             f"CREATE TABLE [{name}] ("
             f'{",".join(f"[{n}] {t} NOT NULL" for n, t in dict_primary_key.items())},'
