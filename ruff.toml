@@ -1,9 +1,10 @@
 [lint]
 extend-select = [
+  "B",   # https://docs.astral.sh/ruff/rules/#flake8-bugbear-b
   "I",   # https://docs.astral.sh/ruff/rules/#isort-i
   "UP",  # https://docs.astral.sh/ruff/rules/#pyupgrade-up
 ]
-extend-ignore = [
+ignore = [
   # https://docs.astral.sh/ruff/rules/redundant-open-modes/
   # we prefer explicit to implicit open modes
   "UP015",
