@@ -304,10 +304,12 @@ def create_test_case(**database_creation_parameters):
 
                     # Testing with wrong parameters
                     self.assertRaises(
-                        Exception, lambda: session.remove_field("current", 1)
+                        session.database_exceptions,
+                        lambda: session.remove_field("current", 1),
                     )
                     self.assertRaises(
-                        Exception, lambda: session.remove_field("current", None)
+                        session.database_exceptions,
+                        lambda: session.remove_field("current", None),
                     )
 
                     # Removing list of fields with list type
@@ -439,7 +441,7 @@ def create_test_case(**database_creation_parameters):
                 values["BandWidth"] = 25000
                 session.set_values("collection1", "document1", values)
                 self.assertRaises(
-                    Exception,
+                    AttributeError,
                     lambda: session.set_values("collection1", "document1", True),
                 )
 
@@ -798,7 +800,7 @@ def create_test_case(**database_creation_parameters):
                 # Testing when trying to add a document that already exists
                 document = {}
                 document["name"] = "document1"
-                with self.assertRaises(Exception):
+                with self.assertRaises(session.database_exceptions):
                     session.add_document("collection1", document)
 
                 # Testing with invalid parameters
@@ -812,7 +814,7 @@ def create_test_case(**database_creation_parameters):
                     ),
                 )
                 self.assertRaises(
-                    Exception, lambda: session.add_document("collection1", True)
+                    AttributeError, lambda: session.add_document("collection1", True)
                 )
 
                 # Testing the add of several documents
@@ -823,7 +825,7 @@ def create_test_case(**database_creation_parameters):
                 # Adding a document with a dictionary without the primary key
                 document = {}
                 document["no_primary_key"] = "document1"
-                with self.assertRaises(Exception):
+                with self.assertRaises(session.database_exceptions):
                     session.add_document("collection1", document)
 
         def test_add_collection(self):
@@ -851,18 +853,21 @@ def create_test_case(**database_creation_parameters):
 
                 # Trying with a collection already existing
                 self.assertRaises(
-                    Exception, lambda: session.add_collection("collection1")
+                    session.database_exceptions,
+                    lambda: session.add_collection("collection1"),
                 )
 
                 # Trying with table names already taken
                 session.add_field("collection1", "test", str, description="Test field")
                 self.assertRaises(
-                    Exception, lambda: session.add_collection(session.populse_db_table)
+                    session.database_exceptions,
+                    lambda: session.add_collection(session.populse_db_table),
                 )
 
                 # Trying with wrong types
                 self.assertRaises(
-                    Exception, lambda: session.add_collection("collection_valid", True)
+                    AttributeError,
+                    lambda: session.add_collection("collection_valid", True),
                 )
 
         def test_remove_collection(self):
@@ -930,10 +935,12 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing with a collection not existing
                 self.assertRaises(
-                    Exception,
+                    session.database_exceptions,
                     lambda: session.remove_collection("collection_not_existing"),
                 )
-                self.assertRaises(Exception, lambda: session.remove_collection(True))
+                self.assertRaises(
+                    session.database_exceptions, lambda: session.remove_collection(True)
+                )
 
         def test_get_collection(self):
             """
