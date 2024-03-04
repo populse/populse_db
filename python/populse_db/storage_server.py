@@ -191,7 +191,7 @@ class StorageServerRead:
 
 class StorageServerWrite(StorageServerRead):
     def __init__(self, database, exclusive):
-        # Write access must be in an exclusive transaction to avoid 
+        # Write access must be in an exclusive transaction to avoid
         # "Database is locked" error in SQLite with parallel accesses:
         # https://www2.sqlite.org/cvstrac/wiki?p=DatabaseIsLocked
         self._dbs = database.session(exclusive=True)

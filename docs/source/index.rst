@@ -155,7 +155,7 @@ must do isto declare its collections if it uses an empty database.
       #   - the "type" field is a list containing the value "T1"
       for doc in db['acquisition'].search('subject=="rbndt001" and "T1" in type'):
          pprint(doc)
-      
+
       # Retrieve all possible types of acquisition
       print('Subjects:', ', '.join(db.subject.distinct_values('subject_id')))
 
