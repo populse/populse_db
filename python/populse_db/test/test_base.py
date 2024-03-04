@@ -130,7 +130,7 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing with a field that already exists
                 self.assertRaises(
-                    Exception,
+                    session.database_exceptions,
                     lambda: session.add_field(
                         "collection1", "PatientName", str, "Name of the patient"
                     ),
@@ -147,7 +147,7 @@ def create_test_case(**database_creation_parameters):
                 # Testing with close field names
                 session.add_field("collection1", "Bits per voxel", int, "with space")
                 session.add_field("collection1", "Bitspervoxel", int, "without space")
-                with self.assertRaises(Exception):
+                with self.assertRaises(session.database_exceptions):
                     session.add_field("collection1", "bitspervoxel", int, "lower case")
                 self.assertEqual(
                     session.get_field("collection1", "Bitspervoxel")["description"],
@@ -157,7 +157,7 @@ def create_test_case(**database_creation_parameters):
                     session.get_field("collection1", "Bits per voxel")["description"],
                     "with space",
                 )
-                with self.assertRaises(Exception):
+                with self.assertRaises(TypeError):
                     self.assertEqual(
                         session.get_field("collection1", "bitspervoxel")["description"],
                         "lower case",
@@ -175,7 +175,7 @@ def create_test_case(**database_creation_parameters):
                     lambda: session.add_field(True, "Field", list[int], None),
                 )
                 self.assertRaises(
-                    Exception,
+                    AttributeError,
                     lambda: session.add_field(
                         "collection1", "Patient Name", None, None
                     ),
@@ -183,11 +183,11 @@ def create_test_case(**database_creation_parameters):
 
                 # Testing that the document primary key field is taken
                 self.assertRaises(
-                    Exception,
+                    session.database_exceptions,
                     lambda: session.add_field("collection1", "name", str, None),
                 )
 
-                with self.assertRaises(Exception):
+                with self.assertRaises(ValueError):
                     session.remove_field("collection", "name")
 
         def test_add_fields(self):

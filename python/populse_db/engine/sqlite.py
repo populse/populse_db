@@ -28,6 +28,8 @@ class ParsedFilter(str):
 
 
 class SQLiteSession(DatabaseSession):
+    database_exceptions = (sqlite3.OperationalError,)
+
     @staticmethod
     def parse_url(url):
         if url.path:
