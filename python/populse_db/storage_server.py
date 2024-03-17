@@ -65,8 +65,18 @@ class StorageClient:
     def disconnect(self, connection_id, rollback):
         self.connections[connection_id]._close(rollback)
 
-    def get(self, connection_id, path, default=None):
-        return self.connections[connection_id].get(path, default=default)
+    def get(
+        self,
+        connection_id,
+        path,
+        default=None,
+        fields=None,
+        as_list=None,
+        distinct=False,
+    ):
+        return self.connections[connection_id].get(
+            path, default=default, fields=fields, as_list=as_list, distinct=distinct
+        )
 
     def set(self, connection_id, path, value):
         self.connections[connection_id].set(path, value)
@@ -121,11 +131,19 @@ class StorageServerRead:
         path = path[1:]
         return (collection, document_id, field, path)
 
-    def get(self, path, default=None):
+    def get(self, path, default=None, fields=None, as_list=False, distinct=False):
         collection, document_id, field, path = self._parse_path(path)
         if not collection:
             raise ValueError("cannot get the whole content of a database")
+        if distinct and document_id:
+            raise ValueError("distinct is only allowed on collection")
         if field:
+            if fields:
+                raise ValueError(
+                    "fields selection is only allowed for collection or document"
+                )
+            if as_list:
+                raise ValueError("as_list is only allowed for collection or document")
             row = collection.document(document_id, fields=[field], as_list=True)
             if not row:
                 return default
@@ -139,14 +157,16 @@ class StorageServerRead:
                     return default
             return value
         elif document_id:
-            document = collection.document(document_id)
+            document = collection.document(document_id, fields=fields, as_list=as_list)
             if not document:
                 return default
             if document_id == populse_db.storage.Storage.default_document_id:
                 del document[document_id]
             return document
         else:
-            return list(collection.documents())
+            return list(
+                collection.documents(fields=fields, as_list=as_list, distinct=distinct)
+            )
 
     def search(self, path, query, fields, as_list):
         collection, document_id, field, path = self._parse_path(path)

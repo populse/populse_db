@@ -216,8 +216,15 @@ class StorageSession:
     def update(self, value):
         self._server.update(self._connection_id, self._path, value)
 
-    def get(self, default=None):
-        return self._server.get(self._connection_id, self._path, default=default)
+    def get(self, default=None, fields=None, as_list=False, distinct=False):
+        return self._server.get(
+            self._connection_id,
+            self._path,
+            default=default,
+            fields=fields,
+            as_list=as_list,
+            distinct=distinct,
+        )
 
     def append(self, value):
         return self._server.append(self._connection_id, self._path, value)
