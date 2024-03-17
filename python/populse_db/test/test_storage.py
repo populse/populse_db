@@ -269,6 +269,11 @@ def test_storage():
             for d in d.snapshots.search('subject LIKE "%7%"')
         ] == snapshots[1:2]
 
+        assert [
+            {k: v for k, v in doc.items() if v is not None}
+            for doc in d.snapshots.search(image="/somewhere/something.png")
+        ] == snapshots[3:4]
+
         # Find all unique values
         assert sorted(d.snapshots.distinct_values("data_type")) == ["greywhite", "void"]
 

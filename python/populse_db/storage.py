@@ -222,7 +222,11 @@ class StorageSession:
     def append(self, value):
         return self._server.append(self._connection_id, self._path, value)
 
-    def search(self, query, fields=None, as_list=None):
+    def search(self, query=None, fields=None, as_list=None, **kwargs):
+        if kwargs and query:
+            raise ValueError("Cannot combine query and equality research")
+        if kwargs:
+            query = " AND ".join(f'{{{k}}}=="{v}"' for k, v in kwargs.items())
         return self._server.search(
             self._connection_id, self._path, query, fields=fields, as_list=as_list
         )
