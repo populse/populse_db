@@ -217,6 +217,19 @@ def test_storage():
             "dict": {"one": 1, "two": 2, "three": 3},
         }
 
+        # Delete data
+        del d.test_update.test.dict.two
+        del d.test_update.test.f2
+        assert d.test_update.test.get() == {
+            "key": "test",
+            "f1": "f1",
+            "f2": None,
+            "f3": "f3",
+            "dict": {"one": 1, "three": 3},
+        }
+        del d.test_update.test
+        assert d.test_update.get() == []
+
         with pytest.raises(ValueError):
             d.update({})
         with pytest.raises(ValueError):

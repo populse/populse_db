@@ -81,6 +81,9 @@ class StorageClient:
     def set(self, connection_id, path, value):
         self.connections[connection_id].set(path, value)
 
+    def delete(self, connection_id, path):
+        self.connections[connection_id].delete(path)
+
     def update(self, connection_id, path, value):
         self.connections[connection_id].update(path, value)
 
@@ -213,6 +216,9 @@ class StorageServerRead:
         raise PermissionError(self._read_only_error)
 
     def set(self, path, value):
+        raise PermissionError(self._read_only_error)
+
+    def delete(self, path):
         raise PermissionError(self._read_only_error)
 
     def update(self, path, value):
@@ -348,6 +354,27 @@ class StorageServerWrite(StorageServerRead):
             collection.delete(None)
             for document in value:
                 collection.add(document)
+
+    def delete(self, path):
+        collection, document_id, field, path = self._parse_path(path)
+        if not collection:
+            raise ValueError("cannot delete the whole content of a database")
+        if not document_id:
+            raise ValueError("cannot delete a collection in a data session")
+        if field:
+            if path:
+                db_value = collection.document(
+                    document_id, fields=[field], as_list=True
+                )[0]
+                container = db_value
+                for i in path[:-1]:
+                    container = container[i]
+                del container[path[-1]]
+            else:
+                db_value = None
+            collection.update_document(document_id, {field: db_value})
+        else:
+            del collection[document_id]
 
     def update(self, path, value):
         collection, document_id, field, path = self._parse_path(path)
