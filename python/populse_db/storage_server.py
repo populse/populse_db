@@ -97,6 +97,9 @@ class StorageClient:
             path, query, fields=fields, as_list=as_list
         )
 
+    def search_and_delete(self, connection_id, path, query):
+        return self.connections[connection_id].search_and_delete(path, query)
+
     def distinct_values(self, connection_id, path, field):
         return self.connections[connection_id].distinct_values(path, field)
 
@@ -188,6 +191,23 @@ class StorageServerRead:
                 query = document_query
         result = list(collection.filter(query, fields=fields, as_list=as_list))
         return result
+
+    def search_and_delete(self, path, query):
+        collection, document_id, field, path = self._parse_path(path)
+        if path or field:
+            raise ValueError("only collections can be searched")
+        if document_id:
+            document_id = collection.document_id(document_id)
+            primary_key = list(collection.primary_key)
+            document_query = " and ".join(
+                f'{{{primary_key[i]}}}=="{document_id[i]}"'
+                for i in range(len(document_id))
+            )
+            if query:
+                query = f"{query} and {document_query}"
+            else:
+                query = document_query
+        collection.delete(query)
 
     def distinct_values(self, path, field):
         collection, document_id, f, path = self._parse_path(path)

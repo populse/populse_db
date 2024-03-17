@@ -311,6 +311,10 @@ def test_storage():
             == "default"
         )
 
+        # Search and delete
+        d.snapshots.search_and_delete('image LIKE "/home/yann%"')
+        assert len(d.snapshots.get()) == 1
+
     # Test read only session
     with store.data(write=False) as d:
         with pytest.raises(PermissionError):
