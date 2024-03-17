@@ -277,6 +277,21 @@ def test_storage():
         # Find all unique values
         assert sorted(d.snapshots.distinct_values("data_type")) == ["greywhite", "void"]
 
+        # Get non existent data
+        assert d.nothing.get() is None
+        assert d.nothing.get("default") == "default"
+        assert d.nothing.x.get() is None
+        assert d.nothing.x.get("default") == "default"
+        assert d.nothing.x.y.get() is None
+        assert d.nothing.x.y.get("default") == "default"
+        assert d.snapshots["0001292COG", "bad", "greywhite"].get() is None
+        assert d.snapshots["0001292COG", "bad", "greywhite"].get("default") == "default"
+        assert d.snapshots["0001292COG", "M0", "greywhite"].nothing.get() is None
+        assert (
+            d.snapshots["0001292COG", "M0", "greywhite"].nothing.get("default")
+            == "default"
+        )
+
     # Test read only session
     with store.data(write=False) as d:
         with pytest.raises(PermissionError):

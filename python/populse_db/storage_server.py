@@ -65,8 +65,8 @@ class StorageClient:
     def disconnect(self, connection_id, rollback):
         self.connections[connection_id]._close(rollback)
 
-    def get(self, connection_id, path):
-        return self.connections[connection_id].get(path)
+    def get(self, connection_id, path, default=None):
+        return self.connections[connection_id].get(path, default=default)
 
     def set(self, connection_id, path, value):
         self.connections[connection_id].set(path, value)
@@ -121,21 +121,28 @@ class StorageServerRead:
         path = path[1:]
         return (collection, document_id, field, path)
 
-    def get(self, path):
+    def get(self, path, default=None):
         collection, document_id, field, path = self._parse_path(path)
         if not collection:
             raise ValueError("cannot get the whole content of a database")
         if field:
-            value = collection.document(document_id, fields=[field], as_list=True)[0]
+            row = collection.document(document_id, fields=[field], as_list=True)
+            if not row:
+                return default
+            value = row[0]
+            if value is None:
+                return default
             for i in path:
-                value = value[i]
+                try:
+                    value = value[i]
+                except (KeyError, IndexError):
+                    return default
             return value
         elif document_id:
             document = collection.document(document_id)
-            if (
-                document
-                and document_id == populse_db.storage.Storage.default_document_id
-            ):
+            if not document:
+                return default
+            if document_id == populse_db.storage.Storage.default_document_id:
                 del document[document_id]
             return document
         else:
