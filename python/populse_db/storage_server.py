@@ -78,6 +78,9 @@ class StorageClient:
             path, default=default, fields=fields, as_list=as_list, distinct=distinct
         )
 
+    def count(self, connection_id, path, query=None):
+        return self.connections[connection_id].count(path, query)
+
     def set(self, connection_id, path, value):
         self.connections[connection_id].set(path, value)
 
@@ -191,6 +194,23 @@ class StorageServerRead:
                 query = document_query
         result = list(collection.filter(query, fields=fields, as_list=as_list))
         return result
+
+    def count(self, path, query):
+        collection, document_id, field, path = self._parse_path(path)
+        if path or field:
+            raise ValueError("only collections can be counted")
+        if document_id:
+            document_id = collection.document_id(document_id)
+            primary_key = list(collection.primary_key)
+            document_query = " and ".join(
+                f'{{{primary_key[i]}}}=="{document_id[i]}"'
+                for i in range(len(document_id))
+            )
+            if query:
+                query = f"{query} and {document_query}"
+            else:
+                query = document_query
+        return collection.count(query)
 
     def search_and_delete(self, path, query):
         collection, document_id, field, path = self._parse_path(path)

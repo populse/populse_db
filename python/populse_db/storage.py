@@ -232,6 +232,9 @@ class StorageSession:
             distinct=distinct,
         )
 
+    def count(self, query=None):
+        return self._server.count(self._connection_id, self._path, query=query)
+
     def append(self, value):
         return self._server.append(self._connection_id, self._path, value)
 

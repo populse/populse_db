@@ -352,6 +352,13 @@ class SQLiteCollection(DatabaseCollection):
             else:
                 yield document
 
+    def count(self, filter=None):
+        where = self.parse_filter(filter)
+        sql = f"SELECT COUNT(*) FROM [{self.name}]"
+        if where:
+            sql += f" WHERE {where}"
+        return self.session.execute(sql, None).fetchone()[0]
+
     def document(self, document_id, fields=None, as_list=False):
         document_id = self.document_id(document_id)
         where = f'{" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'

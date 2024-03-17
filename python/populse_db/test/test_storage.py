@@ -287,6 +287,10 @@ def test_storage():
             for doc in d.snapshots.search(image="/somewhere/something.png")
         ] == snapshots[3:4]
 
+        # Count elements
+        assert d.snapshots.count() == 4
+        assert d.snapshots.count('image LIKE "/home/yann%"') == 3
+
         # Find all unique values
         assert set(d.snapshots.distinct_values("data_type")) == {"greywhite", "void"}
         assert set(
