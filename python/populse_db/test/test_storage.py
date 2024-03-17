@@ -147,6 +147,12 @@ def test_storage():
         schema.add_schema("populse_db.test.schema.snapshot")
         schema.add_schema("populse_db.test.schema.processing")
 
+        schema.add_collection("test_update", "key")
+        schema.add_field("test_update", "f1", str)
+        schema.add_field("test_update", "f2", str)
+        schema.add_field("test_update", "f3", str)
+        schema.add_field("test_update", "dict", dict)
+
     with store.data(write=True) as d:
         now = datetime.now()
 
@@ -183,6 +189,38 @@ def test_storage():
         assert d.dataset.my_data.my_list[3].get() == "three"
         d.dataset.my_data.my_list[3] = "last"
         assert d.dataset.my_data.my_list[3].get() == "last"
+
+        # Update a document
+        d.test_update["test"] = {
+            "f1": "f1",
+            "f3": "value",
+            "dict": {"one": 1, "three": 4},
+        }
+        d.test_update.test.update(
+            {
+                "f2": "f2",
+                "f3": "f3",
+            }
+        )
+        d.test_update.test.dict.update(
+            {
+                "two": 2,
+                "three": 3,
+            }
+        )
+
+        assert d.test_update.test.get() == {
+            "key": "test",
+            "f1": "f1",
+            "f2": "f2",
+            "f3": "f3",
+            "dict": {"one": 1, "two": 2, "three": 3},
+        }
+
+        with pytest.raises(ValueError):
+            d.update({})
+        with pytest.raises(ValueError):
+            d.test_update.update({})
 
         # Adds many documents in a collection
         for snapshot in snapshots:

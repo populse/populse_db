@@ -71,6 +71,9 @@ class StorageClient:
     def set(self, connection_id, path, value):
         self.connections[connection_id].set(path, value)
 
+    def update(self, connection_id, path, value):
+        self.connections[connection_id].update(path, value)
+
     def append(self, connection_id, path, value):
         self.connections[connection_id].append(path, value)
 
@@ -183,6 +186,9 @@ class StorageServerRead:
         raise PermissionError(self._read_only_error)
 
     def set(self, path, value):
+        raise PermissionError(self._read_only_error)
+
+    def update(self, path, value):
         raise PermissionError(self._read_only_error)
 
     def clear_database(self):
@@ -315,6 +321,23 @@ class StorageServerWrite(StorageServerRead):
             collection.delete(None)
             for document in value:
                 collection.add(document)
+
+    def update(self, path, value):
+        collection, document_id, field, path = self._parse_path(path)
+        if not document_id:
+            raise ValueError("cannot update a database or a collection")
+        if field:
+            db_value = collection.document(document_id, fields=[field], as_list=True)[0]
+            if path:
+                container = db_value
+                for i in path:
+                    container = container[i]
+                container.update(value)
+            else:
+                db_value.update(value)
+            collection.update_document(document_id, {field: db_value})
+        else:
+            collection.update_document(document_id, value)
 
     def append(self, path, value):
         collection, document_id, field, path = self._parse_path(path)

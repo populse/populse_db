@@ -213,6 +213,9 @@ class StorageSession:
     def set(self, value):
         self._server.set(self._connection_id, self._path, value)
 
+    def update(self, value):
+        self._server.update(self._connection_id, self._path, value)
+
     def get(self):
         return self._server.get(self._connection_id, self._path)
 
