@@ -2,7 +2,7 @@
 [//]: [![](https://travis-ci.org/populse/populse_db.svg?branch=master)](https://travis-ci.org/populse/populse_db)
 [![Build status](https://ci.appveyor.com/api/projects/status/exyixo4o0osns6tn/branch/master?svg=true)](https://ci.appveyor.com/project/populse/populse-db-6gndf/branch/master)
 [![codecov](https://codecov.io/gh/populse/populse_db/branch/master/graph/badge.svg?token=sTgorGiZ7w)](https://codecov.io/gh/populse/populse_db)
-[![](https://img.shields.io/badge/license-CeCILL--B-blue.svg)](https://github.com/populse/populse_db/blob/master/LICENSE.en)
+[![](https://img.shields.io/badge/license-CeCILL--B-blue.svg)](https://github.com/populse/populse_db/blob/master/LICENSE)
 [![](https://img.shields.io/pypi/v/populse_db.svg)](https://pypi.python.org/pypi/populse_db/)
 [![](https://img.shields.io/pypi/status/populse_db.svg)](https://pypi.python.org/pypi/populse_db/)
 [![](https://img.shields.io/badge/python-3.9%203.10%203.11%203.12-yellow.svg)](#)
@@ -92,4 +92,4 @@ The script of tests is python/populse_db/test.py, so the following command launc
 
   Populse_db is precisely released under the CeCILL-B software license
 
-  You can find all the details on the license [here](http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html), or refer to the license file [here](https://github.com/populse/populse_db/blob/master/LICENSE.en)
+  You can find all the details on the license [here](http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html), or refer to the license file [here](https://github.com/populse/populse_db/blob/master/LICENSE)
