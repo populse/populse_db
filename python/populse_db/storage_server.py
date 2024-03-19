@@ -1,132 +1,39 @@
 from uuid import uuid4
 
 import populse_db.storage
-from populse_db.database import str_to_type, type_to_str
+from populse_db.database import str_to_type
 
 from . import Database
 
 
-class StorageClient:
-    def __init__(self, *args, **kwargs):
-        self.database = Database(*args, **kwargs)
-        self.connections = {}
-
-    def access_rights(self, access_token):
-        return "write"
-
-    def connect(self, access_token, exclusive, write):
-        connection_id = str(uuid4())
-        access_rights = self.access_rights(access_token)
-        if not write and access_rights in ("read", "write"):
-            self.connections[connection_id] = StorageServerRead(
-                self.database, exclusive
-            )
-        elif access_rights == "write":
-            self.connections[connection_id] = StorageServerWrite(
-                self.database, exclusive
-            )
-        else:
-            raise PermissionError("database access refused")
-        return connection_id
-
-    def add_schema_collections(self, connection_id, schema_to_collections):
-        return self.connections[connection_id].add_schema_collections(
-            schema_to_collections
-        )
-
-    def add_collection(self, connection_id, name, primary_key):
-        # Make primary_key json compatible
-        if isinstance(primary_key, dict):
-            primary_key = dict(
-                (k, (v if isinstance(v, str) else type_to_str(v)))
-                for k, v in primary_key.items()
-            )
-        return self.connections[connection_id].add_collection(name, primary_key)
-
-    def add_field(
-        self,
-        connection_id,
-        collection_name,
-        field_name,
-        field_type,
-        description=None,
-        index=False,
-    ):
-        if isinstance(field_type, type):
-            field_type = type_to_str(field_type)
-        self.connections[connection_id].add_field(
-            collection_name,
-            field_name,
-            field_type,
-            description,
-            index,
-        )
-
-    def disconnect(self, connection_id, rollback):
-        self.connections[connection_id]._close(rollback)
-
-    def get(
-        self,
-        connection_id,
-        path,
-        default=None,
-        fields=None,
-        as_list=None,
-        distinct=False,
-    ):
-        return self.connections[connection_id].get(
-            path, default=default, fields=fields, as_list=as_list, distinct=distinct
-        )
-
-    def count(self, connection_id, path, query=None):
-        return self.connections[connection_id].count(path, query)
-
-    def set(self, connection_id, path, value):
-        self.connections[connection_id].set(path, value)
-
-    def delete(self, connection_id, path):
-        self.connections[connection_id].delete(path)
-
-    def update(self, connection_id, path, value):
-        self.connections[connection_id].update(path, value)
-
-    def append(self, connection_id, path, value):
-        self.connections[connection_id].append(path, value)
-
-    def search(self, connection_id, path, query, fields=None, as_list=None):
-        if isinstance(fields, tuple):
-            fields = list(fields)
-        return self.connections[connection_id].search(
-            path, query, fields=fields, as_list=as_list
-        )
-
-    def search_and_delete(self, connection_id, path, query):
-        return self.connections[connection_id].search_and_delete(path, query)
-
-    def distinct_values(self, connection_id, path, field):
-        return self.connections[connection_id].distinct_values(path, field)
-
-    def clear_database(self, connection_id):
-        return self.connections[connection_id].clear_database()
-
-
-class StorageServerRead:
+class StorageAPI:
     _read_only_error = "database is read-only"
 
-    def __init__(self, database, exclusive):
-        self._dbs = database.session(exclusive=exclusive)
+    def __init__(self, *args, **kwargs):
+        self.database = Database(*args, **kwargs)
+        self.sessions = {}
 
-    def _close(self, rollback):
-        self._dbs.close(rollback=rollback)
+    @staticmethod
+    def _init_database(dbs):
+        # Initialize schema
+        if not dbs.has_collection(populse_db.storage.Storage.default_collection):
+            dbs.add_collection(
+                populse_db.storage.Storage.default_collection,
+                populse_db.Storage.default_field,
+            )
+            dbs[populse_db.storage.Storage.default_collection][
+                populse_db.storage.Storage.default_document_id
+            ] = {}
 
-    def _parse_path(self, path):
+    @staticmethod
+    def _parse_path(dbs, path):
         if not path:
             return (None, None, None, None)
-        if self._dbs.has_collection(path[0]):
-            collection = self._dbs[path[0]]
+        if dbs.has_collection(path[0]):
+            collection = dbs[path[0]]
             path = path[1:]
         else:
-            collection = self._dbs[populse_db.storage.Storage.default_collection]
+            collection = dbs[populse_db.storage.Storage.default_collection]
         if populse_db.storage.Storage.default_field in collection.primary_key:
             document_id = populse_db.storage.Storage.default_document_id
         else:
@@ -140,8 +47,141 @@ class StorageServerRead:
         path = path[1:]
         return (collection, document_id, field, path)
 
-    def get(self, path, default=None, fields=None, as_list=False, distinct=False):
-        collection, document_id, field, path = self._parse_path(path)
+    def access_rights(self, access_token):
+        return "write"
+
+    def connect(self, access_token, exclusive, write, create):
+        connection_id = str(uuid4())
+        access_rights = self.access_rights(access_token)
+        if not write and access_rights in ("read", "write"):
+            dbs = self.database.session(exclusive=exclusive, create=False)
+        elif access_rights == "write":
+            # Write access must be in an exclusive transaction to avoid
+            # "Database is locked" error in SQLite with parallel accesses:
+            # https://www2.sqlite.org/cvstrac/wiki?p=DatabaseIsLocked
+            dbs = self.database.session(exclusive=True, create=create)
+        else:
+            raise PermissionError("database access refused")
+        if dbs:
+            self.sessions[connection_id] = (dbs, write)
+            if write:
+                self._init_database(dbs)
+            return connection_id
+        return None
+
+    def _get_database_session(self, connection_id, write):
+        session = self.sessions.get(connection_id)
+        if session is None:
+            raise ValueError("invalid storage connection id")
+        dbs, writable = session
+        if write and not writable:
+            raise PermissionError(self._read_only_error)
+        return dbs
+
+    def add_schema_collections(self, connection_id, schema_to_collections):
+        dbs = self._get_database_session(connection_id, write=True)
+        if not dbs.has_collection(populse_db.storage.Storage.schema_collection):
+            dbs.add_collection(populse_db.storage.Storage.schema_collection, "name")
+            schema_collection = dbs[populse_db.storage.Storage.schema_collection]
+            schema_collection.add_field("version", str)
+            schema_collection[schema_to_collections["name"]] = {
+                "version": schema_to_collections["version"]
+            }
+        collections = schema_to_collections["collections"]
+        for collection_name, fields_definition in collections.items():
+            if not dbs.has_collection(collection_name):
+                primary_keys = {}
+                for field_name, field_def in fields_definition.items():
+                    type_str, kwargs = field_def
+                    if kwargs.get("primary_key", False):
+                        primary_keys[field_name] = str_to_type(type_str)
+                dbs.add_collection(collection_name, primary_keys)
+                if populse_db.storage.Storage.default_field in primary_keys:
+                    dbs[collection_name][
+                        populse_db.storage.Storage.default_document_id
+                    ] = {}
+
+            collection = dbs[collection_name]
+            for field_name, field_def in fields_definition.items():
+                type_str, kwargs = field_def
+                field = collection.fields.get(field_name)
+                if field:
+                    type_python = str_to_type(type_str)
+                    if field["type"] != type_python:
+                        raise ValueError(
+                            f"database has a {collection_name}.{field_name} field "
+                            f"with type {field['type']} but schema requires type {type_python}"
+                        )
+                    if field["primary_key"] != kwargs.get("primary_key", False):
+                        raise ValueError(
+                            f"primary key difference between database and schema for {collection_name}.{field_name}"
+                        )
+                else:
+                    collection.add_field(field_name, str_to_type(type_str), **kwargs)
+
+    def add_collection(self, connection_id, name, primary_key):
+        dbs = self._get_database_session(connection_id, write=True)
+        collection = dbs.get_collection(name)
+        if collection is None:
+            dbs.add_collection(name, primary_key)
+        else:
+            # Check that primary key of existing collection is compatible
+            # with requested one.
+            if isinstance(primary_key, str):
+                dict_primary_key = {primary_key: str}
+            elif not isinstance(primary_key, dict):
+                dict_primary_key = dict((i, str) for i in primary_key)
+            else:
+                dict_primary_key = dict(
+                    (k, str_to_type(v)) for k, v in primary_key.items()
+                )
+            if collection.primary_key != dict_primary_key:
+                raise ValueError(
+                    f"primary key {primary_key} is not compatible with the one defined for collection {name}"
+                )
+
+    def add_field(
+        self,
+        connection_id,
+        collection_name,
+        field_name,
+        field_type,
+        description=None,
+        index=False,
+    ):
+        dbs = self._get_database_session(connection_id, write=True)
+        if collection_name is None:
+            collection_name = populse_db.storage.Storage.default_collection
+        collection = dbs.get_collection(collection_name)
+        if collection is None:
+            raise ValueError(f'No collection named "{collection_name}"')
+        field = collection.fields.get(field_name)
+        if field is None:
+            collection.add_field(
+                field_name, field_type, description=description, index=index
+            )
+        else:
+            # Check compatibility with existing field
+            if field["type"] != str_to_type(field_type):
+                raise ValueError(
+                    f"Incompatible type for field {field_name} of collection {collection_name}, requested {field_type} but existing database has {field['type']}"
+                )
+
+    def disconnect(self, connection_id, rollback):
+        dbs = self._get_database_session(connection_id, write=False)
+        dbs.close(rollback)
+
+    def get(
+        self,
+        connection_id,
+        path,
+        default=None,
+        fields=None,
+        as_list=None,
+        distinct=False,
+    ):
+        dbs = self._get_database_session(connection_id, write=False)
+        collection, document_id, field, path = self._parse_path(dbs, path)
         if not collection:
             raise ValueError("cannot get the whole content of a database")
         if distinct and document_id:
@@ -177,26 +217,9 @@ class StorageServerRead:
                 collection.documents(fields=fields, as_list=as_list, distinct=distinct)
             )
 
-    def search(self, path, query, fields, as_list):
-        collection, document_id, field, path = self._parse_path(path)
-        if path or field:
-            raise ValueError("only collections can be searched")
-        if document_id:
-            document_id = collection.document_id(document_id)
-            primary_key = list(collection.primary_key)
-            document_query = " and ".join(
-                f'{{{primary_key[i]}}}=="{document_id[i]}"'
-                for i in range(len(document_id))
-            )
-            if query:
-                query = f"{query} and {document_query}"
-            else:
-                query = document_query
-        result = list(collection.filter(query, fields=fields, as_list=as_list))
-        return result
-
-    def count(self, path, query):
-        collection, document_id, field, path = self._parse_path(path)
+    def count(self, connection_id, path, query=None):
+        dbs = self._get_database_session(connection_id, write=False)
+        collection, document_id, field, path = self._parse_path(dbs, path)
         if path or field:
             raise ValueError("only collections can be counted")
         if document_id:
@@ -212,169 +235,9 @@ class StorageServerRead:
                 query = document_query
         return collection.count(query)
 
-    def search_and_delete(self, path, query):
-        collection, document_id, field, path = self._parse_path(path)
-        if path or field:
-            raise ValueError("only collections can be searched")
-        if document_id:
-            document_id = collection.document_id(document_id)
-            primary_key = list(collection.primary_key)
-            document_query = " and ".join(
-                f'{{{primary_key[i]}}}=="{document_id[i]}"'
-                for i in range(len(document_id))
-            )
-            if query:
-                query = f"{query} and {document_query}"
-            else:
-                query = document_query
-        collection.delete(query)
-
-    def distinct_values(self, path, field):
-        collection, document_id, f, path = self._parse_path(path)
-        if path or f or document_id:
-            raise ValueError("only collections support distinct values searching")
-        for row in collection.documents(fields=[field], as_list=True, distinct=True):
-            yield row[0]
-
-    def add_schema_collections(self, schema_to_collections):
-        raise PermissionError(self._read_only_error)
-
-    def add_collection(self, name, primary_key):
-        raise PermissionError(self._read_only_error)
-
-    def add_field(
-        self,
-        collection_name,
-        field_name,
-        field_type,
-        description,
-        index,
-    ):
-        raise PermissionError(self._read_only_error)
-
-    def append(self, path, value):
-        raise PermissionError(self._read_only_error)
-
-    def set(self, path, value):
-        raise PermissionError(self._read_only_error)
-
-    def delete(self, path):
-        raise PermissionError(self._read_only_error)
-
-    def update(self, path, value):
-        raise PermissionError(self._read_only_error)
-
-    def clear_database(self):
-        raise PermissionError(self._read_only_error)
-
-
-class StorageServerWrite(StorageServerRead):
-    def __init__(self, database, exclusive):
-        # Write access must be in an exclusive transaction to avoid
-        # "Database is locked" error in SQLite with parallel accesses:
-        # https://www2.sqlite.org/cvstrac/wiki?p=DatabaseIsLocked
-        self._dbs = database.session(exclusive=True)
-        self._init_database()
-
-    def _init_database(self):
-        if not self._dbs.has_collection(populse_db.storage.Storage.default_collection):
-            self._dbs.add_collection(
-                populse_db.storage.Storage.default_collection,
-                populse_db.Storage.default_field,
-            )
-            self._dbs[populse_db.storage.Storage.default_collection][
-                populse_db.storage.Storage.default_document_id
-            ] = {}
-
-    def add_schema_collections(self, schema_to_collections):
-        if not self._dbs.has_collection(populse_db.storage.Storage.schema_collection):
-            self._dbs.add_collection(
-                populse_db.storage.Storage.schema_collection, "name"
-            )
-            schema_collection = self._dbs[populse_db.storage.Storage.schema_collection]
-            schema_collection.add_field("version", str)
-            schema_collection[schema_to_collections["name"]] = {
-                "version": schema_to_collections["version"]
-            }
-        collections = schema_to_collections["collections"]
-        for collection_name, fields_definition in collections.items():
-            if not self._dbs.has_collection(collection_name):
-                primary_keys = {}
-                for field_name, field_def in fields_definition.items():
-                    type_str, kwargs = field_def
-                    if kwargs.get("primary_key", False):
-                        primary_keys[field_name] = str_to_type(type_str)
-                self._dbs.add_collection(collection_name, primary_keys)
-                if populse_db.storage.Storage.default_field in primary_keys:
-                    self._dbs[collection_name][
-                        populse_db.storage.Storage.default_document_id
-                    ] = {}
-
-            collection = self._dbs[collection_name]
-            for field_name, field_def in fields_definition.items():
-                type_str, kwargs = field_def
-                field = collection.fields.get(field_name)
-                if field:
-                    type_python = str_to_type(type_str)
-                    if field["type"] != type_python:
-                        raise ValueError(
-                            f"database has a {collection_name}.{field_name} field "
-                            f"with type {field['type']} but schema requires type {type_python}"
-                        )
-                    if field["primary_key"] != kwargs.get("primary_key", False):
-                        raise ValueError(
-                            f"primary key difference between database and schema for {collection_name}.{field_name}"
-                        )
-                else:
-                    collection.add_field(field_name, str_to_type(type_str), **kwargs)
-
-    def add_collection(self, name, primary_key):
-        collection = self._dbs.get_collection(name)
-        if collection is None:
-            self._dbs.add_collection(name, primary_key)
-        else:
-            # Check that primary key of existing collection is compatible
-            # with requested one.
-            if isinstance(primary_key, str):
-                dict_primary_key = {primary_key: str}
-            elif not isinstance(primary_key, dict):
-                dict_primary_key = dict((i, str) for i in primary_key)
-            else:
-                dict_primary_key = dict(
-                    (k, str_to_type(v)) for k, v in primary_key.items()
-                )
-            if collection.primary_key != dict_primary_key:
-                raise ValueError(
-                    f"primary key {primary_key} is not compatible with the one defined for collection {name}"
-                )
-
-    def add_field(
-        self,
-        collection_name,
-        field_name,
-        field_type,
-        description,
-        index,
-    ):
-        if collection_name is None:
-            collection_name = populse_db.storage.Storage.default_collection
-        collection = self._dbs.get_collection(collection_name)
-        if collection is None:
-            raise ValueError(f'No collection named "{collection_name}"')
-        field = collection.fields.get(field_name)
-        if field is None:
-            collection.add_field(
-                field_name, field_type, description=description, index=index
-            )
-        else:
-            # Check compatibility with existing field
-            if field["type"] != str_to_type(field_type):
-                raise ValueError(
-                    f"Incompatible type for field {field_name} of collection {collection_name}, requested {field_type} but existing database has {field['type']}"
-                )
-
-    def set(self, path, value):
-        collection, document_id, field, path = self._parse_path(path)
+    def set(self, connection_id, path, value):
+        dbs = self._get_database_session(connection_id, write=True)
+        collection, document_id, field, path = self._parse_path(dbs, path)
         if not collection:
             raise ValueError("cannot set the whole content of a database")
         if field:
@@ -395,8 +258,9 @@ class StorageServerWrite(StorageServerRead):
             for document in value:
                 collection.add(document)
 
-    def delete(self, path):
-        collection, document_id, field, path = self._parse_path(path)
+    def delete(self, connection_id, path):
+        dbs = self._get_database_session(connection_id, write=True)
+        collection, document_id, field, path = self._parse_path(dbs, path)
         if not collection:
             raise ValueError("cannot delete the whole content of a database")
         if not document_id:
@@ -416,8 +280,9 @@ class StorageServerWrite(StorageServerRead):
         else:
             del collection[document_id]
 
-    def update(self, path, value):
-        collection, document_id, field, path = self._parse_path(path)
+    def update(self, connection_id, path, value):
+        dbs = self._get_database_session(connection_id, write=True)
+        collection, document_id, field, path = self._parse_path(dbs, path)
         if not document_id:
             raise ValueError("cannot update a database or a collection")
         if field:
@@ -433,8 +298,9 @@ class StorageServerWrite(StorageServerRead):
         else:
             collection.update_document(document_id, value)
 
-    def append(self, path, value):
-        collection, document_id, field, path = self._parse_path(path)
+    def append(self, connection_id, path, value):
+        dbs = self._get_database_session(connection_id, write=True)
+        collection, document_id, field, path = self._parse_path(dbs, path)
         if not collection:
             raise ValueError("cannot set the whole content of a database")
         if field:
@@ -451,6 +317,52 @@ class StorageServerWrite(StorageServerRead):
         else:
             collection.add(value)
 
-    def clear_database(self):
-        self._dbs.clear()
+    def search(self, connection_id, path, query, fields=None, as_list=None):
+        dbs = self._get_database_session(connection_id, write=False)
+        collection, document_id, field, path = self._parse_path(dbs, path)
+        if path or field:
+            raise ValueError("only collections can be searched")
+        if document_id:
+            document_id = collection.document_id(document_id)
+            primary_key = list(collection.primary_key)
+            document_query = " and ".join(
+                f'{{{primary_key[i]}}}=="{document_id[i]}"'
+                for i in range(len(document_id))
+            )
+            if query:
+                query = f"{query} and {document_query}"
+            else:
+                query = document_query
+        result = list(collection.filter(query, fields=fields, as_list=as_list))
+        return result
+
+    def search_and_delete(self, connection_id, path, query):
+        dbs = self._get_database_session(connection_id, write=False)
+        collection, document_id, field, path = self._parse_path(dbs, path)
+        if path or field:
+            raise ValueError("only collections can be searched")
+        if document_id:
+            document_id = collection.document_id(document_id)
+            primary_key = list(collection.primary_key)
+            document_query = " and ".join(
+                f'{{{primary_key[i]}}}=="{document_id[i]}"'
+                for i in range(len(document_id))
+            )
+            if query:
+                query = f"{query} and {document_query}"
+            else:
+                query = document_query
+        collection.delete(query)
+
+    def distinct_values(self, connection_id, path, field):
+        dbs = self._get_database_session(connection_id, write=False)
+        collection, document_id, f, path = self._parse_path(dbs, path)
+        if path or f or document_id:
+            raise ValueError("only collections support distinct values searching")
+        for row in collection.documents(fields=[field], as_list=True, distinct=True):
+            yield row[0]
+
+    def clear_database(self, connection_id):
+        dbs = self._get_database_session(connection_id, write=True)
+        dbs.clear()
         self._init_database()

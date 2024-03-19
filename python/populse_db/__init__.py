@@ -3,7 +3,7 @@ import threading
 from contextlib import contextmanager
 from urllib.parse import urlparse
 
-from .engine.sqlite import SQLiteSession
+from .engine.sqlite import create_sqlite_session_factory
 
 try:
     __version__ = importlib.metadata.__version__ = importlib.metadata.version(
@@ -93,7 +93,7 @@ class Database:
         - __exit__: Release resource used by the :any:`DatabaseSession`
     """
 
-    def __init__(self, database_url, timeout=None, echo_sql=None):
+    def __init__(self, database_url, timeout=None, create=False, echo_sql=None):
         """Creates a :any:`Database` instance.
 
         :param database_url: URL defining database engine and its parameters. The
@@ -109,31 +109,33 @@ class Database:
 
         self.thread_local = threading.local()
         self.url = urlparse(database_url)
+        self.create = create
         self.echo_sql = echo_sql
         if timeout:
             self.timeout = int(timeout)
         else:
             self.timeout = None
         if self.url.scheme in ("", "sqlite"):
-            self.session_class = SQLiteSession
+            self.session_factory = create_sqlite_session_factory(self.url)
         else:
             raise ValueError(f"Invalid database type in database URL: {database_url}")
-        self.session_parameters = self.session_class.parse_url(self.url)
 
-    def session(self, exclusive=False):
-        args, kwargs = self.session_parameters
-        return self.session_class(
-            *args,
+    def session(self, exclusive=False, create=None):
+        if create is None:
+            create = self.create
+        return self.session_factory(
             exclusive=exclusive,
             timeout=self.timeout,
             echo_sql=self.echo_sql,
-            **kwargs,
+            create=create,
         )
 
-    def begin_session(self, exclusive):
+    def begin_session(self, exclusive, create=None):
+        if create is None:
+            create = self.create
         session_depth = getattr(self.thread_local, "populse_db", None)
         if session_depth is None:
-            session = self.session(exclusive=exclusive)
+            session = self.session(exclusive=exclusive, create=create)
             depth = 0
         else:
             session, depth = session_depth
@@ -164,16 +166,18 @@ class Database:
         outermost __enter__/__exit__ pair (i.e. by the outermost with
         statement).
         """
-        return self.begin_session(exclusive=False)
+        return self.begin_session(exclusive=False, create=self.create)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.end_session(rollback=(exc_type is not None))
 
     @property
     @contextmanager
-    def exclusive(self):
+    def exclusive(self, create=None):
+        if create is None:
+            create = self.create
         try:
-            session = self.begin_session(exclusive=True)
+            session = self.begin_session(exclusive=True, create=create)
             yield session
             self.end_session(rollback=False)
         except Exception:

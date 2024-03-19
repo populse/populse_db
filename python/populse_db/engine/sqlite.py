@@ -1,4 +1,6 @@
+import functools
 import json
+import os
 import sqlite3
 from datetime import date, datetime, time
 
@@ -23,6 +25,20 @@ A populse_db engine is created when a DatabaseSession object is created
 """
 
 
+def create_sqlite_session_factory(url):
+    if url.path:
+        sqlite_file = url.path
+    elif url.netloc:
+        sqlite_file = url.netloc
+    return functools.partial(sqlite_session_factory, sqlite_file)
+
+
+def sqlite_session_factory(sqlite_file, *args, create=False, **kwargs):
+    if not create and not os.path.exists(sqlite_file):
+        return None
+    return SQLiteSession(sqlite_file, *args, **kwargs)
+
+
 class ParsedFilter(str):
     pass
 
@@ -32,14 +48,6 @@ class SQLiteSession(DatabaseSession):
         sqlite3.OperationalError,
         sqlite3.IntegrityError,
     )
-
-    @staticmethod
-    def parse_url(url):
-        if url.path:
-            args = (url.path,)
-        elif url.netloc:
-            args = (url.netloc,)
-        return args, {}
 
     def __init__(self, sqlite_file, exclusive=False, timeout=None, echo_sql=None):
         self.echo_sql = echo_sql

@@ -2,7 +2,7 @@ import importlib
 from contextlib import contextmanager
 
 from .database import type_to_str
-from .storage_server import StorageClient
+from .storage_server import StorageAPI
 
 
 class Storage:
@@ -12,37 +12,46 @@ class Storage:
     default_document_id = "_"
 
     def __init__(self, *args, timeout=10000, **kwargs):
-        self.server = StorageClient(*args, timeout=timeout, **kwargs)
+        self.storage_api = StorageAPI(*args, timeout=timeout, **kwargs)
 
     @contextmanager
-    def data(self, exclusive=None, write=False):
-        token = self.server.access_rights("TODO")
-        connection_id = self.server.connect(token, exclusive=exclusive, write=write)
-        try:
-            yield StorageSession(self.server, connection_id)
-            self.server.disconnect(connection_id, rollback=False)
-        except Exception:
-            self.server.disconnect(connection_id, rollback=True)
-            raise
+    def data(self, exclusive=None, write=False, create=False):
+        token = self.storage_api.access_rights("TODO")
+        connection_id = self.storage_api.connect(
+            token, exclusive=exclusive, write=write, create=create
+        )
+        if connection_id is not None:
+            try:
+                yield StorageSession(self.storage_api, connection_id)
+                self.storage_api.disconnect(connection_id, rollback=False)
+            except Exception:
+                self.storage_api.disconnect(connection_id, rollback=True)
+                raise
+        else:
+            yield None
 
     @contextmanager
     def schema(self):
-        token = self.server.access_rights("TODO")
-        connection_id = self.server.connect(token, exclusive=True, write=True)
+        token = self.storage_api.access_rights("TODO")
+        connection_id = self.storage_api.connect(
+            token, exclusive=True, write=True, create=True
+        )
         try:
-            yield SchemaSession(self.server, connection_id)
-            self.server.disconnect(connection_id, rollback=False)
+            yield SchemaSession(self.storage_api, connection_id)
+            self.storage_api.disconnect(connection_id, rollback=False)
         except Exception:
-            self.server.disconnect(connection_id, rollback=True)
+            self.storage_api.disconnect(connection_id, rollback=True)
             raise
 
-    def start_session(self, exclusive=None, write=False):
-        token = self.server.access_rights("TODO")
-        connection_id = self.server.connect(token, exclusive=exclusive, write=write)
-        return StorageSession(self.server, connection_id)
+    def start_session(self, exclusive=None, write=False, create=False):
+        token = self.storage_api.access_rights("TODO")
+        connection_id = self.storage_api.connect(
+            token, exclusive=exclusive, write=write, create=create
+        )
+        return StorageSession(self.storage_api, connection_id)
 
     def end_session(self, storage_session, rollback=False):
-        self.server.disconnect(storage_session._connection_id, rollback=rollback)
+        self.storage_api.disconnect(storage_session._connection_id, rollback=rollback)
 
 
 class SchemaSession:
@@ -164,22 +173,32 @@ class SchemaSession:
         return collections
 
     def __init__(self, server, connection_id):
-        super().__setattr__("_server", server)
+        super().__setattr__("_storage_api", server)
         super().__setattr__("_connection_id", connection_id)
 
     def add_schema(self, name, version=None):
         schema_to_collections = self.find_schema(name, version)
         if not schema_to_collections:
             raise ValueError(f"cannot find schema {name} with version {version}")
-        self._server.add_schema_collections(self._connection_id, schema_to_collections)
+        self._storage_api.add_schema_collections(
+            self._connection_id, schema_to_collections
+        )
 
     def add_collection(self, name, primary_key):
-        self._server.add_collection(self._connection_id, name, primary_key)
+        # Make primary_key json compatible
+        if isinstance(primary_key, dict):
+            primary_key = dict(
+                (k, (v if isinstance(v, str) else type_to_str(v)))
+                for k, v in primary_key.items()
+            )
+        self._storage_api.add_collection(self._connection_id, name, primary_key)
 
     def add_field(
         self, collection_name, field_name, field_type, description=None, index=False
     ):
-        self._server.add_field(
+        if isinstance(field_type, type):
+            field_type = type_to_str(field_type)
+        self._storage_api.add_field(
             self._connection_id,
             collection_name,
             field_name,
@@ -189,41 +208,43 @@ class SchemaSession:
         )
 
     def clear_database(self):
-        return self._server.clear_database(self._connection_id)
+        return self._storage_api.clear_database(self._connection_id)
 
 
 class StorageSession:
-    def __init__(self, server, connection_id, path=None):
-        super().__setattr__("_server", server)
+    def __init__(self, storage_api, connection_id, path=None):
+        super().__setattr__("_storage_api", storage_api)
         super().__setattr__("_connection_id", connection_id)
         super().__setattr__("_path", path or [])
 
     def __getitem__(self, key):
-        return self.__class__(self._server, self._connection_id, self._path + [key])
+        return self.__class__(
+            self._storage_api, self._connection_id, self._path + [key]
+        )
 
     def __getattr__(self, key):
         return self[key]
 
     def __setitem__(self, key, value):
-        self._server.set(self._connection_id, self._path + [key], value)
+        self._storage_api.set(self._connection_id, self._path + [key], value)
 
     def __setattr__(self, key, value):
         self[key] = value
 
     def __delitem__(self, key):
-        self._server.delete(self._connection_id, self._path + [key])
+        self._storage_api.delete(self._connection_id, self._path + [key])
 
     def __delattr__(self, key):
         del self[key]
 
     def set(self, value):
-        self._server.set(self._connection_id, self._path, value)
+        self._storage_api.set(self._connection_id, self._path, value)
 
     def update(self, value):
-        self._server.update(self._connection_id, self._path, value)
+        self._storage_api.update(self._connection_id, self._path, value)
 
     def get(self, default=None, fields=None, as_list=False, distinct=False):
-        return self._server.get(
+        return self._storage_api.get(
             self._connection_id,
             self._path,
             default=default,
@@ -233,20 +254,22 @@ class StorageSession:
         )
 
     def count(self, query=None):
-        return self._server.count(self._connection_id, self._path, query=query)
+        return self._storage_api.count(self._connection_id, self._path, query=query)
 
     def append(self, value):
-        return self._server.append(self._connection_id, self._path, value)
+        return self._storage_api.append(self._connection_id, self._path, value)
 
     def distinct_values(self, field):
-        return self._server.distinct_values(self._connection_id, self._path, field)
+        return self._storage_api.distinct_values(self._connection_id, self._path, field)
 
     def search(self, query=None, fields=None, as_list=None, **kwargs):
         if kwargs and query:
             raise ValueError("Cannot combine query and equality research")
         if kwargs:
             query = " AND ".join(f'{{{k}}}=="{v}"' for k, v in kwargs.items())
-        return self._server.search(
+        if isinstance(fields, tuple):
+            fields = list(fields)
+        return self._storage_api.search(
             self._connection_id, self._path, query, fields=fields, as_list=as_list
         )
 
@@ -255,4 +278,6 @@ class StorageSession:
             raise ValueError("Cannot combine query and equality research")
         if kwargs:
             query = " AND ".join(f'{{{k}}}=="{v}"' for k, v in kwargs.items())
-        return self._server.search_and_delete(self._connection_id, self._path, query)
+        return self._storage_api.search_and_delete(
+            self._connection_id, self._path, query
+        )

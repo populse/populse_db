@@ -13,7 +13,7 @@ from populse_db.filter import FilterToSQL, literal_parser
 class TestsSQLiteInMemory(unittest.TestCase):
     def test_add_get_document(self):
         now = datetime.now()
-        db = Database("sqlite://:memory:")
+        db = Database("sqlite://:memory:", create=True)
         with db as dbs:
             dbs.add_collection("test", "index")
             base_doc = {
@@ -72,14 +72,14 @@ def create_test_case(**database_creation_parameters):
                 del self.database_creation_parameters["database_url"]
             self.temp_folder = None
 
-        def create_database(self, clear=True):
+        def create_database(self, clear=True, create=True):
             """
             Opens the database
             :param clear: Bool to know if the database must be cleared
             """
 
             try:
-                db = Database(**self.database_creation_parameters)
+                db = Database(**self.database_creation_parameters, create=create)
             except Exception as e:
                 if self.database_creation_parameters["database_url"].startswith(
                     "postgresql"
