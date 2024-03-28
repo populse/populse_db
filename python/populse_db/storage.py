@@ -1,5 +1,6 @@
-import importlib
 from contextlib import contextmanager
+import importlib
+import types
 
 from .database import type_to_str
 from .storage_server import StorageAPI
@@ -112,7 +113,7 @@ class SchemaSession:
     @classmethod
     def _parse_field(cls, name, definition):
         error = True
-        if isinstance(definition, type):
+        if isinstance(definition, (type, types.GenericAlias)):
             type_str = type_to_str(definition)
             kwargs = {}
             error = False
@@ -122,7 +123,7 @@ class SchemaSession:
             error = False
         elif isinstance(definition, list) and len(definition) == 2:
             if isinstance(definition[1], dict):
-                if isinstance(definition[0], type):
+                if isinstance(definition[0], (type, types.GenericAlias)):
                     type_str = type_to_str(definition[0])
                     kwargs = definition[1]
                     error = False
@@ -196,7 +197,7 @@ class SchemaSession:
     def add_field(
         self, collection_name, field_name, field_type, description=None, index=False
     ):
-        if isinstance(field_type, type):
+        if isinstance(field_type, (type, types.GenericAlias)):
             field_type = type_to_str(field_type)
         self._storage_api.add_field(
             self._connection_id,
