@@ -3,7 +3,7 @@ import importlib
 import types
 
 from .database import type_to_str
-from .storage_server import StorageAPI
+from .storage_api import StorageAPI
 
 
 class Storage:
