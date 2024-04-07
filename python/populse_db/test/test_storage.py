@@ -338,6 +338,9 @@ def test_storage():
 
 
 def test_storage_server():
+    pytest.importorskip("fastapi")
+    pytest.importorskip("uvicorn")
+    pytest.importorskip("tblib")
     tmp = NamedTemporaryFile()
     cmd = [sys.executable, "-m", "populse_db.server", tmp.name]
     server = subprocess.Popen(cmd)

@@ -6,7 +6,6 @@ from uuid import uuid4
 
 from cryptography.fernet import Fernet, InvalidToken
 import requests
-import tblib
 
 import populse_db.storage
 from populse_db.database import str_to_type, json_decode, json_encode
@@ -16,6 +15,9 @@ from .database import populse_db_table
 
 
 def deserialize_exception(je):
+    # tblib is optional for populse_db
+    import tblib
+
     exception_class = getattr(
         importlib.import_module(je["class_module"]), je["class_name"]
     )
