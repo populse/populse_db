@@ -4,11 +4,11 @@ import sqlite3
 import typing
 from uuid import uuid4
 
-from cryptography.fernet import Fernet, InvalidToken
 import requests
+from cryptography.fernet import Fernet, InvalidToken
 
 import populse_db.storage
-from populse_db.database import str_to_type, json_decode, json_encode
+from populse_db.database import json_decode, json_encode, str_to_type
 
 from . import Database
 from .database import populse_db_table
@@ -119,7 +119,7 @@ class StorageFileAPI:
         try:
             access_rights = f.decrypt(access_token.encode()).decode()
         except InvalidToken:
-            raise PermissionError("invalid token")
+            raise PermissionError("invalid token") from None
         if not write and access_rights in ("read", "write"):
             dbs = self.database.session(exclusive=exclusive, create=False)
         elif access_rights == "write":
@@ -532,7 +532,7 @@ class StorageServerAPI:
     ):
         return self._call(
             "get",
-            f"data",
+            "data",
             dict(
                 connection_id=connection_id,
                 path=path,
@@ -547,40 +547,40 @@ class StorageServerAPI:
     def count(self, connection_id, path, query=None):
         return self._call(
             "get",
-            f"count",
+            "count",
             dict(connection_id=connection_id, path=path, query=query),
         )
 
     def set(self, connection_id, path, value):
         return self._call(
             "post",
-            f"data",
+            "data",
             dict(connection_id=connection_id, path=path, value=json_encode(value)),
         )
 
     def delete(self, connection_id, path):
         return self._call(
-            "delete", f"data", dict(connection_id=connection_id, path=path)
+            "delete", "data", dict(connection_id=connection_id, path=path)
         )
 
     def update(self, connection_id, path, value):
         return self._call(
             "put",
-            f"data",
+            "data",
             dict(connection_id=connection_id, path=path, value=json_encode(value)),
         )
 
     def append(self, connection_id, path, value):
         return self._call(
             "patch",
-            f"data",
+            "data",
             dict(connection_id=connection_id, path=path, value=json_encode(value)),
         )
 
     def search(self, connection_id, path, query, fields=None, as_list=None):
         return self._call(
             "get",
-            f"search",
+            "search",
             dict(
                 connection_id=connection_id,
                 path=path,
@@ -594,7 +594,7 @@ class StorageServerAPI:
     def search_and_delete(self, connection_id, path, query):
         return self._call(
             "delete",
-            f"search",
+            "search",
             dict(connection_id=connection_id, path=path, query=query),
             decode=True,
         )
@@ -602,7 +602,7 @@ class StorageServerAPI:
     def distinct_values(self, connection_id, path, field):
         return self._call(
             "get",
-            f"distinct",
+            "distinct",
             dict(connection_id=connection_id, path=path, field=field),
             decode=True,
         )

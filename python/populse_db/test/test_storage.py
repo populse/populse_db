@@ -1,9 +1,9 @@
-from datetime import datetime
 import os
-from tempfile import NamedTemporaryFile
 import signal
 import subprocess
 import sys
+from datetime import datetime
+from tempfile import NamedTemporaryFile
 
 import pytest
 
@@ -345,6 +345,7 @@ def test_storage_server():
     cmd = [sys.executable, "-m", "populse_db.server", tmp.name]
     server = subprocess.Popen(cmd)
     import time
+
     time.sleep(1)
     try:
         store = Storage(tmp.name)

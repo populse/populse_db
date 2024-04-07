@@ -1,15 +1,17 @@
-import uvicorn
-from fastapi import FastAPI, Body, Request
-from fastapi.responses import JSONResponse
 import sqlite3
 import sys
 from typing import Annotated
+
 import tblib
+import uvicorn
+from fastapi import Body, FastAPI, Request
+from fastapi.responses import JSONResponse
+
+from .database import json_decode, json_encode, populse_db_table
 from .storage_api import StorageFileAPI
-from .database import populse_db_table, json_decode, json_encode
 
 body_str = Annotated[str, Body(embed=True)]
-body_path = Annotated[list[str| int | list[str]], Body(embed=True)]
+body_path = Annotated[list[str | int | list[str]], Body(embed=True)]
 body_bool = Annotated[bool, Body()]
 body_dict = Annotated[dict, Body()]
 body_json = Annotated[str | int | float | bool | None | list | dict, Body()]
@@ -42,7 +44,7 @@ def create_server(database_file):
 
     @app.get("/access_token")
     async def access_token():
-        #TODO: give a real re/write challenge to the user in
+        # TODO: give a real re/write challenge to the user in
         # order to get its access rights.
         return storage_api.access_token()
 
@@ -112,7 +114,9 @@ def create_server(database_file):
 
     @app.get("/count")
     async def count(
-        connection_id: body_str, path: body_path, query: Annotated[str | None, Body()] = None
+        connection_id: body_str,
+        path: body_path,
+        query: Annotated[str | None, Body()] = None,
     ):
         return storage_api.count(connection_id, path, query)
 
@@ -140,9 +144,7 @@ def create_server(database_file):
         fields: Annotated[list[str] | None, Body()] = None,
         as_list: body_bool = False,
     ):
-        result = storage_api.search(
-            connection_id, path, query, fields, as_list
-        )
+        result = storage_api.search(connection_id, path, query, fields, as_list)
         return json_encode(result)
 
     @app.delete("/search")
@@ -172,7 +174,6 @@ def create_server(database_file):
 
 
 if __name__ == "__main__":
-    from pprint import pprint
 
     database_file = sys.argv[1]
     cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE", timeout=10)

@@ -12,9 +12,9 @@ from ..database import (
     json_decode,
     json_dumps,
     json_encode,
+    populse_db_table,
     str_to_type,
     type_to_str,
-    populse_db_table
 )
 from ..filter import FilterToSQL, filter_parser
 
