@@ -1,5 +1,9 @@
 from datetime import datetime
+import os
 from tempfile import NamedTemporaryFile
+import signal
+import subprocess
+import sys
 
 import pytest
 
@@ -113,9 +117,7 @@ def test_storage_schema():
         SchemaSession.find_schema("populse_db.test.schema.non_existing")
 
 
-def test_storage():
-    tmp = NamedTemporaryFile()
-    store = Storage(tmp.name)
+def run_storage_tests(store):
     with store.schema() as schema:
         schema.add_collection("test_collection_1", "primary_key")
         schema.add_collection("test_collection_1", "primary_key")
@@ -327,3 +329,22 @@ def test_storage():
         with pytest.raises(PermissionError):
             for snapshot in snapshots:
                 d.snapshots.append(snapshot)
+
+
+def test_storage():
+    tmp = NamedTemporaryFile()
+    store = Storage(tmp.name)
+    run_storage_tests(store)
+
+
+def test_storage_server():
+    tmp = NamedTemporaryFile()
+    cmd = [sys.executable, "-m", "populse_db.server", tmp.name]
+    server = subprocess.Popen(cmd)
+    import time
+    time.sleep(1)
+    try:
+        store = Storage(tmp.name)
+        run_storage_tests(store)
+    finally:
+        os.kill(server.pid, signal.SIGTERM)

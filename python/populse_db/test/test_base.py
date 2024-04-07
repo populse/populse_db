@@ -5,7 +5,7 @@ import unittest
 from datetime import date, datetime, time
 
 from populse_db import Database
-from populse_db.database import check_value_type
+from populse_db.database import check_value_type, populse_db_table
 from populse_db.engine.sqlite import SQLiteSession
 from populse_db.filter import FilterToSQL, literal_parser
 
@@ -861,7 +861,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_field("collection1", "test", str, description="Test field")
                 self.assertRaises(
                     session.database_exceptions,
-                    lambda: session.add_collection(session.populse_db_table),
+                    lambda: session.add_collection(populse_db_table),
                 )
 
                 # Trying with wrong types

@@ -14,6 +14,7 @@ from ..database import (
     json_encode,
     str_to_type,
     type_to_str,
+    populse_db_table
 )
 from ..filter import FilterToSQL, filter_parser
 
@@ -112,7 +113,7 @@ class SQLiteSession(DatabaseSession):
 
     def settings(self, category, key, default=None):
         try:
-            sql = f"SELECT _json FROM [{self.populse_db_table}] WHERE category=? and key=?"
+            sql = f"SELECT _json FROM [{populse_db_table}] WHERE category=? and key=?"
             cur = self.execute(sql, [category, key])
         except sqlite3.OperationalError:
             return default
@@ -122,7 +123,7 @@ class SQLiteSession(DatabaseSession):
         return default
 
     def set_settings(self, category, key, value):
-        sql = f"INSERT OR REPLACE INTO {self.populse_db_table} (category, key, _json) VALUES (?,?,?)"
+        sql = f"INSERT OR REPLACE INTO {populse_db_table} (category, key, _json) VALUES (?,?,?)"
         data = [category, key, json_dumps(value)]
         retry = False
         try:
@@ -132,7 +133,7 @@ class SQLiteSession(DatabaseSession):
         if retry:
             sql2 = (
                 "CREATE TABLE IF NOT EXISTS "
-                f"[{self.populse_db_table}] ("
+                f"[{populse_db_table}] ("
                 "category TEXT NOT NULL,"
                 "key TEXT NOT NULL,"
                 "_json TEXT,"
@@ -190,7 +191,7 @@ class SQLiteSession(DatabaseSession):
         sql = "SELECT name FROM sqlite_master WHERE type='table'"
         for row in self.execute(sql):
             table = row[0]
-            if table == self.populse_db_table:
+            if table == populse_db_table:
                 continue
             yield self[table]
 

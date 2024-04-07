@@ -3,6 +3,7 @@ from datetime import date, datetime, time
 
 import dateutil
 
+populse_db_table = "populse_db"
 
 def check_value_type(value, field_type):
     """
@@ -152,7 +153,6 @@ class DatabaseSession:
     .. automethod:: __getitem__
     """
 
-    populse_db_table = "populse_db"
     default_primary_key = "primary_key"
 
     def execute(self, *args, **kwargs):

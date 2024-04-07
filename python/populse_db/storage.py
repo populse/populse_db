@@ -1,6 +1,9 @@
 from contextlib import contextmanager
 import importlib
 import types
+import typing
+import os
+import sqlite3
 
 from .database import type_to_str
 from .storage_api import StorageAPI
@@ -12,14 +15,22 @@ class Storage:
     default_field = "_"
     default_document_id = "_"
 
-    def __init__(self, *args, timeout=10000, **kwargs):
-        self.storage_api = StorageAPI(*args, timeout=timeout, **kwargs)
+    def __init__(
+        self,
+        database_file: str,
+        timeout: float | None = 10000,
+        create: bool = False,
+        echo_sql: typing.TextIO | None = None,
+    ):
+        self.storage_api = StorageAPI(
+            database_file, timeout=timeout, create=create, echo_sql=echo_sql
+        )
+        self.access_token = self.storage_api.access_token()
 
     @contextmanager
     def data(self, exclusive=None, write=False, create=False):
-        token = self.storage_api.access_rights("TODO")
         connection_id = self.storage_api.connect(
-            token, exclusive=exclusive, write=write, create=create
+            self.access_token, exclusive=exclusive, write=write, create=create
         )
         if connection_id is not None:
             try:
@@ -33,9 +44,8 @@ class Storage:
 
     @contextmanager
     def schema(self):
-        token = self.storage_api.access_rights("TODO")
         connection_id = self.storage_api.connect(
-            token, exclusive=True, write=True, create=True
+            self.access_token, exclusive=True, write=True, create=True
         )
         try:
             yield SchemaSession(self.storage_api, connection_id)
@@ -45,9 +55,8 @@ class Storage:
             raise
 
     def start_session(self, exclusive=None, write=False, create=False):
-        token = self.storage_api.access_rights("TODO")
         connection_id = self.storage_api.connect(
-            token, exclusive=exclusive, write=write, create=create
+            self.access_token, exclusive=exclusive, write=write, create=create
         )
         return StorageSession(self.storage_api, connection_id)
 

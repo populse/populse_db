@@ -1,16 +1,72 @@
+import importlib
+import os
+import sqlite3
+import typing
 from uuid import uuid4
 
+from cryptography.fernet import Fernet, InvalidToken
+import requests
+import tblib
+
 import populse_db.storage
-from populse_db.database import str_to_type
+from populse_db.database import str_to_type, json_decode, json_encode
 
 from . import Database
+from .database import populse_db_table
+
+
+def deserialize_exception(je):
+    exception_class = getattr(
+        importlib.import_module(je["class_module"]), je["class_name"]
+    )
+    exception = exception_class(*je["args"])
+    tb = tblib.Traceback.from_dict(je["traceback"])
+    exception.with_traceback(tb.as_traceback())
+    return exception
 
 
 class StorageAPI:
+    """
+    Select between StorageFileAPI() and StorageServerAPI()
+    """
+
+    def __new__(
+        cls,
+        database_file: str,
+        timeout: float | None = None,
+        create: bool = False,
+        echo_sql: typing.TextIO | None = None,
+    ):
+        if os.path.exists(database_file):
+            cnx = sqlite3.connect(database_file, timeout=10)
+            # Check if storage_server table exists
+            cur = cnx.execute(
+                "SELECT COUNT(*) FROM sqlite_master "
+                f"WHERE type='table' AND name='{populse_db_table}'"
+            )
+            if cur.fetchone()[0]:
+                row = cnx.execute(
+                    f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'"
+                ).fetchone()
+                if row:
+                    return StorageServerAPI(database_file, row[0])
+        return StorageFileAPI(database_file, timeout, create, echo_sql)
+
+
+class StorageFileAPI:
     _read_only_error = "database is read-only"
 
-    def __init__(self, *args, **kwargs):
-        self.database = Database(*args, **kwargs)
+    def __init__(
+        self,
+        database_file: str,
+        timeout: float | None = None,
+        create: bool = False,
+        echo_sql: typing.TextIO | None = None,
+    ):
+        self.key = Fernet.generate_key()
+        self.database = Database(
+            database_file, timeout=timeout, create=create, echo_sql=echo_sql
+        )
         self.sessions = {}
 
     @staticmethod
@@ -47,12 +103,21 @@ class StorageAPI:
         path = path[1:]
         return (collection, document_id, field, path)
 
-    def access_rights(self, access_token):
-        return "write"
+    def access_token(self):
+        # For local file, we chose to not check access rights
+        # at this time but to grant write access and let the
+        # filesystem raise an exception when a write access is
+        # tried on a read only file.
+        f = Fernet(self.key)
+        return f.encrypt(b"write").decode()
 
     def connect(self, access_token, exclusive, write, create):
         connection_id = str(uuid4())
-        access_rights = self.access_rights(access_token)
+        f = Fernet(self.key)
+        try:
+            access_rights = f.decrypt(access_token.encode()).decode()
+        except InvalidToken:
+            raise PermissionError("invalid token")
         if not write and access_rights in ("read", "write"):
             dbs = self.database.session(exclusive=exclusive, create=False)
         elif access_rights == "write":
@@ -200,6 +265,8 @@ class StorageAPI:
             if value is None:
                 return default
             for i in path:
+                if isinstance(value, list) and isinstance(i, str):
+                    i = int(i)
                 try:
                     value = value[i]
                 except (KeyError, IndexError):
@@ -247,8 +314,13 @@ class StorageAPI:
                 )[0]
                 container = db_value
                 for i in path[:-1]:
+                    if isinstance(container, list) and isinstance(i, str):
+                        i = int(i)
                     container = container[i]
-                container[path[-1]] = value
+                i = path[-1]
+                if isinstance(container, list) and isinstance(i, str):
+                    i = int(i)
+                container[i] = value
                 value = db_value
             collection.update_document(document_id, {field: value})
         elif document_id:
@@ -366,3 +438,176 @@ class StorageAPI:
         dbs = self._get_database_session(connection_id, write=True)
         dbs.clear()
         self._init_database()
+
+
+class StorageServerAPI:
+    def __init__(self, database_file, url):
+        self.database_file = database_file
+        self.url = url
+
+    def access_token(self):
+        return self._call("get", "access_token", None)
+
+    def _call(self, method, route, payload, decode=False):
+        response = requests.request(
+            method,
+            f"{self.url}/{route}",
+            json=payload,
+        )
+        if response.status_code == 500:
+            exc = deserialize_exception(response.json())
+            raise exc
+        response.raise_for_status()
+        result = response.json()
+        if decode:
+            result = json_decode(result)
+        return result
+
+    def connect(self, access_token, exclusive, write, create):
+        return self._call(
+            "post",
+            "connection",
+            dict(
+                access_token=access_token,
+                exclusive=bool(exclusive),
+                write=bool(write),
+                create=bool(create),
+            ),
+        )
+
+    def disconnect(self, connection_id, rollback):
+        return self._call(
+            "delete",
+            "connection",
+            dict(connection_id=connection_id, rollback=rollback),
+        )
+
+    def add_schema_collections(self, connection_id, schema_to_collections):
+        return self._call(
+            "post",
+            "schema_collection",
+            dict(
+                connection_id=connection_id,
+                schema_to_collections=schema_to_collections,
+            ),
+        )
+
+    def add_collection(self, connection_id, name, primary_key):
+        return self._call(
+            "post",
+            f"schema/{name}",
+            dict(connection_id=connection_id, primary_key=primary_key),
+        )
+
+    def add_field(
+        self,
+        connection_id,
+        collection_name,
+        field_name,
+        field_type,
+        description=None,
+        index=False,
+    ):
+        return self._call(
+            "post",
+            f"schema/{collection_name}/{field_name}",
+            dict(
+                connection_id=connection_id,
+                field_type=field_type,
+                description=description,
+                index=index,
+            ),
+        )
+
+    def get(
+        self,
+        connection_id,
+        path,
+        default=None,
+        fields=None,
+        as_list=None,
+        distinct=False,
+    ):
+        return self._call(
+            "get",
+            f"data",
+            dict(
+                connection_id=connection_id,
+                path=path,
+                default=default,
+                fields=fields,
+                as_list=as_list,
+                distinct=distinct,
+            ),
+            decode=True,
+        )
+
+    def count(self, connection_id, path, query=None):
+        return self._call(
+            "get",
+            f"count",
+            dict(connection_id=connection_id, path=path, query=query),
+        )
+
+    def set(self, connection_id, path, value):
+        return self._call(
+            "post",
+            f"data",
+            dict(connection_id=connection_id, path=path, value=json_encode(value)),
+        )
+
+    def delete(self, connection_id, path):
+        return self._call(
+            "delete", f"data", dict(connection_id=connection_id, path=path)
+        )
+
+    def update(self, connection_id, path, value):
+        return self._call(
+            "put",
+            f"data",
+            dict(connection_id=connection_id, path=path, value=json_encode(value)),
+        )
+
+    def append(self, connection_id, path, value):
+        return self._call(
+            "patch",
+            f"data",
+            dict(connection_id=connection_id, path=path, value=json_encode(value)),
+        )
+
+    def search(self, connection_id, path, query, fields=None, as_list=None):
+        return self._call(
+            "get",
+            f"search",
+            dict(
+                connection_id=connection_id,
+                path=path,
+                query=query,
+                fields=fields,
+                as_list=as_list,
+            ),
+            decode=True,
+        )
+
+    def search_and_delete(self, connection_id, path, query):
+        return self._call(
+            "delete",
+            f"search",
+            dict(connection_id=connection_id, path=path, query=query),
+            decode=True,
+        )
+
+    def distinct_values(self, connection_id, path, field):
+        return self._call(
+            "get",
+            f"distinct",
+            dict(connection_id=connection_id, path=path, field=field),
+            decode=True,
+        )
+
+    def clear_database(self, connection_id):
+        return self._call(
+            "delete",
+            "",
+            dict(connection_id=connection_id),
+        )
