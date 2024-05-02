@@ -462,6 +462,4 @@ class FilterToSQL(Transformer):
                                 build_condition_*() method (except
                                 build_condition_all)
         """
-        return (
-            ["("] + left_condition + [")", operator_str, "("] + right_condition + [")"]
-        )
+        return left_condition + [operator_str] + right_condition

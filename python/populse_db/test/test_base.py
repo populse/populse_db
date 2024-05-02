@@ -1811,8 +1811,13 @@ def create_test_case(**database_creation_parameters):
                             }
                             self.assertEqual(documents, expected)
                         except Exception as e:
+                            try:
+                                parsed = f". Parsed filter = {session['collection1'].parse_filter(tested_filter)}"
+                            except Exception:
+                                raise
+                                parsed = ""
                             raise Exception(
-                                f"Error while testing filter : {tested_filter}"
+                                f"Error while testing filter : {tested_filter}{parsed}"
                             ) from e
                     all_documents = {
                         document["name"]
