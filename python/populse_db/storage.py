@@ -270,7 +270,7 @@ class StorageSession:
     def distinct_values(self, field):
         return self._storage_api.distinct_values(self._connection_id, self._path, field)
 
-    def search(self, query=None, fields=None, as_list=None, **kwargs):
+    def search(self, query=None, fields=None, as_list=None, distinct=False, **kwargs):
         if kwargs and query:
             raise ValueError("Cannot combine query and equality research")
         if kwargs:
@@ -278,7 +278,12 @@ class StorageSession:
         if isinstance(fields, tuple):
             fields = list(fields)
         return self._storage_api.search(
-            self._connection_id, self._path, query, fields=fields, as_list=as_list
+            self._connection_id,
+            self._path,
+            query,
+            fields=fields,
+            as_list=as_list,
+            distinct=distinct,
         )
 
     def search_and_delete(self, query=None, **kwargs):

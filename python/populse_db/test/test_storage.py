@@ -289,6 +289,10 @@ def run_storage_tests(store):
             for doc in d.snapshots.search(image="/somewhere/something.png")
         ] == snapshots[3:4]
 
+        assert d.snapshots.search(
+            time_point="M0", as_list=True, fields=["data_type"], distinct=True
+        ) == [["greywhite"]]
+
         # Count elements
         assert d.snapshots.count() == 4
         assert d.snapshots.count('image LIKE "/home/yann%"') == 3

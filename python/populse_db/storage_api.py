@@ -391,7 +391,9 @@ class StorageFileAPI:
         else:
             collection.add(value)
 
-    def search(self, connection_id, path, query, fields=None, as_list=None):
+    def search(
+        self, connection_id, path, query, fields=None, as_list=None, distinct=False
+    ):
         dbs = self._get_database_session(connection_id, write=False)
         collection, document_id, field, path = self._parse_path(dbs, path)
         if path or field:
@@ -407,7 +409,9 @@ class StorageFileAPI:
                 query = f"{query} and {document_query}"
             else:
                 query = document_query
-        result = list(collection.filter(query, fields=fields, as_list=as_list))
+        result = list(
+            collection.filter(query, fields=fields, as_list=as_list, distinct=distinct)
+        )
         return result
 
     def search_and_delete(self, connection_id, path, query):
@@ -577,7 +581,9 @@ class StorageServerAPI:
             dict(connection_id=connection_id, path=path, value=json_encode(value)),
         )
 
-    def search(self, connection_id, path, query, fields=None, as_list=None):
+    def search(
+        self, connection_id, path, query, fields=None, as_list=None, distinct=False
+    ):
         return self._call(
             "get",
             "search",
@@ -587,6 +593,7 @@ class StorageServerAPI:
                 query=query,
                 fields=fields,
                 as_list=as_list,
+                distinct=distinct,
             ),
             decode=True,
         )
