@@ -160,11 +160,17 @@ def run_storage_tests(store):
 
         # Set a global value
         d.last_update = now
+        d.a_dict = {"one": 1}
 
         # Read a global value
         assert d.last_update.get() == now
+        assert d.a_dict.get() == {"one": 1}
 
         assert d.does_not_exist.get() is None
+
+        # Modify global value
+        d.a_dict["two"] = 2
+        assert d.a_dict.get() == {"one": 1, "two": 2}
 
         # Set single document fields
         d.dataset.directory = "/somewhere"

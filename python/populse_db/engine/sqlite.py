@@ -305,6 +305,7 @@ class SQLiteCollection(DatabaseCollection):
         return next(self.session.execute(sql, document_id))[0] != 0
 
     def _documents(self, where, where_data, fields, as_list, distinct):
+        json_decode_columns = []
         if fields:
             columns = []
             catchall_fields = False
@@ -312,6 +313,7 @@ class SQLiteCollection(DatabaseCollection):
                 if field in self.fields:
                     columns.append(f"[{field}]")
                 else:
+                    json_decode_columns.append(len(columns))
                     columns.append(
                         f"json_extract([{self.catchall_column}],'$.{field}')"
                     )
@@ -331,6 +333,12 @@ class SQLiteCollection(DatabaseCollection):
             sql += f" WHERE {where}"
         cur = self.session.execute(sql, where_data)
         for row in cur:
+            for i in json_decode_columns:
+                if row[i] is None:
+                    continue
+                if isinstance(row, tuple):
+                    row = list(row)
+                row[i] = json.loads(row[i])
             if catchall_fields:
                 if row[-1] is not None:
                     catchall = json.loads(row[-1])
