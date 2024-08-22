@@ -172,6 +172,9 @@ def run_storage_tests(store):
         d.a_dict["two"] = 2
         assert d.a_dict.get() == {"one": 1, "two": 2}
 
+        del d.a_dict["two"]
+        assert d.a_dict.get() == {"one": 1}
+
         # Set single document fields
         d.dataset.directory = "/somewhere"
         d.dataset.schema.set("BIDS")

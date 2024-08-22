@@ -72,14 +72,18 @@ def create_test_case(**database_creation_parameters):
                 del self.database_creation_parameters["database_url"]
             self.temp_folder = None
 
-        def create_database(self, clear=True, create=True):
+        def create_database(self, clear=True, create=True, echo_sql=None):
             """
             Opens the database
             :param clear: Bool to know if the database must be cleared
             """
 
             try:
-                db = Database(**self.database_creation_parameters, create=create)
+                db = Database(
+                    **self.database_creation_parameters,
+                    create=create,
+                    echo_sql=echo_sql,
+                )
             except Exception as e:
                 if self.database_creation_parameters["database_url"].startswith(
                     "postgresql"
@@ -1976,7 +1980,9 @@ def create_test_case(**database_creation_parameters):
             """
             Test automatic creation of fields with add_document
             """
-            database = self.create_database()
+            import sys
+
+            database = self.create_database(echo_sql=sys.stdout)
             with database as session:
                 now = datetime.now()
                 session.add_collection("test")
@@ -2001,6 +2007,7 @@ def create_test_case(**database_creation_parameters):
                     doc[lk] = [v]
                 doc["primary_key"] = "test"
                 session.add_document("test", doc)
+                self.maxDiff = None
                 stored_doc = session.get_document("test", "test")
                 self.assertEqual(doc, stored_doc)
 

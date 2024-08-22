@@ -415,7 +415,7 @@ class SQLiteCollection(DatabaseCollection):
                     catchall[field] = value
         else:
             catchall_column = self.catchall_column
-            catchall_data = json_dumps(document)
+            catchall_data = document
         if catchall is not ...:
             if not self.catchall_column:
                 raise ValueError(
@@ -423,18 +423,20 @@ class SQLiteCollection(DatabaseCollection):
                 )
             bad_json = False
             try:
-                catchall_data = json_dumps(catchall)
+                catchall_data = catchall
+                json_dumps(catchall)
             except TypeError:
                 if isinstance(catchall, dict):
                     bad_json = True
                 else:
                     raise
             if bad_json:
-                jsons = []
+                jsons = {}
                 for field, value in catchall.items():
                     bad_json = False
                     try:
-                        j = json_dumps(value)
+                        j = value
+                        json_dumps(value)
                     except TypeError:
                         bad_json = True
                     if bad_json:
@@ -446,10 +448,10 @@ class SQLiteCollection(DatabaseCollection):
                         columns.append(field)
                         data.append(column_value)
                     else:
-                        jsons.append((f'"{field}"', j))
+                        jsons[field] = j
                 if jsons:
                     catchall_column = self.catchall_column
-                    catchall_data = f'{{{",".join(f"{i}:{j}" for i, j in jsons)}}}'
+                    catchall_data = jsons
 
             else:
                 catchall_column = self.catchall_column
@@ -459,7 +461,7 @@ class SQLiteCollection(DatabaseCollection):
         columns, data, catchall_column, catchall_data = self._dict_to_sql_update(
             document
         )
-
+        catchall_data = json.dumps(catchall_data)
         columns = [i for i in self.primary_key] + columns
         data = [i for i in document_id] + data
         if catchall_column:
@@ -485,11 +487,15 @@ class SQLiteCollection(DatabaseCollection):
             partial_document
         )
 
-        if catchall_column:
+        if catchall_column and catchall_data:
             catchall_update = [
-                f'[{catchall_column}]=json_patch(IFNULL([{catchall_column}],"{{}}"),?)'
+                # f'[{catchall_column}]=json_patch(IFNULL([{catchall_column}],"{{}}"),?)'
+                f'[{catchall_column}]=json_set(IFNULL([{catchall_column}],"{{}}"),{",".join("?,json(?)" for i in catchall_data)})'
             ]
-            data.append(catchall_data)
+            # data.append(catchall_data)
+            for k, v in catchall_data.items():
+                data.append(f"$.{k}")
+                data.append(json.dumps(v))
         else:
             catchall_update = []
         where = " AND ".join(f"[{i}]=?" for i in self.primary_key)
