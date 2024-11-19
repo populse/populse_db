@@ -334,6 +334,11 @@ def run_storage_tests(store):
         d.snapshots.search_and_delete('image LIKE "/home/yann%"')
         assert len(d.snapshots.get()) == 1
 
+        # Check schema
+        assert d.has_collection("unknown_collection") is False
+        assert d.has_collection("snapshots") is True
+        
+
     # Test read only session
     with store.data(write=False) as d:
         with pytest.raises(PermissionError):

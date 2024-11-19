@@ -31,7 +31,8 @@ def create_sqlite_session_factory(url):
         sqlite_file = url.path
     elif url.netloc:
         sqlite_file = url.netloc
-    return functools.partial(sqlite_session_factory, sqlite_file)
+    result = functools.partial(sqlite_session_factory, sqlite_file)
+    return result
 
 
 def sqlite_session_factory(sqlite_file, *args, create=False, **kwargs):

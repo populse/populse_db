@@ -294,3 +294,6 @@ class StorageSession:
         return self._storage_api.search_and_delete(
             self._connection_id, self._path, query
         )
+
+    def has_collection(self, collection):
+        return self._storage_api.has_collection(self._connection_id, collection)

@@ -445,6 +445,10 @@ class StorageFileAPI:
         dbs.clear()
         self._init_database()
 
+    def has_collection(self, connection_id, collection):
+        dbs = self._get_database_session(connection_id, write=False)
+        return dbs.has_collection(collection)
+
 
 class StorageServerAPI:
     def __init__(self, database_file, url):
@@ -619,4 +623,11 @@ class StorageServerAPI:
             "delete",
             "",
             dict(connection_id=connection_id),
+        )
+
+    def has_collection(self, connection_id, collection):
+        return self._call(
+            "get",
+            "has_collection",
+            dict(connection_id=connection_id, collection=collection),
         )
