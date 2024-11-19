@@ -449,6 +449,18 @@ class StorageFileAPI:
         dbs = self._get_database_session(connection_id, write=False)
         return dbs.has_collection(collection)
 
+    def collection_names(self, connection_id):
+        dbs = self._get_database_session(connection_id, write=False)
+        return [
+            i.name
+            for i in dbs.get_collections()
+            if i.name
+            not in {
+                populse_db.storage.Storage.default_collection,
+                populse_db.storage.Storage.schema_collection,
+            }
+        ]
+
 
 class StorageServerAPI:
     def __init__(self, database_file, url):

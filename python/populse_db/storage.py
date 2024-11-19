@@ -297,3 +297,6 @@ class StorageSession:
 
     def has_collection(self, collection):
         return self._storage_api.has_collection(self._connection_id, collection)
+
+    def collection_names(self):
+        return self._storage_api.collection_names(self._connection_id)

@@ -337,7 +337,15 @@ def run_storage_tests(store):
         # Check schema
         assert d.has_collection("unknown_collection") is False
         assert d.has_collection("snapshots") is True
-        
+        assert d.collection_names() == [
+            "test_collection_1",
+            "test_collection_2",
+            "dataset",
+            "metadata",
+            "snapshots",
+            "execution",
+            "test_update"
+        ]
 
     # Test read only session
     with store.data(write=False) as d:
