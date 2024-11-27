@@ -27,7 +27,7 @@ A populse_db engine is created when a DatabaseSession object is created
 """
 
 
-sqlite3.register_adapter(dateutil, lambda d: d.isoformat())
+sqlite3.register_adapter(datetime, lambda d: d.isoformat())
 sqlite3.register_adapter(date, lambda d: d.isoformat())
 sqlite3.register_adapter(time, lambda d: d.isoformat())
 sqlite3.register_converter("bool", lambda b: bool(int(b)))
