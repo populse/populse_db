@@ -154,6 +154,8 @@ def run_storage_tests(store):
         schema.add_field("test_update", "f2", str)
         schema.add_field("test_update", "f3", str)
         schema.add_field("test_update", "dict", dict)
+        schema.add_field("test_update", "yes", bool)
+        schema.add_field("test_update", "no", bool)
 
     with store.data(write=True) as d:
         now = datetime.now()
@@ -203,6 +205,8 @@ def run_storage_tests(store):
 
         # Update a document
         d.test_update["test"] = {
+            "yes": True,
+            "no": False,
             "f1": "f1",
             "f3": "value",
             "dict": {"one": 1, "three": 4},
@@ -221,6 +225,8 @@ def run_storage_tests(store):
         )
 
         assert d.test_update.test.get() == {
+            "yes": True,
+            "no": False,
             "key": "test",
             "f1": "f1",
             "f2": "f2",
@@ -232,12 +238,17 @@ def run_storage_tests(store):
         del d.test_update.test.dict.two
         del d.test_update.test.f2
         assert d.test_update.test.get() == {
+            "yes": True,
+            "no": False,
             "key": "test",
             "f1": "f1",
             "f2": None,
             "f3": "f3",
             "dict": {"one": 1, "three": 3},
         }
+        assert d.test_update.test.yes.get() is True
+        assert d.test_update.test.no.get() is False
+
         del d.test_update.test
         assert d.test_update.get() == []
 
@@ -344,7 +355,7 @@ def run_storage_tests(store):
             "metadata",
             "snapshots",
             "execution",
-            "test_update"
+            "test_update",
         ]
 
     # Test read only session

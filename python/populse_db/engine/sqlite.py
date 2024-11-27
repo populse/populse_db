@@ -15,6 +15,7 @@ from ..database import (
     populse_db_table,
     str_to_type,
     type_to_str,
+    type_to_sqlite,
 )
 from ..filter import FilterToSQL, filter_parser
 
@@ -24,6 +25,15 @@ SQLite3 implementation of populse_db engine.
 A populse_db engine is created when a DatabaseSession object is created
 (typically within a "with" statement)
 """
+
+
+sqlite3.register_adapter(dateutil, lambda d: d.isoformat())
+sqlite3.register_adapter(date, lambda d: d.isoformat())
+sqlite3.register_adapter(time, lambda d: d.isoformat())
+sqlite3.register_converter("bool", lambda b: bool(int(b)))
+sqlite3.register_converter("datetime", lambda b: dateutil.parser.parse(b))
+sqlite3.register_converter("date", lambda b: dateutil.parser.parse(b).date())
+sqlite3.register_converter("time", lambda b: dateutil.parser.parse(b).time())
 
 
 def create_sqlite_session_factory(url):
@@ -54,7 +64,10 @@ class SQLiteSession(DatabaseSession):
     def __init__(self, sqlite_file, exclusive=False, timeout=None, echo_sql=None):
         self.echo_sql = echo_sql
         self.sqlite = sqlite3.connect(
-            sqlite_file, isolation_level=None, check_same_thread=False
+            sqlite_file,
+            isolation_level=None,
+            check_same_thread=False,
+            detect_types=sqlite3.PARSE_DECLTYPES,
         )
         self.exclusive = exclusive
         if timeout:
@@ -167,7 +180,7 @@ class SQLiteSession(DatabaseSession):
         else:
             dict_primary_key = {
                 k: (
-                    type_to_str(str_to_type(v))
+                    type_to_sqlite(str_to_type(v))
                     if isinstance(v, str)
                     else type_to_str(v)
                 )
@@ -199,18 +212,6 @@ class SQLiteSession(DatabaseSession):
 
 class SQLiteCollection(DatabaseCollection):
     _column_encodings = {
-        datetime: (
-            lambda d: (None if d is None else d.isoformat()),
-            lambda s: (None if s is None else dateutil.parser.parse(s)),
-        ),
-        date: (
-            lambda d: (None if d is None else d.isoformat()),
-            lambda s: (None if s is None else dateutil.parser.parse(s).date()),
-        ),
-        time: (
-            lambda d: (None if d is None else d.isoformat()),
-            lambda s: (None if s is None else dateutil.parser.parse(s).time()),
-        ),
         list: (
             lambda l: (None if l is None else json_dumps(l)),  # noqa: E741
             lambda l: (None if l is None else json.loads(l)),  # noqa: E741
@@ -260,7 +261,7 @@ class SQLiteCollection(DatabaseCollection):
     ):
         if isinstance(field_type, str):
             field_type = str_to_type(field_type)
-        sql = f"ALTER TABLE [{self.name}] ADD COLUMN [{name}] {type_to_str(field_type)}"
+        sql = f"ALTER TABLE [{self.name}] ADD COLUMN [{name}] {type_to_sqlite(field_type)}"
         self.session.execute(sql)
         if index:
             sql = f"CREATE INDEX [{self.name}_{name}] ON [{self.name}] ([{name}])"

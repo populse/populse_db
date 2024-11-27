@@ -57,9 +57,33 @@ def type_to_str(type):
         return type.__name__
 
 
-_str_to_type = {
-    type_to_str(i): i for i in (str, int, float, bool, date, datetime, time, dict, list)
+_type_to_sqlite = {
+    str: "text",
 }
+
+
+def type_to_sqlite(type):
+    '''
+    Like type_to_str(type) but for internal use in SQLite column type
+    definitions in order to avoid conversion problems due to SQlite type
+    affinity. See https://www.sqlite.org/datatype3.html
+    '''
+    result = _type_to_sqlite.get(type)
+    if result is None:
+        args = getattr(type, "__args__", None)
+        if args:
+            result = f'{type.__name__}[{",".join(type_to_sqlite(i) for i in args)}]'
+        else:
+            result = type.__name__
+    return result
+
+
+_str_to_type = {
+    type_to_sqlite(i): i for i in (str, int, float, bool, date, datetime, time, dict, list)
+}
+_str_to_type.update({
+    type_to_str(i): i for i in (str, int, float, bool, date, datetime, time, dict, list)
+})
 
 
 def str_to_type(str):
