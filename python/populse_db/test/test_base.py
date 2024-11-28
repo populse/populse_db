@@ -1980,9 +1980,7 @@ def create_test_case(**database_creation_parameters):
             """
             Test automatic creation of fields with add_document
             """
-            import sys
-
-            database = self.create_database(echo_sql=sys.stdout)
+            database = self.create_database()
             with database as session:
                 now = datetime.now()
                 session.add_collection("test")

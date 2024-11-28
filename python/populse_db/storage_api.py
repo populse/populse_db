@@ -440,17 +440,26 @@ class StorageFileAPI:
         for row in collection.documents(fields=[field], as_list=True, distinct=True):
             yield row[0]
 
-    def clear_database(self, connection_id):
+    def clear_database(self, connection_id, path):
         dbs = self._get_database_session(connection_id, write=True)
+        collection, document_id, f, path = self._parse_path(dbs, path)
+        if collection:
+            raise ValueError("clear_database can only be called on a whole database")
         dbs.clear()
         self._init_database()
 
-    def has_collection(self, connection_id, collection):
+    def has_collection(self, connection_id, path, collection):
         dbs = self._get_database_session(connection_id, write=False)
+        c, document_id, f, path = self._parse_path(dbs, path)
+        if c:
+            raise ValueError("has_collection can only be called on a whole database")
         return dbs.has_collection(collection)
 
-    def collection_names(self, connection_id):
+    def collection_names(self, connection_id, path):
         dbs = self._get_database_session(connection_id, write=False)
+        collection, document_id, f, path = self._parse_path(dbs, path)
+        if collection:
+            raise ValueError("collection_names can only be called on a whole database")
         return [
             i.name
             for i in dbs.get_collections()
@@ -460,6 +469,13 @@ class StorageFileAPI:
                 populse_db.storage.Storage.schema_collection,
             }
         ]
+
+    def keys(self, connection_id, path):
+        dbs = self._get_database_session(connection_id, write=False)
+        collection, document_id, f, path = self._parse_path(dbs, path)
+        if not collection or path or f or document_id:
+            raise ValueError("only collections support keys()")
+        return collection.fields.keys()
 
 
 class StorageServerAPI:
@@ -630,23 +646,30 @@ class StorageServerAPI:
             decode=True,
         )
 
-    def clear_database(self, connection_id):
+    def clear_database(self, connection_id, path):
         return self._call(
             "delete",
             "",
-            dict(connection_id=connection_id),
+            dict(connection_id=connection_id, path=path),
         )
 
-    def has_collection(self, connection_id, collection):
+    def has_collection(self, connection_id, path, collection):
         return self._call(
             "get",
             "has_collection",
-            dict(connection_id=connection_id, collection=collection),
+            dict(connection_id=connection_id, path=path, collection=collection),
         )
 
-    def collection_names(self, connection_id):
+    def collection_names(self, connection_id, path):
         return self._call(
             "get",
             "collection_names",
-            dict(connection_id=connection_id),
+            dict(connection_id=connection_id, path=path),
+        )
+
+    def keys(self, connection_id, path):
+        return self._call(
+            "get",
+            "keys",
+            dict(connection_id=connection_id, path=path),
         )

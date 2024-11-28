@@ -348,6 +348,8 @@ def run_storage_tests(store):
         # Check schema
         assert d.has_collection("unknown_collection") is False
         assert d.has_collection("snapshots") is True
+        with pytest.raises(ValueError):
+            d.snapshots.has_collection('snapshots')
         assert d.collection_names() == [
             "test_collection_1",
             "test_collection_2",
@@ -357,6 +359,22 @@ def run_storage_tests(store):
             "execution",
             "test_update",
         ]
+        with pytest.raises(ValueError):
+            d.snapshots.collection_names()
+        assert set(d.snapshots.keys()) == {
+            "subject",
+            "time_point",
+            "image",
+            "top",
+            "size",
+            "execution",
+            "data_type",
+            "side",
+        }
+        with pytest.raises(ValueError):
+            d.keys()
+        with pytest.raises(ValueError):
+            d.snapshots.subject.keys()
 
     # Test read only session
     with store.data(write=False) as d:

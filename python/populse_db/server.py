@@ -170,21 +170,32 @@ def create_server(database_file):
     @app.delete("/")
     async def clear_database(
         connection_id: body_str,
+        path: body_path,
     ):
-        return storage_api.clear_database(connection_id)
+        return storage_api.clear_database(connection_id, path)
 
     @app.get("/has_collection")
     async def has_collection(
         connection_id: body_str,
+        path: body_path,
         collection: body_str,
     ):
-        return storage_api.has_collection(connection_id, collection)
+        return storage_api.has_collection(connection_id, path, collection)
 
     @app.get("/collection_names")
     async def collection_names(
         connection_id: body_str,
+        path: body_path,
     ):
-        return storage_api.collection_names(connection_id)
+        return storage_api.collection_names(connection_id, path)
+
+    @app.get("/keys")
+    async def keys(
+        connection_id: body_str,
+        path: body_path,
+    ):
+        result = storage_api.keys(connection_id, path)
+        return list(result)
 
     return app
 
