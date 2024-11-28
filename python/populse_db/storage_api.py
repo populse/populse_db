@@ -643,3 +643,10 @@ class StorageServerAPI:
             "has_collection",
             dict(connection_id=connection_id, collection=collection),
         )
+
+    def collection_names(self, connection_id):
+        return self._call(
+            "get",
+            "collection_names",
+            dict(connection_id=connection_id),
+        )

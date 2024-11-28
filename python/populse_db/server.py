@@ -143,8 +143,11 @@ def create_server(database_file):
         query: Annotated[str | None, Body()] = None,
         fields: Annotated[list[str] | None, Body()] = None,
         as_list: body_bool = False,
+        distinct: body_bool = False,
     ):
-        result = storage_api.search(connection_id, path, query, fields, as_list)
+        result = storage_api.search(
+            connection_id, path, query, fields, as_list, distinct
+        )
         return json_encode(result)
 
     @app.delete("/search")
@@ -169,6 +172,19 @@ def create_server(database_file):
         connection_id: body_str,
     ):
         return storage_api.clear_database(connection_id)
+
+    @app.get("/has_collection")
+    async def has_collection(
+        connection_id: body_str,
+        collection: body_str,
+    ):
+        return storage_api.has_collection(connection_id, collection)
+
+    @app.get("/collection_names")
+    async def collection_names(
+        connection_id: body_str,
+    ):
+        return storage_api.collection_names(connection_id)
 
     return app
 
