@@ -25,7 +25,7 @@ class Database:
 
     Example::
 
-        from populse_db import database
+        from populse_db import Database
 
         db = Database('sqlite:///tmp/populse_db.sqlite')
         with db as dbs:
@@ -43,7 +43,7 @@ class Database:
     session (preventing any other access to the database by other processes
     or threads) by using the `exclusive` property::
 
-        from populse_db import database
+        from populse_db import Database
 
         db = Database('sqlite:///tmp/populse_db.sqlite')
         with db.exclusive as dbs:
@@ -53,7 +53,7 @@ class Database:
     :any:``Database`` is a reusable context manager. It means that it is allowed
     to use it in several consecutive ``with``::
 
-        from populse_db import database
+        from populse_db import Database
 
         db = Database('sqlite:///tmp/populse_db.sqlite')
         with db as dbs:
@@ -68,7 +68,7 @@ class Database:
     transaction is not ended in any of the inner context, it is terminated
     when the outer context exits::
 
-        from populse_db import database
+        from populse_db import Database
 
         db = Database('sqlite:///tmp/populse_db.sqlite')
         with db as dbs1:
