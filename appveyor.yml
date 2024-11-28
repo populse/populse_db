@@ -6,8 +6,7 @@ environment:
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
       PYTHON: "Python3.10"
-#      APPVEYOR_SSH_KEY:
-#      APPVEYOR_SSH_BLOCK: true
+#      APPVEYOR_SSH_KEY: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCinsCtblP8Dlo0IyeE3chxy7Opt1nrrhLWQCUFJBtWr1EjtvZSme00z56yV2c0WWlhKyVUbz56w893WHTjvqgeZuezzGM1vdeD+fQDPBn3WhhOQHNmL2VxDo+f1CFE7ybT6epYPrvdz4B7MqORX8lIOIVVL82GclpDxnJkM7LzMWbOvJ7Gjf12Ob45Nx2ESZxHVv5Z9GeAmMyX2gHu3dlhJQoq6YQ0U/aqkFzfYLbEI5/H78Xmd2YzlxDnzNPB9xbjNqub1KTS+p3JhhSXJgWHeRn/kqwwkOdTnjG1yZoCWgSzCHsQx9oacYciY49Lo5falgIIw3ORJWgk/vjedxDFjBLgYj5NPzGcaxgzsFmMDWyynTSZyysb3HKbydODXV9i40dEnC9gfBQER0m9/cXPcxBK7oVZdZwrxXm0Ke3QGYtRLmh9N2lTUm51/IPBRaDH6/L1se4NgVuT2uytHEYN2t30r14CJhzJ2QGCoas8sxFS9Pt0BWzC4C1WQyZlDN0= econdami@irmage-pteric
 
     - APPVEYOR_BUILD_WORKER_IMAGE: macos
       PYTHON: "Python3.10"
@@ -32,13 +31,16 @@ install:
   - pip install -e .[postgres]
   - pip install codecov
 
+  - sh: export APPVEYOR_SSH_BLOCK=true
+  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
+
 test_script:
   - cmd: python -m populse_db.test -v
   - sh: python ./python/populse_db/test.py -v
-  - sh: if [[ $(uname -s) == Linux ]] && [[ $PYTHON == Python3.9 ]]; then coverage run ./python/populse_db/test.py -v; fi
+  - sh: if [[ $(uname -s) == Linux ]] && [[ $PYTHON == Python3.10 ]]; then coverage run ./python/populse_db/test.py -v; fi
 
 after_test:
-  - sh: if [[ $(uname -s) == Linux ]] && [[ $PYTHON == Python3.9 ]]; then codecov; fi
+  - sh: if [[ $(uname -s) == Linux ]] && [[ $PYTHON == Python3.10 ]]; then codecov; fi
 
 notifications:
   - provider: Email
