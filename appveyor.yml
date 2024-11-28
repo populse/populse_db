@@ -2,15 +2,15 @@ environment:
 
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      PYTHON: "C:\\Python39"
+      PYTHON: "C:\\Python310"
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-      PYTHON: "Python3.9"
+      PYTHON: "Python3.10"
 #      APPVEYOR_SSH_KEY:
 #      APPVEYOR_SSH_BLOCK: true
 
     - APPVEYOR_BUILD_WORKER_IMAGE: macos
-      PYTHON: "Python3.9"
+      PYTHON: "Python3.10"
 
 build: off
 
