@@ -22,7 +22,7 @@ install:
 #  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
 
   - cmd: SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
-  - sh: if [[ $PYTHON == Python3.9 ]]; then export PATH=~/venv3.9/bin:~/venv3.9/lib:$PATH; fi
+  - sh: if [[ $PYTHON == Python3.10 ]]; then export PATH=~/venv3.10/bin:~/venv3.10/lib:$PATH; fi
 
   - python --version
   - python -m pip install pip --upgrade
