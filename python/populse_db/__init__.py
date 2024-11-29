@@ -1,4 +1,6 @@
 import importlib.metadata
+import os
+import re
 import threading
 from contextlib import contextmanager
 from urllib.parse import urlparse
@@ -108,15 +110,24 @@ class Database:
         """
 
         self.thread_local = threading.local()
+
+        # Remove the drive letter for Windows paths
+        if os.name == "nt" and re.match(r"^[a-zA-Z]:\\", database_url):
+            database_url = database_url[2:]
+
         self.url = urlparse(database_url)
         self.create = create
         self.echo_sql = echo_sql
+
         if timeout:
             self.timeout = int(timeout)
+
         else:
             self.timeout = None
+
         if self.url.scheme in ("", "sqlite"):
             self.session_factory = create_sqlite_session_factory(self.url)
+
         else:
             raise ValueError(f"Invalid database type in database URL: {database_url}")
 

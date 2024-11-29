@@ -349,7 +349,7 @@ def run_storage_tests(store):
         assert d.has_collection("unknown_collection") is False
         assert d.has_collection("snapshots") is True
         with pytest.raises(ValueError):
-            d.snapshots.has_collection('snapshots')
+            d.snapshots.has_collection("snapshots")
         assert d.collection_names() == [
             "test_collection_1",
             "test_collection_2",
@@ -387,9 +387,10 @@ def run_storage_tests(store):
 
 
 def test_storage():
-    tmp = NamedTemporaryFile()
-    store = Storage(tmp.name)
-    run_storage_tests(store)
+    with NamedTemporaryFile(delete=True) as tmp:
+        tmp.close()
+        store = Storage(tmp.name)
+        run_storage_tests(store)
 
 
 def test_storage_server():

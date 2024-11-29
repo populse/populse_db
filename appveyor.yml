@@ -29,7 +29,9 @@ install:
   - pip install setuptools --upgrade
   - pip install pytest
   - pip install -e .[postgres]
-  - pip install codecov
+#  - pip install fastapi
+#  - pip install uvicorn
+#  - pip install tblib
 
 #  - sh: export APPVEYOR_SSH_BLOCK=true
 #  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
