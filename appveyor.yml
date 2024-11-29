@@ -29,6 +29,7 @@ install:
   - pip install setuptools --upgrade
   - pip install pytest
   - pip install -e .[postgres]
+  - sh: if [[ $(uname -s) == Linux ]]; then pip3 install coverage[toml]; fi
 #  - pip install fastapi
 #  - pip install uvicorn
 #  - pip install tblib
@@ -38,12 +39,14 @@ install:
 
 test_script:
   - cmd: python -m populse_db.test -v
-  - sh: python -m pytest -v
-#  - sh: python ./python/populse_db/test.py -v
-#  - sh: if [[ $(uname -s) == Linux ]] && [[ $PYTHON == Python3.10 ]]; then coverage run ./python/populse_db/test.py -v; fi
-#
-#after_test:
-#  - sh: if [[ $(uname -s) == Linux ]] && [[ $PYTHON == Python3.10 ]]; then codecov; fi
+  - sh: if [[ $(uname -s) == Darwin ]]; then python -m populse_db.test -v; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then coverage run --source=populse_db -m pytest -v; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then coverage xml -i; fi
+
+after_test:
+  - sh: if [[ $(uname -s) == Linux ]]; then curl -Os https://uploader.codecov.io/latest/linux/codecov; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then chmod +x codecov; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then ./codecov -f "coverage.xml" -t "b88bf18b-b29e-412e-96fe-e0f00832c173"; fi
 
 notifications:
   - provider: Email
