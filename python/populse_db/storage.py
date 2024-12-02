@@ -24,21 +24,33 @@ class Storage:
             database_file, timeout=timeout, create=create, echo_sql=echo_sql
         )
         self.access_token = self.storage_api.access_token()
+        self._current_data_session = None
 
     @contextmanager
     def data(self, exclusive=None, write=False, create=False):
-        connection_id = self.storage_api.connect(
-            self.access_token, exclusive=exclusive, write=write, create=create
-        )
-        if connection_id is not None:
-            try:
-                yield StorageSession(self.storage_api, connection_id)
-                self.storage_api.disconnect(connection_id, rollback=False)
-            except Exception:
-                self.storage_api.disconnect(connection_id, rollback=True)
-                raise
+        if self._current_data_session is not None:
+            storage_session, is_exclusive, is_write = self._current_data_session
+            if exclusive and is_exclusive is not True:
+                raise RuntimeError('Impossible to get an exclusive data session because another non exclusive data session exists')
+            if write and not is_write:
+                raise RuntimeError('Impossible to get an write data session because another read data session exists')
+            yield storage_session
         else:
-            yield None
+            connection_id = self.storage_api.connect(
+                self.access_token, exclusive=exclusive, write=write, create=create
+            )
+            if connection_id is not None:
+                try:
+                    storage_session = StorageSession(self.storage_api, connection_id)
+                    self._current_data_session =(storage_session, exclusive, write)
+                    yield storage_session
+                    self._current_data_session = None
+                    self.storage_api.disconnect(connection_id, rollback=False)
+                except Exception:
+                    self.storage_api.disconnect(connection_id, rollback=True)
+                    raise
+            else:
+                yield None
 
     @contextmanager
     def schema(self):
