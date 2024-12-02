@@ -47,6 +47,7 @@ class Storage:
                     self._current_data_session = None
                     self.storage_api.disconnect(connection_id, rollback=False)
                 except Exception:
+                    self._current_data_session = None
                     self.storage_api.disconnect(connection_id, rollback=True)
                     raise
             else:
