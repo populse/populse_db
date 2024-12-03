@@ -1,7 +1,6 @@
 import importlib
 import os
 import sqlite3
-import tblib
 import typing
 from uuid import uuid4
 
@@ -15,6 +14,9 @@ from . import Database
 from .database import populse_db_table
 
 def serialize_exception(e):
+    # Import tblib in this function avoid to make it a mandatory dependency
+    import tblib
+
     tb = tblib.Traceback(e.__traceback__)
     result = {
         "class_module": e.__class__.__module__,
