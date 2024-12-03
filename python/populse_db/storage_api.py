@@ -13,6 +13,7 @@ from populse_db.database import json_decode, json_encode, str_to_type
 from . import Database
 from .database import populse_db_table
 
+
 def serialize_exception(e):
     # Import tblib in this function avoid to make it a mandatory dependency
     import tblib
@@ -40,7 +41,7 @@ def deserialize_exception(je):
     exception_class = getattr(
         importlib.import_module(je["class_module"]), je["class_name"]
     )
-    exception = exception_class(*je.get("args",[]), **je.get("kwargs", {}))
+    exception = exception_class(*je.get("args", []), **je.get("kwargs", {}))
     tb = tblib.Traceback.from_dict(je["traceback"])
     exception.with_traceback(tb.as_traceback())
     return exception

@@ -190,7 +190,6 @@ def create_server(database_file):
 
 
 if __name__ == "__main__":
-
     database_file = sys.argv[1]
     cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE", timeout=10)
     try:

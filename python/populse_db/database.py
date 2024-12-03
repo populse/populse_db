@@ -63,11 +63,11 @@ _type_to_sqlite = {
 
 
 def type_to_sqlite(type):
-    '''
+    """
     Like type_to_str(type) but for internal use in SQLite column type
     definitions in order to avoid conversion problems due to SQlite type
     affinity. See https://www.sqlite.org/datatype3.html
-    '''
+    """
     result = _type_to_sqlite.get(type)
     if result is None:
         args = getattr(type, "__args__", None)
@@ -79,11 +79,15 @@ def type_to_sqlite(type):
 
 
 _str_to_type = {
-    type_to_sqlite(i): i for i in (str, int, float, bool, date, datetime, time, dict, list)
+    type_to_sqlite(i): i
+    for i in (str, int, float, bool, date, datetime, time, dict, list)
 }
-_str_to_type.update({
-    type_to_str(i): i for i in (str, int, float, bool, date, datetime, time, dict, list)
-})
+_str_to_type.update(
+    {
+        type_to_str(i): i
+        for i in (str, int, float, bool, date, datetime, time, dict, list)
+    }
+)
 
 
 def str_to_type(str):
@@ -503,9 +507,9 @@ class DatabaseCollection:
                 column_value = encode(json_encode(value))
                 self.bad_json_fields.add(field)
                 settings = self.settings()
-                settings.setdefault("fields", {}).setdefault(field, {})[
-                    "bad_json"
-                ] = True
+                settings.setdefault("fields", {}).setdefault(field, {})["bad_json"] = (
+                    True
+                )
                 self.set_settings(settings)
             return column_value
         return value
