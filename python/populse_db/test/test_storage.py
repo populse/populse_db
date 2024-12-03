@@ -2,6 +2,7 @@ import os
 import signal
 import subprocess
 import sys
+import time
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 
@@ -432,14 +433,16 @@ def test_storage_server():
     pytest.importorskip("fastapi")
     pytest.importorskip("uvicorn")
     pytest.importorskip("tblib")
-    tmp = NamedTemporaryFile()
-    cmd = [sys.executable, "-m", "populse_db.server", tmp.name]
-    server = subprocess.Popen(cmd)
-    import time
 
-    time.sleep(1)
-    try:
-        store = Storage(tmp.name)
-        run_storage_tests(store)
-    finally:
-        os.kill(server.pid, signal.SIGTERM)
+    with NamedTemporaryFile(delete=True) as tmp:
+        tmp.close()
+        cmd = [sys.executable, "-m", "populse_db.server", tmp.name]
+        server = subprocess.Popen(cmd)
+        time.sleep(1)
+
+        try:
+            store = Storage(tmp.name)
+            run_storage_tests(store)
+
+        finally:
+            os.kill(server.pid, signal.SIGTERM)
