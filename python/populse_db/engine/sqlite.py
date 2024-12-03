@@ -26,7 +26,10 @@ A populse_db engine is created when a DatabaseSession object is created
 (typically within a "with" statement)
 """
 
-
+if tuple(int(i) for i in sqlite3.sqlite_version.split(".")) < (3, 38, 0):
+    raise NotImplementedError(
+        f"populse_db requires a SQLite version > 3.38.0 but current version is {sqlite3.sqlite_version}"
+    )
 sqlite3.register_adapter(datetime, lambda d: d.isoformat())
 sqlite3.register_adapter(date, lambda d: d.isoformat())
 sqlite3.register_adapter(time, lambda d: d.isoformat())
@@ -316,9 +319,7 @@ class SQLiteCollection(DatabaseCollection):
                     columns.append(f"[{field}]")
                 else:
                     json_decode_columns.append(len(columns))
-                    columns.append(
-                        f"[{self.catchall_column}] -> '$.{field}'"
-                    )
+                    columns.append(f"[{self.catchall_column}] -> '$.{field}'")
         else:
             fields = self.fields
             columns = [f"[{i}]" for i in fields]
@@ -442,9 +443,7 @@ class SQLiteCollection(DatabaseCollection):
                     except TypeError:
                         bad_json = True
                     if bad_json:
-                        self.add_field(
-                            field, dict, bad_json=True
-                        )
+                        self.add_field(field, dict, bad_json=True)
                         column_value = self._encode_column_value(field, value)
                         columns.append(field)
                         data.append(column_value)
