@@ -4,11 +4,11 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       PYTHON: "C:\\Python310"
 
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
       PYTHON: "Python3.10"
  #     APPVEYOR_SSH_KEY:
 
-    - APPVEYOR_BUILD_WORKER_IMAGE: macos
+    - APPVEYOR_BUILD_WORKER_IMAGE: macos-sonoma
       PYTHON: "Python3.10"
 
 build: off
