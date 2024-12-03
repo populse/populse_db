@@ -435,14 +435,22 @@ def test_storage_server():
     pytest.importorskip("tblib")
 
     with NamedTemporaryFile(delete=True) as tmp:
+        tmp_path = tmp.name
         tmp.close()
-        cmd = [sys.executable, "-m", "populse_db.server", tmp.name]
-        server = subprocess.Popen(cmd)
-        time.sleep(1)
+        cmd = [sys.executable, "-m", "populse_db.server", tmp_path]
+        server = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
         try:
-            store = Storage(tmp.name)
+            time.sleep(5)
+            store = Storage(tmp_path)
             run_storage_tests(store)
 
+        except Exception as e:
+            print("Error during test execution:", e)
+            raise
+
         finally:
-            os.kill(server.pid, signal.SIGTERM)
+            server.terminate()
+
+#        finally:
+#            os.kill(server.pid, signal.SIGTERM)
