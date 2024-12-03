@@ -31,14 +31,14 @@ install:
   - pip install -e .[server]
   - sh: if [[ $(uname -s) == Linux ]]; then pip3 install coverage[toml]; fi
 
-  # Install SQLite 3.38 or later (only for Linux)
+  # Install SQLite 3.47 (only for Linux)
   - sh: |
       if [[ $(uname -s) == Linux ]]; then
         sudo apt-get update
         sudo apt-get install -y build-essential wget
-        wget https://www.sqlite.org/2024/sqlite-autoconf-3380000.tar.gz
-        tar -xvzf sqlite-autoconf-3380000.tar.gz
-        cd sqlite-autoconf-3380000
+        wget https://www.sqlite.org/2024/sqlite-autoconf-3470100.tar.gz
+        tar -xvzf sqlite-autoconf-3470100.tar.gz
+        cd sqlite-autoconf-3470100
         ./configure
         make
         sudo make install
