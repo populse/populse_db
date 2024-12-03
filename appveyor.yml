@@ -30,18 +30,22 @@ install:
   - pip install pytest
   - pip install -e .[server]
   - sh: if [[ $(uname -s) == Linux ]]; then pip3 install coverage[toml]; fi
-
-  # Install SQLite 3.47 (only for Linux)
   - sh: |
       if [[ $(uname -s) == Linux ]]; then
+        echo "     ** Removing older SQLite versions **"
+        sudo apt-get remove --purge -y sqlite3 libsqlite3-dev
+        sudo apt-get autoremove -y
         sudo apt-get update
+        echo "     ** Installing SQLite 3.47 **"
         sudo apt-get install -y build-essential wget
         wget https://www.sqlite.org/2024/sqlite-autoconf-3470100.tar.gz
         tar -xvzf sqlite-autoconf-3470100.tar.gz
         cd sqlite-autoconf-3470100
-        ./configure
+        ./configure --prefix=/usr/local
         make
         sudo make install
+        export PATH=/usr/local/bin:$PATH
+        export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
         sqlite3 --version
         cd ..
       fi
