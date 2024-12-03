@@ -28,12 +28,8 @@ install:
   - pip -V
   - pip install setuptools --upgrade
   - pip install pytest
-  - pip install -e .[postgres]
+  - pip install -e .[server]
   - sh: if [[ $(uname -s) == Linux ]]; then pip3 install coverage[toml]; fi
-#  - pip install fastapi
-#  - pip install uvicorn
-#  - pip install tblib
-
 #  - sh: export APPVEYOR_SSH_BLOCK=true
 #  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
 
