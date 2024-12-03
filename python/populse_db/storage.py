@@ -1,4 +1,5 @@
 import importlib
+import pathlib
 import types
 import typing
 from contextlib import contextmanager
@@ -15,11 +16,13 @@ class Storage:
 
     def __init__(
         self,
-        database_file: str,
+        database_file: str | pathlib.Path,
         timeout: float | None = 10000,
         create: bool = False,
         echo_sql: typing.TextIO | None = None,
     ):
+        if isinstance(database_file, pathlib.Path):
+            database_file = str(database_file)
         self.storage_api = StorageAPI(
             database_file, timeout=timeout, create=create, echo_sql=echo_sql
         )

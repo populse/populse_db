@@ -234,6 +234,17 @@ def run_storage_tests(store):
             "dict": {"one": 1, "two": 2, "three": 3},
         }
 
+        d.test_update.test.update({})
+        assert d.test_update.test.get() == {
+            "yes": True,
+            "no": False,
+            "key": "test",
+            "f1": "f1",
+            "f2": "f2",
+            "f3": "f3",
+            "dict": {"one": 1, "two": 2, "three": 3},
+        }
+
         # Delete data
         del d.test_update.test.dict.two
         del d.test_update.test.f2
@@ -376,6 +387,23 @@ def run_storage_tests(store):
         with pytest.raises(ValueError):
             d.snapshots.subject.keys()
 
+        # Test reentrant data session
+        with store.data(write=False) as d2:
+            assert d2.last_update.get() == now
+        with store.data(write=True) as data:
+            data.anything = "something"
+            assert data.anything.get() == "something"
+            data.anything = 42
+            assert data.anything.get() == 42
+            data.anything = {}
+            assert data.anything.get() == {}
+            data.test_collection_1.value = now
+            assert data.test_collection_1.value.get() == now
+            data.test_collection_1.value = 42
+            assert data.test_collection_1.value.get() == 42
+            data.test_collection_1.value = "toto"
+            assert data.test_collection_1.value.get() == "toto"
+
     # Test read only session
     with store.data(write=False) as d:
         with pytest.raises(PermissionError):
@@ -384,6 +412,13 @@ def run_storage_tests(store):
         with pytest.raises(PermissionError):
             for snapshot in snapshots:
                 d.snapshots.append(snapshot)
+
+        # Test reentrant data session
+        with store.data(write=False) as d2:
+            assert d2.anything.get() == {}
+        with pytest.raises(RuntimeError):
+            with store.data(write=True) as d2:
+                d2.anything = "something"
 
 
 def test_storage():

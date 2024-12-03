@@ -1,6 +1,7 @@
 import importlib
 import os
 import sqlite3
+import tblib
 import typing
 from uuid import uuid4
 
@@ -13,6 +14,22 @@ from populse_db.database import json_decode, json_encode, str_to_type
 from . import Database
 from .database import populse_db_table
 
+def serialize_exception(e):
+    tb = tblib.Traceback(e.__traceback__)
+    result = {
+        "class_module": e.__class__.__module__,
+        "class_name": e.__class__.__name__,
+        "traceback": tb.to_dict(),
+    }
+    kwargs = e.__getstate__()
+    if kwargs is None:
+        result["args"] = e.args
+    else:
+        kwargs.pop("lineno", None)
+        kwargs.pop("colno", None)
+        result["kwargs"] = kwargs
+    return result
+
 
 def deserialize_exception(je):
     # tblib is optional for populse_db
@@ -21,7 +38,7 @@ def deserialize_exception(je):
     exception_class = getattr(
         importlib.import_module(je["class_module"]), je["class_name"]
     )
-    exception = exception_class(*je["args"])
+    exception = exception_class(*je.get("args",[]), **je.get("kwargs", {}))
     tb = tblib.Traceback.from_dict(je["traceback"])
     exception.with_traceback(tb.as_traceback())
     return exception

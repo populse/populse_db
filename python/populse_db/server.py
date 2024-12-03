@@ -2,29 +2,18 @@ import sqlite3
 import sys
 from typing import Annotated
 
-import tblib
 import uvicorn
 from fastapi import Body, FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from .database import json_decode, json_encode, populse_db_table
-from .storage_api import StorageFileAPI
+from .storage_api import StorageFileAPI, serialize_exception
 
 body_str = Annotated[str, Body(embed=True)]
 body_path = Annotated[list[str | int | list[str]], Body(embed=True)]
 body_bool = Annotated[bool, Body()]
 body_dict = Annotated[dict, Body()]
 body_json = Annotated[str | int | float | bool | None | list | dict, Body()]
-
-
-def serialize_exception(e):
-    tb = tblib.Traceback(e.__traceback__)
-    return {
-        "class_module": e.__class__.__module__,
-        "class_name": e.__class__.__name__,
-        "args": e.args,
-        "traceback": tb.to_dict(),
-    }
 
 
 def create_server(database_file):
