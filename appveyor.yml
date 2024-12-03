@@ -43,6 +43,7 @@ install:
         make
         sudo make install
         sqlite3 --version
+        cd ..
       fi
 #  - sh: export APPVEYOR_SSH_BLOCK=true
 #  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
