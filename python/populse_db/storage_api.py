@@ -15,35 +15,46 @@ from .database import populse_db_table
 
 
 def serialize_exception(e):
-    # Import tblib in this function avoid to make it a mandatory dependency
-    import tblib
+    try:
+        # Import tblib in this function avoid to make it a mandatory dependency
+        import tblib
 
-    tb = tblib.Traceback(e.__traceback__)
-    result = {
-        "class_module": e.__class__.__module__,
-        "class_name": e.__class__.__name__,
-        "traceback": tb.to_dict(),
-    }
-    kwargs = e.__getstate__()
-    if kwargs is None:
-        result["args"] = e.args
-    else:
-        kwargs.pop("lineno", None)
-        kwargs.pop("colno", None)
-        result["kwargs"] = kwargs
+        tb = tblib.Traceback(e.__traceback__)
+        result = {
+            "class_module": e.__class__.__module__,
+            "class_name": e.__class__.__name__,
+            "traceback": tb.to_dict(),
+        }
+
+        kwargs = (e.__getstate__() if hasattr(e, "__getstate__") else None)
+        if kwargs is None:
+            result["args"] = e.args
+        else:
+            kwargs.pop("lineno", None)
+            kwargs.pop("colno", None)
+            result["kwargs"] = kwargs
+    except Exception as e2:
+        result = {
+            "class_module": e2.__class__.__module__,
+            "class_name": e2.__class__.__name__,
+            "args": [f"Error while managing exception ({e}): {e2}"]
+        }
+
     return result
 
 
 def deserialize_exception(je):
-    # tblib is optional for populse_db
-    import tblib
-
     exception_class = getattr(
         importlib.import_module(je["class_module"]), je["class_name"]
     )
     exception = exception_class(*je.get("args", []), **je.get("kwargs", {}))
-    tb = tblib.Traceback.from_dict(je["traceback"])
-    exception.with_traceback(tb.as_traceback())
+    tb = je.get("traceback")
+    if tb is not None:
+        # Import tblib in this function avoid to make it a mandatory dependency
+        import tblib
+
+        tb = tblib.Traceback.from_dict(tb)
+        exception.with_traceback(tb.as_traceback())
     return exception
 
 
