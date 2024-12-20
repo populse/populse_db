@@ -58,6 +58,7 @@ class Storage:
                     self.storage_api.disconnect(connection_id, rollback=True)
                     raise
             else:
+                print("\nFailed to establish a data session.")
                 yield None
 
     @contextmanager
