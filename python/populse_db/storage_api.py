@@ -26,7 +26,7 @@ def serialize_exception(e):
             "traceback": tb.to_dict(),
         }
 
-        kwargs = (e.__getstate__() if hasattr(e, "__getstate__") else None)
+        kwargs = e.__getstate__() if hasattr(e, "__getstate__") else None
         if kwargs is None:
             result["args"] = e.args
         else:
@@ -37,7 +37,7 @@ def serialize_exception(e):
         result = {
             "class_module": e2.__class__.__module__,
             "class_name": e2.__class__.__name__,
-            "args": [f"Error while managing exception ({e}): {e2}"]
+            "args": [f"Error while managing exception ({e}): {e2}"],
         }
 
     return result

@@ -14,8 +14,8 @@ from ..database import (
     json_encode,
     populse_db_table,
     str_to_type,
-    type_to_str,
     type_to_sqlite,
+    type_to_str,
 )
 from ..filter import FilterToSQL, filter_parser
 

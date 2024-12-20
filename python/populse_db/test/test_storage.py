@@ -1,5 +1,5 @@
-import os
-import signal
+# import os
+# import signal
 import subprocess
 import sys
 import time
@@ -451,6 +451,7 @@ def test_storage_server():
 
         finally:
             server.terminate()
+
 
 #        finally:
 #            os.kill(server.pid, signal.SIGTERM)
