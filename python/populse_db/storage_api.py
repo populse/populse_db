@@ -265,6 +265,36 @@ class StorageFileAPI:
                     f"Incompatible type for field {field_name} of collection {collection_name}, requested {field_type} but existing database has {field['type']}"
                 )
 
+    def remove_field(self, connection_id, collection_name, field_name):
+        """
+        Removes a specified field from a collection in the database.
+
+        Args:
+            connection_id (str): The identifier for the database connection.
+            collection_name (str): The name of the collection.
+                                   Defaults to the storage's default
+                                   collection.
+            field_name (str): The name of the field to remove.
+
+        Raises:
+            ValueError: If the specified collection does not exist.
+        """
+        # Retrieve the database session with write access
+        dbs = self._get_database_session(connection_id, write=True)
+        # Use default collection name if none is provided
+        collection_name = (
+            collection_name or populse_db.storage.Storage.default_collection
+        )
+        # Retrieve the specified collection
+        collection = dbs.get_collection(collection_name)
+
+        if collection is None:
+            raise ValueError(f'No collection named "{collection_name}"')
+
+        # Remove the field if it exists
+        if collection.fields.get(field_name):
+            collection.remove_field(field_name)
+
     def disconnect(self, connection_id, rollback):
         dbs = self._get_database_session(connection_id, write=False)
         dbs.close(rollback)
