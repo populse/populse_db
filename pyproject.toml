@@ -1,6 +1,6 @@
 [project]
 name = "populse_db"
-version = "2.5.0"
+version = "2.5.1"
 authors = [
     {name = "Populse team", email = "populse-support@univ-grenoble-alpes.fr"},
 ]
