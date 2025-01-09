@@ -305,14 +305,6 @@ class SQLiteCollection(DatabaseCollection):
             NotImplementedError: If the SQLite version is below 3.35.0,
                                  which does not support removing columns.
         """
-        # Check SQLite version
-        sqlite_version = sqlite3.sqlite_version
-
-        if tuple(map(int, sqlite_version.split("."))) < (3, 35, 0):
-            raise NotImplementedError(
-                f"SQLite {sqlite_version} does not support removing a column"
-            )
-
         if name in self.primary_key:
             raise ValueError("Cannot remove a key field")
 
