@@ -405,6 +405,34 @@ def run_storage_tests(store):
             data.test_collection_1.value = "toto"
             assert data.test_collection_1.value.get() == "toto"
 
+    # Test field removal
+    with store.schema() as schema:
+        schema.add_collection("test_collection_3", "primary_key")
+        schema.add_field("test_collection_3", "a", str)
+        schema.add_field("test_collection_3", "b", str)
+        schema.add_field("test_collection_3", "x", str)
+        schema.add_field("test_collection_3", "c", str)
+    with store.data(write=True) as d:
+        d.test_collection_3.key = {"a": "a", "b": "b", "c": "c", "x": "x"}
+        assert d.test_collection_3.key.get() == {
+            "primary_key": "key",
+            "a": "a",
+            "b": "b",
+            "c": "c",
+            "x": "x",
+        }
+        assert set(d.test_collection_3.keys()) == {"primary_key", "a", "b", "x", "c"}
+    with store.schema() as schema:
+        schema.remove_field("test_collection_3", "x")
+    with store.data(write=False) as d:
+        assert d.test_collection_3.key.get() == {
+            "primary_key": "key",
+            "a": "a",
+            "b": "b",
+            "c": "c",
+        }
+        assert set(d.test_collection_3.keys()) == {"primary_key", "a", "b", "c"}
+
     # Test read only session
     with store.data(write=False) as d:
         with pytest.raises(PermissionError):

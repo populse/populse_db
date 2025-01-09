@@ -293,16 +293,30 @@ class SQLiteCollection(DatabaseCollection):
             self.bad_json_fields.add(name)
 
     def remove_field(self, name):
+        """
+        Removes a specified field from the table and updates associated
+        metadata.
+
+        Args:
+            name (str): The name of the field to remove.
+
+        Raises:
+            ValueError: If attempting to remove a primary key field.
+            NotImplementedError: If the SQLite version is below 3.35.0,
+                                 which does not support removing columns.
+        """
         if name in self.primary_key:
             raise ValueError("Cannot remove a key field")
-        raise NotImplementedError("SQLite does not support removing a column")
-        # sql = f'ALTER TABLE [{self.name}] DROP COLUMN [{name}]'
-        # self.session.execute(sql)
-        # settings = self.settings()
-        # settings.setdefault('fields', {}).pop(name, None)
-        # self.set_settings(settings)
-        # self.fields.pop(name, None)
-        # self.bad_json_fields.discard(name)
+
+        sql = f"ALTER TABLE [{self.name}] DROP COLUMN [{name}]"
+        self.session.execute(sql)
+        # Update metadata
+        settings = self.settings()
+        fields = settings.setdefault("fields", {})
+        fields.pop(name, None)
+        self.set_settings(settings)
+        self.fields.pop(name, None)
+        self.bad_json_fields.discard(name)
 
     def has_document(self, document_id):
         document_id = self.document_id(document_id)

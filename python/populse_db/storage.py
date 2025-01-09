@@ -236,6 +236,22 @@ class SchemaSession:
             index,
         )
 
+    def remove_field(self, collection_name, field_name):
+        """
+        Removes a specified field from a collection in the storage system.
+
+        Args:
+            collection_name (str): The name of the collection containing
+                                   the field.
+            field_name (str): The name of the field to be removed.
+
+        This method delegates the operation to the storage API, ensuring
+        the field is removed from the specified collection within the
+        active connection.
+
+        """
+        self._storage_api.remove_field(self._connection_id, collection_name, field_name)
+
     def clear_database(self):
         return self._storage_api.clear_database(self._connection_id)
 
