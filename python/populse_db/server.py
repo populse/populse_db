@@ -82,6 +82,18 @@ def create_server(database_file):
             index,
         )
 
+    @app.delete("/schema/{collection_name}/{field_name}")
+    async def remove_field(
+        connection_id: body_str,
+        collection_name: str,
+        field_name: str,
+    ):
+        return storage_api.remove_field(
+            connection_id,
+            collection_name,
+            field_name,
+        )
+
     @app.get("/data")
     async def get(
         connection_id: body_str,

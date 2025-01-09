@@ -618,6 +618,20 @@ class StorageServerAPI:
             ),
         )
 
+    def remove_field(
+        self,
+        connection_id,
+        collection_name,
+        field_name,
+    ):
+        return self._call(
+            "delete",
+            f"schema/{collection_name}/{field_name}",
+            dict(
+                connection_id=connection_id,
+            ),
+        )
+
     def get(
         self,
         connection_id,
