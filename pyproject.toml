@@ -32,6 +32,13 @@ doc = [
     "psycopg2-binary",
 ]
 
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["python"]
+
 [project.urls]
 homepage = "http://populse.github.io/populse_db/"
 repository = "https://github.com/populse/populse_db"
@@ -60,9 +67,6 @@ line_length = 79
 skip_gitignore = true
 #known_first_party = ['populse_mia']
 
-#[tool.coverage.run]
-#omit = [
-#]
 
 [tool.interrogate]
 ignore-init-method = true
