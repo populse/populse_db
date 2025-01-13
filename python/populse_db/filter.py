@@ -367,7 +367,7 @@ class FilterToSQL(Transformer):
         else:
             where = [f"{field} "]
         if not list_value:
-            return [0]
+            return ["0"]
         elif len(list_value) == 1:
             where.append(f"IS {to_sql(list_value[0])}")
         else:
