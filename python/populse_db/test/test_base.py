@@ -34,7 +34,7 @@ class TestsSQLiteInMemory(unittest.TestCase):
             }
             doc = base_doc.copy()
             for k, v in base_doc.items():
-                lk = "list_%s" % k
+                lk = f"list_{k}"
                 doc[lk] = [v]
             doc["index"] = "test"
             dbs.add_document("test", doc)
@@ -1261,14 +1261,14 @@ def create_test_case(**database_creation_parameters):
                             ("Freesurfer", "mgz"),
                         ):
                             document = dict(
-                                name="/%s_%d.%s" % (file, dt.year, ext),
+                                name=f"/{file}_{dt.year}.{ext}",
                                 format=format,
                                 strings=list(file),
                                 datetime=dt,
                                 has_format=True,
                             )
                             session.add_document("collection1", document)
-                        document = "/%s_%d.none" % (file, dt.year)
+                        document = f"/{file}_{dt.year}.none"
                         d = dict(name=document, strings=list(file))
                         session.add_document("collection1", d)
 
@@ -1806,8 +1806,8 @@ def create_test_case(**database_creation_parameters):
                 ):
                     for tested_filter in (
                         filter,
-                        "(%s) AND ALL" % filter,
-                        "ALL AND (%s)" % filter,
+                        f"({filter}) AND ALL",
+                        f"ALL AND ({filter})",
                     ):
                         try:
                             documents = {
@@ -1826,8 +1826,8 @@ def create_test_case(**database_creation_parameters):
                         for document in session.filter_documents("collection1", "ALL")
                     }
                     for tested_filter in (
-                        "(%s) OR ALL" % filter,
-                        "ALL OR (%s)" % filter,
+                        f"({filter}) OR ALL",
+                        f"ALL OR ({filter})",
                     ):
                         try:
                             documents = {
@@ -2004,7 +2004,7 @@ def create_test_case(**database_creation_parameters):
                 }
                 doc = base_doc.copy()
                 for k, v in base_doc.items():
-                    lk = "list_%s" % k
+                    lk = f"list_{k}"
                     doc[lk] = [v]
                 doc["primary_key"] = "test"
                 session.add_document("test", doc)
