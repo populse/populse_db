@@ -52,7 +52,7 @@ def type_to_str(type):
     """
     args = getattr(type, "__args__", None)
     if args:
-        return f'{type.__name__}[{",".join(type_to_str(i) for i in args)}]'
+        return f"{type.__name__}[{','.join(type_to_str(i) for i in args)}]"
     else:
         return type.__name__
 
@@ -72,7 +72,7 @@ def type_to_sqlite(type):
     if result is None:
         args = getattr(type, "__args__", None)
         if args:
-            result = f'{type.__name__}[{",".join(type_to_sqlite(i) for i in args)}]'
+            result = f"{type.__name__}[{','.join(type_to_sqlite(i) for i in args)}]"
         else:
             result = type.__name__
     return result

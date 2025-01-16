@@ -79,7 +79,7 @@ class SQLiteSession(DatabaseSession):
             "PRAGMA synchronous=OFF;"
             "PRAGMA case_sensitive_like=ON;"
             "PRAGMA foreign_keys=ON;"
-            f'BEGIN {("EXCLUSIVE" if self.exclusive else "DEFERRED")};'
+            f"BEGIN {('EXCLUSIVE' if self.exclusive else 'DEFERRED')};"
         )
         self._collection_cache = {}
         # Iterate on all collections to put them in cache
@@ -122,11 +122,11 @@ class SQLiteSession(DatabaseSession):
 
     def commit(self):
         self.sqlite.commit()
-        self.sqlite.execute(f'BEGIN {("EXCLUSIVE" if self.exclusive else "DEFERRED")}')
+        self.sqlite.execute(f"BEGIN {('EXCLUSIVE' if self.exclusive else 'DEFERRED')}")
 
     def rollback(self):
         self.sqlite.rollback()
-        self.sqlite.execute(f'BEGIN {("EXCLUSIVE" if self.exclusive else "DEFERRED")}')
+        self.sqlite.execute(f"BEGIN {('EXCLUSIVE' if self.exclusive else 'DEFERRED')}")
 
     def settings(self, category, key, default=None):
         try:
@@ -191,9 +191,9 @@ class SQLiteSession(DatabaseSession):
             }
         sql = (
             f"CREATE TABLE [{name}] ("
-            f'{",".join(f"[{n}] {t} NOT NULL" for n, t in dict_primary_key.items())},'
+            f"{','.join(f'[{n}] {t} NOT NULL' for n, t in dict_primary_key.items())},"
             f"{catchall_column} dict,"
-            f'PRIMARY KEY ({",".join(f"[{i}]" for i in dict_primary_key.keys())}))'
+            f"PRIMARY KEY ({','.join(f'[{i}]' for i in dict_primary_key.keys())}))"
         )
         self.execute(sql)
         # Accessing the collection to put it in cache
@@ -320,7 +320,7 @@ class SQLiteCollection(DatabaseCollection):
 
     def has_document(self, document_id):
         document_id = self.document_id(document_id)
-        sql = f'SELECT count(*) FROM [{self.name}] WHERE {" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
+        sql = f"SELECT count(*) FROM [{self.name}] WHERE {' AND '.join(f'[{i}] = ?' for i in self.primary_key)}"
         return next(self.session.execute(sql, document_id))[0] != 0
 
     def _documents(self, where, where_data, fields, as_list, distinct):
@@ -345,7 +345,7 @@ class SQLiteCollection(DatabaseCollection):
                         f"as_list=True cannot be used on {self.name} without a fields list because two documents can have different fields"
                     )
 
-        sql = f'SELECT {("DISTINCT " if distinct else "")}{",".join(columns)} FROM [{self.name}]'
+        sql = f"SELECT {('DISTINCT ' if distinct else '')}{','.join(columns)} FROM [{self.name}]"
         if where:
             sql += f" WHERE {where}"
         cur = self.session.execute(sql, where_data)
@@ -395,7 +395,7 @@ class SQLiteCollection(DatabaseCollection):
 
     def document(self, document_id, fields=None, as_list=False):
         document_id = self.document_id(document_id)
-        where = f'{" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
+        where = f"{' AND '.join(f'[{i}] = ?' for i in self.primary_key)}"
         try:
             return next(self._documents(where, document_id, fields, as_list, False))
         except StopIteration:
@@ -485,7 +485,7 @@ class SQLiteCollection(DatabaseCollection):
             replace = " OR REPLACE"
         else:
             replace = ""
-        sql = f'INSERT{replace} INTO [{self.name}] ({",".join(f"[{i}]" for i in columns)}) values ({",".join("?" for i in data)})'
+        sql = f"INSERT{replace} INTO [{self.name}] ({','.join(f'[{i}]' for i in columns)}) values ({','.join('?' for i in data)})"
         self.session.execute(sql, data)
 
     def update_document(self, document_id, partial_document):
@@ -515,14 +515,14 @@ class SQLiteCollection(DatabaseCollection):
         affectations = [f"[{i}]=?" for i in columns] + catchall_update
         if not affectations:
             return
-        sql = f'UPDATE [{self.name}] SET {",".join(affectations)} WHERE {where}'
+        sql = f"UPDATE [{self.name}] SET {','.join(affectations)} WHERE {where}"
         cur = self.session.execute(sql, data)
         if not cur.rowcount:
             raise ValueError(f"Document with key {document_id} does not exist")
 
     def __delitem__(self, document_id):
         document_id = self.document_id(document_id)
-        sql = f'DELETE FROM [{self.name}] WHERE {" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
+        sql = f"DELETE FROM [{self.name}] WHERE {' AND '.join(f'[{i}] = ?' for i in self.primary_key)}"
         self.session.execute(sql, document_id)
 
     def parse_filter(self, filter):

@@ -1272,7 +1272,9 @@ def create_test_case(**database_creation_parameters):
                         d = dict(name=document, strings=list(file))
                         session.add_document("collection1", d)
 
-                assert list(session.filter_documents("collection1", "format IN []")) == []
+                assert (
+                    list(session.filter_documents("collection1", "format IN []")) == []
+                )
 
                 for filter, expected in (
                     (
@@ -1922,7 +1924,7 @@ def create_test_case(**database_creation_parameters):
                 "[]": [],
             }
             # Adds the literal for a list of all elements in the dictionary
-            literals[f'[{",".join(literals.keys())}]'] = list(literals.values())
+            literals[f"[{','.join(literals.keys())}]"] = list(literals.values())
 
             parser = literal_parser()
             for literal, expected_value in literals.items():
