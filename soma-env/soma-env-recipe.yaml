@@ -2,6 +2,7 @@ package:
   name: populse-db
 
 soma-env:
+  publication: neuro-forge
   type: interpreted
 
 requirements:
