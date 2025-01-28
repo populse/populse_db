@@ -3,6 +3,8 @@ package:
 
 soma-env:
   publication: neuro-forge
+  components:
+    - populse-db
   type: interpreted
 
 requirements:
