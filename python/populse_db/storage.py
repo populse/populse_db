@@ -255,6 +255,10 @@ class SchemaSession:
     def clear_database(self):
         return self._storage_api.clear_database(self._connection_id)
 
+    @contextmanager
+    def data(self):
+        yield StorageSession(self._storage_api, self._connection_id)
+
 
 class StorageSession:
     def __init__(self, storage_api, connection_id, path=None):

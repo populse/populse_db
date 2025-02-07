@@ -158,6 +158,9 @@ def run_storage_tests(store):
         schema.add_field("test_update", "yes", bool)
         schema.add_field("test_update", "no", bool)
 
+        with schema.data() as d:
+            d.a_name = "a value"
+
     with store.data(write=True) as d:
         now = datetime.now()
 
