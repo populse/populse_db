@@ -286,6 +286,9 @@ class StorageSession:
     def __delattr__(self, key):
         del self[key]
 
+    def primary_key(self):
+        return self._storage_api.primary_key(self._connection_id, self._path)
+
     def set(self, value):
         self._storage_api.set(self._connection_id, self._path, value)
 

@@ -365,6 +365,13 @@ class StorageFileAPI:
                 query = document_query
         return collection.count(query)
 
+    def primary_key(self, connection_id, path):
+        dbs = self._get_database_session(connection_id, write=True)
+        collection, document_id, field, path = self._parse_path(dbs, path)
+        if not collection or document_id:
+            raise ValueError("primary_key is only allowed on collections")
+        return list(collection.primary_key)
+
     def set(self, connection_id, path, value):
         dbs = self._get_database_session(connection_id, write=True)
         collection, document_id, field, path = self._parse_path(dbs, path)
@@ -660,6 +667,13 @@ class StorageServerAPI:
             "get",
             "count",
             dict(connection_id=connection_id, path=path, query=query),
+        )
+
+    def primary_key(self, connection_id, path):
+        return self._call(
+            "get",
+            "primary_key",
+            dict(connection_id=connection_id, path=path),
         )
 
     def set(self, connection_id, path, value):

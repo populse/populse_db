@@ -199,6 +199,14 @@ def run_storage_tests(store):
         }
         assert d.dataset.my_data.my_list[2].get() == "two"
 
+        # Get primary key of a collection
+        assert d.test_collection_1.primary_key() == ["primary_key"]
+        assert d.test_collection_2.primary_key() == ["primary_key_1", "primary_key_2"]
+        with pytest.raises(ValueError):
+            d.primary_key()
+        with pytest.raises(ValueError):
+            d.test_collection_1.any_field.primary_key()
+            
         # Set values not in schema
         d.dataset.my_data.new_value = now
         assert d.dataset.my_data.new_value.get() == now

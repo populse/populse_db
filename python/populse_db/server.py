@@ -121,6 +121,10 @@ def create_server(database_file):
     ):
         return storage_api.count(connection_id, path, query)
 
+    @app.get("/primary_key")
+    async def primary_key(connection_id: body_str, path: body_path):
+        return storage_api.primary_key(connection_id, path)
+
     @app.post("/data")
     async def set(connection_id: body_str, path: body_path, value: body_json):
         return storage_api.set(connection_id, path, json_decode(value))
