@@ -238,8 +238,7 @@ class FilterToSQL(Transformer):
                 )
             else:
                 raise ValueError(
-                    "Either left or right operand of a condition"
-                    " must be a field name"
+                    "Either left or right operand of a condition must be a field name"
                 )
 
     def negation(self, items):
@@ -371,7 +370,7 @@ class FilterToSQL(Transformer):
         elif len(list_value) == 1:
             where.append(f"IS {to_sql(list_value[0])}")
         else:
-            where.append(f'IN ({",".join(to_sql(i) for i in list_value)})')
+            where.append(f"IN ({','.join(to_sql(i) for i in list_value)})")
         return where
 
     def build_condition_field_op_field(self, left_field, operator_str, right_field):
