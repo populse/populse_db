@@ -366,7 +366,7 @@ class StorageFileAPI:
         return collection.count(query)
 
     def primary_key(self, connection_id, path):
-        dbs = self._get_database_session(connection_id, write=True)
+        dbs = self._get_database_session(connection_id, write=False)
         collection, document_id, field, path = self._parse_path(dbs, path)
         if not collection or document_id:
             raise ValueError("primary_key is only allowed on collections")
