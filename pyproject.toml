@@ -7,12 +7,11 @@ authors = [
 description = "populse_db"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "CeCILL-B"}
+license = "CECILL-B"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Developers",
-    "License :: OSI Approved",
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3 :: Only",
@@ -67,7 +66,6 @@ line_length = 79
 skip_gitignore = true
 #known_first_party = ['populse_mia']
 
-
 [tool.interrogate]
 ignore-init-method = true
 ignore-init-module = false
@@ -85,3 +83,6 @@ verbose = 2
 quiet = false
 color = true
 omit-covered-files = false
+
+[tool.setuptools]
+license-files = ["LICENSE.en", "LICENSE.fr"]
