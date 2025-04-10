@@ -15,25 +15,30 @@ classifiers = [
     "Environment :: Console",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: SQL",
     "Natural Language :: English",
     "Topic :: Database",
 ]
+
 dependencies = [
     "python-dateutil",
-    "lark-parser >=0.7.0",
+    "lark >=0.7.0",
+    "cryptography",
+    "requests",
 ]
 
 [project.optional-dependencies]
 doc = [
     "sphinx >=1.0",
 ]
-postgres = [
-    "psycopg2-binary",
+server = [
+    "fastapi",
+    "uvicorn",
+    "tblib",
 ]
 
 [project.urls]

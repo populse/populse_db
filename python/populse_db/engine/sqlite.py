@@ -1,4 +1,6 @@
+import functools
 import json
+import os
 import sqlite3
 from datetime import date, datetime, time
 
@@ -10,7 +12,9 @@ from ..database import (
     json_decode,
     json_dumps,
     json_encode,
+    populse_db_table,
     str_to_type,
+    type_to_sqlite,
     type_to_str,
 )
 from ..filter import FilterToSQL, filter_parser
@@ -21,6 +25,33 @@ SQLite3 implementation of populse_db engine.
 A populse_db engine is created when a DatabaseSession object is created
 (typically within a "with" statement)
 """
+
+if tuple(int(i) for i in sqlite3.sqlite_version.split(".")) < (3, 38, 0):
+    raise NotImplementedError(
+        f"populse_db requires a SQLite version > 3.38.0 but current version is {sqlite3.sqlite_version}"
+    )
+sqlite3.register_adapter(datetime, lambda d: d.isoformat())
+sqlite3.register_adapter(date, lambda d: d.isoformat())
+sqlite3.register_adapter(time, lambda d: d.isoformat())
+sqlite3.register_converter("bool", lambda b: bool(int(b)))
+sqlite3.register_converter("datetime", lambda b: dateutil.parser.parse(b))
+sqlite3.register_converter("date", lambda b: dateutil.parser.parse(b).date())
+sqlite3.register_converter("time", lambda b: dateutil.parser.parse(b).time())
+
+
+def create_sqlite_session_factory(url):
+    if url.path:
+        sqlite_file = url.path
+    elif url.netloc:
+        sqlite_file = url.netloc
+    result = functools.partial(sqlite_session_factory, sqlite_file)
+    return result
+
+
+def sqlite_session_factory(sqlite_file, *args, create=False, **kwargs):
+    if not create and not os.path.exists(sqlite_file):
+        return None
+    return SQLiteSession(sqlite_file, *args, **kwargs)
 
 
 class ParsedFilter(str):
@@ -33,18 +64,13 @@ class SQLiteSession(DatabaseSession):
         sqlite3.IntegrityError,
     )
 
-    @staticmethod
-    def parse_url(url):
-        if url.path:
-            args = (url.path,)
-        elif url.netloc:
-            args = (url.netloc,)
-        return args, {}
-
     def __init__(self, sqlite_file, exclusive=False, timeout=None, echo_sql=None):
         self.echo_sql = echo_sql
         self.sqlite = sqlite3.connect(
-            sqlite_file, isolation_level=None, check_same_thread=False
+            sqlite_file,
+            isolation_level=None,
+            check_same_thread=False,
+            detect_types=sqlite3.PARSE_DECLTYPES,
         )
         self.exclusive = exclusive
         if timeout:
@@ -53,7 +79,7 @@ class SQLiteSession(DatabaseSession):
             "PRAGMA synchronous=OFF;"
             "PRAGMA case_sensitive_like=ON;"
             "PRAGMA foreign_keys=ON;"
-            f'BEGIN {("EXCLUSIVE" if self.exclusive else "DEFERRED")};'
+            f"BEGIN {('EXCLUSIVE' if self.exclusive else 'DEFERRED')};"
         )
         self._collection_cache = {}
         # Iterate on all collections to put them in cache
@@ -96,15 +122,15 @@ class SQLiteSession(DatabaseSession):
 
     def commit(self):
         self.sqlite.commit()
-        self.sqlite.execute(f'BEGIN {("EXCLUSIVE" if self.exclusive else "DEFERRED")}')
+        self.sqlite.execute(f"BEGIN {('EXCLUSIVE' if self.exclusive else 'DEFERRED')}")
 
     def rollback(self):
         self.sqlite.rollback()
-        self.sqlite.execute(f'BEGIN {("EXCLUSIVE" if self.exclusive else "DEFERRED")}')
+        self.sqlite.execute(f"BEGIN {('EXCLUSIVE' if self.exclusive else 'DEFERRED')}")
 
     def settings(self, category, key, default=None):
         try:
-            sql = f"SELECT _json FROM [{self.populse_db_table}] WHERE category=? and key=?"
+            sql = f"SELECT _json FROM [{populse_db_table}] WHERE category=? and key=?"
             cur = self.execute(sql, [category, key])
         except sqlite3.OperationalError:
             return default
@@ -114,7 +140,7 @@ class SQLiteSession(DatabaseSession):
         return default
 
     def set_settings(self, category, key, value):
-        sql = f"INSERT OR REPLACE INTO {self.populse_db_table} (category, key, _json) VALUES (?,?,?)"
+        sql = f"INSERT OR REPLACE INTO {populse_db_table} (category, key, _json) VALUES (?,?,?)"
         data = [category, key, json_dumps(value)]
         retry = False
         try:
@@ -124,7 +150,7 @@ class SQLiteSession(DatabaseSession):
         if retry:
             sql2 = (
                 "CREATE TABLE IF NOT EXISTS "
-                f"[{self.populse_db_table}] ("
+                f"[{populse_db_table}] ("
                 "category TEXT NOT NULL,"
                 "key TEXT NOT NULL,"
                 "_json TEXT,"
@@ -157,7 +183,7 @@ class SQLiteSession(DatabaseSession):
         else:
             dict_primary_key = {
                 k: (
-                    type_to_str(str_to_type(v))
+                    type_to_sqlite(str_to_type(v))
                     if isinstance(v, str)
                     else type_to_str(v)
                 )
@@ -165,9 +191,9 @@ class SQLiteSession(DatabaseSession):
             }
         sql = (
             f"CREATE TABLE [{name}] ("
-            f'{",".join(f"[{n}] {t} NOT NULL" for n, t in dict_primary_key.items())},'
+            f"{','.join(f'[{n}] {t} NOT NULL' for n, t in dict_primary_key.items())},"
             f"{catchall_column} dict,"
-            f'PRIMARY KEY ({",".join(f"[{i}]" for i in dict_primary_key.keys())}))'
+            f"PRIMARY KEY ({','.join(f'[{i}]' for i in dict_primary_key.keys())}))"
         )
         self.execute(sql)
         # Accessing the collection to put it in cache
@@ -182,25 +208,13 @@ class SQLiteSession(DatabaseSession):
         sql = "SELECT name FROM sqlite_master WHERE type='table'"
         for row in self.execute(sql):
             table = row[0]
-            if table == self.populse_db_table:
+            if table == populse_db_table:
                 continue
             yield self[table]
 
 
 class SQLiteCollection(DatabaseCollection):
     _column_encodings = {
-        datetime: (
-            lambda d: (None if d is None else d.isoformat()),
-            lambda s: (None if s is None else dateutil.parser.parse(s)),
-        ),
-        date: (
-            lambda d: (None if d is None else d.isoformat()),
-            lambda s: (None if s is None else dateutil.parser.parse(s).date()),
-        ),
-        time: (
-            lambda d: (None if d is None else d.isoformat()),
-            lambda s: (None if s is None else dateutil.parser.parse(s).time()),
-        ),
         list: (
             lambda l: (None if l is None else json_dumps(l)),  # noqa: E741
             lambda l: (None if l is None else json.loads(l)),  # noqa: E741
@@ -250,7 +264,7 @@ class SQLiteCollection(DatabaseCollection):
     ):
         if isinstance(field_type, str):
             field_type = str_to_type(field_type)
-        sql = f"ALTER TABLE [{self.name}] ADD COLUMN [{name}] {type_to_str(field_type)}"
+        sql = f"ALTER TABLE [{self.name}] ADD COLUMN [{name}] {type_to_sqlite(field_type)}"
         self.session.execute(sql)
         if index:
             sql = f"CREATE INDEX [{self.name}_{name}] ON [{self.name}] ([{name}])"
@@ -279,23 +293,38 @@ class SQLiteCollection(DatabaseCollection):
             self.bad_json_fields.add(name)
 
     def remove_field(self, name):
+        """
+        Removes a specified field from the table and updates associated
+        metadata.
+
+        Args:
+            name (str): The name of the field to remove.
+
+        Raises:
+            ValueError: If attempting to remove a primary key field.
+            NotImplementedError: If the SQLite version is below 3.35.0,
+                                 which does not support removing columns.
+        """
         if name in self.primary_key:
             raise ValueError("Cannot remove a key field")
-        raise NotImplementedError("SQLite does not support removing a column")
-        # sql = f'ALTER TABLE [{self.name}] DROP COLUMN [{name}]'
-        # self.session.execute(sql)
-        # settings = self.settings()
-        # settings.setdefault('fields', {}).pop(name, None)
-        # self.set_settings(settings)
-        # self.fields.pop(name, None)
-        # self.bad_json_fields.discard(name)
+
+        sql = f"ALTER TABLE [{self.name}] DROP COLUMN [{name}]"
+        self.session.execute(sql)
+        # Update metadata
+        settings = self.settings()
+        fields = settings.setdefault("fields", {})
+        fields.pop(name, None)
+        self.set_settings(settings)
+        self.fields.pop(name, None)
+        self.bad_json_fields.discard(name)
 
     def has_document(self, document_id):
         document_id = self.document_id(document_id)
-        sql = f'SELECT count(*) FROM [{self.name}] WHERE {" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
+        sql = f"SELECT count(*) FROM [{self.name}] WHERE {' AND '.join(f'[{i}] = ?' for i in self.primary_key)}"
         return next(self.session.execute(sql, document_id))[0] != 0
 
     def _documents(self, where, where_data, fields, as_list, distinct):
+        json_decode_columns = []
         if fields:
             columns = []
             catchall_fields = False
@@ -303,25 +332,30 @@ class SQLiteCollection(DatabaseCollection):
                 if field in self.fields:
                     columns.append(f"[{field}]")
                 else:
-                    columns.append(
-                        f"json_extract([{self.catchall_column}],'$.{field}')"
-                    )
+                    json_decode_columns.append(len(columns))
+                    columns.append(f"[{self.catchall_column}] -> '$.{field}'")
         else:
             fields = self.fields
             columns = [f"[{i}]" for i in fields]
             catchall_fields = bool(self.catchall_column)
             if catchall_fields:
-                columns.append(self.catchall_column)
+                columns.append(f"[{self.catchall_column}] -> '$'")
                 if as_list:
                     raise ValueError(
                         f"as_list=True cannot be used on {self.name} without a fields list because two documents can have different fields"
                     )
 
-        sql = f'SELECT {("DISTINCT " if distinct else "")}{",".join(columns)} FROM [{self.name}]'
+        sql = f"SELECT {('DISTINCT ' if distinct else '')}{','.join(columns)} FROM [{self.name}]"
         if where:
             sql += f" WHERE {where}"
         cur = self.session.execute(sql, where_data)
         for row in cur:
+            for i in json_decode_columns:
+                if row[i] is None:
+                    continue
+                if isinstance(row, tuple):
+                    row = list(row)
+                row[i] = json.loads(row[i])
             if catchall_fields:
                 if row[-1] is not None:
                     catchall = json.loads(row[-1])
@@ -334,7 +368,7 @@ class SQLiteCollection(DatabaseCollection):
                 catchall = {}
             if columns[-1] == self.catchall_column:
                 columns = columns[:-1]
-            document = catchall
+            document = json_decode(catchall)
             if isinstance(document, dict):
                 document.update(zip(fields, row))
                 for field, value in document.items():
@@ -352,9 +386,16 @@ class SQLiteCollection(DatabaseCollection):
             else:
                 yield document
 
+    def count(self, filter=None):
+        where = self.parse_filter(filter)
+        sql = f"SELECT COUNT(*) FROM [{self.name}]"
+        if where:
+            sql += f" WHERE {where}"
+        return self.session.execute(sql, None).fetchone()[0]
+
     def document(self, document_id, fields=None, as_list=False):
         document_id = self.document_id(document_id)
-        where = f'{" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
+        where = f"{' AND '.join(f'[{i}] = ?' for i in self.primary_key)}"
         try:
             return next(self._documents(where, document_id, fields, as_list, False))
         except StopIteration:
@@ -391,7 +432,7 @@ class SQLiteCollection(DatabaseCollection):
                     catchall[field] = value
         else:
             catchall_column = self.catchall_column
-            catchall_data = json_dumps(document)
+            catchall_data = document
         if catchall is not ...:
             if not self.catchall_column:
                 raise ValueError(
@@ -399,33 +440,32 @@ class SQLiteCollection(DatabaseCollection):
                 )
             bad_json = False
             try:
-                catchall_data = json_dumps(catchall)
+                catchall_data = catchall
+                json_dumps(catchall)
             except TypeError:
                 if isinstance(catchall, dict):
                     bad_json = True
                 else:
                     raise
             if bad_json:
-                jsons = []
+                jsons = {}
                 for field, value in catchall.items():
                     bad_json = False
                     try:
-                        j = json_dumps(value)
+                        j = value
+                        json_dumps(value)
                     except TypeError:
                         bad_json = True
                     if bad_json:
-                        t = type(value)
-                        self.add_field(
-                            field, t, bad_json=t not in (time, date, datetime)
-                        )
+                        self.add_field(field, dict, bad_json=True)
                         column_value = self._encode_column_value(field, value)
                         columns.append(field)
                         data.append(column_value)
                     else:
-                        jsons.append((f'"{field}"', j))
+                        jsons[field] = j
                 if jsons:
                     catchall_column = self.catchall_column
-                    catchall_data = f'{{{",".join(f"{i}:{j}" for i, j in jsons)}}}'
+                    catchall_data = jsons
 
             else:
                 catchall_column = self.catchall_column
@@ -435,7 +475,7 @@ class SQLiteCollection(DatabaseCollection):
         columns, data, catchall_column, catchall_data = self._dict_to_sql_update(
             document
         )
-
+        catchall_data = json.dumps(json_encode(catchall_data))
         columns = [i for i in self.primary_key] + columns
         data = [i for i in document_id] + data
         if catchall_column:
@@ -445,7 +485,7 @@ class SQLiteCollection(DatabaseCollection):
             replace = " OR REPLACE"
         else:
             replace = ""
-        sql = f'INSERT{replace} INTO [{self.name}] ({",".join(f"[{i}]" for i in columns)}) values ({",".join("?" for i in data)})'
+        sql = f"INSERT{replace} INTO [{self.name}] ({','.join(f'[{i}]' for i in columns)}) values ({','.join('?' for i in data)})"
         self.session.execute(sql, data)
 
     def update_document(self, document_id, partial_document):
@@ -461,11 +501,13 @@ class SQLiteCollection(DatabaseCollection):
             partial_document
         )
 
-        if catchall_column:
+        if catchall_column and catchall_data:
             catchall_update = [
-                f'[{catchall_column}]=json_patch(IFNULL([{catchall_column}],"{{}}"),?)'
+                f'[{catchall_column}]=json_set(IFNULL([{catchall_column}],"{{}}"),{",".join("?,json(?)" for i in catchall_data)})'
             ]
-            data.append(catchall_data)
+            for k, v in catchall_data.items():
+                data.append(f"$.{k}")
+                data.append(json.dumps(v))
         else:
             catchall_update = []
         where = " AND ".join(f"[{i}]=?" for i in self.primary_key)
@@ -473,14 +515,14 @@ class SQLiteCollection(DatabaseCollection):
         affectations = [f"[{i}]=?" for i in columns] + catchall_update
         if not affectations:
             return
-        sql = f'UPDATE [{self.name}] SET {",".join(affectations)} WHERE {where}'
+        sql = f"UPDATE [{self.name}] SET {','.join(affectations)} WHERE {where}"
         cur = self.session.execute(sql, data)
         if not cur.rowcount:
             raise ValueError(f"Document with key {document_id} does not exist")
 
     def __delitem__(self, document_id):
         document_id = self.document_id(document_id)
-        sql = f'DELETE FROM [{self.name}] WHERE {" AND ".join(f"[{i}] = ?" for i in self.primary_key)}'
+        sql = f"DELETE FROM [{self.name}] WHERE {' AND '.join(f'[{i}] = ?' for i in self.primary_key)}"
         self.session.execute(sql, document_id)
 
     def parse_filter(self, filter):

@@ -1,0 +1,22 @@
+package:
+  name: populse-db
+
+soma-env:
+  publication: neuro-forge
+  components:
+    - populse-db
+  type: interpreted
+
+requirements:
+  run:
+    - python >=3.10
+    - lark-parser >0.7.0
+    - python-dateutil
+    - requests
+    - cryptography
+
+tests:
+  - script: "python -m populse_db.test"
+    requirements:
+      run:
+        - pytest

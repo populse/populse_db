@@ -5,15 +5,16 @@ import unittest
 from datetime import date, datetime, time
 
 from populse_db import Database
-from populse_db.database import check_value_type
-from populse_db.engine.sqlite import SQLiteSession
+from populse_db.database import check_value_type, populse_db_table
+
+# from populse_db.engine.sqlite import SQLiteSession
 from populse_db.filter import FilterToSQL, literal_parser
 
 
 class TestsSQLiteInMemory(unittest.TestCase):
     def test_add_get_document(self):
         now = datetime.now()
-        db = Database("sqlite://:memory:")
+        db = Database("sqlite://:memory:", create=True)
         with db as dbs:
             dbs.add_collection("test", "index")
             base_doc = {
@@ -33,7 +34,7 @@ class TestsSQLiteInMemory(unittest.TestCase):
             }
             doc = base_doc.copy()
             for k, v in base_doc.items():
-                lk = "list_%s" % k
+                lk = f"list_{k}"
                 doc[lk] = [v]
             doc["index"] = "test"
             dbs.add_document("test", doc)
@@ -72,14 +73,18 @@ def create_test_case(**database_creation_parameters):
                 del self.database_creation_parameters["database_url"]
             self.temp_folder = None
 
-        def create_database(self, clear=True):
+        def create_database(self, clear=True, create=True, echo_sql=None):
             """
             Opens the database
             :param clear: Bool to know if the database must be cleared
             """
 
             try:
-                db = Database(**self.database_creation_parameters)
+                db = Database(
+                    **self.database_creation_parameters,
+                    create=create,
+                    echo_sql=echo_sql,
+                )
             except Exception as e:
                 if self.database_creation_parameters["database_url"].startswith(
                     "postgresql"
@@ -238,86 +243,86 @@ def create_test_case(**database_creation_parameters):
                 session.add_document("current", document)
 
                 # Removing fields
-                if isinstance(session, SQLiteSession):
-                    with self.assertRaises(NotImplementedError):
-                        session.remove_field("current", "PatientName")
-                else:
-                    session.remove_field("current", "PatientName")
-                    session.remove_field("current", "Dataset dimensions")
+                session.remove_field("current", "PatientName")
+                session.remove_field("current", "Dataset dimensions")
 
-                    # Testing that the field does not exist anymore
-                    self.assertIsNone(session.get_field("current", "PatientName"))
-                    self.assertIsNone(
-                        session.get_field("current", "Dataset dimensions")
-                    )
+                # Testing that the field does not exist anymore
+                self.assertIsNone(session.get_field("current", "PatientName"))
+                self.assertIsNone(session.get_field("current", "Dataset dimensions"))
 
-                    # Testing that the field values are removed
-                    self.assertIsNone(
-                        session.get_value("current", "document1", "PatientName")
-                    )
-                    self.assertEqual(
-                        session.get_value("current", "document1", "SequenceName"),
-                        "RARE",
-                    )
-                    self.assertIsNone(
-                        session.get_value("current", "document1", "Dataset dimensions")
-                    )
+                # Testing that the field values are removed
+                with self.assertRaises(KeyError):
+                    session["current"]["document1"]["PatientName"]
+                with self.assertRaises(KeyError):
+                    session["current"]["document2"]["PatientName"]
+                self.assertIsNone(session["current"]["document1"]["SequenceName"])
+                self.assertEqual(
+                    session["current"]["document2"]["SequenceName"],
+                    "RARE",
+                )
+                with self.assertRaises(KeyError):
+                    session["current"]["document1"]["Dataset dimensions"]
+                with self.assertRaises(KeyError):
+                    session["current"]["document2"]["Dataset dimensions"]
 
-                    # Testing with list of fields
-                    session.remove_field("current", ["SequenceName"])
-                    self.assertIsNone(session.get_field("current", "SequenceName"))
+                # /\ Deleting a list of fields is not yet implemented in populse_db 3.0! /\
+                # Testing with list of fields
+                # session.remove_field("current", ["SequenceName"])
+                # self.assertIsNone(session.get_field("current", "SequenceName"))
 
-                    # Adding fields again
-                    session.add_field(
-                        "current", "PatientName", str, "Name of the patient"
-                    )
-                    session.add_field("current", "SequenceName", str, None)
-                    session.add_field("current", "Dataset dimensions", list[int], None)
+                # Adding fields again
+                session.add_field("current", "PatientName", str, "Name of the patient")
+                # session.add_field("current", "SequenceName", str, None)
+                session.add_field("current", "Dataset dimensions", list[int], None)
 
-                    # Testing with list of fields
-                    session.remove_field("current", ["SequenceName", "PatientName"])
-                    self.assertIsNone(session.get_field("current", "SequenceName"))
-                    self.assertIsNone(session.get_field("current", "PatientName"))
+                # Testing with list of fields
+                # session.remove_field("current", ["SequenceName", "PatientName"])
+                # self.assertIsNone(session.get_field("current", "SequenceName"))
+                # self.assertIsNone(session.get_field("current", "PatientName"))
 
-                    # Testing with a field not existing
-                    self.assertRaises(
-                        ValueError,
-                        lambda: session.remove_field("not_existing", "document1"),
-                    )
-                    self.assertRaises(
-                        ValueError, lambda: session.remove_field(1, "NotExisting")
-                    )
-                    self.assertRaises(
-                        ValueError,
-                        lambda: session.remove_field("current", "NotExisting"),
-                    )
-                    self.assertRaises(
-                        ValueError,
-                        lambda: session.remove_field("current", "Dataset dimension"),
-                    )
-                    self.assertRaises(
-                        ValueError,
-                        lambda: session.remove_field(
-                            "current", ["SequenceName", "PatientName", "Not_Existing"]
-                        ),
-                    )
+                # Testing with a field not existing
+                self.assertRaises(
+                    ValueError,
+                    lambda: session.remove_field("not_existing", "document1"),
+                )
+                self.assertRaises(
+                    ValueError, lambda: session.remove_field(1, "NotExisting")
+                )
+                import sqlite3
 
-                    # Testing with wrong parameters
-                    self.assertRaises(
-                        session.database_exceptions,
-                        lambda: session.remove_field("current", 1),
-                    )
-                    self.assertRaises(
-                        session.database_exceptions,
-                        lambda: session.remove_field("current", None),
-                    )
+                self.assertRaises(
+                    sqlite3.OperationalError,
+                    lambda: session.remove_field("current", "NotExisting"),
+                )
+                self.assertRaises(
+                    sqlite3.OperationalError,
+                    lambda: session.remove_field("current", "Dataset dimension"),
+                )
+                # /\ Deleting a list of fields is not yet implemented in populse_db 3.0! /\
+                # self.assertRaises(
+                #     ValueError,
+                #     lambda: session.remove_field(
+                #         "current", ["SequenceName", "PatientName", "Not_Existing"]
+                #     ),
+                # )
 
-                    # Removing list of fields with list type
-                    session.add_field("current", "list1", list[int], None)
-                    session.add_field("current", "list2", list[str], None)
-                    session.remove_field("current", ["list1", "list2"])
-                    self.assertIsNone(session.get_field("current", "list1"))
-                    self.assertIsNone(session.get_field("current", "list2"))
+                # Testing with wrong parameters
+                self.assertRaises(
+                    session.database_exceptions,
+                    lambda: session.remove_field("current", 1),
+                )
+                self.assertRaises(
+                    session.database_exceptions,
+                    lambda: session.remove_field("current", None),
+                )
+
+                # /\ Deleting a list of fields is not yet implemented in populse_db 3.0! /\
+                # Removing list of fields with list type
+                # session.add_field("current", "list1", list[int], None)
+                # session.add_field("current", "list2", list[str], None)
+                # session.remove_field("current", ["list1", "list2"])
+                # self.assertIsNone(session.get_field("current", "list1"))
+                # self.assertIsNone(session.get_field("current", "list2"))
 
         def test_get_field(self):
             """
@@ -861,7 +866,7 @@ def create_test_case(**database_creation_parameters):
                 session.add_field("collection1", "test", str, description="Test field")
                 self.assertRaises(
                     session.database_exceptions,
-                    lambda: session.add_collection(session.populse_db_table),
+                    lambda: session.add_collection(populse_db_table),
                 )
 
                 # Trying with wrong types
@@ -1256,16 +1261,20 @@ def create_test_case(**database_creation_parameters):
                             ("Freesurfer", "mgz"),
                         ):
                             document = dict(
-                                name="/%s_%d.%s" % (file, dt.year, ext),
+                                name=f"/{file}_{dt.year}.{ext}",
                                 format=format,
                                 strings=list(file),
                                 datetime=dt,
                                 has_format=True,
                             )
                             session.add_document("collection1", document)
-                        document = "/%s_%d.none" % (file, dt.year)
+                        document = f"/{file}_{dt.year}.none"
                         d = dict(name=document, strings=list(file))
                         session.add_document("collection1", d)
+
+                assert (
+                    list(session.filter_documents("collection1", "format IN []")) == []
+                )
 
                 for filter, expected in (
                     (
@@ -1799,8 +1808,8 @@ def create_test_case(**database_creation_parameters):
                 ):
                     for tested_filter in (
                         filter,
-                        "(%s) AND ALL" % filter,
-                        "ALL AND (%s)" % filter,
+                        f"({filter}) AND ALL",
+                        f"ALL AND ({filter})",
                     ):
                         try:
                             documents = {
@@ -1819,8 +1828,8 @@ def create_test_case(**database_creation_parameters):
                         for document in session.filter_documents("collection1", "ALL")
                     }
                     for tested_filter in (
-                        "(%s) OR ALL" % filter,
-                        "ALL OR (%s)" % filter,
+                        f"({filter}) OR ALL",
+                        f"ALL OR ({filter})",
                     ):
                         try:
                             documents = {
@@ -1915,7 +1924,7 @@ def create_test_case(**database_creation_parameters):
                 "[]": [],
             }
             # Adds the literal for a list of all elements in the dictionary
-            literals[f'[{",".join(literals.keys())}]'] = list(literals.values())
+            literals[f"[{','.join(literals.keys())}]"] = list(literals.values())
 
             parser = literal_parser()
             for literal, expected_value in literals.items():
@@ -1997,10 +2006,11 @@ def create_test_case(**database_creation_parameters):
                 }
                 doc = base_doc.copy()
                 for k, v in base_doc.items():
-                    lk = "list_%s" % k
+                    lk = f"list_{k}"
                     doc[lk] = [v]
                 doc["primary_key"] = "test"
                 session.add_document("test", doc)
+                self.maxDiff = None
                 stored_doc = session.get_document("test", "test")
                 self.assertEqual(doc, stored_doc)
 
