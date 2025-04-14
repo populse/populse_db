@@ -25,9 +25,8 @@ import threading
 import uuid
 
 import dateutil
-import six
-
 import populse_db.database as pdb
+import six
 from populse_db.engine import Engine
 from populse_db.filter import FilterToQuery, filter_parser
 
