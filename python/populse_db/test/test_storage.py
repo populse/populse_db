@@ -206,7 +206,7 @@ def run_storage_tests(store):
             d.primary_key()
         with pytest.raises(ValueError):
             d.test_collection_1.any_field.primary_key()
-            
+
         # Set values not in schema
         d.dataset.my_data.new_value = now
         assert d.dataset.my_data.new_value.get() == now
