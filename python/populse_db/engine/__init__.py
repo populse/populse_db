@@ -1,21 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 This Python package contains engines that contains the minimum API to connect
 an external database engine to a Populse database.
 """
-
-
-def engine_factory(database_url):
-    """
-    Method that interprets an URL and creates the corresponding database
-    engine.
-    """
-    if database_url.startswith("sqlite:///"):
-        from .sqlite import SQLiteEngine
-
-        return SQLiteEngine(database_url[10:])
-    else:
-        raise ValueError("Invalid database URL: %s" % database_url)
 
 
 class Engine:
@@ -35,10 +21,10 @@ class Engine:
 
     def __enter__(self):
         """
-        This method is called at the begining of a database modification
+        This method is called at the beginning of a database modification
         session before any other method (normally within a "with" statement).
         Typically, it creates a connection with the database system, starts a
-        session then checks the existance of the base schema and creates it if
+        session then checks the existence of the base schema and creates it if
         necessary.
         """
         raise NotImplementedError()
@@ -46,7 +32,7 @@ class Engine:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
         This method is called when the user do not need to use the engine
-        anymore. After this call, all database ressources are freed and a
+        anymore. After this call, all database resources are freed and a
         call to __enter__ is necessary to be able to reuse the engine.
         Parameters are the exception information as for a "with" statement.
         It must call commit() if exc_type is None or else rollback().
@@ -154,7 +140,7 @@ class Engine:
         """
         Checks existence of a field in a collection. May be called often,
         must be fast.
-        Returns False if collection does not exist.
+        Returns False if collection does not exists.
 
         :param collection: collection name (str)
 
@@ -194,8 +180,7 @@ class Engine:
 
     def remove_fields(self, collection, fields):
         """
-        Remove given fields from a collection as well as all corresponding
-        data.
+        Remove given fields from a collection as well as all corresponding data.
 
         :param collection: collection name (str)
 
@@ -218,20 +203,21 @@ class Engine:
     def document(self, collection, document_id, fields=None, as_list=False):
         """
         Returns a Row Object corresponding to a document in the collection.
-
         The object has one item per selected fields. If fields is not given,
         fields returned by the fields() method are used.
-        If as_list is True, a list of values is returned (one value per
-        selected field).
-        Returns None if the collection or document does not exist.
+        If as_list is True, a list of values is returned (one value per selected
+        field).
+        Returns None if the collection or document does not exists.
 
         :param collection: collection name (str)
+
         :param document_id: document identifier: the value of the primary
-                            key field (str)
+            key field (str)
+
         :param fields: list of fields to get values from (other fields are
-                       ignored) (list of str or None)
-        :param as_list: if True, return a list of values instead of a
-                        Row Object (str)
+            ignored) (list of str or None)
+
+        :param as_list: if True, return a list of values instead of a Row Object (str)
         """
         raise NotImplementedError()
 
@@ -292,7 +278,9 @@ class Engine:
         """
         raise NotImplementedError()
 
-    def filter_documents(self, parsed_filter, fields=None, as_list=False):
+    def filter_documents(
+        self, parsed_filter, fields=None, as_list=False, distinct=False
+    ):
         """
         Iterate over document selected by a filter. See document() method
         for the format of a document object.
@@ -303,7 +291,8 @@ class Engine:
         :param fields: list of fields to get values from (other fields are
             ignored) (list of str or None)
 
-        :param as_list: if True, return a list of values insted of a
-                        Row Object (str)
+        :param as_list: if True, return a list of values instead of a Row Object (str)
+
+        :param distinct: if True, return only a series of different values.
         """
         raise NotImplementedError()

@@ -1,16 +1,15 @@
 environment:
 
   matrix:
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-      PYTHON: "C:\\Python39-x64"
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      PYTHON: "C:\\Python310"
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
-      PYTHON: "$HOME/venv3.9"
-#      APPVEYOR_SSH_KEY:
-#      APPVEYOR_SSH_BLOCK: true
+      PYTHON: "Python3.10"
+ #     APPVEYOR_SSH_KEY:
 
-    - APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
-      PYTHON: "~/venv3.9"
+    - APPVEYOR_BUILD_WORKER_IMAGE: macos-sonoma
+      PYTHON: "Python3.10"
 
 build: off
 
@@ -22,24 +21,44 @@ install:
 #  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
 
   - cmd: SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
-  - sh: export PATH=~/venv3.9/bin:~/venv3.9/lib:$PATH
+  - sh: if [[ $PYTHON == Python3.10 ]]; then export PATH=~/venv3.10/bin:~/venv3.10/lib:$PATH; fi
 
   - python --version
   - python -m pip install pip --upgrade
   - pip -V
   - pip install setuptools --upgrade
-  - pip install -e .[postgres]
-  - pip install codecov
-  - sh: if [[ $(uname -s) == Linux ]]; then pip install coverage[toml]; fi
+  - pip install pytest
+  - pip install -e .[server]
+  - sh: if [[ $(uname -s) == Linux ]]; then pip3 install coverage[toml]; fi
+  - sh: |
+      if [[ $(uname -s) == Linux ]]; then
+        echo "     ** Removing older SQLite versions **"
+        sudo apt-get remove --purge -y sqlite3 libsqlite3-dev
+        sudo apt-get autoremove -y
+        sudo apt-get update
+        echo "     ** Installing SQLite 3.47 **"
+        sudo apt-get install -y build-essential wget
+        wget https://www.sqlite.org/2024/sqlite-autoconf-3470100.tar.gz
+        tar -xvzf sqlite-autoconf-3470100.tar.gz
+        cd sqlite-autoconf-3470100
+        ./configure --prefix=/usr/local
+        make
+        sudo make install
+        export PATH=/usr/local/bin:$PATH
+        export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+        sqlite3 --version
+        cd ..
+      fi
+#  - sh: export APPVEYOR_SSH_BLOCK=true
+#  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
 
 test_script:
   - cmd: python -m populse_db.test -v
-  - sh: python ./python/populse_db/test.py -v
-  - sh: if [[ $(uname -s) == Linux ]]; then coverage run ./python/populse_db/test.py -v; fi
-  - sh: if [[ $(uname -s) == Linux ]]; then coverage xml; fi
+  - sh: if [[ $(uname -s) == Darwin ]]; then python -m populse_db.test -v; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then coverage run --source=populse_db -m pytest -v; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then coverage xml -i; fi
 
 after_test:
-  #- sh: if [[ $(uname -s) == Linux ]]; then codecov; fi
   - sh: if [[ $(uname -s) == Linux ]]; then curl -Os https://uploader.codecov.io/latest/linux/codecov; fi
   - sh: if [[ $(uname -s) == Linux ]]; then chmod +x codecov; fi
   - sh: if [[ $(uname -s) == Linux ]]; then ./codecov -f "coverage.xml" -t "b88bf18b-b29e-412e-96fe-e0f00832c173"; fi
