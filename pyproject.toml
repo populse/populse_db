@@ -42,7 +42,7 @@ server = [
 ]
 
 [project.urls]
-homepage = "http://populse.github.io/populse_db/"
+homepage = "https://populse.github.io/populse_db/"
 repository = "https://github.com/populse/populse_db"
 
 [build-system]
