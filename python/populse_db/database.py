@@ -36,7 +36,7 @@ def check_value_type(value, field_type):
                     return False
             return True
     elif field_type is float:
-        return isinstance(value, (int, float))
+        return isinstance(value, int | float)
     else:
         return isinstance(value, field_type)
     return False
@@ -416,7 +416,7 @@ class DatabaseCollection:
         self.session.set_settings("collection", self.name, settings)
 
     def document_id(self, document_id):
-        if not isinstance(document_id, (tuple, list)):
+        if not isinstance(document_id, tuple | list):
             document_id = (document_id,)
         if len(document_id) != len(self.primary_key):
             raise KeyError(

@@ -178,7 +178,7 @@ class SQLiteSession(DatabaseSession):
     ):
         if isinstance(primary_key, str):
             dict_primary_key = {primary_key: "str"}
-        elif isinstance(primary_key, (list, tuple)):
+        elif isinstance(primary_key, list | tuple):
             dict_primary_key = {i: "str" for i in primary_key}
         else:
             dict_primary_key = {
@@ -370,7 +370,7 @@ class SQLiteCollection(DatabaseCollection):
                 columns = columns[:-1]
             document = json_decode(catchall)
             if isinstance(document, dict):
-                document.update(zip(fields, row))
+                document.update(zip(fields, row, strict=True))
                 for field, value in document.items():
                     encoding = self.fields.get(field, {}).get("encoding")
                     if encoding:
@@ -493,7 +493,9 @@ class SQLiteCollection(DatabaseCollection):
         if not all(
             y is None or x == y
             for x, y in zip(
-                document_id, (partial_document.get(i) for i in self.primary_key)
+                document_id,
+                (partial_document.get(i) for i in self.primary_key),
+                strict=True,
             )
         ):
             raise ValueError("Modification of a document's primary key is not allowed")

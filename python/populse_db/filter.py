@@ -184,13 +184,13 @@ class FilterToSQL(Transformer):
                 if left_operand is None or isinstance(
                     left_operand,
                     (
-                        str,
-                        int,
-                        float,
-                        bool,
-                        datetime.date,
-                        datetime.time,
-                        datetime.datetime,
+                        str
+                        | int
+                        | float
+                        | bool
+                        | datetime.date
+                        | datetime.time
+                        | datetime.datetime
                     ),
                 ):
                     return self.build_condition_literal_in_list_field(
