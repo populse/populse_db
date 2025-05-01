@@ -5,7 +5,7 @@
 [![](https://img.shields.io/badge/license-CeCILL--B-blue.svg)](https://github.com/populse/populse_db/blob/master/LICENSE)
 [![](https://img.shields.io/pypi/v/populse_db.svg)](https://pypi.python.org/pypi/populse_db/)
 [![](https://img.shields.io/pypi/status/populse_db.svg)](https://pypi.python.org/pypi/populse_db/)
-[![](https://img.shields.io/badge/python-3.9%203.10%203.11%203.12-yellow.svg)](#)
+[![](https://img.shields.io/badge/python-3.10%203.11%203.12-yellow.svg)](#)
 [![](https://img.shields.io/badge/platform-Linux%2C%20OSX%2C%20Windows-orange.svg)](#)
 
 Database API for Populse
