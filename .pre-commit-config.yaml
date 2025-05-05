@@ -1,48 +1,31 @@
-repos:
+ci:
+  autoupdate_commit_msg: 'chore: update pre-commit hooks'
 
+exclude: '^LICENSE'
+
+repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
-    hooks: # general hooks
+    hooks:
     -   id: check-added-large-files
-    -   id: check-ast
     -   id: check-case-conflict
-    -   id: check-docstring-first
+    -   id: check-executables-have-shebangs
     -   id: check-json
     -   id: check-merge-conflict
+    -   id: check-shebang-scripts-are-executable
+    -   id: check-symlinks
     -   id: check-toml
     -   id: check-xml
     -   id: check-yaml
     -   id: debug-statements
+    -   id: destroyed-symlinks
     -   id: end-of-file-fixer
-    -   id: fix-encoding-pragma
-    -   id: name-tests-test
+    -   id: fix-byte-order-marker
     -   id: trailing-whitespace
 
--   repo: https://github.com/psf/black
-    rev: 25.1.0
-    hooks: # code formatter
-    -   id: black
-        language: python
-        args: ["--line-length=79"]
-
--   repo: https://github.com/pycqa/isort
-    rev: 6.0.0
-    hooks: # imports sorting
-    -   id: isort
-        name: isort (python)
-
--   repo: https://github.com/econchick/interrogate
-    rev: 1.7.0
-    hooks: # documentation checker
-    -   id: interrogate
-        args: [--config=pyproject.toml]
-        pass_filenames: false
-
--   repo: https://github.com/PyCQA/flake8
-    rev: 7.1.2
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.5
     hooks:
-    -   id: flake8
-        name: flake8 under python3
-        language_version: python3
-
-exclude: 'docs/doctrees/.*|docs/html/.*|processes/.*'
+    -   id: ruff
+    -   id: ruff-format
+        exclude: '^docs/'

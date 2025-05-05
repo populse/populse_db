@@ -1,36 +1,48 @@
 [project]
-name = "populse_db"
-version = "2.5.3"
+name = "populse-db"
+version = "3.0.0"
 authors = [
-    {name = "Populse team", email = "populse-support@univ-grenoble-alpes.fr"},
+    {name = "Popolse Team", email = "contact@brainvisa.info"},
 ]
-description = "populse_db"
+description = "populse-db"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {text = "CeCILL-B"}
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved",
-    "Natural Language :: English",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python",
     "Programming Language :: Python :: 3.11",
-    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: SQL",
+    "Natural Language :: English",
+    "Topic :: Database",
 ]
+
 dependencies = [
     "python-dateutil",
-    "lark",
+    "lark >=0.7.0",
+    "cryptography",
+    "requests",
 ]
 
 [project.optional-dependencies]
 doc = [
     "sphinx >=1.0",
-    "psycopg2-binary",
 ]
+server = [
+    "fastapi",
+    "uvicorn",
+    "tblib",
+]
+
+[project.urls]
+homepage = "https://populse.github.io/populse_db/"
+repository = "https://github.com/populse/populse_db"
 
 [build-system]
 requires = ["setuptools >= 61.0"]
@@ -39,49 +51,5 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["python"]
 
-[project.urls]
-homepage = "http://populse.github.io/populse_db/"
-repository = "https://github.com/populse/populse_db"
-
-[tool.black]
-line-length = 79
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
-
-[tool.isort]
-atomic = true
-profile = "black"
-line_length = 79
-skip_gitignore = true
-#known_first_party = ['populse_mia']
-
-
-[tool.interrogate]
-ignore-init-method = true
-ignore-init-module = false
-ignore-magic = false
-ignore-semiprivate = false
-ignore-private = false
-ignore-property-decorators = false
-ignore-module = false
-ignore-nested-functions = false
-ignore-nested-classes = true
-ignore-setters = false
-fail-under = 100
-exclude = ["setup.py", "docs", "build", "processes"]
-verbose = 2
-quiet = false
-color = true
-omit-covered-files = false
+[tool.brainvisa-cmake]
+test_commands = ["python -m populse_db.test --verbose"]

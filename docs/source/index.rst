@@ -11,153 +11,175 @@
 +----------------------------+--------------------------------------------------------------+--------------------------------------------------+
 
 
-Generalities
+Introduction
 ============
 
-Overview
---------
+populse_db is a small Python module aiming is to store and query efficiently JSON data with the following constraints:
 
-* Can support every database type, as it takes an engine as entry
-* Populse_db is ensured to work with Python 2.7 and Python >= 3.4
-* Populse_db is ensured to work on the platforms Linux, OSX, and Windows
+* **Storage on file system**: The data must be stored on a standard file system and
+  respect all system access rights.
+* **Parallel access**: Multiple processes or threads must be able to read or modify
+  data in parallel.
+* **Use a few files**: populse_db store data in a single file. In some environment
+  where the number of inodes is limited, it is vital that data storage have also a
+  reasonable limit on the number of files it produces.
+* **No schema required**: populse_db can be used without thinking about
+  database schema. But it is also possible to define some pieces of schema in order
+  to optimize query performances on some JSON attributes or to define a
+  partitioning of the data.
+* **Date and time support**: populse_db support items of type `datetime.time`,
+  `datetime.date` and `datetime.datetime` in JSON objects. These items are
+  automatically encoded (resp. decoded) to (resp. from) strings using ISO
+  format.
+* **Query list elements**: populse_db has a simple query language that
+  allows to select objects by looking for items in list fields.
+* **Transactions support**: to ensure the consistency of the database,
+  populse_db allows all modifications to be made within a transaction.
+  Thus, in case of unexpected problem, the database will keep its initial
+  state before the transaction.
+* **Partitioning of JSON objects**: populse_db allows to read or modify
+  individually each stored object. But it also allows to define a
+  partitioning of the objects offering a direct access to different parts of
+  the same object without having to read or write the whole object (as it would
+  be using a simple JSON file).
 
-Relational schema
------------------
+populse_db offers a simple API on top of a SQLite backend that allows to respect all the requirements.
 
-The relational schema of populse_db is generic, and completely dynamic.
-
-Populse_db is composed of three elements:
-
-* Collection (table)
-* Field (column in a collection)
-* Document (row in a collection)
-
-The methods of the API populse_db mainly allow you to add and remove collections, fields, and documents.
-
-Beware that all table and column names (except collection and field tables) are hashed with md5, in order to avoid issues with forbidden characters.
-
-When a database is created, it is empty.
-
-.. image:: ../pictures/schema.png
-
-Both tables are empty, as there is no collection yet.
-
-.. image:: ../pictures/empty_database.png
-
-When a collection is added, it is added to the list of collections, and the collection table is created.
-
-Exact call: session.add_collection("collection_test")
-
-.. image:: ../pictures/database_collection.png
-
-When a document is added to a collection, a row is inserted in the collection table.
-
-Exact call: session.add_document("collection_test", "document")
-
-.. image:: ../pictures/database_document.png
-
-When a field is added to a collection, it is added in the list of fields, and a column is created in the collection table.
-
-Exact call: session.add_field("collection_test", "field", populse_db.database.FIELD_TYPE_STRING, "field test")
-
-.. image:: ../pictures/database_field.png
-
-When a value is added to <collection, field, document>, the corresponding cell is set.
-
-Exact call: session.new_value("collection_test", "document", "field", "new_value")
-
-.. image:: ../pictures/database_value.png
-
-Requirements
+Dependencies
 ------------
 
-The modules required for populse_db are the following ones:
+Install tools take care of all the required dependencies for you but here is a
+summary of what populse_db needs:
 
-* lark-parser
-* python-dateutil
-* sphinx
-* psycopg2
+* Python >= 3.9. populse_db uses some features introduced in Python 3.9 (such
+  as the possibility to subscript list type as in ``list[str]``). Therefore it
+  can't work with Python 3.8 or earlier releases.
+* `dateutil <https://dateutil.readthedocs.io/>`_
+* `Lark-parser <https://github.com/lark-parser/lark/>`_ >= 0.7.0.
+* *[optional]* `Sphinx <https://www.sphinx-doc.org/>`_ allows to build the
+  documentation from source code.
 
-Other packages used
--------------------
+Get started
+============
 
-The other packages used by populse_db are the following ones:
-
-* ast
-* copy
-* datetime
-* hashlib
-* operator
-* os
-* re
-* six
-* tempfile
-* types
-* unittest
-
-Documentation
+Installation
 -------------
+Populse_db can be installed by standard Python tool. For instance::
 
-* This documentation website has been generated with Sphinx (See Sphinx website for more informations `here <http://www.sphinx-doc.org/en/master/>`__)
+   pip install populse_db
 
-* The source code of this website is in docs/ directory (The website is actually in docs/html/ directory, but docs/index.html is redirecting to the website)
+The documentation is embedded in the project. However, if one needs to rebuild
+the documentation, use::
 
-* Generate the website (from populse_db root directory):
+   pip install populse_db[doc]
 
-.. code-block:: python
 
-   cd docs/
-   make html # The website generated will be in docs/html/ directory
-   cd ..
+Basic usage
+-----------
 
-* The website is deployed automatically thanks to GitHub pages (More informations are available on their website `here <https://pages.github.com/>`__)
+Populse_db is organized in *collections* and *documents*. A document is a JSON
+object represented by a dictionary in Python. A collection is a named container
+in which documents can be stored. Internally, collections corresponds to
+database tables and documents are stored in table rows (one document per row).
+But  populse_db can hide this internal database stuff. The only thing user
+must do isto declare its collections if it uses an empty database.
 
-* The option is available in the GitHub repository populse_db settings: See GitHub Pages subsection in Options section, it is currently set to master branch /docs folder
+::
 
-* The empty file docs/.nojekyll must be there in order to have CSS on the deployed GitHub website at https://populse.github.io/populse_db/
+   from datetime import date, datetime
+   from populse_db import Storage
+   from pprint import pprint
 
-* The structure of the website that can be modified is in docs/source/ directory (for example, docs/source/index.rst is this current page)
+   # Create a storage using a file name
+   storage = Storage('/tmp/populse_db.sqlite')
+   # Create a read/write session
+   with storage.session(write=True) as db:
+      db.last_modified = datetime.now()
 
-* In order to install Sphinx, the following commands have been executed (from populse_db root directory):
+      # Store documents in the database
+      db['subject'] = Storage.Collection('subject_id')
+      db['subject']['rbndt001'] = {
+         'name': 'Eléa',
+         'sex': 'f',
+         'birth_date': date(1968, 3, 3),
+      }
+      db['subject']['rbndt002'] = {
+         'name': 'Païkan',
+         'sex': 'm',
+         'birth_date': date(1963, 12, 7),
+      }
+      db['acquisition'] = Storage.Collection()
+      db['acquisition']['rbndt001_t1'] = {
+         'subject_id': 'rbndt001',
+         'type': ['image', 'mri', 'T1'],
+         'format': 'DICOM',
+         'files': [
+               '/somewhere/t1/acq0001.dcm',
+               '/somewhere/t1/acq0002.dcm',
+               '/somewhere/t1/acq0003.dcm',
+               '/somewhere/t1/acq0004.dcm',
+         ],
+         'date': date(2022, 3, 28),
+      }
+      db['acquisition']['rbndt001_t2'] = {
+         'subject_id': 'rbndt001',
+         'type': ['image', 'mri', 'T2'],
+         'format': 'DICOM',
+         'files': [
+               '/somewhere/t2/acq0001.dcm',
+               '/somewhere/t2/acq0002.dcm',
+               '/somewhere/t2/acq0003.dcm',
+               '/somewhere/t2/acq0004.dcm',
+         ],
+         'date': date(2022, 3, 28),
+      }
+      db['acquisition']['rbndt002_t1'] = {
+         'subject_id': 'rbndt002',
+         'type': ['image', 'mri', 'T1'],
+         'format': 'NIFTI',
+         'files': [
+               '/elsewhere/sub-rbndt001.nii',
+         ],
+         'date': date(2022, 3, 29),
+      }
 
-.. code-block:: python
+      # Retrieve a single value from storage
+      print('Last modified:', db.last_modified.get())
 
-   pip install sphinx
-   mkdir docs/
-   cd docs/
-   sphinx-quickstart
-   """
-   Default values, except the following ones:
-    - Separate source and build directories (y/n) [n]: y
-    - Project name: populse_db
-    - Author name(s): populse
-    - Project version: 1
-    - Project release: 1.0.0
-    - autodoc: automatically insert docstrings from modules (y/n) [n]: y
-    - Create Windows command file? (y/n) [y]: n
-   """
-   """
-   The following line (22) must be uncommented from docs/source/conf.py:
-    - sys.path.insert(0, os.path.abspath('../..'))
-   The following line (8) must be modified from docs/Makefile:
-    - BUILDDIR      = BUILD  =>  BUILDDIR      = .
-   """
-   sphinx-apidoc -f -o source/ ../python/populse_db/
+      # Retrieve a single document from collection 'subject'
+      pprint(db['subject']['rbndt001'].get())
 
-* After that, the documentation can be modified in docs/source directory, and built with make html command in docs/ directory
+      # Retrieve all documents from collection 'subject' respecting the
+      # following conditions:
+      #   - the "subject" field equals to "rbndt001"
+      #   - the "type" field is a list containing the value "T1"
+      for doc in db['acquisition'].search('subject=="rbndt001" and "T1" in type'):
+         pprint(doc)
 
-* The documentation is directly using the docstring from the source code to automatically generate the API
+      # Retrieve all possible types of acquisition
+      print('Subjects:', ', '.join(db.subject.distinct_values('subject_id')))
 
-License
--------
+The example above illustrate how to use populse_db to store and retrieve JSON
+objects without wondering about the underlying SQL database engine. This script
+produces the following result::
 
-The whole populse project is open source.
+   {'birth_date': datetime.date(1968, 3, 3),
+   'name': 'Eléa',
+   'primary_key': 'rbndt001',
+   'sex': 'f'}
+   {'date': datetime.date(2022, 3, 28),
+   'files': ['/somewhere/t1/acq0001.dcm',
+            '/somewhere/t1/acq0002.dcm',
+            '/somewhere/t1/acq0003.dcm',
+            '/somewhere/t1/acq0004.dcm'],
+   'format': 'DICOM',
+   'primary_key': 'rbndt001_t1',
+   'subject': 'rbndt001',
+   'type': ['image', 'mri', 'T1']}
 
-Populse_db is precisely released under the CeCILL-B software license.
 
-You can find all the details on the license `here
-<http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html>`__, or refer to the license file `here
-<https://github.com/populse/populse_db/blob/master/LICENSE.en>`__.
+
+
 
 Indices and tables
 ==================
