@@ -1,7 +1,6 @@
 import importlib
 import os
 import re
-import sqlite3
 import typing
 from uuid import uuid4
 
@@ -74,6 +73,10 @@ class StorageAPI:
         if re.match("^https?:.*", database_file):
             return StorageServerAPI(database_file)
         if os.path.exists(database_file) or create:
+            # sqlite3 module is optional because it does not
+            # exist in Pyodide distribution (i.e. PyScript)
+            import sqlite3
+
             cnx = sqlite3.connect(database_file, timeout=10)
             # Check if storage_server table exists
             cur = cnx.execute(

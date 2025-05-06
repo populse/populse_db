@@ -5,8 +5,6 @@ import threading
 from contextlib import contextmanager
 from urllib.parse import urlparse
 
-from .engine.sqlite import create_sqlite_session_factory
-
 try:
     __version__ = importlib.metadata.__version__ = importlib.metadata.version(
         "populse_db"
@@ -126,6 +124,10 @@ class Database:
             self.timeout = None
 
         if self.url.scheme in ("", "sqlite"):
+            # sqlite3 module (used in .engine.sqlite) is optional
+            # because it does not exist in Pyodide distribution (i.e.
+            # PyScript).
+            from .engine.sqlite import create_sqlite_session_factory
             self.session_factory = create_sqlite_session_factory(self.url)
 
         else:

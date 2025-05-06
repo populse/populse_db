@@ -1,4 +1,3 @@
-import sqlite3
 import sys
 from typing import Annotated
 
@@ -206,11 +205,13 @@ def create_server(database_file, create=True):
 
 
 if __name__ == "__main__":
+    import sqlite3
+
     database_file = sys.argv[1]
     if len(sys.argv) > 2:
         port = int(sys.argv[2])
     else:
-        port=5000
+        port = 5000
     cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE", timeout=10)
     try:
         sql = (
