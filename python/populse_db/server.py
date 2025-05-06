@@ -4,6 +4,7 @@ from typing import Annotated
 import uvicorn
 from fastapi import Body, FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from .database import json_decode, json_encode, populse_db_table
 from .storage_api import StorageFileAPI, serialize_exception
@@ -18,6 +19,14 @@ body_json = Annotated[str | int | float | bool | None | list | dict, Body()]
 def create_server(database_file, create=True):
     storage_api = StorageFileAPI(database_file, create=create)
     app = FastAPI()
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     async def catch_exceptions_middleware(request: Request, call_next):
         try:
