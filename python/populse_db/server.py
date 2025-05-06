@@ -16,8 +16,8 @@ body_dict = Annotated[dict, Body()]
 body_json = Annotated[str | int | float | bool | None | list | dict, Body()]
 
 
-def create_server(database_file):
-    storage_api = StorageFileAPI(database_file)
+def create_server(database_file, create=True):
+    storage_api = StorageFileAPI(database_file, create=create)
     app = FastAPI()
 
     async def catch_exceptions_middleware(request: Request, call_next):
@@ -207,6 +207,10 @@ def create_server(database_file):
 
 if __name__ == "__main__":
     database_file = sys.argv[1]
+    if len(sys.argv) > 2:
+        port = int(sys.argv[2])
+    else:
+        port=5000
     cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE", timeout=10)
     try:
         sql = (
@@ -223,7 +227,7 @@ if __name__ == "__main__":
         ).fetchone()
         if row:
             raise RuntimeError(f"{database_file} already have a server in {row[0]}")
-        url = "http://127.0.0.1:5000"
+        url = f"http://127.0.0.1:{port}"
         cnx.execute(
             f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
             ["server", "url", url],
@@ -232,4 +236,4 @@ if __name__ == "__main__":
     finally:
         cnx.close()
     app = create_server(database_file)
-    uvicorn.run(app, port=5000, log_level="critical")
+    uvicorn.run(app, port=port, log_level="critical")

@@ -1,5 +1,6 @@
 import importlib
 import os
+import re
 import sqlite3
 import typing
 from uuid import uuid4
@@ -70,7 +71,9 @@ class StorageAPI:
         create: bool = False,
         echo_sql: typing.TextIO | None = None,
     ):
-        if os.path.exists(database_file):
+        if re.match("^https?:.*", database_file):
+            return StorageServerAPI(database_file)
+        if os.path.exists(database_file) or create:
             cnx = sqlite3.connect(database_file, timeout=10)
             # Check if storage_server table exists
             cur = cnx.execute(
@@ -82,7 +85,7 @@ class StorageAPI:
                     f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'"
                 ).fetchone()
                 if row:
-                    return StorageServerAPI(database_file, row[0])
+                    return StorageServerAPI(row[0])
         return StorageFileAPI(database_file, timeout, create, echo_sql)
 
 
@@ -547,8 +550,7 @@ class StorageFileAPI:
 
 
 class StorageServerAPI:
-    def __init__(self, database_file, url):
-        self.database_file = database_file
+    def __init__(self, url):
         self.url = url
 
     def access_token(self):
