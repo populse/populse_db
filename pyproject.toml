@@ -1,6 +1,6 @@
 [project]
 name = "populse-db"
-version = "3.0.4"
+version = "3.0.5"
 authors = [
     {name = "Popolse Team", email = "contact@brainvisa.info"},
 ]
@@ -53,3 +53,24 @@ where = ["python"]
 
 [tool.brainvisa-cmake]
 test_commands = ["python -m populse_db.test --verbose"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+populse-db = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+doc = { features = ["doc"], solve-group = "default" }
+server = { features = ["server"], solve-group = "default" }
+
+[tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+uvicorn = "*"
+fastapi = "*"
+tblib = "*"
+pip = "*"
+pytest = ">=8.3.5,<9"

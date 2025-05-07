@@ -1,3 +1,4 @@
+import argparse
 import sys
 from typing import Annotated
 
@@ -214,12 +215,20 @@ def create_server(database_file, create=True):
 if __name__ == "__main__":
     import sqlite3
 
-    database_file = sys.argv[1]
-    if len(sys.argv) > 2:
-        port = int(sys.argv[2])
-    else:
-        port = 5000
-    cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE", timeout=10)
+    parser = argparse.ArgumentParser(
+        prog="python -m populse_db.server",
+        description="Run a web server fo a populse_db database",
+    )
+
+    parser.add_argument('database')
+    parser.add_argument('-b', '--bind', default="0.0.0.0")
+    parser.add_argument('-p', '--port', default="8080")
+    parser.add_argument('-u', '--url', default=None)
+    parser.add_argument('-v', '--verbose',
+                        action='store_true')
+
+    options = parser.parse_args()
+    cnx = sqlite3.connect(options.database, isolation_level="EXCLUSIVE", timeout=10)
     try:
         sql = (
             "CREATE TABLE IF NOT EXISTS "
@@ -234,20 +243,27 @@ if __name__ == "__main__":
             f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'"
         ).fetchone()
         if row:
-            raise RuntimeError(f"{database_file} already have a server in {row[0]}")
-        url = f"http://0.0.0.0:{port}"
+            raise RuntimeError(f"{options.database} already have a server in {row[0]}")
+        if options.url is None:
+            if options.bind == "0.0.0.0":
+                host="127.0.0.1"
+            else:
+                host=options.bind
+            options.url = f"http://{host}:{options.port}"
+        if options.verbose:
+            print('Storing external URL:', options.url)
         cnx.execute(
             f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
-            ["server", "url", url],
+            ["server", "url", options.url],
         )
         cnx.commit()
     finally:
         cnx.close()
     try:
-        app = create_server(database_file)
-        uvicorn.run(app, port=port, log_level="critical")
+        app = create_server(options.database)
+        uvicorn.run(app, host=options.bind, port=int(options.port), log_level=("debug" if options.verbose else "critical"))
     finally:
-        cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE", timeout=10)
+        cnx = sqlite3.connect(options.database, isolation_level="EXCLUSIVE", timeout=10)
         try:
             cnx.execute(
                 f"DELETE FROM [{populse_db_table}] WHERE category='server' AND key='url'"
@@ -255,3 +271,4 @@ if __name__ == "__main__":
             cnx.commit()
         finally:
             cnx.close()
+
