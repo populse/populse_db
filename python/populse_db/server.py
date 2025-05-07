@@ -1,4 +1,5 @@
 import argparse
+import json
 from typing import Annotated
 
 import uvicorn
@@ -15,11 +16,16 @@ body_dict = Annotated[dict, Body()]
 body_json = Annotated[str | int | float | bool | None | list | dict, Body()]
 
 query_str = Annotated[str, Query()]
-query_path = Annotated[list[str | int | list[str]], Query()]
+query_path = Annotated[str, Query()]
 query_bool = Annotated[bool, Query()]
 query_dict = Annotated[dict, Query()]
-query_json = Annotated[str | int | float | bool | None | list | dict, Query()]
+query_json = Annotated[str, Query()]
 
+
+def str_to_json(value):
+    if value and (value[0] in {"[", '"', "{"} or value[0].isdigit()):
+        return json.loads(value)
+    return value
 
 def create_server(database_file, create=True):
     storage_api = StorageFileAPI(database_file, create=create)
@@ -118,8 +124,8 @@ def create_server(database_file, create=True):
     ):
         result = storage_api.get(
             connection_id,
-            path,
-            default,
+            str_to_json(path),
+            str_to_json(default),
             fields,
             as_list,
             distinct,
@@ -132,11 +138,11 @@ def create_server(database_file, create=True):
         path: query_path,
         query: Annotated[str | None, Query()] = None,
     ):
-        return storage_api.count(connection_id, path, query)
+        return storage_api.count(connection_id, str_to_json(path), query)
 
     @app.get("/primary_key")
     async def primary_key(connection_id: query_str, path: query_path):
-        return storage_api.primary_key(connection_id, path)
+        return storage_api.primary_key(connection_id, str_to_json(path))
 
     @app.post("/data")
     async def set(connection_id: body_str, path: body_path, value: body_json):
@@ -164,7 +170,7 @@ def create_server(database_file, create=True):
         distinct: query_bool = False,
     ):
         result = storage_api.search(
-            connection_id, path, query, fields, as_list, distinct
+            connection_id, str_to_json(path), query, fields, as_list, distinct
         )
         return json_encode(result)
 
@@ -182,7 +188,7 @@ def create_server(database_file, create=True):
         path: query_path,
         field: query_str,
     ):
-        result = storage_api.distinct_values(connection_id, path, field)
+        result = storage_api.distinct_values(connection_id, str_to_json(path), field)
         return json_encode(result)
 
     @app.delete("/")
@@ -198,21 +204,21 @@ def create_server(database_file, create=True):
         path: query_path,
         collection: query_str,
     ):
-        return storage_api.has_collection(connection_id, path, collection)
+        return storage_api.has_collection(connection_id, str_to_json(path), collection)
 
     @app.get("/collection_names")
     async def collection_names(
         connection_id: query_str,
         path: query_path,
     ):
-        return storage_api.collection_names(connection_id, path)
+        return storage_api.collection_names(connection_id, str_to_json(path))
 
     @app.get("/keys")
     async def keys(
         connection_id: query_str,
         path: query_path,
     ):
-        result = storage_api.keys(connection_id, path)
+        result = storage_api.keys(connection_id, str_to_json(path))
         return list(result)
 
     return app

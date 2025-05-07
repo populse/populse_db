@@ -1,4 +1,5 @@
 import importlib
+import json
 import os
 import re
 import typing
@@ -552,6 +553,13 @@ class StorageFileAPI:
         return collection.fields.keys()
 
 
+def json_to_str(value):
+    if isinstance(value, str):
+        if not value or (value[0] not in {"[", "{", '"'} and not value[0].isdigit()):
+            return value
+    return json.dumps(value)
+
+
 class StorageServerAPI:
     def __init__(self, url):
         self.url = url
@@ -660,6 +668,9 @@ class StorageServerAPI:
         as_list=None,
         distinct=False,
     ):
+        path = json_to_str(path)
+        if default is not None:
+            default = json_to_str(default)
         return self._call(
             "get",
             "data",
@@ -675,6 +686,7 @@ class StorageServerAPI:
         )
 
     def count(self, connection_id, path, query=None):
+        path = json_to_str(path)
         return self._call(
             "get",
             "count",
@@ -682,6 +694,7 @@ class StorageServerAPI:
         )
 
     def primary_key(self, connection_id, path):
+        path = json_to_str(path)
         return self._call(
             "get",
             "primary_key",
@@ -717,8 +730,9 @@ class StorageServerAPI:
     def search(
         self, connection_id, path, query, fields=None, as_list=None, distinct=False
     ):
+        path = json_to_str(path)
         return self._call(
-            "post",
+            "get",
             "search",
             dict(
                 connection_id=connection_id,
@@ -740,6 +754,7 @@ class StorageServerAPI:
         )
 
     def distinct_values(self, connection_id, path, field):
+        path = json_to_str(path)
         return self._call(
             "get",
             "distinct",
@@ -755,6 +770,7 @@ class StorageServerAPI:
         )
 
     def has_collection(self, connection_id, path, collection):
+        path = json_to_str(path)
         return self._call(
             "get",
             "has_collection",
@@ -762,6 +778,7 @@ class StorageServerAPI:
         )
 
     def collection_names(self, connection_id, path):
+        path = json_to_str(path)
         return self._call(
             "get",
             "collection_names",
@@ -769,6 +786,7 @@ class StorageServerAPI:
         )
 
     def keys(self, connection_id, path):
+        path = json_to_str(path)
         return self._call(
             "get",
             "keys",
