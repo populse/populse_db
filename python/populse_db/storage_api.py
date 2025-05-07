@@ -560,10 +560,17 @@ class StorageServerAPI:
         return self._call("get", "access_token", None)
 
     def _call(self, method, route, payload, decode=False):
+        if method == "get":
+            if payload:
+                params = {k: v for k, v in payload.items() if v is not None}
+            else:
+                params = None
+            j = None
+        else:
+            j = payload
+            params = None
         response = requests.request(
-            method,
-            f"{self.url}/{route}",
-            json=payload,
+            method, f"{self.url}/{route}", json=j, params=params
         )
         if response.status_code == 500:
             exc = deserialize_exception(response.json())
@@ -711,7 +718,7 @@ class StorageServerAPI:
         self, connection_id, path, query, fields=None, as_list=None, distinct=False
     ):
         return self._call(
-            "get",
+            "post",
             "search",
             dict(
                 connection_id=connection_id,
