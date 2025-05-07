@@ -4,7 +4,6 @@ from typing import Annotated
 import uvicorn
 from fastapi import Body, FastAPI, Request
 from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
 
 from .database import json_decode, json_encode, populse_db_table
 from .storage_api import StorageFileAPI, serialize_exception
@@ -20,14 +19,15 @@ def create_server(database_file, create=True):
     storage_api = StorageFileAPI(database_file, create=create)
     app = FastAPI()
 
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    @app.middleware("http")
+    async def cors_middleware(request: Request, call_next):
+        
+        response = await call_next(request)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        return response
 
+    @app.middleware("http")
     async def catch_exceptions_middleware(request: Request, call_next):
         try:
             return await call_next(request)
@@ -36,8 +36,6 @@ def create_server(database_file, create=True):
                 status_code=500,
                 content=serialize_exception(exc),
             )
-
-    app.middleware("http")(catch_exceptions_middleware)
 
     @app.get("/access_token")
     async def access_token():
@@ -237,7 +235,7 @@ if __name__ == "__main__":
         ).fetchone()
         if row:
             raise RuntimeError(f"{database_file} already have a server in {row[0]}")
-        url = f"http://127.0.0.1:{port}"
+        url = f"http://0.0.0.0:{port}"
         cnx.execute(
             f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
             ["server", "url", url],
@@ -245,5 +243,15 @@ if __name__ == "__main__":
         cnx.commit()
     finally:
         cnx.close()
-    app = create_server(database_file)
-    uvicorn.run(app, port=port, log_level="critical")
+    try:
+        app = create_server(database_file)
+        uvicorn.run(app, port=port, log_level="critical")
+    finally:
+        cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE", timeout=10)
+        try:
+            cnx.execute(
+                f"DELETE FROM [{populse_db_table}] WHERE category='server' AND key='url'"
+            )
+            cnx.commit()
+        finally:
+            cnx.close()
