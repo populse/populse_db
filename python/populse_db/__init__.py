@@ -128,6 +128,7 @@ class Database:
             # because it does not exist in Pyodide distribution (i.e.
             # PyScript).
             from .engine.sqlite import create_sqlite_session_factory
+
             self.session_factory = create_sqlite_session_factory(self.url)
 
         else:

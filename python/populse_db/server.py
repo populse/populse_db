@@ -3,7 +3,7 @@ import json
 from typing import Annotated
 
 import uvicorn
-from fastapi import Body, Query, FastAPI, Request
+from fastapi import Body, FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 
 from .database import json_decode, json_encode, populse_db_table
@@ -27,13 +27,13 @@ def str_to_json(value):
         return json.loads(value)
     return value
 
+
 def create_server(database_file, create=True):
     storage_api = StorageFileAPI(database_file, create=create)
     app = FastAPI()
 
     @app.middleware("http")
     async def cors_middleware(request: Request, call_next):
-
         response = await call_next(request)
         response.headers["Access-Control-Allow-Origin"] = "*"
         response.headers["Access-Control-Allow-Methods"] = "*"
