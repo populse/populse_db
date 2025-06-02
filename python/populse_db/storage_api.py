@@ -1,7 +1,7 @@
 import importlib
+import json
 import os
 import re
-import sqlite3
 import typing
 from uuid import uuid4
 
@@ -74,6 +74,10 @@ class StorageAPI:
         if re.match("^https?:.*", database_file):
             return StorageServerAPI(database_file)
         if os.path.exists(database_file) or create:
+            # sqlite3 module is optional because it does not
+            # exist in Pyodide distribution (i.e. PyScript)
+            import sqlite3
+
             cnx = sqlite3.connect(database_file, timeout=10)
             # Check if storage_server table exists
             cur = cnx.execute(
@@ -549,6 +553,13 @@ class StorageFileAPI:
         return collection.fields.keys()
 
 
+def json_to_str(value):
+    if isinstance(value, str):
+        if not value or (value[0] not in {"[", "{", '"'} and not value[0].isdigit()):
+            return value
+    return json.dumps(value)
+
+
 class StorageServerAPI:
     def __init__(self, url):
         self.url = url
@@ -557,10 +568,17 @@ class StorageServerAPI:
         return self._call("get", "access_token", None)
 
     def _call(self, method, route, payload, decode=False):
+        if method == "get":
+            if payload:
+                params = {k: v for k, v in payload.items() if v is not None}
+            else:
+                params = None
+            j = None
+        else:
+            j = payload
+            params = None
         response = requests.request(
-            method,
-            f"{self.url}/{route}",
-            json=payload,
+            method, f"{self.url}/{route}", json=j, params=params
         )
         if response.status_code == 500:
             exc = deserialize_exception(response.json())
@@ -650,6 +668,9 @@ class StorageServerAPI:
         as_list=None,
         distinct=False,
     ):
+        path = json_to_str(path)
+        if default is not None:
+            default = json_to_str(default)
         return self._call(
             "get",
             "data",
@@ -665,6 +686,7 @@ class StorageServerAPI:
         )
 
     def count(self, connection_id, path, query=None):
+        path = json_to_str(path)
         return self._call(
             "get",
             "count",
@@ -672,6 +694,7 @@ class StorageServerAPI:
         )
 
     def primary_key(self, connection_id, path):
+        path = json_to_str(path)
         return self._call(
             "get",
             "primary_key",
@@ -707,6 +730,7 @@ class StorageServerAPI:
     def search(
         self, connection_id, path, query, fields=None, as_list=None, distinct=False
     ):
+        path = json_to_str(path)
         return self._call(
             "get",
             "search",
@@ -730,6 +754,7 @@ class StorageServerAPI:
         )
 
     def distinct_values(self, connection_id, path, field):
+        path = json_to_str(path)
         return self._call(
             "get",
             "distinct",
@@ -745,6 +770,7 @@ class StorageServerAPI:
         )
 
     def has_collection(self, connection_id, path, collection):
+        path = json_to_str(path)
         return self._call(
             "get",
             "has_collection",
@@ -752,6 +778,7 @@ class StorageServerAPI:
         )
 
     def collection_names(self, connection_id, path):
+        path = json_to_str(path)
         return self._call(
             "get",
             "collection_names",
@@ -759,6 +786,7 @@ class StorageServerAPI:
         )
 
     def keys(self, connection_id, path):
+        path = json_to_str(path)
         return self._call(
             "get",
             "keys",

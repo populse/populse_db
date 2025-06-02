@@ -1,9 +1,9 @@
-import sqlite3
-import sys
+import argparse
+import json
 from typing import Annotated
 
 import uvicorn
-from fastapi import Body, FastAPI, Request
+from fastapi import Body, FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 
 from .database import json_decode, json_encode, populse_db_table
@@ -15,11 +15,32 @@ body_bool = Annotated[bool, Body()]
 body_dict = Annotated[dict, Body()]
 body_json = Annotated[str | int | float | bool | None | list | dict, Body()]
 
+query_str = Annotated[str, Query()]
+query_path = Annotated[str, Query()]
+query_bool = Annotated[bool, Query()]
+query_dict = Annotated[dict, Query()]
+query_json = Annotated[str, Query()]
+
+
+def str_to_json(value):
+    if value and (value[0] in {"[", '"', "{"} or value[0].isdigit()):
+        return json.loads(value)
+    return value
+
 
 def create_server(database_file, create=True):
     storage_api = StorageFileAPI(database_file, create=create)
     app = FastAPI()
 
+    @app.middleware("http")
+    async def cors_middleware(request: Request, call_next):
+        response = await call_next(request)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        return response
+
+    @app.middleware("http")
     async def catch_exceptions_middleware(request: Request, call_next):
         try:
             return await call_next(request)
@@ -28,8 +49,6 @@ def create_server(database_file, create=True):
                 status_code=500,
                 content=serialize_exception(exc),
             )
-
-    app.middleware("http")(catch_exceptions_middleware)
 
     @app.get("/access_token")
     async def access_token():
@@ -96,17 +115,17 @@ def create_server(database_file, create=True):
 
     @app.get("/data")
     async def get(
-        connection_id: body_str,
-        path: body_path,
-        default: body_json = None,
-        fields: Annotated[list[str] | None, Body()] = None,
-        as_list: body_bool = False,
-        distinct: body_bool = False,
+        connection_id: query_str,
+        path: query_path,
+        default: query_json = None,
+        fields: Annotated[list[str] | None, Query()] = None,
+        as_list: query_bool = False,
+        distinct: query_bool = False,
     ):
         result = storage_api.get(
             connection_id,
-            path,
-            default,
+            str_to_json(path),
+            str_to_json(default),
             fields,
             as_list,
             distinct,
@@ -115,15 +134,15 @@ def create_server(database_file, create=True):
 
     @app.get("/count")
     async def count(
-        connection_id: body_str,
-        path: body_path,
-        query: Annotated[str | None, Body()] = None,
+        connection_id: query_str,
+        path: query_path,
+        query: Annotated[str | None, Query()] = None,
     ):
-        return storage_api.count(connection_id, path, query)
+        return storage_api.count(connection_id, str_to_json(path), query)
 
     @app.get("/primary_key")
-    async def primary_key(connection_id: body_str, path: body_path):
-        return storage_api.primary_key(connection_id, path)
+    async def primary_key(connection_id: query_str, path: query_path):
+        return storage_api.primary_key(connection_id, str_to_json(path))
 
     @app.post("/data")
     async def set(connection_id: body_str, path: body_path, value: body_json):
@@ -143,15 +162,15 @@ def create_server(database_file, create=True):
 
     @app.get("/search")
     async def search(
-        connection_id: body_str,
-        path: body_path,
-        query: Annotated[str | None, Body()] = None,
-        fields: Annotated[list[str] | None, Body()] = None,
-        as_list: body_bool = False,
-        distinct: body_bool = False,
+        connection_id: query_str,
+        path: query_path,
+        query: Annotated[str | None, Query()] = None,
+        fields: Annotated[list[str] | None, Query()] = None,
+        as_list: query_bool = False,
+        distinct: query_bool = False,
     ):
         result = storage_api.search(
-            connection_id, path, query, fields, as_list, distinct
+            connection_id, str_to_json(path), query, fields, as_list, distinct
         )
         return json_encode(result)
 
@@ -165,11 +184,11 @@ def create_server(database_file, create=True):
 
     @app.get("/distinct")
     async def distinct_values(
-        connection_id: body_str,
-        path: body_path,
-        field: body_str,
+        connection_id: query_str,
+        path: query_path,
+        field: query_str,
     ):
-        result = storage_api.distinct_values(connection_id, path, field)
+        result = storage_api.distinct_values(connection_id, str_to_json(path), field)
         return json_encode(result)
 
     @app.delete("/")
@@ -181,37 +200,46 @@ def create_server(database_file, create=True):
 
     @app.get("/has_collection")
     async def has_collection(
-        connection_id: body_str,
-        path: body_path,
-        collection: body_str,
+        connection_id: query_str,
+        path: query_path,
+        collection: query_str,
     ):
-        return storage_api.has_collection(connection_id, path, collection)
+        return storage_api.has_collection(connection_id, str_to_json(path), collection)
 
     @app.get("/collection_names")
     async def collection_names(
-        connection_id: body_str,
-        path: body_path,
+        connection_id: query_str,
+        path: query_path,
     ):
-        return storage_api.collection_names(connection_id, path)
+        return storage_api.collection_names(connection_id, str_to_json(path))
 
     @app.get("/keys")
     async def keys(
-        connection_id: body_str,
-        path: body_path,
+        connection_id: query_str,
+        path: query_path,
     ):
-        result = storage_api.keys(connection_id, path)
+        result = storage_api.keys(connection_id, str_to_json(path))
         return list(result)
 
     return app
 
 
 if __name__ == "__main__":
-    database_file = sys.argv[1]
-    if len(sys.argv) > 2:
-        port = int(sys.argv[2])
-    else:
-        port=5000
-    cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE", timeout=10)
+    import sqlite3
+
+    parser = argparse.ArgumentParser(
+        prog="python -m populse_db.server",
+        description="Run a web server fo a populse_db database",
+    )
+
+    parser.add_argument("database")
+    parser.add_argument("-b", "--bind", default="0.0.0.0")
+    parser.add_argument("-p", "--port", default="8080")
+    parser.add_argument("-u", "--url", default=None)
+    parser.add_argument("-v", "--verbose", action="store_true")
+
+    options = parser.parse_args()
+    cnx = sqlite3.connect(options.database, isolation_level="EXCLUSIVE", timeout=10)
     try:
         sql = (
             "CREATE TABLE IF NOT EXISTS "
@@ -226,14 +254,36 @@ if __name__ == "__main__":
             f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'"
         ).fetchone()
         if row:
-            raise RuntimeError(f"{database_file} already have a server in {row[0]}")
-        url = f"http://127.0.0.1:{port}"
+            raise RuntimeError(f"{options.database} already have a server in {row[0]}")
+        if options.url is None:
+            if options.bind == "0.0.0.0":
+                host = "127.0.0.1"
+            else:
+                host = options.bind
+            options.url = f"http://{host}:{options.port}"
+        if options.verbose:
+            print("Storing external URL:", options.url)
         cnx.execute(
             f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
-            ["server", "url", url],
+            ["server", "url", options.url],
         )
         cnx.commit()
     finally:
         cnx.close()
-    app = create_server(database_file)
-    uvicorn.run(app, port=port, log_level="critical")
+    try:
+        app = create_server(options.database)
+        uvicorn.run(
+            app,
+            host=options.bind,
+            port=int(options.port),
+            log_level=("debug" if options.verbose else "critical"),
+        )
+    finally:
+        cnx = sqlite3.connect(options.database, isolation_level="EXCLUSIVE", timeout=10)
+        try:
+            cnx.execute(
+                f"DELETE FROM [{populse_db_table}] WHERE category='server' AND key='url'"
+            )
+            cnx.commit()
+        finally:
+            cnx.close()

@@ -464,7 +464,7 @@ def run_storage_tests(store):
 def test_storage():
     store = Storage("/tmp/i_do_not_exist")
     with pytest.raises(RuntimeError):
-        with store.data() as d:
+        with store.data() as _:
             pass
 
     with NamedTemporaryFile(delete=True) as tmp:
