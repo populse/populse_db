@@ -616,7 +616,6 @@ class StorageServerAPI:
             ),
         )
 
-
     def _call(self, method, route, payload, decode=False):
         if method == "get":
             if payload:
