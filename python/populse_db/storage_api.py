@@ -137,11 +137,14 @@ class StorageFileAPI:
 
     def connect(self, access_token, exclusive, write, create):
         connection_id = str(uuid4())
-        f = Fernet(self.key)
-        try:
-            access_rights = f.decrypt(access_token.encode()).decode()
-        except InvalidToken:
-            raise PermissionError("invalid token") from None
+        if access_token:
+            f = Fernet(self.key)
+            try:
+                access_rights = f.decrypt(access_token.encode()).decode()
+            except InvalidToken:
+                raise PermissionError("invalid token") from None
+        else:
+            access_rights = "none"
         if not write and access_rights in ("read", "write"):
             dbs = self.database.session(exclusive=exclusive, create=False)
         elif access_rights == "write":
@@ -568,6 +571,7 @@ class StorageServerAPI:
                 cnx.close()
         if self.url is None:
             raise RuntimeError(f"Cannot get server URL from database {database_file}")
+        self.key = Fernet.generate_key()
 
     def access_token(self, write=True):
         import sqlite3
@@ -576,14 +580,15 @@ class StorageServerAPI:
             # Check write access to the database file
             cnx = None
             try:
+                challenge = str(uuid4())
                 cnx = sqlite3.connect(self.database_file)
-                cur = cnx.cursor()
-                cur.execute("BEGIN;")
-                cur.execute("CREATE TEMP TABLE test_write(x INTEGER);")
-                cnx.rollback()  # on annule tout changement
-                access = b"write"
+                cnx.execute(
+                    f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
+                    ["server", f"write_challenge_{challenge}", "written"],
+                )
+                cnx.commit()
             except sqlite3.Error:
-                return ""
+                raise PermissionError("Cannot write to database") from None
             finally:
                 if cnx is not None:
                     cnx.close()
@@ -592,17 +597,25 @@ class StorageServerAPI:
             cnx = None
             try:
                 cnx = sqlite3.connect(f"file:{self.database_file}?mode=ro", uri=True)
-                cur = cnx.cursor()
-                cur.execute("SELECT name FROM sqlite_master LIMIT 1;")
-                _ = cur.fetchone()
-                access = b"read"
+                challenge = cnx.execute(
+                    f"SELECT _json FROM [{populse_db_table}] WHERE category=? AND key=?",
+                    ["server", "read_challenge"],
+                ).fetchone()[0]
             except sqlite3.Error:
-                return ""
+                raise PermissionError("Cannot read from database") from None
             finally:
                 if cnx is not None:
                     cnx.close()
-        f = Fernet(self.key)
-        return f.encrypt(access).decode()
+
+        return self._call(
+            "get",
+            "access_token",
+            dict(
+                write=bool(write),
+                challenge=str(challenge),
+            ),
+        )
+
 
     def _call(self, method, route, payload, decode=False):
         if method == "get":

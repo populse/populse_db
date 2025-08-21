@@ -1,8 +1,8 @@
 import argparse
 import json
 from typing import Annotated
+import uuid
 
-from cryptography.fernet import Fernet
 from fastapi import Body, FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 import uvicorn
@@ -52,20 +52,42 @@ def create_server(database_file, create=True):
             )
 
     @app.get("/access_token")
-    async def access_token(write: body_bool):
-        access = None
-        if write:
-            # Try to write into database file
-            access = b"write"
+    async def access_token(write: query_bool, challenge: query_str):
+        import sqlite3
 
+        if write:
+            cnx = None
+            try:
+                cnx = sqlite3.connect(storage_api.database_file)
+                deleted = cnx.execute(
+                    f"SELECT COUNT(*) FROM [{populse_db_table}] WHERE category=? AND key=?",
+                    ["server", f"write_challenge_{challenge}"],
+                ).fetchone()[0]
+                cnx.execute(
+                    f"DELETE FROM [{populse_db_table}] WHERE category=? AND key=? RETURNING *",
+                    ["server", f"write_challenge_{challenge}"],
+                )
+                if deleted != 1:
+                    return ""
+            except sqlite3.Error:
+                return ""
+            finally:
+                if cnx is not None:
+                    cnx.close()
+            access_token = storage_api.access_token(True)
         else:
-            # Try to read from database file
-            access = b"read"
-        if access is not None:
-            f = Fernet(storage_api.key)
-            return f.encrypt(access).decode()
-        else:
-            return ""
+            try:
+                cnx = sqlite3.connect(storage_api.database_file)
+                read_challenge = cnx.execute(
+                    f"SELECT _json FROM [{populse_db_table}] WHERE category=? AND key=?",
+                    ["server", "read_challenge"],
+                ).fetchone()[0]
+                if challenge != read_challenge:
+                    return ""
+            except sqlite3.Error:
+                return ""
+            access_token = storage_api.access_token(False)
+        return access_token
 
     @app.post("/connection")
     async def connect(
@@ -277,6 +299,10 @@ if __name__ == "__main__":
         cnx.execute(
             f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
             ["server", "url", options.url],
+        )
+        cnx.execute(
+            f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
+            ["server", "read_challenge", str(uuid.uuid4())],
         )
         cnx.commit()
     finally:
