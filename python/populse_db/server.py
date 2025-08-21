@@ -301,7 +301,7 @@ if __name__ == "__main__":
             ["server", "url", options.url],
         )
         cnx.execute(
-            f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
+            f"INSERT OR REPLACE INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
             ["server", "read_challenge", str(uuid.uuid4())],
         )
         cnx.commit()
