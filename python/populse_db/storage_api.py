@@ -1,7 +1,5 @@
 import importlib
 import json
-import os
-import re
 import typing
 from uuid import uuid4
 
@@ -71,25 +69,10 @@ class StorageAPI:
         create: bool = False,
         echo_sql: typing.TextIO | None = None,
     ):
-        if re.match("^https?:.*", database_file):
+        if database_file.startswith("server:"):
+            # Get the server URL from the database
+            database_file = database_file[7:]
             return StorageServerAPI(database_file)
-        if os.path.exists(database_file) or create:
-            # sqlite3 module is optional because it does not
-            # exist in Pyodide distribution (i.e. PyScript)
-            import sqlite3
-
-            cnx = sqlite3.connect(database_file, timeout=10)
-            # Check if storage_server table exists
-            cur = cnx.execute(
-                "SELECT COUNT(*) FROM sqlite_master "
-                f"WHERE type='table' AND name='{populse_db_table}'"
-            )
-            if cur.fetchone()[0]:
-                row = cnx.execute(
-                    f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'"
-                ).fetchone()
-                if row:
-                    return StorageServerAPI(row[0])
         return StorageFileAPI(database_file, timeout, create, echo_sql)
 
 
@@ -103,6 +86,7 @@ class StorageFileAPI:
         create: bool = False,
         echo_sql: typing.TextIO | None = None,
     ):
+        self.database_file = database_file
         self.key = Fernet.generate_key()
         self.database = Database(
             database_file, timeout=timeout, create=create, echo_sql=echo_sql
@@ -143,21 +127,24 @@ class StorageFileAPI:
         path = path[1:]
         return (collection, document_id, field, path)
 
-    def access_token(self):
+    def access_token(self, write=True):
         # For local file, we chose to not check access rights
-        # at this time but to grant write access and let the
+        # at this time but to grant requested access and let the
         # filesystem raise an exception when a write access is
         # tried on a read only file.
         f = Fernet(self.key)
-        return f.encrypt(b"write").decode()
+        return f.encrypt(b"write" if "write" else "read").decode()
 
     def connect(self, access_token, exclusive, write, create):
         connection_id = str(uuid4())
-        f = Fernet(self.key)
-        try:
-            access_rights = f.decrypt(access_token.encode()).decode()
-        except InvalidToken:
-            raise PermissionError("invalid token") from None
+        if access_token:
+            f = Fernet(self.key)
+            try:
+                access_rights = f.decrypt(access_token.encode()).decode()
+            except InvalidToken:
+                raise PermissionError("invalid token") from None
+        else:
+            access_rights = "none"
         if not write and access_rights in ("read", "write"):
             dbs = self.database.session(exclusive=exclusive, create=False)
         elif access_rights == "write":
@@ -561,11 +548,73 @@ def json_to_str(value):
 
 
 class StorageServerAPI:
-    def __init__(self, url):
-        self.url = url
+    def __init__(self, database_file, url=None):
+        import sqlite3
 
-    def access_token(self):
-        return self._call("get", "access_token", None)
+        self.url = url
+        self.database_file = database_file
+        if self.url is None:
+            cnx = sqlite3.connect(database_file, timeout=10)
+            try:
+                # Check if storage_server table exists
+                cur = cnx.execute(
+                    "SELECT COUNT(*) FROM sqlite_master "
+                    f"WHERE type='table' AND name='{populse_db_table}'"
+                )
+                if cur.fetchone()[0]:
+                    row = cnx.execute(
+                        f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'"
+                    ).fetchone()
+                    if row:
+                        self.url = row[0]
+            finally:
+                cnx.close()
+        if self.url is None:
+            raise RuntimeError(f"Cannot get server URL from database {database_file}")
+        self.key = Fernet.generate_key()
+
+    def access_token(self, write=True):
+        import sqlite3
+
+        if write:
+            # Check write access to the database file
+            cnx = None
+            try:
+                challenge = str(uuid4())
+                cnx = sqlite3.connect(self.database_file)
+                cnx.execute(
+                    f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
+                    ["server", f"write_challenge_{challenge}", "written"],
+                )
+                cnx.commit()
+            except sqlite3.Error:
+                raise PermissionError("Cannot write to database") from None
+            finally:
+                if cnx is not None:
+                    cnx.close()
+        else:
+            # Check read access to the database file
+            cnx = None
+            try:
+                cnx = sqlite3.connect(f"file:{self.database_file}?mode=ro", uri=True)
+                challenge = cnx.execute(
+                    f"SELECT _json FROM [{populse_db_table}] WHERE category=? AND key=?",
+                    ["server", "read_challenge"],
+                ).fetchone()[0]
+            except sqlite3.Error:
+                raise PermissionError("Cannot read from database") from None
+            finally:
+                if cnx is not None:
+                    cnx.close()
+
+        return self._call(
+            "get",
+            "access_token",
+            dict(
+                write=bool(write),
+                challenge=str(challenge),
+            ),
+        )
 
     def _call(self, method, route, payload, decode=False):
         if method == "get":

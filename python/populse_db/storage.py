@@ -26,8 +26,18 @@ class Storage:
         self.storage_api = StorageAPI(
             database_file, timeout=timeout, create=create, echo_sql=echo_sql
         )
-        self.access_token = self.storage_api.access_token()
+        self._read_access_token = None
+        self._write_access_token = None
         self._current_data_session = None
+
+    def access_token(self, write):
+        if write:
+            if self._write_access_token is None:
+                self._write_access_token = self.storage_api.access_token(write)
+            return self._write_access_token
+        if self._read_access_token is None:
+            self._read_access_token = self.storage_api.access_token(write)
+        return self._read_access_token
 
     @contextmanager
     def data(self, exclusive=None, write=False, create=False):
@@ -44,7 +54,10 @@ class Storage:
             yield storage_session
         else:
             connection_id = self.storage_api.connect(
-                self.access_token, exclusive=exclusive, write=write, create=create
+                self.access_token(write),
+                exclusive=exclusive,
+                write=write,
+                create=create,
             )
             if connection_id is not None:
                 try:
@@ -63,7 +76,7 @@ class Storage:
     @contextmanager
     def schema(self):
         connection_id = self.storage_api.connect(
-            self.access_token, exclusive=True, write=True, create=True
+            self.access_token(True), exclusive=True, write=True, create=True
         )
         try:
             yield SchemaSession(self.storage_api, connection_id)
@@ -74,7 +87,7 @@ class Storage:
 
     def start_session(self, exclusive=None, write=False, create=False):
         connection_id = self.storage_api.connect(
-            self.access_token, exclusive=exclusive, write=write, create=create
+            self.access_token(write), exclusive=exclusive, write=write, create=create
         )
         return StorageSession(self.storage_api, connection_id)
 
