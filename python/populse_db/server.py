@@ -2,9 +2,10 @@ import argparse
 import json
 from typing import Annotated
 
-import uvicorn
+from cryptography.fernet import Fernet
 from fastapi import Body, FastAPI, Query, Request
 from fastapi.responses import JSONResponse
+import uvicorn
 
 from .database import json_decode, json_encode, populse_db_table
 from .storage_api import StorageFileAPI, serialize_exception
@@ -51,10 +52,20 @@ def create_server(database_file, create=True):
             )
 
     @app.get("/access_token")
-    async def access_token():
-        # TODO: give a real re/write challenge to the user in
-        # order to get its access rights.
-        return storage_api.access_token()
+    async def access_token(write: body_bool):
+        access = None
+        if write:
+            # Try to write into database file
+            access = b"write"
+
+        else:
+            # Try to read from database file
+            access = b"read"
+        if access is not None:
+            f = Fernet(storage_api.key)
+            return f.encrypt(access).decode()
+        else:
+            return ""
 
     @app.post("/connection")
     async def connect(

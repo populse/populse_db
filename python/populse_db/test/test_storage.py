@@ -486,7 +486,7 @@ def test_storage_server():
 
         try:
             time.sleep(5)
-            store = Storage(tmp_path)
+            store = Storage(f"server:{tmp_path}")
             run_storage_tests(store)
 
         except Exception as e:
