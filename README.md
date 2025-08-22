@@ -71,6 +71,7 @@ The script of tests is python/populse_db/test.py, so the following command launc
 * python-dateutil
 * sphinx
 * psycopg2
+* SQLite version > 3.38.0
 
 # Other packages used
 
