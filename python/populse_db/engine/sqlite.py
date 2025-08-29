@@ -66,6 +66,8 @@ class SQLiteSession(DatabaseSession):
 
     def __init__(self, sqlite_file, exclusive=False, timeout=None, echo_sql=None):
         self.echo_sql = echo_sql
+        if self.echo_sql:
+            print(f"Connecting to {sqlite_file}", file=self.echo_sql, flush=True)
         self.sqlite = sqlite3.connect(
             sqlite_file,
             isolation_level=None,
@@ -90,6 +92,8 @@ class SQLiteSession(DatabaseSession):
             self.sqlite.rollback()
         else:
             self.sqlite.commit()
+        if self.echo_sql:
+            print(f"Disconnect from database (rollback={rollback})", file=self.echo_sql, flush=True)
         self.sqlite.close()
 
     def has_collection(self, name):
@@ -110,12 +114,12 @@ class SQLiteSession(DatabaseSession):
             if data:
                 result = self.sqlite.execute(sql, data)
                 if self.echo_sql:
-                    print(sql, data, file=self.echo_sql)
+                    print(sql, data, file=self.echo_sql, flush=True)
                 return result
             else:
                 result = self.sqlite.execute(sql)
                 if self.echo_sql:
-                    print(sql, file=self.echo_sql)
+                    print(sql, file=self.echo_sql, flush=True)
                 return result
         except sqlite3.OperationalError as e:
             raise sqlite3.OperationalError(f"Error in SQL request: {sql}") from e
@@ -159,11 +163,13 @@ class SQLiteSession(DatabaseSession):
             self.execute(sql2)
             self.execute(sql, data)
 
-    def clear(self):
+    def clear(self, keep_settings=False):
         """
         Erase the whole database content.
         """
         sql = 'SELECT name FROM sqlite_master WHERE type = "table"'
+        if keep_settings:
+            sql += f" AND name != '{populse_db_table}'"
         tables = [i[0] for i in self.execute(sql)]
         for table in tables:
             sql = f"DROP TABLE [{table}]"

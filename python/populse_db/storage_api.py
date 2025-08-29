@@ -1,5 +1,7 @@
 import importlib
 import json
+import threading
+import time
 import typing
 from uuid import uuid4
 
@@ -29,6 +31,8 @@ def serialize_exception(e):
         if kwargs is None:
             result["args"] = e.args
         else:
+            if hasattr(e, "args"):
+                result["args"] = e.args
             kwargs.pop("lineno", None)
             kwargs.pop("colno", None)
             result["kwargs"] = kwargs
@@ -46,7 +50,9 @@ def deserialize_exception(je):
     exception_class = getattr(
         importlib.import_module(je["class_module"]), je["class_name"]
     )
-    exception = exception_class(*je.get("args", []), **je.get("kwargs", {}))
+    #    exception = exception_class(*je.get("args", []), **je.get("kwargs", {}))
+    exception = exception_class(*je.get("args", []))
+    exception.__setstate__(je.get("kwargs", {}))
     tb = je.get("traceback")
     if tb is not None:
         # Import tblib in this function avoid to make it a mandatory dependency
@@ -55,6 +61,10 @@ def deserialize_exception(je):
         tb = tblib.Traceback.from_dict(tb)
         exception.with_traceback(tb.as_traceback())
     return exception
+
+
+def generate_secret():
+    return Fernet.generate_key().decode()
 
 
 class StorageAPI:
@@ -68,15 +78,98 @@ class StorageAPI:
         timeout: float | None = None,
         create: bool = False,
         echo_sql: typing.TextIO | None = None,
+        secret: str | None = None,
     ):
         if database_file.startswith("server:"):
             # Get the server URL from the database
             database_file = database_file[7:]
-            return StorageServerAPI(database_file)
-        return StorageFileAPI(database_file, timeout, create, echo_sql)
+            return StorageServerAPI(database_file, secret=secret)
+        return StorageFileAPI(database_file, timeout, create, echo_sql, secret=secret)
 
 
-class StorageFileAPI:
+class BaseStorageAPI:
+    def __init__(self, database_file: str, secret: None | str | bytes = None):
+        self.database_file = database_file
+        if secret is None:
+            self.secret = generate_secret()
+        else:
+            self.secret = secret
+
+    def get_access_challenge(self, write):
+        import sqlite3
+
+        try:
+            if write:
+                # Check write access to the database file
+                cnx = sqlite3.connect(self.database_file, isolation_level="EXCLUSIVE")
+                challenge = str(uuid4())
+                cnx.execute(
+                    f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
+                    ["server", f"write_challenge_{challenge}", "written"],
+                )
+                cnx.commit()
+            else:
+                # Check read access to the database file
+                cnx = sqlite3.connect(f"file:{self.database_file}?mode=ro", uri=True)
+                challenge = cnx.execute(
+                    f"SELECT _json FROM [{populse_db_table}] WHERE category=? AND key=?",
+                    ["server", "read_challenge"],
+                ).fetchone()[0]
+        except sqlite3.Error:
+            return None
+        finally:
+            cnx.close()
+        return challenge
+
+    def check_access_challenge(self, write, challenge):
+        import sqlite3
+
+        try:
+            if write:
+                cnx = sqlite3.connect(self.database_file, isolation_level="EXCLUSIVE")
+                found_challenge = cnx.execute(
+                    f"SELECT COUNT(*) FROM [{populse_db_table}] WHERE category='server' AND key=?",
+                    [f"write_challenge_{challenge}"],
+                ).fetchone()[0]
+                cnx.execute(
+                    f"DELETE FROM [{populse_db_table}] WHERE category='server' AND key=?",
+                    [f"write_challenge_{challenge}"],
+                )
+                if found_challenge == 1:
+                    return True
+            else:
+                cnx = sqlite3.connect(f"file:{self.database_file}?mode=ro", uri=True)
+                read_challenge = cnx.execute(
+                    f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='read_challenge'",
+                ).fetchone()[0]
+                if challenge == read_challenge:
+                    return True
+        finally:
+            cnx.close()
+        return False
+
+    def access_token(self, write, challenge=None):
+        if challenge is None:
+            granted = self.get_access_challenge(write=write)
+        else:
+            granted = self.check_access_challenge(write=write, challenge=challenge)
+        if granted:
+            f = Fernet(self.secret)
+            access_token = f.encrypt(b"write" if "write" else "read").decode()
+            return access_token
+        return ""
+
+    def rights_from_token(self, access_token):
+        if access_token:
+            f = Fernet(self.secret)
+            try:
+                return f.decrypt(access_token.encode()).decode()
+            except InvalidToken:
+                raise PermissionError("invalid token") from None
+        return "none"
+
+
+class StorageFileAPI(BaseStorageAPI):
     _read_only_error = "database is read-only"
 
     def __init__(
@@ -85,13 +178,14 @@ class StorageFileAPI:
         timeout: float | None = None,
         create: bool = False,
         echo_sql: typing.TextIO | None = None,
+        secret: str | None = None,
     ):
-        self.database_file = database_file
-        self.key = Fernet.generate_key()
+        super().__init__(database_file=database_file, secret=secret)
         self.database = Database(
-            database_file, timeout=timeout, create=create, echo_sql=echo_sql
+            self.database_file, timeout=timeout, create=create, echo_sql=echo_sql
         )
         self.sessions = {}
+        self.lock = threading.Lock()
 
     @staticmethod
     def _init_database(dbs):
@@ -127,24 +221,23 @@ class StorageFileAPI:
         path = path[1:]
         return (collection, document_id, field, path)
 
-    def access_token(self, write=True):
-        # For local file, we chose to not check access rights
-        # at this time but to grant requested access and let the
-        # filesystem raise an exception when a write access is
-        # tried on a read only file.
-        f = Fernet(self.key)
-        return f.encrypt(b"write" if "write" else "read").decode()
+    def access_token(self, write, challenge=None):
+        if challenge is None:
+            # For local file, we chose to not check access rights
+            # at this time but to grant requested access and let the
+            # filesystem raise an exception when a write access is
+            # tried on a read only file.
+            f = Fernet(self.secret)
+            return f.encrypt(b"write" if "write" else "read").decode()
+        else:
+            return super().access_token(write, challenge=challenge)
 
     def connect(self, access_token, exclusive, write, create):
+        if self.sessions is None:
+            raise RuntimeError("Database is not accessible anymore")
+
         connection_id = str(uuid4())
-        if access_token:
-            f = Fernet(self.key)
-            try:
-                access_rights = f.decrypt(access_token.encode()).decode()
-            except InvalidToken:
-                raise PermissionError("invalid token") from None
-        else:
-            access_rights = "none"
+        access_rights = self.rights_from_token(access_token)
         if not write and access_rights in ("read", "write"):
             dbs = self.database.session(exclusive=exclusive, create=False)
         elif access_rights == "write":
@@ -159,10 +252,31 @@ class StorageFileAPI:
             if write:
                 self._init_database(dbs)
             return connection_id
-        return None
+        raise RuntimeError("Internal error, cannot create database session")
 
-    def _get_database_session(self, connection_id, write):
-        session = self.sessions.get(connection_id)
+    def disconnect(self, connection_id, rollback):
+        with self.lock:
+            dbs = self._get_database_session(connection_id, write=False, lock=False)
+            dbs.close(rollback)
+            del self.sessions[connection_id]
+
+    def close(self):
+        with self.lock:
+            for connection_id, dbs_write in self.sessions.items():
+                dbs, write = dbs_write
+                dbs.close()
+            self.sessions = None
+
+    def _get_database_session(self, connection_id, write, lock=True):
+        if lock:
+            self.lock.acquire()
+        try:
+            if self.sessions is None:
+                raise RuntimeError("Database is not accessible anymore")
+            session = self.sessions.get(connection_id)
+        finally:
+            if lock:
+                self.lock.release()
         if session is None:
             raise ValueError("invalid storage connection id")
         dbs, writable = session
@@ -288,10 +402,6 @@ class StorageFileAPI:
         # Remove the field if it exists
         if collection.fields.get(field_name):
             collection.remove_field(field_name)
-
-    def disconnect(self, connection_id, rollback):
-        dbs = self._get_database_session(connection_id, write=False)
-        dbs.close(rollback)
 
     def get(
         self,
@@ -502,13 +612,10 @@ class StorageFileAPI:
         for row in collection.documents(fields=[field], as_list=True, distinct=True):
             yield row[0]
 
-    def clear_database(self, connection_id, path):
+    def clear_database(self, connection_id, keep_settings=False):
         dbs = self._get_database_session(connection_id, write=True)
-        collection, document_id, f, path = self._parse_path(dbs, path)
-        if collection:
-            raise ValueError("clear_database can only be called on a whole database")
-        dbs.clear()
-        self._init_database()
+        dbs.clear(keep_settings)
+        self._init_database(dbs)
 
     def has_collection(self, connection_id, path, collection):
         dbs = self._get_database_session(connection_id, write=False)
@@ -547,74 +654,44 @@ def json_to_str(value):
     return json.dumps(value)
 
 
-class StorageServerAPI:
-    def __init__(self, database_file, url=None):
-        import sqlite3
-
+class StorageServerAPI(BaseStorageAPI):
+    def __init__(self, database_file, url=None, secret=None, timeout=5):
+        super().__init__(database_file=database_file, secret=secret)
         self.url = url
-        self.database_file = database_file
         if self.url is None:
-            cnx = sqlite3.connect(database_file, timeout=10)
-            try:
-                # Check if storage_server table exists
-                cur = cnx.execute(
-                    "SELECT COUNT(*) FROM sqlite_master "
-                    f"WHERE type='table' AND name='{populse_db_table}'"
-                )
-                if cur.fetchone()[0]:
-                    row = cnx.execute(
-                        f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'"
-                    ).fetchone()
-                    if row:
-                        self.url = row[0]
-            finally:
-                cnx.close()
+            self.url = self.wait_for_server(timeout)
         if self.url is None:
             raise RuntimeError(f"Cannot get server URL from database {database_file}")
-        self.key = Fernet.generate_key()
 
-    def access_token(self, write=True):
+    def wait_for_server(self, timeout):
+        now = time.time()
+        end = now + timeout
+        url = self.get_server_url()
+        while not url and now < end:
+            time.sleep(0.1)
+            url = self.get_server_url()
+            now = time.time()
+        return url
+
+    def get_server_url(self):
         import sqlite3
 
-        if write:
-            # Check write access to the database file
-            cnx = None
-            try:
-                challenge = str(uuid4())
-                cnx = sqlite3.connect(self.database_file)
-                cnx.execute(
-                    f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
-                    ["server", f"write_challenge_{challenge}", "written"],
-                )
-                cnx.commit()
-            except sqlite3.Error:
-                raise PermissionError("Cannot write to database") from None
-            finally:
-                if cnx is not None:
-                    cnx.close()
-        else:
-            # Check read access to the database file
-            cnx = None
-            try:
-                cnx = sqlite3.connect(f"file:{self.database_file}?mode=ro", uri=True)
-                challenge = cnx.execute(
-                    f"SELECT _json FROM [{populse_db_table}] WHERE category=? AND key=?",
-                    ["server", "read_challenge"],
-                ).fetchone()[0]
-            except sqlite3.Error:
-                raise PermissionError("Cannot read from database") from None
-            finally:
-                if cnx is not None:
-                    cnx.close()
-
-        return self._call(
-            "get",
-            "access_token",
-            dict(
-                write=bool(write),
-                challenge=str(challenge),
-            ),
-        )
+        cnx = sqlite3.connect(self.database_file, timeout=1)
+        try:
+            # Check if storage_server table exists
+            cur = cnx.execute(
+                "SELECT COUNT(*) FROM sqlite_master "
+                f"WHERE type='table' AND name='{populse_db_table}'"
+            )
+            if cur.fetchone()[0]:
+                row = cnx.execute(
+                    f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'"
+                ).fetchone()
+                if row:
+                    return row[0]
+        finally:
+            cnx.close()
+        return None
 
     def _call(self, method, route, payload, decode=False):
         if method == "get":
@@ -622,13 +699,10 @@ class StorageServerAPI:
                 params = {k: v for k, v in payload.items() if v is not None}
             else:
                 params = None
-            j = None
+            response = requests.request(method, f"{self.url}/{route}", params=params)
         else:
             j = payload
-            params = None
-        response = requests.request(
-            method, f"{self.url}/{route}", json=j, params=params
-        )
+            response = requests.request(method, f"{self.url}/{route}", json=j)
         if response.status_code == 500:
             exc = deserialize_exception(response.json())
             raise exc
@@ -637,6 +711,17 @@ class StorageServerAPI:
         if decode:
             result = json_decode(result)
         return result
+
+    def access_token(self, write):
+        challenge = self.get_access_challenge(write=write)
+        return self._call(
+            "get",
+            "access_token",
+            dict(
+                write=bool(write),
+                challenge=challenge,
+            ),
+        )
 
     def connect(self, access_token, exclusive, write, create):
         return self._call(
@@ -683,6 +768,8 @@ class StorageServerAPI:
         description=None,
         index=False,
     ):
+        if collection_name is None:
+            collection_name = populse_db.storage.Storage.default_collection
         return self._call(
             "post",
             f"schema/{collection_name}/{field_name}",
@@ -811,11 +898,11 @@ class StorageServerAPI:
             decode=True,
         )
 
-    def clear_database(self, connection_id, path):
+    def clear_database(self, connection_id, keep_settings=False):
         return self._call(
             "delete",
             "",
-            dict(connection_id=connection_id, path=path),
+            dict(connection_id=connection_id, keep_settings=keep_settings),
         )
 
     def has_collection(self, connection_id, path, collection):

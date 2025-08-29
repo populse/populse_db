@@ -1,5 +1,10 @@
 import argparse
+from contextlib import asynccontextmanager
 import json
+import os
+import signal
+import socket
+import threading
 from typing import Annotated
 import uuid
 
@@ -8,7 +13,7 @@ from fastapi.responses import JSONResponse
 import uvicorn
 
 from .database import json_decode, json_encode, populse_db_table
-from .storage_api import StorageFileAPI, serialize_exception
+from .storage_api import StorageFileAPI, serialize_exception, generate_secret
 
 body_str = Annotated[str, Body(embed=True)]
 body_path = Annotated[list[str | int | list[str]], Body(embed=True)]
@@ -29,9 +34,55 @@ def str_to_json(value):
     return value
 
 
-def create_server(database_file, create=True):
-    storage_api = StorageFileAPI(database_file, create=create)
-    app = FastAPI()
+def create_server():
+    import sqlite3
+
+    verbose = "POPULSE_DB_VERBOSE" in os.environ
+    database_file = os.environ["POPULSE_DB_FILE"]
+    url = os.environ["POPULSE_DB_URL"]
+    secret = os.environ["POPULSE_DB_SECRET"]
+    create = True
+    storage_api = StorageFileAPI(database_file, create=create, secret=secret)
+    lock = threading.Lock()
+
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE")
+        try:
+            if verbose:
+                print("Storing external URL:", url)
+            rows = cnx.execute(f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'").fetchall()
+            if rows:
+                existing_url = rows[0][0]
+                if existing_url != url:
+                    raise RuntimeError(f"Cannot start server with URL {url} because another server already exists with URL {existing_url}")
+            else:
+                cnx.execute(
+                    f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES ('server','url',?)",
+                    [url],
+                )
+                cnx.execute(
+                    f"INSERT OR REPLACE INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
+                    ["server", "read_challenge", str(uuid.uuid4())],
+                )
+                cnx.commit()
+        finally:
+            cnx.close()
+        default_sigint_handler = signal.getsignal(signal.SIGINT)
+        # signal.signal(signal.SIGINT, sigint_handler)
+
+        yield
+        cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE")
+        try:
+            cnx.execute(
+                f"DELETE FROM [{populse_db_table}] WHERE category='server' AND key='url'"
+            )
+            cnx.commit()
+        finally:
+            cnx.close()
+
+    app = FastAPI(lifespan=lifespan)
 
     @app.middleware("http")
     async def cors_middleware(request: Request, call_next):
@@ -43,73 +94,58 @@ def create_server(database_file, create=True):
 
     @app.middleware("http")
     async def catch_exceptions_middleware(request: Request, call_next):
+        if storage_api.sessions is None:
+            return JSONResponse(
+                status_code=410,
+                content={
+                    "class_module": "builtins",
+                    "class_name": "RuntimeError",
+                    "args": ["Server is shutting down"],
+                },
+            )
         try:
             return await call_next(request)
         except Exception as exc:
+            from traceback import print_exc
+
+            print_exc()
             return JSONResponse(
                 status_code=500,
                 content=serialize_exception(exc),
             )
 
     @app.get("/access_token")
-    async def access_token(write: query_bool, challenge: query_str):
-        import sqlite3
+    def access_token(write: query_bool, challenge: query_str):
 
-        if write:
-            cnx = None
-            try:
-                cnx = sqlite3.connect(storage_api.database_file)
-                deleted = cnx.execute(
-                    f"SELECT COUNT(*) FROM [{populse_db_table}] WHERE category=? AND key=?",
-                    ["server", f"write_challenge_{challenge}"],
-                ).fetchone()[0]
-                cnx.execute(
-                    f"DELETE FROM [{populse_db_table}] WHERE category=? AND key=? RETURNING *",
-                    ["server", f"write_challenge_{challenge}"],
-                )
-                if deleted != 1:
-                    return ""
-            except sqlite3.Error:
-                return ""
-            finally:
-                if cnx is not None:
-                    cnx.close()
-            access_token = storage_api.access_token(True)
-        else:
-            try:
-                cnx = sqlite3.connect(storage_api.database_file)
-                read_challenge = cnx.execute(
-                    f"SELECT _json FROM [{populse_db_table}] WHERE category=? AND key=?",
-                    ["server", "read_challenge"],
-                ).fetchone()[0]
-                if challenge != read_challenge:
-                    return ""
-            except sqlite3.Error:
-                return ""
-            access_token = storage_api.access_token(False)
+        access_token = storage_api.access_token(write=write, challenge=challenge)
         return access_token
 
     @app.post("/connection")
-    async def connect(
+    def connect(
         access_token: body_str,
         exclusive: body_bool,
         write: body_bool,
         create: body_bool,
     ):
-        return storage_api.connect(access_token, exclusive, write, create)
+        if write:
+            lock.acquire()
+        connection_id = storage_api.connect(access_token, exclusive, write, create)
+        return connection_id
 
     @app.delete("/connection")
-    async def disconnect(connection_id: body_str, rollback: body_bool):
+    def disconnect(connection_id: body_str, rollback: body_bool):
+        if lock.locked():
+            lock.release()
         return storage_api.disconnect(connection_id, rollback)
 
     @app.post("/schema_collection")
-    async def add_schema_collections(
+    def add_schema_collections(
         connection_id: body_str, schema_to_collections: body_dict
     ):
         return storage_api.add_schema_collections(connection_id, schema_to_collections)
 
     @app.post("/schema/{name}")
-    async def add_collection(
+    def add_collection(
         connection_id: body_str,
         name: str,
         primary_key: Annotated[str | list[str] | dict[str, str], Body()],
@@ -117,7 +153,7 @@ def create_server(database_file, create=True):
         return storage_api.add_collection(connection_id, name, primary_key)
 
     @app.post("/schema/{collection_name}/{field_name}")
-    async def add_field(
+    def add_field(
         connection_id: body_str,
         collection_name: str,
         field_name: str,
@@ -135,7 +171,7 @@ def create_server(database_file, create=True):
         )
 
     @app.delete("/schema/{collection_name}/{field_name}")
-    async def remove_field(
+    def remove_field(
         connection_id: body_str,
         collection_name: str,
         field_name: str,
@@ -147,7 +183,7 @@ def create_server(database_file, create=True):
         )
 
     @app.get("/data")
-    async def get(
+    def get(
         connection_id: query_str,
         path: query_path,
         default: query_json = None,
@@ -166,7 +202,7 @@ def create_server(database_file, create=True):
         return json_encode(result)
 
     @app.get("/count")
-    async def count(
+    def count(
         connection_id: query_str,
         path: query_path,
         query: Annotated[str | None, Query()] = None,
@@ -174,27 +210,27 @@ def create_server(database_file, create=True):
         return storage_api.count(connection_id, str_to_json(path), query)
 
     @app.get("/primary_key")
-    async def primary_key(connection_id: query_str, path: query_path):
+    def primary_key(connection_id: query_str, path: query_path):
         return storage_api.primary_key(connection_id, str_to_json(path))
 
     @app.post("/data")
-    async def set(connection_id: body_str, path: body_path, value: body_json):
+    def set(connection_id: body_str, path: body_path, value: body_json):
         return storage_api.set(connection_id, path, json_decode(value))
 
     @app.delete("/data")
-    async def delete(connection_id: body_str, path: body_path):
+    def delete(connection_id: body_str, path: body_path):
         return storage_api.delete(connection_id, path)
 
     @app.put("/data")
-    async def update(connection_id: body_str, path: body_path, value: body_json):
+    def update(connection_id: body_str, path: body_path, value: body_json):
         return storage_api.update(connection_id, path, json_decode(value))
 
     @app.patch("/data")
-    async def append(connection_id: body_str, path: body_path, value: body_json):
+    def append(connection_id: body_str, path: body_path, value: body_json):
         return storage_api.append(connection_id, path, json_decode(value))
 
     @app.get("/search")
-    async def search(
+    def search(
         connection_id: query_str,
         path: query_path,
         query: Annotated[str | None, Query()] = None,
@@ -208,7 +244,7 @@ def create_server(database_file, create=True):
         return json_encode(result)
 
     @app.delete("/search")
-    async def search_and_delete(
+    def search_and_delete(
         connection_id: body_str,
         path: body_path,
         query: Annotated[str | None, Body()] = None,
@@ -216,7 +252,7 @@ def create_server(database_file, create=True):
         return storage_api.search_and_delete(connection_id, path, query)
 
     @app.get("/distinct")
-    async def distinct_values(
+    def distinct_values(
         connection_id: query_str,
         path: query_path,
         field: query_str,
@@ -225,14 +261,14 @@ def create_server(database_file, create=True):
         return json_encode(result)
 
     @app.delete("/")
-    async def clear_database(
+    def clear_database(
         connection_id: body_str,
-        path: body_path,
+        keep_settings: body_bool,
     ):
-        return storage_api.clear_database(connection_id, path)
+        return storage_api.clear_database(connection_id, keep_settings)
 
     @app.get("/has_collection")
-    async def has_collection(
+    def has_collection(
         connection_id: query_str,
         path: query_path,
         collection: query_str,
@@ -240,14 +276,14 @@ def create_server(database_file, create=True):
         return storage_api.has_collection(connection_id, str_to_json(path), collection)
 
     @app.get("/collection_names")
-    async def collection_names(
+    def collection_names(
         connection_id: query_str,
         path: query_path,
     ):
         return storage_api.collection_names(connection_id, str_to_json(path))
 
     @app.get("/keys")
-    async def keys(
+    def keys(
         connection_id: query_str,
         path: query_path,
     ):
@@ -255,6 +291,12 @@ def create_server(database_file, create=True):
         return list(result)
 
     return app
+
+
+def find_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        return s.getsockname()[1]
 
 
 if __name__ == "__main__":
@@ -267,11 +309,15 @@ if __name__ == "__main__":
 
     parser.add_argument("database")
     parser.add_argument("-b", "--bind", default="0.0.0.0")
-    parser.add_argument("-p", "--port", default="8080")
+    parser.add_argument("-p", "--port", default=None)
     parser.add_argument("-u", "--url", default=None)
     parser.add_argument("-v", "--verbose", action="store_true")
 
     options = parser.parse_args()
+    if options.port:
+        port = int(options.port)
+    else:
+        port = find_free_port()
     cnx = sqlite3.connect(options.database, isolation_level="EXCLUSIVE", timeout=10)
     try:
         sql = (
@@ -293,34 +339,18 @@ if __name__ == "__main__":
                 host = "127.0.0.1"
             else:
                 host = options.bind
-            options.url = f"http://{host}:{options.port}"
-        if options.verbose:
-            print("Storing external URL:", options.url)
-        cnx.execute(
-            f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
-            ["server", "url", options.url],
-        )
-        cnx.execute(
-            f"INSERT OR REPLACE INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
-            ["server", "read_challenge", str(uuid.uuid4())],
-        )
-        cnx.commit()
+            options.url = f"http://{host}:{port}"
     finally:
         cnx.close()
-    try:
-        app = create_server(options.database)
-        uvicorn.run(
-            app,
-            host=options.bind,
-            port=int(options.port),
-            log_level=("debug" if options.verbose else "critical"),
-        )
-    finally:
-        cnx = sqlite3.connect(options.database, isolation_level="EXCLUSIVE", timeout=10)
-        try:
-            cnx.execute(
-                f"DELETE FROM [{populse_db_table}] WHERE category='server' AND key='url'"
-            )
-            cnx.commit()
-        finally:
-            cnx.close()
+    if options.verbose:
+        os.environ["POPULSE_DB_VERBOSE"] = "yes"
+    os.environ["POPULSE_DB_FILE"] = options.database
+    os.environ["POPULSE_DB_URL"] = options.url
+    os.environ["POPULSE_DB_SECRET"] = generate_secret()
+    uvicorn.run(
+        "populse_db.server:create_server",
+        host=options.bind,
+        port=int(port),
+        log_level=("debug" if options.verbose else "critical"),
+        factory=True,
+    )

@@ -1,8 +1,8 @@
 import importlib
+from contextlib import contextmanager
 import pathlib
 import types
 import typing
-from contextlib import contextmanager
 
 from .database import type_to_str
 from .storage_api import StorageAPI
@@ -20,11 +20,16 @@ class Storage:
         timeout: float | None = 10000,
         create: bool = False,
         echo_sql: typing.TextIO | None = None,
+        secret: str | None = None,
     ):
         if isinstance(database_file, pathlib.Path):
             database_file = str(database_file)
         self.storage_api = StorageAPI(
-            database_file, timeout=timeout, create=create, echo_sql=echo_sql
+            database_file,
+            timeout=timeout,
+            create=create,
+            echo_sql=echo_sql,
+            secret=secret,
         )
         self._read_access_token = None
         self._write_access_token = None
@@ -33,10 +38,10 @@ class Storage:
     def access_token(self, write):
         if write:
             if self._write_access_token is None:
-                self._write_access_token = self.storage_api.access_token(write)
+                self._write_access_token = self.storage_api.access_token(write=True)
             return self._write_access_token
         if self._read_access_token is None:
-            self._read_access_token = self.storage_api.access_token(write)
+            self._read_access_token = self.storage_api.access_token(write=False)
         return self._read_access_token
 
     @contextmanager
@@ -264,8 +269,8 @@ class SchemaSession:
         """
         self._storage_api.remove_field(self._connection_id, collection_name, field_name)
 
-    def clear_database(self):
-        return self._storage_api.clear_database(self._connection_id)
+    def clear_database(self, keep_settings=False):
+        return self._storage_api.clear_database(self._connection_id, keep_settings)
 
     @contextmanager
     def data(self):

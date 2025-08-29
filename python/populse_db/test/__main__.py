@@ -28,6 +28,11 @@ parser.add_argument(
     help="Exit instantly on first error or failed test",
 )
 parser.add_argument(
+    "--full-trace",
+    action="store_true",
+    help="Don't cut any tracebacks (default is to cut)",
+)
+parser.add_argument(
     "-k",
     metavar="EXPRESSION",
     dest="keyword",
@@ -60,6 +65,9 @@ if args.keyword:
     pytest_command += ["-k", args.keyword]
 if args.s:
     pytest_command += ["-s"]
+if args.full_trace:
+    pytest_command += ["--full-trace"]
+
 module_src = Path(__file__).parent.parent
 if args.html:
     # Path(args.html).mkdir(exist_ok=True)

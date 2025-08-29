@@ -480,12 +480,11 @@ def test_storage_server():
     with NamedTemporaryFile(delete=True) as tmp:
         tmp_path = tmp.name
         tmp.close()
-        cmd = [sys.executable, "-m", "populse_db.server", tmp_path]
-        server = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        cmd = [sys.executable, "-m", "populse_db.server", "-v", tmp_path]
+        server = subprocess.Popen(cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
 
         try:
-            time.sleep(5)
-            store = Storage(f"server:{tmp_path}")
+            store = Storage(f"server:{tmp_path}", echo_sql=sys.stdout)
             run_storage_tests(store)
             os.chmod(tmp_path, 0o500)
             store = Storage(f"server:{tmp_path}")
