@@ -177,17 +177,12 @@ illustrated in the following example:</p>
    <span class="c1">#   - the &quot;type&quot; field is a list containing the value &quot;T1&quot;</span>
    <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">db</span><span class="p">[</span><span class="s1">&#39;acquisition&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;subject==&quot;rbndt001&quot; and &quot;T1&quot; in type&#39;</span><span class="p">):</span>
       <span class="n">pprint</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+
+   <span class="c1"># Retrieve all possible types of acquisition</span>
+   <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Subjects:&#39;</span><span class="p">,</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">subject</span><span class="o">.</span><span class="n">distinct_values</span><span class="p">(</span><span class="s1">&#39;subject_id&#39;</span><span class="p">)))</span>
 </pre></div>
 </div>
-<p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
-The example shows how to use populse_db to store and retrieve JSON
-=======</p>
-<blockquote>
-<div><p># Retrieve all possible types of acquisition
-print(‘Subjects:’, ‘, ‘.join(db.subject.distinct_values(‘subject_id’)))</p>
-</div></blockquote>
 <p>The example above illustrate how to use populse_db to store and retrieve JSON
-&gt;&gt;&gt;&gt;&gt;&gt;&gt; origin/master
 objects without wondering about the underlying SQL database engine. This script
 produces the following result:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;birth_date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">1968</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>

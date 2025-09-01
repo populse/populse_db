@@ -155,14 +155,10 @@ illustrated in the following example::
       for doc in db['acquisition'].search('subject=="rbndt001" and "T1" in type'):
          pprint(doc)
 
-<<<<<<< HEAD
-The example shows how to use populse_db to store and retrieve JSON
-=======
       # Retrieve all possible types of acquisition
       print('Subjects:', ', '.join(db.subject.distinct_values('subject_id')))
 
 The example above illustrate how to use populse_db to store and retrieve JSON
->>>>>>> origin/master
 objects without wondering about the underlying SQL database engine. This script
 produces the following result::
 
