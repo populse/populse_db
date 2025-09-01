@@ -1,6 +1,10 @@
-from datetime import date, time, datetime
-import dateutil
 import json
+from datetime import date, datetime, time
+
+import dateutil
+
+populse_db_table = "populse_db"
+
 
 def check_value_type(value, field_type):
     """
@@ -18,7 +22,7 @@ def check_value_type(value, field_type):
         return False
     if value is None:
         return True
-    origin = getattr(field_type, '__origin__', None)
+    origin = getattr(field_type, "__origin__", None)
     if origin:
         # field_type is a parameterized type such as list[str]
         # origin is the parent type (e.g. list)
@@ -32,28 +36,59 @@ def check_value_type(value, field_type):
                     return False
             return True
     elif field_type is float:
-        return isinstance(value, (int, float))
+        return isinstance(value, int | float)
     else:
         return isinstance(value, field_type)
     return False
 
+
 def type_to_str(type):
     """Convert a Python type to a string.
-    
+
     Examples:
 
         - ``type_to_str(str) == 'str'``
         - ``type_to_str(list[str]) == 'list[str]'``
     """
-    args = getattr(type, '__args__', None)
+    args = getattr(type, "__args__", None)
     if args:
-        return f'{type.__name__}[{",".join(type_to_str(i) for i in args)}]'
+        return f"{type.__name__}[{','.join(type_to_str(i) for i in args)}]"
     else:
         return type.__name__
 
-_str_to_type = dict((type_to_str(i), i) for i in (
-    str, int, float, bool, date, datetime, time, dict, list
-))
+
+_type_to_sqlite = {
+    str: "text",
+}
+
+
+def type_to_sqlite(type):
+    """
+    Like type_to_str(type) but for internal use in SQLite column type
+    definitions in order to avoid conversion problems due to SQlite type
+    affinity. See https://www.sqlite.org/datatype3.html
+    """
+    result = _type_to_sqlite.get(type)
+    if result is None:
+        args = getattr(type, "__args__", None)
+        if args:
+            result = f"{type.__name__}[{','.join(type_to_sqlite(i) for i in args)}]"
+        else:
+            result = type.__name__
+    return result
+
+
+_str_to_type = {
+    type_to_sqlite(i): i
+    for i in (str, int, float, bool, date, datetime, time, dict, list)
+}
+_str_to_type.update(
+    {
+        type_to_str(i): i
+        for i in (str, int, float, bool, date, datetime, time, dict, list)
+    }
+)
+
 
 def str_to_type(str):
     """Convert a string to a Python type.
@@ -65,12 +100,20 @@ def str_to_type(str):
     """
     global _str_to_type
 
-    s = str.split('[',1)
+    if not str:
+        return None
+    s = str.split("[", 1)
     if len(s) == 1:
-        return _str_to_type[s[0]]
+        result = _str_to_type.get(s[0])
     else:
         args = tuple(str_to_type(i) for i in s[1][:-1].split(","))
-        return _str_to_type[s[0]][args]
+        result = _str_to_type.get(s[0])
+        if result:
+            result = result[args]
+    if not result:
+        raise ValueError(f'invalid type: "{str}"')
+    return result
+
 
 def python_value_type(value):
     """
@@ -99,7 +142,7 @@ class DatabaseSession:
     methods:
 
         *Database related methods:*
-        
+
         - :py:meth:`execute`
         - :py:meth:`commit`
         - :py:meth:`rollback`
@@ -113,6 +156,7 @@ class DatabaseSession:
 
         - :py:meth:`add_collection`
         - :py:meth:`remove_collection`
+        - :py:meth:`has_collection`
         - :py:meth:`__getitem__`
         - :py:meth:`collections`
 
@@ -137,24 +181,24 @@ class DatabaseSession:
 
     .. automethod:: __getitem__
     """
-    populse_db_table = 'populse_db'
-    default_primary_key = 'primary_key'
-    
+
+    default_primary_key = "primary_key"
+
     def execute(self, *args, **kwargs):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def commit(self):
-        raise NotImplemented()
-    
+        raise NotImplementedError()
+
     def rollback(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def settings(self, category, key, default=None):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def set_settings(self, category, key, value):
-        raise NotImplemented()
-    
+        raise NotImplementedError()
+
     def add_collection(self, name, primary_key=default_primary_key):
         """
         Adds a collection
@@ -167,7 +211,7 @@ class DatabaseSession:
                            - If the collection name is invalid
                            - If the primary_key is invalid
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def remove_collection(self, name):
         """
@@ -177,12 +221,17 @@ class DatabaseSession:
 
         :raise ValueError: If the collection does not exist
         """
-        raise NotImplemented()
+        raise NotImplementedError()
+
+    def has_collection(self, name):
+        """
+        Check if a collection with the given name exists.
+        """
+        raise NotImplementedError()
 
     def __getitem__(self, collection_name):
-        """Return a collection object given its name.
-        """
-        raise NotImplemented()
+        """Return a collection object given its name."""
+        raise NotImplementedError()
 
     def collections(self):
         """
@@ -209,7 +258,7 @@ class DatabaseSession:
             Use :py:meth:`collections()` instead
         """
         return self.collections()
-    
+
     def get_collections_names(self):
         """
         .. deprecated:: 3.0
@@ -217,15 +266,15 @@ class DatabaseSession:
         """
         return (i.name for i in self)
 
-    def add_field(self, collection, name, field_type, description=None,
-                  index=False):
+    def add_field(self, collection, name, field_type, description=None, index=False):
         """
         .. deprecated:: 3.0
             Use ``db_session[collection].add_field(...)`` instead.
             See :py:meth:`DatabaseCollection.add_field`.
         """
-        self[collection].add_field(name, field_type, description=description, 
-                                   index=index)
+        self[collection].add_field(
+            name, field_type, description=description, index=index
+        )
 
     def remove_field(self, collection, field):
         """
@@ -245,7 +294,7 @@ class DatabaseSession:
             return self[collection].fields.get(name)
         except ValueError:
             return None
-    
+
     def get_fields_names(self, collection):
         """
         .. deprecated:: 3.0
@@ -263,7 +312,7 @@ class DatabaseSession:
             Use ``db_session[collection].fields.values()`` instead.
             See :py:attr:`DatabaseCollection.fields`.
         """
-        try:     
+        try:
             return self[collection].fields.values()
         except ValueError:
             return ()
@@ -275,7 +324,7 @@ class DatabaseSession:
             See :py:meth:`DatabaseCollection.update_document`.
         """
         self[collection].update_document(document_id, values)
-            
+
     def has_document(self, collection, document_id):
         """
         .. deprecated:: 3.0
@@ -284,8 +333,7 @@ class DatabaseSession:
         """
         return self[collection].has_document(document_id)
 
-    def get_document(self, collection, document_id, fields=None,
-                     as_list=False):
+    def get_document(self, collection, document_id, fields=None, as_list=False):
         """
         .. deprecated:: 3.0
             Use ``db_session[collection].document(...)`` instead.
@@ -296,7 +344,7 @@ class DatabaseSession:
         except ValueError:
             return None
         return collection.document(document_id, fields, as_list)
-    
+
     def get_documents_ids(self, collection):
         """
         .. deprecated:: 3.0
@@ -309,8 +357,7 @@ class DatabaseSession:
             return
         yield from c.documents_ids()
 
-    def get_documents(self, collection, fields=None, as_list=False,
-                      document_ids=None):
+    def get_documents(self, collection, fields=None, as_list=False, document_ids=None):
         """
         .. deprecated:: 3.0
             Use ``db_session[collection].documents_ids(...)`` instead.
@@ -335,8 +382,7 @@ class DatabaseSession:
             See :py:meth:`DatabaseCollection.__delitem__`.
         """
         del self[collection][document_id]
-    
-    
+
     def add_document(self, collection, document):
         """
         .. deprecated:: 3.0
@@ -344,7 +390,6 @@ class DatabaseSession:
             See :py:meth:`DatabaseCollection.add`.
         """
         self[collection].add(document)
-        
 
     def filter_documents(self, collection, filter_query, fields=None, as_list=False):
         """
@@ -359,31 +404,34 @@ class DatabaseCollection:
     def __init__(self, session, name):
         self.session = session
         self.name = name
-        self.catchall_column = self.settings().get('catchall_column', '_catchall')
+        self.catchall_column = self.settings().get("catchall_column", "_catchall")
         self.primary_key = {}
         self.bad_json_fields = set()
         self.fields = {}
 
     def settings(self):
-        return self.session.settings('collection', self.name, {})
-    
+        return self.session.settings("collection", self.name, {})
+
     def set_settings(self, settings):
-        self.session.set_settings('collection', self.name, settings)
+        self.session.set_settings("collection", self.name, settings)
 
     def document_id(self, document_id):
-        if not isinstance(document_id, (tuple, list)):
+        if not isinstance(document_id, tuple | list):
             document_id = (document_id,)
         if len(document_id) != len(self.primary_key):
-            raise KeyError(f'key for table {self.name} requires {len(self.primary_key)} value(s), {len(document_id)} given')
+            raise KeyError(
+                f"key for table {self.name} requires {len(self.primary_key)} value(s), {len(document_id)} given"
+            )
         return document_id
-    
+
     def update_settings(self, **kwargs):
         settings = self.settings()
         settings.update(kwargs)
         self.set_settings(settings)
 
-    def add_field(self, name, field_type, description=None,
-                  index=False, bad_json=False):
+    def add_field(
+        self, name, field_type, description=None, index=False, bad_json=False
+    ):
         """
         Adds a field to the database
 
@@ -406,7 +454,7 @@ class DatabaseCollection:
                            - If the field description is invalid
         """
         raise NotImplementedError()
-    
+
     def remove_field(self, name):
         """
         Removes a field in the collection
@@ -421,19 +469,11 @@ class DatabaseCollection:
         raise NotImplementedError()
 
     def update_document(self, document_id, partial_document):
-        document_id = self.document_id(document_id)
-        document = self[document_id]
-        if document is None:
-            raise ValueError(f'Collection {self.name} have no document with key {document_id}')
-        for field, value in partial_document.items():
-            if field in self.primary_key and value != document[field]:
-                raise ValueError(f'cannot change the value of the key field {field}')
-            document[field] = value
-        self[document_id] = document
-    
+        raise NotImplementedError()
+
     def has_document(self, document_id):
         raise NotImplementedError()
-      
+
     def document(self, document_id, fields=None, as_list=False):
         raise NotImplementedError()
 
@@ -441,11 +481,13 @@ class DatabaseCollection:
         raise NotImplementedError()
 
     def documents_ids(self):
-        yield from (i for i in self.documents(fields=tuple(self.primary_key), as_list=True))
+        yield from (
+            i for i in self.documents(fields=tuple(self.primary_key), as_list=True)
+        )
 
     def __iter__(self):
         return self.documents()
-     
+
     def add(self, document, replace=False):
         raise NotImplementedError()
 
@@ -453,7 +495,7 @@ class DatabaseCollection:
         raise NotImplementedError()
 
     def _encode_column_value(self, field, value):
-        encoding  = self.fields.get(field,{}).get('encoding')
+        encoding = self.fields.get(field, {}).get("encoding")
         if encoding:
             encode, decode = encoding
             try:
@@ -465,20 +507,22 @@ class DatabaseCollection:
                 column_value = encode(json_encode(value))
                 self.bad_json_fields.add(field)
                 settings = self.settings()
-                settings.setdefault('fields', {}).setdefault(field,{})['bad_json'] = True
+                settings.setdefault("fields", {}).setdefault(field, {})["bad_json"] = (
+                    True
+                )
                 self.set_settings(settings)
             return column_value
         return value
 
     def __getitem__(self, document_id):
         return self.document(document_id)
-    
+
     def __delitem__(self, document_id):
         raise NotImplementedError()
-    
+
     def parse_filter(self, filter):
         raise NotImplementedError()
-    
+
     def filter(self, filter, fields=None, as_list=False):
         """
         Iterates over the collection documents selected by filter_query
@@ -487,8 +531,6 @@ class DatabaseCollection:
 
         filter_query can be the result of self.filter_query() or a string containing a filter
         (in this case self.fliter_query() is called to get the actual query)
-
-        :param collection: Filter collection (str, must be existing)
 
         :param filter_query: Filter query (str)
 
@@ -505,22 +547,33 @@ class DatabaseCollection:
         """
         raise NotImplementedError()
 
+    def delete(self, filter):
+        """
+        Delete documents corresponding to the given filter
+
+        :param filter_query: Filter query (str)
+        """
+        raise NotImplementedError()
+
+
 def json_dumps(value):
-    return json.dumps(value, separators=(',', ':'))
+    return json.dumps(value, separators=(",", ":"))
+
 
 _json_encodings = {
-    datetime: lambda d: f'{d.isoformat()}ℹdatetimeℹ',
-    date: lambda d: f'{d.isoformat()}ℹdateℹ',
-    time: lambda d: f'{d.isoformat()}ℹtimeℹ',
-    list: lambda l: [json_encode(i) for i in l],
-    dict: lambda d: dict((k, json_encode(v)) for k, v in d.items()),
+    datetime: lambda d: f"{d.isoformat()}ℹdatetimeℹ",
+    date: lambda d: f"{d.isoformat()}ℹdateℹ",
+    time: lambda d: f"{d.isoformat()}ℹtimeℹ",
+    list: lambda l: [json_encode(i) for i in l],  # noqa: E741
+    dict: lambda d: {k: json_encode(v) for k, v in d.items()},
 }
 
 _json_decodings = {
-    'datetime': lambda s: dateutil.parser.parse(s),
-    'date': lambda s: dateutil.parser.parse(s).date(),
-    'time': lambda s: dateutil.parser.parse(s).time(),
+    "datetime": lambda s: dateutil.parser.parse(s),
+    "date": lambda s: dateutil.parser.parse(s).date(),
+    "time": lambda s: dateutil.parser.parse(s).time(),
 }
+
 
 def json_encode(value):
     global _json_encodings
@@ -529,7 +582,8 @@ def json_encode(value):
     encode = _json_encodings.get(type_)
     if encode is not None:
         return encode(value)
-    return encode(value)
+    return value
+
 
 def json_decode(value):
     global _json_decodings
@@ -537,17 +591,18 @@ def json_decode(value):
     if isinstance(value, list):
         return [json_decode(i) for i in value]
     elif isinstance(value, dict):
-        return dict((k, json_decode(v)) for k, v in value.items())
+        return {k: json_decode(v) for k, v in value.items()}
     elif isinstance(value, str):
-        if value.endswith('ℹ'):
-            l = value[:-1].rsplit('ℹ', 1)
-            if len(l) == 2:
-                encoded_value, decoding_name = l
+        if value.endswith("ℹ"):
+            split_value = value[:-1].rsplit("ℹ", 1)
+            if len(split_value) == 2:
+                encoded_value, decoding_name = split_value
                 decode = _json_decodings.get(decoding_name)
                 if decode is None:
                     raise ValueError(f'Invalid JSON encoding type for value "{value}"')
                 return decode(encoded_value)
     return value
+
 
 # Obsolete constants kept for backward compatibility with API v2
 
@@ -568,7 +623,21 @@ FIELD_TYPE_LIST_DATETIME = list[datetime]
 FIELD_TYPE_LIST_TIME = list[time]
 FIELD_TYPE_LIST_JSON = list[dict]
 
-ALL_TYPES = {FIELD_TYPE_LIST_STRING, FIELD_TYPE_LIST_INTEGER, FIELD_TYPE_LIST_FLOAT, FIELD_TYPE_LIST_BOOLEAN,
-             FIELD_TYPE_LIST_DATE, FIELD_TYPE_LIST_DATETIME,
-             FIELD_TYPE_LIST_TIME, FIELD_TYPE_LIST_JSON, FIELD_TYPE_STRING, FIELD_TYPE_INTEGER, FIELD_TYPE_FLOAT,
-             FIELD_TYPE_BOOLEAN, FIELD_TYPE_DATE, FIELD_TYPE_DATETIME, FIELD_TYPE_TIME, FIELD_TYPE_JSON}
+ALL_TYPES = {
+    FIELD_TYPE_LIST_STRING,
+    FIELD_TYPE_LIST_INTEGER,
+    FIELD_TYPE_LIST_FLOAT,
+    FIELD_TYPE_LIST_BOOLEAN,
+    FIELD_TYPE_LIST_DATE,
+    FIELD_TYPE_LIST_DATETIME,
+    FIELD_TYPE_LIST_TIME,
+    FIELD_TYPE_LIST_JSON,
+    FIELD_TYPE_STRING,
+    FIELD_TYPE_INTEGER,
+    FIELD_TYPE_FLOAT,
+    FIELD_TYPE_BOOLEAN,
+    FIELD_TYPE_DATE,
+    FIELD_TYPE_DATETIME,
+    FIELD_TYPE_TIME,
+    FIELD_TYPE_JSON,
+}

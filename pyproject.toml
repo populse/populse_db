@@ -1,0 +1,79 @@
+[project]
+name = "populse-db"
+version = "3.0.10"
+authors = [
+    {name = "Popolse Team", email = "contact@brainvisa.info"},
+]
+description = "populse-db"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "CeCILL-B"}
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: SQL",
+    "Natural Language :: English",
+    "Topic :: Database",
+]
+
+dependencies = [
+    "python-dateutil",
+    "lark >=0.7.0",
+    "cryptography",
+    "requests",
+]
+
+[project.optional-dependencies]
+doc = [
+    "sphinx >=1.0",
+]
+server = [
+    "fastapi",
+    "uvicorn",
+    "tblib",
+]
+
+[project.urls]
+homepage = "https://populse.github.io/populse_db/"
+repository = "https://github.com/populse/populse_db"
+
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["python"]
+
+[tool.brainvisa-cmake]
+test_commands = ["python -m populse_db.test --verbose"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+populse-db = { path = ".", editable = true }
+build = "*"
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+doc = { features = ["doc"], solve-group = "default" }
+server = { features = ["server"], solve-group = "default" }
+
+[tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+python="*"
+uvicorn = "*"
+fastapi = "*"
+tblib = "*"
+pip = "*"
+pytest = "*"
+twine = "*"

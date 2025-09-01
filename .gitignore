@@ -102,3 +102,7 @@ ENV/
 
 # Backup files
 *~
+
+# pixi environments
+.pixi
+*.egg-info
