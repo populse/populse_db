@@ -1,26 +1,24 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>User documentation &#8212; populse_db 3.0.0alpha documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/haiku.css" />
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <title>User documentation &#8212; populse_db 3.0.10 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css?v=fce32b03" />
+    <script src="_static/documentation_options.js?v=d28a59c5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
   </head><body>
       <div class="header" role="banner"><h1 class="heading"><a href="index.html">
-          <span>populse_db 3.0.0alpha documentation</span></a></h1>
+          <span>populse_db 3.0.10 documentation</span></a></h1>
         <h2 class="heading"><span>User documentation</span></h2>
       </div>
-      <div class="topnav" role="navigation" aria-label="top navigation">
+      <div class="topnav" role="navigation" aria-label="Top">
       
         <p>
         <a class="uplink" href="index.html">Contents</a>
@@ -33,11 +31,6 @@
   <div class="toctree-wrapper compound">
 </div>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 20%" />
-<col style="width: 44%" />
-<col style="width: 36%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference external" href="./index.html">Index</a></p></td>
 <td><p><a class="reference external" href="./documentation.html">Documentation</a></p></td>
@@ -46,9 +39,9 @@
 </tbody>
 </table>
 <section id="user-documentation">
-<h1>User documentation<a class="headerlink" href="#user-documentation" title="Permalink to this headline">¶</a></h1>
+<h1>User documentation<a class="headerlink" href="#user-documentation" title="Link to this heading">¶</a></h1>
 <section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>From <a class="reference external" href="https://pypi.org/project/populse-db/">PyPI</a>:</p></li>
 </ul>
@@ -78,16 +71,16 @@
 </div>
 </section>
 <section id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h2>
 <p>Import examples:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">populse_db</span>
-<span class="kn">from</span> <span class="nn">populse_db.database</span> <span class="kn">import</span> <span class="n">Database</span>
-<span class="kn">import</span> <span class="nn">populse_db.database</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">populse_db</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">populse_db.database</span><span class="w"> </span><span class="kn">import</span> <span class="n">Database</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">populse_db.database</span>
 </pre></div>
 </div>
 </section>
 <section id="tests">
-<h2>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h2>
+<h2>Tests<a class="headerlink" href="#tests" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>Unit tests have been written with the package unittest</p></li>
 <li><p>Continuous integration has been deployed with Travis (Linux, OSX), and AppVeyor (Windows)</p></li>
@@ -101,16 +94,16 @@
 </div>
 </section>
 <section id="using-populse-db">
-<h2>Using populse_db<a class="headerlink" href="#using-populse-db" title="Permalink to this headline">¶</a></h2>
+<h2>Using populse_db<a class="headerlink" href="#using-populse-db" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>Small script to show the initialization and some examples of calls:</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">tempfile</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 
-<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 
-<span class="kn">from</span> <span class="nn">populse_db.database</span> <span class="kn">import</span> <span class="n">Database</span><span class="p">,</span> <span class="n">FIELD_TYPE_STRING</span><span class="p">,</span> <span class="n">FIELD_TYPE_INTEGER</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">populse_db.database</span><span class="w"> </span><span class="kn">import</span> <span class="n">Database</span><span class="p">,</span> <span class="n">FIELD_TYPE_STRING</span><span class="p">,</span> <span class="n">FIELD_TYPE_INTEGER</span>
 
 <span class="c1"># Generating the database in a temp directory</span>
 <span class="n">temp_folder</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">()</span>
@@ -162,7 +155,7 @@
 
 
       </div>
-      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
       
         <p>
         <a class="uplink" href="index.html">Contents</a>
@@ -171,8 +164,8 @@
       </div>
 
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, populse team.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    &#169; Copyright 2022, populse team.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.3.0.
     </div>
   </body>
 </html>

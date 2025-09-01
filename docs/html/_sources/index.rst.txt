@@ -14,35 +14,36 @@
 Introduction
 ============
 
-populse_db is an open source Python module that sits in front of a database 
-(`SQLite <https://sqlite.org>`_ or `Postgres <https://www.postgresql.org>`_)
-and allows the storage and query of JSON documents. It brings together
-features from SQL and NOSQL databases and can be used without any database
-server thanks to its SQLite backend.
+populse_db is a small Python module aiming is to store and query efficiently JSON data with the following constraints:
 
-Features
---------
-
-* **No server required**: populse_db can be used with a database stored in a
-  simple file or even in memory. This feature is simply a consequence of
-  the possibility to use a SQLite database backend.
+* **Storage on file system**: The data must be stored on a standard file system and
+  respect all system access rights.
+* **Parallel access**: Multiple processes or threads must be able to read or modify
+  data in parallel.
+* **Use a few files**: populse_db store data in a single file. In some environment
+  where the number of inodes is limited, it is vital that data storage have also a
+  reasonable limit on the number of files it produces.
 * **No schema required**: populse_db can be used without thinking about
-  database schema. But it is also possible to define some pieces of schema
-  or to use an existing one to further optimize query performances.
+  database schema. But it is also possible to define some pieces of schema in order
+  to optimize query performances on some JSON attributes or to define a
+  partitioning of the data.
 * **Date and time support**: populse_db support items of type `datetime.time`,
   `datetime.date` and `datetime.datetime` in JSON objects. These items are
   automatically encoded (resp. decoded) to (resp. from) strings using ISO
-  format. 
+  format.
 * **Query list elements**: populse_db has a simple query language that
   allows to select objects by looking for items in list fields.
-* **Transactions support**: to ensure the consistency of the database, 
+* **Transactions support**: to ensure the consistency of the database,
   populse_db allows all modifications to be made within a transaction.
   Thus, in case of unexpected problem, the database will keep its initial
-  state before the transaction. 
+  state before the transaction.
 * **Partitioning of JSON objects**: populse_db allows to read or modify
   individually each stored object. But it also allows to define a
   partitioning of the objects offering a direct access to different parts of
-  the same object.
+  the same object without having to read or write the whole object (as it would
+  be using a simple JSON file).
+
+populse_db offers a simple API on top of a SQLite backend that allows to respect all the requirements.
 
 Dependencies
 ------------
@@ -55,8 +56,6 @@ summary of what populse_db needs:
   can't work with Python 3.8 or earlier releases.
 * `dateutil <https://dateutil.readthedocs.io/>`_
 * `Lark-parser <https://github.com/lark-parser/lark/>`_ >= 0.7.0.
-* *[optional]* `Psycopg2 <https://www.psycopg.org/>`_ allows the connection to
-  a Postgresql database.
 * *[optional]* `Sphinx <https://www.sphinx-doc.org/>`_ allows to build the
   documentation from source code.
 
@@ -69,11 +68,6 @@ Populse_db can be installed by standard Python tool. For instance::
 
    pip install populse_db
 
-By default, only SQL backend is supported. If one wants to use Postgresql
-database, use the following command::
-
-   pip install populse_db[postgres]
-
 The documentation is embedded in the project. However, if one needs to rebuild
 the documentation, use::
 
@@ -85,25 +79,24 @@ Basic usage
 
 Populse_db is organized in *collections* and *documents*. A document is a JSON
 object represented by a dictionary in Python. A collection is a named container
-in which documents can be stored. Internally, collections correponds to
+in which documents can be stored. Internally, collections corresponds to
 database tables and documents are stored in table rows (one document per row).
 But  populse_db can hide this internal database stuff. The only thing user
-must do isto declare its collections if it uses an empty database.
+must do is to declare its collections if it uses an empty database. This is
+illustrated in the following example::
 
-::
-
-   from datetime import date
-   from populse_db import Database
+   from datetime import date, datetime
+   from populse_db import Storage
    from pprint import pprint
 
-   # Connect to a new in memory database using SQLite
-   with Database(':memory:') as db:
-      # Since database is empty, declare collections that
-      # will be used to store documents.
-      db.add_collection('subject')
-      db.add_collection('acquisition')
+   # Create a storage using a file name
+   storage = Storage('/tmp/populse_db.sqlite')
+   # Create a read/write session
+   with storage.session(write=True) as db:
+      db.last_modified = datetime.now()
 
       # Store documents in the database
+      db['subject'] = Storage.Collection('subject_id')
       db['subject']['rbndt001'] = {
          'name': 'Eléa',
          'sex': 'f',
@@ -114,8 +107,9 @@ must do isto declare its collections if it uses an empty database.
          'sex': 'm',
          'birth_date': date(1963, 12, 7),
       }
+      db['acquisition'] = Storage.Collection()
       db['acquisition']['rbndt001_t1'] = {
-         'subject': 'rbndt001',
+         'subject_id': 'rbndt001',
          'type': ['image', 'mri', 'T1'],
          'format': 'DICOM',
          'files': [
@@ -127,7 +121,7 @@ must do isto declare its collections if it uses an empty database.
          'date': date(2022, 3, 28),
       }
       db['acquisition']['rbndt001_t2'] = {
-         'subject': 'rbndt001',
+         'subject_id': 'rbndt001',
          'type': ['image', 'mri', 'T2'],
          'format': 'DICOM',
          'files': [
@@ -139,7 +133,7 @@ must do isto declare its collections if it uses an empty database.
          'date': date(2022, 3, 28),
       }
       db['acquisition']['rbndt002_t1'] = {
-         'subject': 'rbndt002',
+         'subject_id': 'rbndt002',
          'type': ['image', 'mri', 'T1'],
          'format': 'NIFTI',
          'files': [
@@ -148,35 +142,45 @@ must do isto declare its collections if it uses an empty database.
          'date': date(2022, 3, 29),
       }
 
+      # Retrieve a single value from storage
+      print('Last modified:', db.last_modified.get())
+
       # Retrieve a single document from collection 'subject'
-      pprint(db['subject']['rbndt001'])
+      pprint(db['subject']['rbndt001'].get())
 
       # Retrieve all documents from collection 'subject' respecting the
       # following conditions:
       #   - the "subject" field equals to "rbndt001"
-      #   - the "type" field is a list containing tha value "T1"
-      for doc in db['acquisition'].filter('subject=="rbndt001" and "T1" in type'):
+      #   - the "type" field is a list containing the value "T1"
+      for doc in db['acquisition'].search('subject=="rbndt001" and "T1" in type'):
          pprint(doc)
 
+<<<<<<< HEAD
+The example shows how to use populse_db to store and retrieve JSON
+=======
+      # Retrieve all possible types of acquisition
+      print('Subjects:', ', '.join(db.subject.distinct_values('subject_id')))
+
 The example above illustrate how to use populse_db to store and retrieve JSON
+>>>>>>> origin/master
 objects without wondering about the underlying SQL database engine. This script
 produces the following result::
 
    {'birth_date': datetime.date(1968, 3, 3),
-   'name': 'Eléa',
-   'primary_key': 'rbndt001',
-   'sex': 'f'}
+    'name': 'Eléa',
+    'primary_key': 'rbndt001',
+    'sex': 'f'}
    {'date': datetime.date(2022, 3, 28),
-   'files': ['/somewhere/t1/acq0001.dcm',
+    'files': ['/somewhere/t1/acq0001.dcm',
             '/somewhere/t1/acq0002.dcm',
             '/somewhere/t1/acq0003.dcm',
             '/somewhere/t1/acq0004.dcm'],
-   'format': 'DICOM',
-   'primary_key': 'rbndt001_t1',
-   'subject': 'rbndt001',
-   'type': ['image', 'mri', 'T1']}
+    'format': 'DICOM',
+    'primary_key': 'rbndt001_t1',
+    'subject': 'rbndt001',
+    'type': ['image', 'mri', 'T1']}
 
-
+To further understand how to use populse_db, see the `tutorial <./tutorial.html>`_
 
 
 

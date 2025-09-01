@@ -1,26 +1,24 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>populse_db package &#8212; populse_db 3.0.0alpha documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/haiku.css" />
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <title>populse_db package &#8212; populse_db 3.0.10 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css?v=fce32b03" />
+    <script src="_static/documentation_options.js?v=d28a59c5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
   </head><body>
       <div class="header" role="banner"><h1 class="heading"><a href="index.html">
-          <span>populse_db 3.0.0alpha documentation</span></a></h1>
+          <span>populse_db 3.0.10 documentation</span></a></h1>
         <h2 class="heading"><span>populse_db package</span></h2>
       </div>
-      <div class="topnav" role="navigation" aria-label="top navigation">
+      <div class="topnav" role="navigation" aria-label="Top">
       
         <p>
         <a class="uplink" href="index.html">Contents</a>
@@ -31,20 +29,20 @@
         
         
   <section id="module-populse_db">
-<span id="populse-db-package"></span><h1>populse_db package<a class="headerlink" href="#module-populse_db" title="Permalink to this headline">¶</a></h1>
+<span id="populse-db-package"></span><h1>populse_db package<a class="headerlink" href="#module-populse_db" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="populse_db.Database">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.</span></span><span class="sig-name descname"><span class="pre">Database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database_url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.Database" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.</span></span><span class="sig-name descname"><span class="pre">Database</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">echo_sql</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.Database" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Entrypoint of populse_db for creating <a class="reference internal" href="#populse_db.database.DatabaseSession" title="populse_db.database.DatabaseSession"><code class="xref any py py-class docutils literal notranslate"><span class="pre">DatabaseSession</span></code></a> object given
 an URL that identify the underlying database engine.</p>
 <p>Creating a <a class="reference internal" href="#populse_db.Database" title="populse_db.Database"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Database</span></code></a> doesn’t connect to the database engine. It just
 parses the URL (ensuring that it corresponds to a valid engine) and stores
-it. The <a class="reference internal" href="#populse_db.Database" title="populse_db.Database"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Database</span></code></a> is a Python context manager that must be using a 
-<code class="docutils literal notranslate"><span class="pre">with</span></code> statement that connects to the database and creates a database 
+it. The <a class="reference internal" href="#populse_db.Database" title="populse_db.Database"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Database</span></code></a> is a Python context manager that must be using a
+<code class="docutils literal notranslate"><span class="pre">with</span></code> statement that connects to the database and creates a database
 specific object that implements the API of <a class="reference internal" href="#populse_db.database.DatabaseSession" title="populse_db.database.DatabaseSession"><code class="xref any py py-class docutils literal notranslate"><span class="pre">DatabaseSession</span></code></a>.</p>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">populse_db</span> <span class="kn">import</span> <span class="n">database</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">populse_db</span><span class="w"> </span><span class="kn">import</span> <span class="n">Database</span>
 
 <span class="n">db</span> <span class="o">=</span> <span class="n">Database</span><span class="p">(</span><span class="s1">&#39;sqlite:///tmp/populse_db.sqlite&#39;</span><span class="p">)</span>
 <span class="k">with</span> <span class="n">db</span> <span class="k">as</span> <span class="n">dbs</span><span class="p">:</span>
@@ -57,10 +55,22 @@ specific object that implements the API of <a class="reference internal" href="#
 </div>
 <p>Database modification within a <code class="docutils literal notranslate"><span class="pre">with</span></code> statement is done in a transaction.
 If an exception occurs before the end of the <cite>with</cite>, a rollback is done and
-the database is not modified.</p>
+the database is not modified. By default, this transaction allows to read
+the database in parallel. The first database modification will acquire an
+exclusive access to the database. It is possible to request an exclusive
+session (preventing any other access to the database by other processes
+or threads) by using the <cite>exclusive</cite> property:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">populse_db</span><span class="w"> </span><span class="kn">import</span> <span class="n">Database</span>
+
+<span class="n">db</span> <span class="o">=</span> <span class="n">Database</span><span class="p">(</span><span class="s1">&#39;sqlite:///tmp/populse_db.sqlite&#39;</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">db</span><span class="o">.</span><span class="n">exclusive</span> <span class="k">as</span> <span class="n">dbs</span><span class="p">:</span>
+    <span class="c1"># All other access to the database are blocked</span>
+    <span class="c1"># until the end of this &quot;with&quot; statement.</span>
+</pre></div>
+</div>
 <p>:any:<code class="docutils literal notranslate"><span class="pre">Database</span></code> is a reusable context manager. It means that it is allowed
 to use it in several consecutive <code class="docutils literal notranslate"><span class="pre">with</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">populse_db</span> <span class="kn">import</span> <span class="n">database</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">populse_db</span><span class="w"> </span><span class="kn">import</span> <span class="n">Database</span>
 
 <span class="n">db</span> <span class="o">=</span> <span class="n">Database</span><span class="p">(</span><span class="s1">&#39;sqlite:///tmp/populse_db.sqlite&#39;</span><span class="p">)</span>
 <span class="k">with</span> <span class="n">db</span> <span class="k">as</span> <span class="n">dbs</span><span class="p">:</span>
@@ -71,11 +81,11 @@ to use it in several consecutive <code class="docutils literal notranslate"><spa
 </pre></div>
 </div>
 <p><a class="reference internal" href="#populse_db.Database" title="populse_db.Database"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Database</span></code></a> is a reentrant context manager. It is possible to use a
-<code class="docutils literal notranslate"><span class="pre">with</span></code> statement within another <code class="docutils literal notranslate"><span class="pre">with</span></code> that already use the same 
-<a class="reference internal" href="#populse_db.Database" title="populse_db.Database"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Database</span></code></a>. In that case, the same context is returned and the 
+<code class="docutils literal notranslate"><span class="pre">with</span></code> statement within another <code class="docutils literal notranslate"><span class="pre">with</span></code> that already use the same
+<a class="reference internal" href="#populse_db.Database" title="populse_db.Database"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Database</span></code></a>. In that case, the same context is returned and the
 transaction is not ended in any of the inner context, it is terminated
 when the outer context exits:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">populse_db</span> <span class="kn">import</span> <span class="n">database</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">populse_db</span><span class="w"> </span><span class="kn">import</span> <span class="n">Database</span>
 
 <span class="n">db</span> <span class="o">=</span> <span class="n">Database</span><span class="p">(</span><span class="s1">&#39;sqlite:///tmp/populse_db.sqlite&#39;</span><span class="p">)</span>
 <span class="k">with</span> <span class="n">db</span> <span class="k">as</span> <span class="n">dbs1</span><span class="p">:</span>
@@ -85,8 +95,8 @@ when the outer context exits:</p>
         <span class="c1"># here: dbs1 is dbs2 == True</span>
         <span class="c1"># No new connection to the database is done</span>
         <span class="n">dbs</span><span class="p">[</span><span class="s1">&#39;my collection&#39;</span><span class="p">][</span><span class="s1">&#39;my document&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="c1"># After the inner with, connection to the database is not </span>
-    <span class="c1"># closed and transaction is ongoing (no commit nor rollback </span>
+    <span class="c1"># After the inner with, connection to the database is not</span>
+    <span class="c1"># closed and transaction is ongoing (no commit nor rollback</span>
     <span class="c1"># is done)</span>
 <span class="c1"># After the end of the outer with, transaction is terminated and</span>
 <span class="c1"># connection to the database is closed.</span>
@@ -98,19 +108,20 @@ connection.</p>
 <dl class="simple">
 <dt>methods:</dt><dd><ul class="simple">
 <li><p>__enter__: Creates a <a class="reference internal" href="#populse_db.database.DatabaseSession" title="populse_db.database.DatabaseSession"><code class="xref any py py-class docutils literal notranslate"><span class="pre">DatabaseSession</span></code></a> instance</p></li>
-<li><p>__exit__: Release resource used by the DatabaseSession</p></li>
+<li><p>__exit__: Release resource used by the <a class="reference internal" href="#populse_db.database.DatabaseSession" title="populse_db.database.DatabaseSession"><code class="xref any py py-class docutils literal notranslate"><span class="pre">DatabaseSession</span></code></a></p></li>
 </ul>
 </dd>
 </dl>
 <p>Creates a <a class="reference internal" href="#populse_db.Database" title="populse_db.Database"><code class="xref any py py-class docutils literal notranslate"><span class="pre">Database</span></code></a> instance.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>database_url</strong> – <p>URL defining database engine and its parameters. The
-engine URL must have the following pattern: 
+engine URL must have the following pattern:
 dialect://user:password&#64;host/dbname[?key=value..].
 To date dialect can only be <code class="docutils literal notranslate"><span class="pre">sqlite</span></code> but <code class="docutils literal notranslate"><span class="pre">postgresql</span></code> is planned.</p>
 <dl class="simple">
 <dt>Examples:</dt><dd><ul class="simple">
+<li><p>/somewhere/a_file.popdb</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">sqlite:///foo.db</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">postgresql://scott:tiger&#64;localhost/test</span></code></p></li>
 </ul>
@@ -119,40 +130,119 @@ To date dialect can only be <code class="docutils literal notranslate"><span cla
 </p>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.Database.begin_session">
+<span class="sig-name descname"><span class="pre">begin_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclusive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.Database.begin_session" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.Database.end_session">
+<span class="sig-name descname"><span class="pre">end_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rollback</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.Database.end_session" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="populse_db.Database.exclusive">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">exclusive</span></span><a class="headerlink" href="#populse_db.Database.exclusive" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.Database.session">
+<span class="sig-name descname"><span class="pre">session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exclusive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.Database.session" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <section id="subpackages">
-<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="populse_db.engine.html">populse_db.engine package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine"><code class="docutils literal notranslate"><span class="pre">Engine</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.add_collection"><code class="docutils literal notranslate"><span class="pre">Engine.add_collection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.add_field"><code class="docutils literal notranslate"><span class="pre">Engine.add_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.clear"><code class="docutils literal notranslate"><span class="pre">Engine.clear()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.collection"><code class="docutils literal notranslate"><span class="pre">Engine.collection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.collections"><code class="docutils literal notranslate"><span class="pre">Engine.collections()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.commit"><code class="docutils literal notranslate"><span class="pre">Engine.commit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.document"><code class="docutils literal notranslate"><span class="pre">Engine.document()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.field"><code class="docutils literal notranslate"><span class="pre">Engine.field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.fields"><code class="docutils literal notranslate"><span class="pre">Engine.fields()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.filter_documents"><code class="docutils literal notranslate"><span class="pre">Engine.filter_documents()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.has_collection"><code class="docutils literal notranslate"><span class="pre">Engine.has_collection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.has_document"><code class="docutils literal notranslate"><span class="pre">Engine.has_document()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.has_field"><code class="docutils literal notranslate"><span class="pre">Engine.has_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.has_value"><code class="docutils literal notranslate"><span class="pre">Engine.has_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.parse_filter"><code class="docutils literal notranslate"><span class="pre">Engine.parse_filter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.primary_key"><code class="docutils literal notranslate"><span class="pre">Engine.primary_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.remove_collection"><code class="docutils literal notranslate"><span class="pre">Engine.remove_collection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.remove_document"><code class="docutils literal notranslate"><span class="pre">Engine.remove_document()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.remove_fields"><code class="docutils literal notranslate"><span class="pre">Engine.remove_fields()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.remove_value"><code class="docutils literal notranslate"><span class="pre">Engine.remove_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.rollback"><code class="docutils literal notranslate"><span class="pre">Engine.rollback()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.Engine.set_values"><code class="docutils literal notranslate"><span class="pre">Engine.set_values()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="populse_db.engine.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="populse_db.engine.html#module-populse_db.engine.sqlite">populse_db.engine.sqlite module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="populse_db.engine.html#module-populse_db.engine.sqlite">populse_db.engine.sqlite module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.ParsedFilter"><code class="docutils literal notranslate"><span class="pre">ParsedFilter</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteCollection"><code class="docutils literal notranslate"><span class="pre">SQLiteCollection</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteCollection.add"><code class="docutils literal notranslate"><span class="pre">SQLiteCollection.add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteCollection.add_field"><code class="docutils literal notranslate"><span class="pre">SQLiteCollection.add_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteCollection.count"><code class="docutils literal notranslate"><span class="pre">SQLiteCollection.count()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteCollection.delete"><code class="docutils literal notranslate"><span class="pre">SQLiteCollection.delete()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteCollection.document"><code class="docutils literal notranslate"><span class="pre">SQLiteCollection.document()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteCollection.documents"><code class="docutils literal notranslate"><span class="pre">SQLiteCollection.documents()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteCollection.filter"><code class="docutils literal notranslate"><span class="pre">SQLiteCollection.filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteCollection.has_document"><code class="docutils literal notranslate"><span class="pre">SQLiteCollection.has_document()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteCollection.parse_filter"><code class="docutils literal notranslate"><span class="pre">SQLiteCollection.parse_filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteCollection.remove_field"><code class="docutils literal notranslate"><span class="pre">SQLiteCollection.remove_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteCollection.update_document"><code class="docutils literal notranslate"><span class="pre">SQLiteCollection.update_document()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteSession"><code class="docutils literal notranslate"><span class="pre">SQLiteSession</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteSession.add_collection"><code class="docutils literal notranslate"><span class="pre">SQLiteSession.add_collection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteSession.clear"><code class="docutils literal notranslate"><span class="pre">SQLiteSession.clear()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteSession.close"><code class="docutils literal notranslate"><span class="pre">SQLiteSession.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteSession.commit"><code class="docutils literal notranslate"><span class="pre">SQLiteSession.commit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteSession.database_exceptions"><code class="docutils literal notranslate"><span class="pre">SQLiteSession.database_exceptions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteSession.execute"><code class="docutils literal notranslate"><span class="pre">SQLiteSession.execute()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteSession.get_collection"><code class="docutils literal notranslate"><span class="pre">SQLiteSession.get_collection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteSession.has_collection"><code class="docutils literal notranslate"><span class="pre">SQLiteSession.has_collection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteSession.remove_collection"><code class="docutils literal notranslate"><span class="pre">SQLiteSession.remove_collection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteSession.rollback"><code class="docutils literal notranslate"><span class="pre">SQLiteSession.rollback()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteSession.set_settings"><code class="docutils literal notranslate"><span class="pre">SQLiteSession.set_settings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.SQLiteSession.settings"><code class="docutils literal notranslate"><span class="pre">SQLiteSession.settings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.create_sqlite_session_factory"><code class="docutils literal notranslate"><span class="pre">create_sqlite_session_factory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="populse_db.engine.html#populse_db.engine.sqlite.sqlite_session_factory"><code class="docutils literal notranslate"><span class="pre">sqlite_session_factory()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
 </div>
 </section>
 <section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
 </section>
 <section id="module-populse_db.database">
-<span id="populse-db-database-module"></span><h2>populse_db.database module<a class="headerlink" href="#module-populse_db.database" title="Permalink to this headline">¶</a></h2>
+<span id="populse-db-database-module"></span><h2>populse_db.database module<a class="headerlink" href="#module-populse_db.database" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">DatabaseCollection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">DatabaseCollection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.add">
-<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.add" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.add" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.add_field">
-<span class="sig-name descname"><span class="pre">add_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bad_json</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.add_field" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">add_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bad_json</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.add_field" title="Link to this definition">¶</a></dt>
 <dd><p>Adds a field to the database</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>collection</strong> – Field collection (str, must be existing)</p></li>
 <li><p><strong>name</strong> – Field name (str, must not be existing)</p></li>
@@ -163,7 +253,7 @@ To date dialect can only be <code class="docutils literal notranslate"><span cla
 <li><p><strong>index</strong> – Bool to know if indexing must be done =&gt; False by default</p></li>
 </ul>
 </dd>
-<dt class="field-even">Raises</dt>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
 <li><p>If the collection does not exist</p></li>
 <li><p>If the field already exists</p></li>
@@ -177,36 +267,46 @@ To date dialect can only be <code class="docutils literal notranslate"><span cla
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.delete">
+<span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.delete" title="Link to this definition">¶</a></dt>
+<dd><p>Delete documents corresponding to the given filter</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filter_query</strong> – Filter query (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.document">
-<span class="sig-name descname"><span class="pre">document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.document" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.document" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.document_id">
-<span class="sig-name descname"><span class="pre">document_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.document_id" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">document_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.document_id" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.documents">
-<span class="sig-name descname"><span class="pre">documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.documents" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.documents" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.documents_ids">
-<span class="sig-name descname"><span class="pre">documents_ids</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.documents_ids" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">documents_ids</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.documents_ids" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.filter">
-<span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.filter" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.filter" title="Link to this definition">¶</a></dt>
 <dd><p>Iterates over the collection documents selected by filter_query</p>
 <p>Each item yield is a row of the collection table returned</p>
 <p>filter_query can be the result of self.filter_query() or a string containing a filter
 (in this case self.fliter_query() is called to get the actual query)</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>collection</strong> – Filter collection (str, must be existing)</p></li>
 <li><p><strong>filter_query</strong> – <p>Filter query (str)</p>
 <ul>
 <li><p>A filter row must be written this way: {&lt;field&gt;} &lt;operator&gt; “&lt;value&gt;”</p></li>
@@ -225,26 +325,26 @@ fields order</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.has_document">
-<span class="sig-name descname"><span class="pre">has_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.has_document" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">has_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.has_document" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.parse_filter">
-<span class="sig-name descname"><span class="pre">parse_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.parse_filter" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">parse_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.parse_filter" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.remove_field">
-<span class="sig-name descname"><span class="pre">remove_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.remove_field" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">remove_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.remove_field" title="Link to this definition">¶</a></dt>
 <dd><p>Removes a field in the collection</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>collection</strong> – Field collection (str, must be existing)</p></li>
 <li><p><strong>field</strong> – Field name (str, must be existing))</p></li>
 </ul>
 </dd>
-<dt class="field-even">Raises</dt>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
 <li><p>If the collection does not exist</p></li>
 <li><p>If the field does not exist</p></li>
@@ -256,29 +356,29 @@ fields order</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.set_settings">
-<span class="sig-name descname"><span class="pre">set_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">settings</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.set_settings" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">set_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">settings</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.set_settings" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.settings">
-<span class="sig-name descname"><span class="pre">settings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.settings" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">settings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.settings" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.update_document">
-<span class="sig-name descname"><span class="pre">update_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partial_document</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.update_document" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">update_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partial_document</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.update_document" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseCollection.update_settings">
-<span class="sig-name descname"><span class="pre">update_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.update_settings" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">update_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseCollection.update_settings" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">DatabaseSession</span></span><a class="headerlink" href="#populse_db.database.DatabaseSession" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">DatabaseSession</span></span><a class="headerlink" href="#populse_db.database.DatabaseSession" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Base class</p>
 <p>methods:</p>
@@ -298,6 +398,7 @@ fields order</p></li>
 <ul class="simple">
 <li><p><a class="reference internal" href="#populse_db.database.DatabaseSession.add_collection" title="populse_db.database.DatabaseSession.add_collection"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_collection()</span></code></a></p></li>
 <li><p><a class="reference internal" href="#populse_db.database.DatabaseSession.remove_collection" title="populse_db.database.DatabaseSession.remove_collection"><code class="xref py py-meth docutils literal notranslate"><span class="pre">remove_collection()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#populse_db.database.DatabaseSession.has_collection" title="populse_db.database.DatabaseSession.has_collection"><code class="xref py py-meth docutils literal notranslate"><span class="pre">has_collection()</span></code></a></p></li>
 <li><p><a class="reference internal" href="#populse_db.database.DatabaseSession.__getitem__" title="populse_db.database.DatabaseSession.__getitem__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__getitem__()</span></code></a></p></li>
 <li><p><a class="reference internal" href="#populse_db.database.DatabaseSession.collections" title="populse_db.database.DatabaseSession.collections"><code class="xref py py-meth docutils literal notranslate"><span class="pre">collections()</span></code></a></p></li>
 </ul>
@@ -323,22 +424,22 @@ fields order</p></li>
 </div></blockquote>
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.__getitem__">
-<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.__getitem__" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.__getitem__" title="Link to this definition">¶</a></dt>
 <dd><p>Return a collection object given its name.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.add_collection">
-<span class="sig-name descname"><span class="pre">add_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'primary_key'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_collection" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">add_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'primary_key'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_collection" title="Link to this definition">¶</a></dt>
 <dd><p>Adds a collection</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – New collection name (str, must not be existing)</p></li>
 <li><p><strong>primary_key</strong> – New collection primary_key column (str) =&gt; “index” by default</p></li>
 </ul>
 </dd>
-<dt class="field-even">Raises</dt>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – <ul class="simple">
 <li><p>If the collection is already existing</p></li>
 <li><p>If the collection name is invalid</p></li>
@@ -351,7 +452,7 @@ fields order</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.add_document">
-<span class="sig-name descname"><span class="pre">add_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_document" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">add_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_document" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">del</span> <span class="pre">db_session[collection].add(document)</span></code> instead.
 See <a class="reference internal" href="#populse_db.database.DatabaseCollection.add" title="populse_db.database.DatabaseCollection.add"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DatabaseCollection.add()</span></code></a>.</p>
@@ -360,7 +461,7 @@ See <a class="reference internal" href="#populse_db.database.DatabaseCollection.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.add_field">
-<span class="sig-name descname"><span class="pre">add_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_field" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">add_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.add_field" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">db_session[collection].add_field(...)</span></code> instead.
 See <a class="reference internal" href="#populse_db.database.DatabaseCollection.add_field" title="populse_db.database.DatabaseCollection.add_field"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DatabaseCollection.add_field()</span></code></a>.</p>
@@ -369,10 +470,10 @@ See <a class="reference internal" href="#populse_db.database.DatabaseCollection.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.collections">
-<span class="sig-name descname"><span class="pre">collections</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.collections" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">collections</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.collections" title="Link to this definition">¶</a></dt>
 <dd><p>Iterates over collections</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>generator</p>
 </dd>
 </dl>
@@ -380,22 +481,22 @@ See <a class="reference internal" href="#populse_db.database.DatabaseCollection.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.commit">
-<span class="sig-name descname"><span class="pre">commit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.commit" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">commit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.commit" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.default_primary_key">
-<span class="sig-name descname"><span class="pre">default_primary_key</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'primary_key'</span></em><a class="headerlink" href="#populse_db.database.DatabaseSession.default_primary_key" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">default_primary_key</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'primary_key'</span></em><a class="headerlink" href="#populse_db.database.DatabaseSession.default_primary_key" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.execute">
-<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.execute" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.execute" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.filter_documents">
-<span class="sig-name descname"><span class="pre">filter_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.filter_documents" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">filter_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.filter_documents" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">del</span> <span class="pre">db_session[collection].filter(...)</span></code> instead.
 See <a class="reference internal" href="#populse_db.database.DatabaseCollection.filter" title="populse_db.database.DatabaseCollection.filter"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DatabaseCollection.filter()</span></code></a>.</p>
@@ -404,7 +505,7 @@ See <a class="reference internal" href="#populse_db.database.DatabaseCollection.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_collection">
-<span class="sig-name descname"><span class="pre">get_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collection" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collection" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">db_session[name]</span></code> instead</p>
 </div>
@@ -412,7 +513,7 @@ See <a class="reference internal" href="#populse_db.database.DatabaseCollection.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_collections">
-<span class="sig-name descname"><span class="pre">get_collections</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collections" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_collections</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collections" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <a class="reference internal" href="#populse_db.database.DatabaseSession.collections" title="populse_db.database.DatabaseSession.collections"><code class="xref py py-meth docutils literal notranslate"><span class="pre">collections()</span></code></a> instead</p>
 </div>
@@ -420,7 +521,7 @@ See <a class="reference internal" href="#populse_db.database.DatabaseCollection.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_collections_names">
-<span class="sig-name descname"><span class="pre">get_collections_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collections_names" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_collections_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_collections_names" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">(i.name</span> <span class="pre">for</span> <span class="pre">i</span> <span class="pre">in</span> <span class="pre">db_session)</span></code> instead</p>
 </div>
@@ -428,7 +529,7 @@ See <a class="reference internal" href="#populse_db.database.DatabaseCollection.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_document">
-<span class="sig-name descname"><span class="pre">get_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_document" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_document" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">db_session[collection].document(...)</span></code> instead.
 See <a class="reference internal" href="#populse_db.database.DatabaseCollection.document" title="populse_db.database.DatabaseCollection.document"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DatabaseCollection.document()</span></code></a>.</p>
@@ -437,7 +538,7 @@ See <a class="reference internal" href="#populse_db.database.DatabaseCollection.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_documents">
-<span class="sig-name descname"><span class="pre">get_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_documents" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_documents" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">db_session[collection].documents_ids(...)</span></code> instead.
 See <a class="reference internal" href="#populse_db.database.DatabaseCollection.documents_ids" title="populse_db.database.DatabaseCollection.documents_ids"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DatabaseCollection.documents_ids()</span></code></a>.</p>
@@ -446,7 +547,7 @@ See <a class="reference internal" href="#populse_db.database.DatabaseCollection.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_documents_ids">
-<span class="sig-name descname"><span class="pre">get_documents_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_documents_ids" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_documents_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_documents_ids" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">db_session[collection].documents_ids(...)</span></code> instead.
 See <a class="reference internal" href="#populse_db.database.DatabaseCollection.documents_ids" title="populse_db.database.DatabaseCollection.documents_ids"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DatabaseCollection.documents_ids()</span></code></a>.</p>
@@ -455,7 +556,7 @@ See <a class="reference internal" href="#populse_db.database.DatabaseCollection.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_field">
-<span class="sig-name descname"><span class="pre">get_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_field" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_field" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">db_session[collection].fields.get(name)</span></code> instead.
 See <code class="xref py py-attr docutils literal notranslate"><span class="pre">DatabaseCollection.fields</span></code>.</p>
@@ -464,7 +565,7 @@ See <code class="xref py py-attr docutils literal notranslate"><span class="pre"
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_fields">
-<span class="sig-name descname"><span class="pre">get_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_fields" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_fields" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">db_session[collection].fields.values()</span></code> instead.
 See <code class="xref py py-attr docutils literal notranslate"><span class="pre">DatabaseCollection.fields</span></code>.</p>
@@ -473,7 +574,7 @@ See <code class="xref py py-attr docutils literal notranslate"><span class="pre"
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.get_fields_names">
-<span class="sig-name descname"><span class="pre">get_fields_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_fields_names" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_fields_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.get_fields_names" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">db_session[collection].fields.keys()</span></code> instead.
 See <code class="xref py py-attr docutils literal notranslate"><span class="pre">DatabaseCollection.fields</span></code>.</p>
@@ -481,28 +582,29 @@ See <code class="xref py py-attr docutils literal notranslate"><span class="pre"
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.has_collection">
+<span class="sig-name descname"><span class="pre">has_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.has_collection" title="Link to this definition">¶</a></dt>
+<dd><p>Check if a collection with the given name exists.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.has_document">
-<span class="sig-name descname"><span class="pre">has_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.has_document" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">has_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.has_document" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">db_session[collection].has_document(...)</span></code> instead.
 See <a class="reference internal" href="#populse_db.database.DatabaseCollection.has_document" title="populse_db.database.DatabaseCollection.has_document"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DatabaseCollection.has_document()</span></code></a>.</p>
 </div>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="populse_db.database.DatabaseSession.populse_db_table">
-<span class="sig-name descname"><span class="pre">populse_db_table</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'populse_db'</span></em><a class="headerlink" href="#populse_db.database.DatabaseSession.populse_db_table" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.remove_collection">
-<span class="sig-name descname"><span class="pre">remove_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_collection" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">remove_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_collection" title="Link to this definition">¶</a></dt>
 <dd><p>Removes a collection</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>name</strong> – Collection to remove (str, must be existing)</p>
 </dd>
-<dt class="field-even">Raises</dt>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – If the collection does not exist</p>
 </dd>
 </dl>
@@ -510,7 +612,7 @@ See <a class="reference internal" href="#populse_db.database.DatabaseCollection.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.remove_document">
-<span class="sig-name descname"><span class="pre">remove_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_document" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">remove_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_document" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">del</span> <span class="pre">db_session[collection][document_id]</span></code> instead.
 See <code class="xref py py-meth docutils literal notranslate"><span class="pre">DatabaseCollection.__delitem__()</span></code>.</p>
@@ -519,7 +621,7 @@ See <code class="xref py py-meth docutils literal notranslate"><span class="pre"
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.remove_field">
-<span class="sig-name descname"><span class="pre">remove_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_field" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">remove_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.remove_field" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">db_session[collection].remove_field(...)</span></code> instead.
 See <a class="reference internal" href="#populse_db.database.DatabaseCollection.remove_field" title="populse_db.database.DatabaseCollection.remove_field"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DatabaseCollection.remove_field()</span></code></a>.</p>
@@ -528,17 +630,17 @@ See <a class="reference internal" href="#populse_db.database.DatabaseCollection.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.rollback">
-<span class="sig-name descname"><span class="pre">rollback</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.rollback" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">rollback</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.rollback" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.set_settings">
-<span class="sig-name descname"><span class="pre">set_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">category</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.set_settings" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">set_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">category</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.set_settings" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.set_values">
-<span class="sig-name descname"><span class="pre">set_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.set_values" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">set_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.set_values" title="Link to this definition">¶</a></dt>
 <dd><div class="deprecated">
 <p><span class="versionmodified deprecated">Deprecated since version 3.0: </span>Use <code class="docutils literal notranslate"><span class="pre">db_session[collection].update_document(...)</span></code> instead.
 See <a class="reference internal" href="#populse_db.database.DatabaseCollection.update_document" title="populse_db.database.DatabaseCollection.update_document"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DatabaseCollection.update_document()</span></code></a>.</p>
@@ -547,23 +649,23 @@ See <a class="reference internal" href="#populse_db.database.DatabaseCollection.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.database.DatabaseSession.settings">
-<span class="sig-name descname"><span class="pre">settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">category</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.settings" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">category</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.DatabaseSession.settings" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="populse_db.database.check_value_type">
-<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">check_value_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.check_value_type" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">check_value_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.check_value_type" title="Link to this definition">¶</a></dt>
 <dd><p>Checks the type of a value</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>value</strong> – value to check</p></li>
 <li><p><strong>field_type</strong> – type that the value is supposed to have</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>true if the value is <code class="docutils literal notranslate"><span class="pre">None</span></code> or if the value is of that type,
 <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise</p>
 </dd>
@@ -572,22 +674,22 @@ See <a class="reference internal" href="#populse_db.database.DatabaseCollection.
 
 <dl class="py function">
 <dt class="sig sig-object py" id="populse_db.database.json_decode">
-<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">json_decode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.json_decode" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">json_decode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.json_decode" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="populse_db.database.json_dumps">
-<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">json_dumps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.json_dumps" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">json_dumps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.json_dumps" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="populse_db.database.json_encode">
-<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">json_encode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.json_encode" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">json_encode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.json_encode" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="populse_db.database.python_value_type">
-<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">python_value_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.python_value_type" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">python_value_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.python_value_type" title="Link to this definition">¶</a></dt>
 <dd><p>Returns the Python type corresponding to a Python value.
 This type can be used in add_field(s) method.
 For list values, only the first item is considered to get the subtype
@@ -606,7 +708,7 @@ of the list.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="populse_db.database.str_to_type">
-<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">str_to_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.str_to_type" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">str_to_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.str_to_type" title="Link to this definition">¶</a></dt>
 <dd><p>Convert a string to a Python type.</p>
 <p>Examples:</p>
 <blockquote>
@@ -618,8 +720,16 @@ of the list.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="populse_db.database.type_to_sqlite">
+<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">type_to_sqlite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.type_to_sqlite" title="Link to this definition">¶</a></dt>
+<dd><p>Like type_to_str(type) but for internal use in SQLite column type
+definitions in order to avoid conversion problems due to SQlite type
+affinity. See <a class="reference external" href="https://www.sqlite.org/datatype3.html">https://www.sqlite.org/datatype3.html</a></p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="populse_db.database.type_to_str">
-<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">type_to_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.type_to_str" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">populse_db.database.</span></span><span class="sig-name descname"><span class="pre">type_to_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.database.type_to_str" title="Link to this definition">¶</a></dt>
 <dd><p>Convert a Python type to a string.</p>
 <p>Examples:</p>
 <blockquote>
@@ -632,22 +742,22 @@ of the list.</p>
 
 </section>
 <section id="module-populse_db.filter">
-<span id="populse-db-filter-module"></span><h2>populse_db.filter module<a class="headerlink" href="#module-populse_db.filter" title="Permalink to this headline">¶</a></h2>
+<span id="populse-db-filter-module"></span><h2>populse_db.filter module<a class="headerlink" href="#module-populse_db.filter" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="populse_db.filter.Field">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.filter.</span></span><span class="sig-name descname"><span class="pre">Field</span></span><a class="headerlink" href="#populse_db.filter.Field" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.filter.</span></span><span class="sig-name descname"><span class="pre">Field</span></span><a class="headerlink" href="#populse_db.filter.Field" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.filter.</span></span><span class="sig-name descname"><span class="pre">FilterToSQL</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dbcollection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">lark.visitors.Transformer</span></code></p>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.filter.</span></span><span class="sig-name descname"><span class="pre">FilterToSQL</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dbcollection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Transformer</span></code></p>
 <p>Instance of this class are passed to Lark parser when parsing a document
 selection filter string in order to create an object that can be used to
 select items from the database. FilterToSQL implements methods that are
 common to all engines and does not produce anything because the query
-objectis specific to each engine. Therefore, engine class must use a 
+objectis specific to each engine. Therefore, engine class must use a
 subclass of FilterToSQL that implements the following methods:</p>
 <blockquote>
 <div><p>build_condition_all
@@ -661,12 +771,12 @@ build_condition_combine_conditions</p>
 </div></blockquote>
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.all">
-<span class="sig-name descname"><span class="pre">all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.all" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.all" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.build_condition_all">
-<span class="sig-name descname"><span class="pre">build_condition_all</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_all" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">build_condition_all</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_all" title="Link to this definition">¶</a></dt>
 <dd><p>Return a selection query that select all documents. This query
 is directly given to the engine and never combined with other
 queries.</p>
@@ -674,18 +784,18 @@ queries.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.build_condition_combine_conditions">
-<span class="sig-name descname"><span class="pre">build_condition_combine_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_condition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_condition</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_combine_conditions" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">build_condition_combine_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_condition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_condition</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_combine_conditions" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition that combines two conditions with an operator.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>left_condition</strong> – condition object returned by one of the 
-build_condition_*() method (except 
+<li><p><strong>left_condition</strong> – condition object returned by one of the
+build_condition_*() method (except
 build_condition_all)</p></li>
 <li><p><strong>operator_str</strong> – string containing one of the BOOLEAN_OPERATOR
 defined in the grammar (in lowercase)</p></li>
-<li><p><strong>right_condition</strong> – condition object returned by one of the 
-build_condition_*() method (except 
+<li><p><strong>right_condition</strong> – condition object returned by one of the
+build_condition_*() method (except
 build_condition_all)</p></li>
 </ul>
 </dd>
@@ -694,14 +804,14 @@ build_condition_all)</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.build_condition_field_in_list">
-<span class="sig-name descname"><span class="pre">build_condition_field_in_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_field_in_list" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">build_condition_field_in_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_field_in_list" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition checking if a field value is a
 constant list value</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>field</strong> – field object as returned by Database.get_field</p></li>
-<li><p><strong>list_value</strong> – Pyton list containing literals</p></li>
+<li><p><strong>list_value</strong> – Python list containing literals</p></li>
 </ul>
 </dd>
 </dl>
@@ -709,11 +819,11 @@ constant list value</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.build_condition_field_in_list_field">
-<span class="sig-name descname"><span class="pre">build_condition_field_in_list_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_field_in_list_field" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">build_condition_field_in_list_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_field_in_list_field" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition checking if a field value is in another
 list field value</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>field</strong> – field object as returned by Database.get_field</p></li>
 <li><p><strong>list_field</strong> – field object as returned by Database.get_field</p></li>
@@ -724,10 +834,10 @@ list field value</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.build_condition_field_op_field">
-<span class="sig-name descname"><span class="pre">build_condition_field_op_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_field_op_field" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">build_condition_field_op_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_field_op_field" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition comparing the content of two fields with an operator.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>left_field</strong> – field object as returned by Database.get_field</p></li>
 <li><p><strong>operator</strong> – string containing one of the CONDITION_OPERATOR
@@ -740,11 +850,11 @@ defined in the grammar (in lowercase)</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.build_condition_field_op_value">
-<span class="sig-name descname"><span class="pre">build_condition_field_op_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_field_op_value" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">build_condition_field_op_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_field_op_value" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition comparing the content of a field with a constant
 value using an operator.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>field</strong> – field object as returned by Database.get_field</p></li>
 <li><p><strong>operator_str</strong> – string containing one of the CONDITION_OPERATOR
@@ -757,10 +867,10 @@ defined in the grammar (in lowercase)</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.build_condition_literal_in_list_field">
-<span class="sig-name descname"><span class="pre">build_condition_literal_in_list_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_literal_in_list_field" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">build_condition_literal_in_list_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_literal_in_list_field" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition checking if a constant value is in a list field</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>value</strong> – Python literal</p></li>
 <li><p><strong>list_field</strong> – field object as returned by Database.get_field</p></li>
@@ -771,12 +881,12 @@ defined in the grammar (in lowercase)</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.build_condition_negation">
-<span class="sig-name descname"><span class="pre">build_condition_negation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_negation" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">build_condition_negation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_negation" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition inverting another condition.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>condition</strong> – condition object returned by one of the 
-build_condition_*() method (except 
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>condition</strong> – condition object returned by one of the
+build_condition_*() method (except
 build_condition_all)</p>
 </dd>
 </dl>
@@ -784,11 +894,11 @@ build_condition_all)</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.build_condition_value_op_field">
-<span class="sig-name descname"><span class="pre">build_condition_value_op_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_value_op_field" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">build_condition_value_op_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.build_condition_value_op_field" title="Link to this definition">¶</a></dt>
 <dd><p>Builds a condition comparing a constant value with the content of a
 field withusing an operator.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>value</strong> – Python value (None, string number, boolean or date/time)</p></li>
 <li><p><strong>operator_str</strong> – string containing one of the CONDITION_OPERATOR
@@ -801,86 +911,91 @@ defined in the grammar (in lowercase)</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.condition">
-<span class="sig-name descname"><span class="pre">condition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.condition" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">condition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.condition" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.conditions">
-<span class="sig-name descname"><span class="pre">conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.conditions" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.conditions" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.date">
-<span class="sig-name descname"><span class="pre">date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.date" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.date" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.datetime">
-<span class="sig-name descname"><span class="pre">datetime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.datetime" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">datetime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.datetime" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.empty_list">
+<span class="sig-name descname"><span class="pre">empty_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.empty_list" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.field_name">
-<span class="sig-name descname"><span class="pre">field_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.field_name" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">field_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.field_name" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.keyword_literal">
-<span class="sig-name descname"><span class="pre">keyword_literal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.keyword_literal" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">keyword_literal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.keyword_literal" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.keyword_literals">
-<span class="sig-name descname"><span class="pre">keyword_literals</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'false':</span> <span class="pre">False,</span> <span class="pre">'null':</span> <span class="pre">None,</span> <span class="pre">'true':</span> <span class="pre">True}</span></em><a class="headerlink" href="#populse_db.filter.FilterToSQL.keyword_literals" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">keyword_literals</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'false':</span> <span class="pre">False,</span> <span class="pre">'null':</span> <span class="pre">None,</span> <span class="pre">'true':</span> <span class="pre">True}</span></em><a class="headerlink" href="#populse_db.filter.FilterToSQL.keyword_literals" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.list">
-<span class="sig-name descname"><span class="pre">list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.list" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.list" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.negation">
-<span class="sig-name descname"><span class="pre">negation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.negation" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">negation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.negation" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.no_list_operators">
-<span class="sig-name descname"><span class="pre">no_list_operators</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'&lt;',</span> <span class="pre">'&lt;=',</span> <span class="pre">'&gt;',</span> <span class="pre">'&gt;=',</span> <span class="pre">'ilike',</span> <span class="pre">'like'}</span></em><a class="headerlink" href="#populse_db.filter.FilterToSQL.no_list_operators" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">no_list_operators</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'&lt;',</span> <span class="pre">'&lt;=',</span> <span class="pre">'&gt;',</span> <span class="pre">'&gt;=',</span> <span class="pre">'ilike',</span> <span class="pre">'like'}</span></em><a class="headerlink" href="#populse_db.filter.FilterToSQL.no_list_operators" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.number">
-<span class="sig-name descname"><span class="pre">number</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.number" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">number</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.number" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.quoted_field_name">
-<span class="sig-name descname"><span class="pre">quoted_field_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.quoted_field_name" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">quoted_field_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.quoted_field_name" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.sql_operators">
-<span class="sig-name descname"><span class="pre">sql_operators</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'!=':</span> <span class="pre">'IS</span> <span class="pre">NOT',</span> <span class="pre">'==':</span> <span class="pre">'IS',</span> <span class="pre">'ilike':</span> <span class="pre">'LIKE'}</span></em><a class="headerlink" href="#populse_db.filter.FilterToSQL.sql_operators" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">sql_operators</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'!=':</span> <span class="pre">'IS</span> <span class="pre">NOT',</span> <span class="pre">'==':</span> <span class="pre">'IS',</span> <span class="pre">'ilike':</span> <span class="pre">'LIKE'}</span></em><a class="headerlink" href="#populse_db.filter.FilterToSQL.sql_operators" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.string">
-<span class="sig-name descname"><span class="pre">string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.string" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.string" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="populse_db.filter.FilterToSQL.time">
-<span class="sig-name descname"><span class="pre">time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.time" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.FilterToSQL.time" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="populse_db.filter.filter_parser">
-<span class="sig-prename descclassname"><span class="pre">populse_db.filter.</span></span><span class="sig-name descname"><span class="pre">filter_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.filter_parser" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">populse_db.filter.</span></span><span class="sig-name descname"><span class="pre">filter_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.filter_parser" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>A singleton instance of Lark grammar parser for filter expression</p>
 </dd>
 </dl>
@@ -888,10 +1003,10 @@ defined in the grammar (in lowercase)</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="populse_db.filter.literal_parser">
-<span class="sig-prename descclassname"><span class="pre">populse_db.filter.</span></span><span class="sig-name descname"><span class="pre">literal_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.literal_parser" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">populse_db.filter.</span></span><span class="sig-name descname"><span class="pre">literal_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.literal_parser" title="Link to this definition">¶</a></dt>
 <dd><p>This is used to test literals parsing</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>An instance of Lark grammar parser for parsing only a literal
 value (int, string, list, date, etc.) from a filter expression. This
 is used for testing the parsing of these literals.</p>
@@ -901,58 +1016,21 @@ is used for testing the parsing of these literals.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="populse_db.filter.to_sql">
-<span class="sig-prename descclassname"><span class="pre">populse_db.filter.</span></span><span class="sig-name descname"><span class="pre">to_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.to_sql" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">populse_db.filter.</span></span><span class="sig-name descname"><span class="pre">to_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.filter.to_sql" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </section>
-<section id="module-populse_db.info">
-<span id="populse-db-info-module"></span><h2>populse_db.info module<a class="headerlink" href="#module-populse_db.info" title="Permalink to this headline">¶</a></h2>
+<section id="populse-db-info-module">
+<h2>populse_db.info module<a class="headerlink" href="#populse-db-info-module" title="Link to this heading">¶</a></h2>
 </section>
 <section id="module-populse_db.test">
-<span id="populse-db-test-module"></span><h2>populse_db.test module<a class="headerlink" href="#module-populse_db.test" title="Permalink to this headline">¶</a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="populse_db.test.TestsSQLiteInMemory">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">populse_db.test.</span></span><span class="sig-name descname"><span class="pre">TestsSQLiteInMemory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">methodName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'runTest'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.TestsSQLiteInMemory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">unittest.case.TestCase</span></code></p>
-<p>Create an instance of the class that will use the named test
-method when executed. Raises a ValueError if the instance does
-not have a method with the specified name.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="populse_db.test.TestsSQLiteInMemory.test_add_get_document">
-<span class="sig-name descname"><span class="pre">test_add_get_document</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.TestsSQLiteInMemory.test_add_get_document" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="populse_db.test.create_test_case">
-<span class="sig-prename descclassname"><span class="pre">populse_db.test.</span></span><span class="sig-name descname"><span class="pre">create_test_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">database_creation_parameters</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.create_test_case" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="populse_db.test.load_tests">
-<span class="sig-prename descclassname"><span class="pre">populse_db.test.</span></span><span class="sig-name descname"><span class="pre">load_tests</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standard_tests</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#populse_db.test.load_tests" title="Permalink to this definition">¶</a></dt>
-<dd><p>Prepares the tests parameters</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>loader</strong> – </p></li>
-<li><p><strong>standard_tests</strong> – </p></li>
-<li><p><strong>pattern</strong> – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A test suite</p>
-</dd>
-</dl>
-</dd></dl>
-
+<span id="populse-db-test-module"></span><h2>populse_db.test module<a class="headerlink" href="#module-populse_db.test" title="Link to this heading">¶</a></h2>
 </section>
 </section>
 
 
       </div>
-      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      <div class="bottomnav" role="navigation" aria-label="Bottom">
       
         <p>
         <a class="uplink" href="index.html">Contents</a>
@@ -961,8 +1039,8 @@ not have a method with the specified name.</p>
       </div>
 
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, populse team.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    &#169; Copyright 2022, populse team.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.3.0.
     </div>
   </body>
 </html>
