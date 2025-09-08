@@ -45,18 +45,21 @@ def create_server():
     storage_api = StorageFileAPI(database_file, create=create, secret=secret)
     lock = threading.Lock()
 
-
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE")
         try:
             if verbose:
                 print("Storing external URL:", url)
-            rows = cnx.execute(f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'").fetchall()
+            rows = cnx.execute(
+                f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'"
+            ).fetchall()
             if rows:
                 existing_url = rows[0][0]
                 if existing_url != url:
-                    raise RuntimeError(f"Cannot start server with URL {url} because another server already exists with URL {existing_url}")
+                    raise RuntimeError(
+                        f"Cannot start server with URL {url} because another server already exists with URL {existing_url}"
+                    )
             else:
                 cnx.execute(
                     f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES ('server','url',?)",
@@ -116,7 +119,6 @@ def create_server():
 
     @app.get("/access_token")
     def access_token(write: query_bool, challenge: query_str):
-
         access_token = storage_api.access_token(write=write, challenge=challenge)
         return access_token
 

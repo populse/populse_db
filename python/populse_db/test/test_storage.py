@@ -481,7 +481,9 @@ def test_storage_server():
         tmp_path = tmp.name
         tmp.close()
         cmd = [sys.executable, "-m", "populse_db.server", "-v", tmp_path]
-        server = subprocess.Popen(cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        server = subprocess.Popen(
+            cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL
+        )
 
         try:
             store = Storage(f"server:{tmp_path}", echo_sql=sys.stdout)
