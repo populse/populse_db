@@ -72,9 +72,6 @@ def create_server():
                 cnx.commit()
         finally:
             cnx.close()
-        default_sigint_handler = signal.getsignal(signal.SIGINT)
-        # signal.signal(signal.SIGINT, sigint_handler)
-
         yield
         cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE")
         try:
@@ -118,7 +115,7 @@ def create_server():
             )
 
     @app.get("/access_token")
-    def access_token(write: query_bool, challenge: query_str):
+    def access_token(write: query_bool, challenge: Annotated[str | None, Query()]):
         access_token = storage_api.access_token(write=write, challenge=challenge)
         return access_token
 
