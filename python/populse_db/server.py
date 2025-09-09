@@ -1,19 +1,18 @@
 import argparse
-from contextlib import asynccontextmanager
 import json
 import os
-import signal
 import socket
 import threading
-from typing import Annotated
 import uuid
+from contextlib import asynccontextmanager
+from typing import Annotated
 
+import uvicorn
 from fastapi import Body, FastAPI, Query, Request
 from fastapi.responses import JSONResponse
-import uvicorn
 
 from .database import json_decode, json_encode, populse_db_table
-from .storage_api import StorageFileAPI, serialize_exception, generate_secret
+from .storage_api import StorageFileAPI, generate_secret, serialize_exception
 
 body_str = Annotated[str, Body(embed=True)]
 body_path = Annotated[list[str | int | list[str]], Body(embed=True)]
@@ -45,18 +44,21 @@ def create_server():
     storage_api = StorageFileAPI(database_file, create=create, secret=secret)
     lock = threading.Lock()
 
-
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE")
         try:
             if verbose:
                 print("Storing external URL:", url)
-            rows = cnx.execute(f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'").fetchall()
+            rows = cnx.execute(
+                f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'"
+            ).fetchall()
             if rows:
                 existing_url = rows[0][0]
                 if existing_url != url:
-                    raise RuntimeError(f"Cannot start server with URL {url} because another server already exists with URL {existing_url}")
+                    raise RuntimeError(
+                        f"Cannot start server with URL {url} because another server already exists with URL {existing_url}"
+                    )
             else:
                 cnx.execute(
                     f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES ('server','url',?)",
@@ -69,9 +71,6 @@ def create_server():
                 cnx.commit()
         finally:
             cnx.close()
-        default_sigint_handler = signal.getsignal(signal.SIGINT)
-        # signal.signal(signal.SIGINT, sigint_handler)
-
         yield
         cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE")
         try:
@@ -115,8 +114,7 @@ def create_server():
             )
 
     @app.get("/access_token")
-    def access_token(write: query_bool, challenge: query_str):
-
+    def access_token(write: query_bool, challenge: Annotated[str | None, Query()]):
         access_token = storage_api.access_token(write=write, challenge=challenge)
         return access_token
 
