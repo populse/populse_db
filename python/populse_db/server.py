@@ -1,18 +1,18 @@
 import argparse
-from contextlib import asynccontextmanager
 import json
 import os
 import socket
 import threading
-from typing import Annotated
 import uuid
+from contextlib import asynccontextmanager
+from typing import Annotated
 
+import uvicorn
 from fastapi import Body, FastAPI, Query, Request
 from fastapi.responses import JSONResponse
-import uvicorn
 
 from .database import json_decode, json_encode, populse_db_table
-from .storage_api import StorageFileAPI, serialize_exception, generate_secret
+from .storage_api import StorageFileAPI, generate_secret, serialize_exception
 
 body_str = Annotated[str, Body(embed=True)]
 body_path = Annotated[list[str | int | list[str]], Body(embed=True)]
