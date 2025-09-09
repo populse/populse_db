@@ -1,5 +1,5 @@
-import importlib
 from contextlib import contextmanager
+import importlib
 import pathlib
 import types
 import typing

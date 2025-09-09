@@ -2,7 +2,6 @@ import argparse
 from contextlib import asynccontextmanager
 import json
 import os
-import signal
 import socket
 import threading
 from typing import Annotated
