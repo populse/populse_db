@@ -306,7 +306,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument("database")
-    parser.add_argument("-b", "--bind", default="0.0.0.0")
+    parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("-p", "--port", default=None)
     parser.add_argument("-u", "--url", default=None)
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -333,10 +333,7 @@ if __name__ == "__main__":
         if row:
             raise RuntimeError(f"{options.database} already have a server in {row[0]}")
         if options.url is None:
-            if options.bind == "0.0.0.0":
-                host = "127.0.0.1"
-            else:
-                host = options.bind
+            host = options.host
             options.url = f"http://{host}:{port}"
     finally:
         cnx.close()
@@ -347,7 +344,7 @@ if __name__ == "__main__":
     os.environ["POPULSE_DB_SECRET"] = generate_secret()
     uvicorn.run(
         "populse_db.server:create_server",
-        host=options.bind,
+        host="0.0.0.0",
         port=int(port),
         log_level=("debug" if options.verbose else "critical"),
         factory=True,
