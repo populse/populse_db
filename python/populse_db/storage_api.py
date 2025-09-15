@@ -81,10 +81,22 @@ class StorageAPI:
         secret: str | None = None,
     ):
         if database_file.startswith("server:"):
-            # Get the server URL from the database
             database_file = database_file[7:]
-            return StorageServerAPI(database_file, secret=secret)
-        return StorageFileAPI(database_file, timeout, create, echo_sql, secret=secret)
+            storage = StorageServerAPI(database_file, secret=secret)
+        elif database_file.startswith("server+file:"):
+            database_file = database_file[12:]
+            url = StorageServerAPI.get_server_url(database_file)
+            if url:
+                storage = StorageServerAPI(database_file, secret=secret)
+            else:
+                storage = StorageFileAPI(
+                    database_file, timeout, create, echo_sql, secret=secret
+                )
+        else:
+            storage = StorageFileAPI(
+                database_file, timeout, create, echo_sql, secret=secret
+            )
+        return storage
 
 
 class BaseStorageAPI:
@@ -666,17 +678,18 @@ class StorageServerAPI(BaseStorageAPI):
     def wait_for_server(self, timeout):
         now = time.time()
         end = now + timeout
-        url = self.get_server_url()
+        url = self.get_server_url(self.database_file)
         while not url and now < end:
             time.sleep(0.1)
-            url = self.get_server_url()
+            url = self.get_server_url(self.database_file)
             now = time.time()
         return url
 
-    def get_server_url(self):
+    @staticmethod
+    def get_server_url(database_file):
         import sqlite3
 
-        cnx = sqlite3.connect(self.database_file, timeout=1)
+        cnx = sqlite3.connect(database_file, timeout=1)
         try:
             # Check if storage_server table exists
             cur = cnx.execute(
