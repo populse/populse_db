@@ -50,25 +50,15 @@ def create_server():
         try:
             if verbose:
                 print("Storing external URL:", url)
-            rows = cnx.execute(
-                f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'"
-            ).fetchall()
-            if rows:
-                existing_url = rows[0][0]
-                if existing_url != url:
-                    raise RuntimeError(
-                        f"Cannot start server with URL {url} because another server already exists with URL {existing_url}"
-                    )
-            else:
-                cnx.execute(
-                    f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES ('server','url',?)",
-                    [url],
-                )
-                cnx.execute(
-                    f"INSERT OR REPLACE INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
-                    ["server", "read_challenge", str(uuid.uuid4())],
-                )
-                cnx.commit()
+            cnx.execute(
+                f"INSERT OR REPLACE INTO [{populse_db_table}] (category, key, _json) VALUES ('server','url',?)",
+                [url],
+            )
+            cnx.execute(
+                f"INSERT OR REPLACE INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
+                ["server", "read_challenge", str(uuid.uuid4())],
+            )
+            cnx.commit()
         finally:
             cnx.close()
         yield
@@ -310,6 +300,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--port", default=None)
     parser.add_argument("-u", "--url", default=None)
     parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("-f", "--force", action="store_true")
 
     options = parser.parse_args()
     if options.port:
@@ -330,7 +321,7 @@ if __name__ == "__main__":
         row = cnx.execute(
             f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'"
         ).fetchone()
-        if row:
+        if not options.force and row:
             raise RuntimeError(f"{options.database} already have a server in {row[0]}")
         if options.url is None:
             host = options.host
