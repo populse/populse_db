@@ -296,6 +296,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument("database")
+    parser.add_argument("-b", "--bind", default="0.0.0.0")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("-p", "--port", default=None)
     parser.add_argument("-u", "--url", default=None)
@@ -335,7 +336,7 @@ if __name__ == "__main__":
     os.environ["POPULSE_DB_SECRET"] = generate_secret()
     uvicorn.run(
         "populse_db.server:create_server",
-        host="0.0.0.0",
+        host=options.bind,
         port=int(port),
         log_level=("debug" if options.verbose else "critical"),
         factory=True,
