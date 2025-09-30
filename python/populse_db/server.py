@@ -104,7 +104,9 @@ def create_server():
             )
 
     @app.get("/access_token")
-    async def access_token(write: query_bool, challenge: Annotated[str | None, Query()]):
+    async def access_token(
+        write: query_bool, challenge: Annotated[str | None, Query()]
+    ):
         async with async_lock:
             access_token = storage_api.access_token(write=write, challenge=challenge)
         return access_token
@@ -130,7 +132,9 @@ def create_server():
         connection_id: body_str, schema_to_collections: body_dict
     ):
         async with async_lock:
-            return storage_api.add_schema_collections(connection_id, schema_to_collections)
+            return storage_api.add_schema_collections(
+                connection_id, schema_to_collections
+            )
 
     @app.post("/schema/{name}")
     async def add_collection(
@@ -258,7 +262,9 @@ def create_server():
         field: query_str,
     ):
         async with async_lock:
-            result = storage_api.distinct_values(connection_id, str_to_json(path), field)
+            result = storage_api.distinct_values(
+                connection_id, str_to_json(path), field
+            )
             return json_encode(result)
 
     @app.delete("/")
@@ -276,7 +282,9 @@ def create_server():
         collection: query_str,
     ):
         async with async_lock:
-            return storage_api.has_collection(connection_id, str_to_json(path), collection)
+            return storage_api.has_collection(
+                connection_id, str_to_json(path), collection
+            )
 
     @app.get("/collection_names")
     async def collection_names(
