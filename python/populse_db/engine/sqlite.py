@@ -93,7 +93,11 @@ class SQLiteSession(DatabaseSession):
         else:
             self.sqlite.commit()
         if self.echo_sql:
-            print(f"Disconnect from database (rollback={rollback})", file=self.echo_sql, flush=True)
+            print(
+                f"Disconnect from database (rollback={rollback})",
+                file=self.echo_sql,
+                flush=True,
+            )
         self.sqlite.close()
 
     def has_collection(self, name):

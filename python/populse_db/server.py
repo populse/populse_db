@@ -1,19 +1,19 @@
 import argparse
-from contextlib import asynccontextmanager
+import asyncio
 import json
 import os
-import signal
 import socket
 import threading
-from typing import Annotated
 import uuid
+from contextlib import asynccontextmanager
+from typing import Annotated
 
+import uvicorn
 from fastapi import Body, FastAPI, Query, Request
 from fastapi.responses import JSONResponse
-import uvicorn
 
 from .database import json_decode, json_encode, populse_db_table
-from .storage_api import StorageFileAPI, serialize_exception, generate_secret
+from .storage_api import StorageFileAPI, generate_secret, serialize_exception
 
 body_str = Annotated[str, Body(embed=True)]
 body_path = Annotated[list[str | int | list[str]], Body(embed=True)]
@@ -43,8 +43,7 @@ def create_server():
     secret = os.environ["POPULSE_DB_SECRET"]
     create = True
     storage_api = StorageFileAPI(database_file, create=create, secret=secret)
-    lock = threading.Lock()
-
+    async_lock = asyncio.Lock()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -52,35 +51,28 @@ def create_server():
         try:
             if verbose:
                 print("Storing external URL:", url)
-            rows = cnx.execute(f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'").fetchall()
-            if rows:
-                existing_url = rows[0][0]
-                if existing_url != url:
-                    raise RuntimeError(f"Cannot start server with URL {url} because another server already exists with URL {existing_url}")
-            else:
-                cnx.execute(
-                    f"INSERT INTO [{populse_db_table}] (category, key, _json) VALUES ('server','url',?)",
-                    [url],
-                )
-                cnx.execute(
-                    f"INSERT OR REPLACE INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
-                    ["server", "read_challenge", str(uuid.uuid4())],
-                )
-                cnx.commit()
-        finally:
-            cnx.close()
-        default_sigint_handler = signal.getsignal(signal.SIGINT)
-        # signal.signal(signal.SIGINT, sigint_handler)
-
-        yield
-        cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE")
-        try:
             cnx.execute(
-                f"DELETE FROM [{populse_db_table}] WHERE category='server' AND key='url'"
+                f"INSERT OR REPLACE INTO [{populse_db_table}] (category, key, _json) VALUES ('server','url',?)",
+                [url],
+            )
+            cnx.execute(
+                f"INSERT OR REPLACE INTO [{populse_db_table}] (category, key, _json) VALUES (?,?,?)",
+                ["server", "read_challenge", str(uuid.uuid4())],
             )
             cnx.commit()
         finally:
             cnx.close()
+        yield
+        storage_api.close()
+        async with async_lock:
+            cnx = sqlite3.connect(database_file, isolation_level="EXCLUSIVE")
+            try:
+                cnx.execute(
+                    f"DELETE FROM [{populse_db_table}] WHERE category='server' AND key='url'"
+                )
+                cnx.commit()
+            finally:
+                cnx.close()
 
     app = FastAPI(lifespan=lifespan)
 
@@ -106,54 +98,55 @@ def create_server():
         try:
             return await call_next(request)
         except Exception as exc:
-            from traceback import print_exc
-
-            print_exc()
             return JSONResponse(
                 status_code=500,
                 content=serialize_exception(exc),
             )
 
     @app.get("/access_token")
-    def access_token(write: query_bool, challenge: query_str):
-
-        access_token = storage_api.access_token(write=write, challenge=challenge)
+    async def access_token(
+        write: query_bool, challenge: Annotated[str | None, Query()]
+    ):
+        async with async_lock:
+            access_token = storage_api.access_token(write=write, challenge=challenge)
         return access_token
 
     @app.post("/connection")
-    def connect(
+    async def connect(
         access_token: body_str,
         exclusive: body_bool,
         write: body_bool,
         create: body_bool,
     ):
-        if write:
-            lock.acquire()
-        connection_id = storage_api.connect(access_token, exclusive, write, create)
+        async with async_lock:
+            connection_id = storage_api.connect(access_token, exclusive, write, create)
         return connection_id
 
     @app.delete("/connection")
-    def disconnect(connection_id: body_str, rollback: body_bool):
-        if lock.locked():
-            lock.release()
-        return storage_api.disconnect(connection_id, rollback)
+    async def disconnect(connection_id: body_str, rollback: body_bool):
+        async with async_lock:
+            return storage_api.disconnect(connection_id, rollback)
 
     @app.post("/schema_collection")
-    def add_schema_collections(
+    async def add_schema_collections(
         connection_id: body_str, schema_to_collections: body_dict
     ):
-        return storage_api.add_schema_collections(connection_id, schema_to_collections)
+        async with async_lock:
+            return storage_api.add_schema_collections(
+                connection_id, schema_to_collections
+            )
 
     @app.post("/schema/{name}")
-    def add_collection(
+    async def add_collection(
         connection_id: body_str,
         name: str,
         primary_key: Annotated[str | list[str] | dict[str, str], Body()],
     ):
-        return storage_api.add_collection(connection_id, name, primary_key)
+        async with async_lock:
+            return storage_api.add_collection(connection_id, name, primary_key)
 
     @app.post("/schema/{collection_name}/{field_name}")
-    def add_field(
+    async def add_field(
         connection_id: body_str,
         collection_name: str,
         field_name: str,
@@ -161,29 +154,31 @@ def create_server():
         description: Annotated[str | None, Body()] = None,
         index: body_bool = False,
     ):
-        return storage_api.add_field(
-            connection_id,
-            collection_name,
-            field_name,
-            field_type,
-            description,
-            index,
-        )
+        async with async_lock:
+            return storage_api.add_field(
+                connection_id,
+                collection_name,
+                field_name,
+                field_type,
+                description,
+                index,
+            )
 
     @app.delete("/schema/{collection_name}/{field_name}")
-    def remove_field(
+    async def remove_field(
         connection_id: body_str,
         collection_name: str,
         field_name: str,
     ):
-        return storage_api.remove_field(
-            connection_id,
-            collection_name,
-            field_name,
-        )
+        async with async_lock:
+            return storage_api.remove_field(
+                connection_id,
+                collection_name,
+                field_name,
+            )
 
     @app.get("/data")
-    def get(
+    async def get(
         connection_id: query_str,
         path: query_path,
         default: query_json = None,
@@ -191,46 +186,53 @@ def create_server():
         as_list: query_bool = False,
         distinct: query_bool = False,
     ):
-        result = storage_api.get(
-            connection_id,
-            str_to_json(path),
-            str_to_json(default),
-            fields,
-            as_list,
-            distinct,
-        )
+        async with async_lock:
+            result = storage_api.get(
+                connection_id,
+                str_to_json(path),
+                str_to_json(default),
+                fields,
+                as_list,
+                distinct,
+            )
         return json_encode(result)
 
     @app.get("/count")
-    def count(
+    async def count(
         connection_id: query_str,
         path: query_path,
         query: Annotated[str | None, Query()] = None,
     ):
-        return storage_api.count(connection_id, str_to_json(path), query)
+        async with async_lock:
+            return storage_api.count(connection_id, str_to_json(path), query)
 
     @app.get("/primary_key")
-    def primary_key(connection_id: query_str, path: query_path):
-        return storage_api.primary_key(connection_id, str_to_json(path))
+    async def primary_key(connection_id: query_str, path: query_path):
+        async with async_lock:
+            return storage_api.primary_key(connection_id, str_to_json(path))
 
     @app.post("/data")
-    def set(connection_id: body_str, path: body_path, value: body_json):
-        return storage_api.set(connection_id, path, json_decode(value))
+    async def set(connection_id: body_str, path: body_path, value: body_json):
+        async with async_lock:
+            return storage_api.set(connection_id, path, json_decode(value))
 
     @app.delete("/data")
-    def delete(connection_id: body_str, path: body_path):
-        return storage_api.delete(connection_id, path)
+    async def delete(connection_id: body_str, path: body_path):
+        async with async_lock:
+            return storage_api.delete(connection_id, path)
 
     @app.put("/data")
-    def update(connection_id: body_str, path: body_path, value: body_json):
-        return storage_api.update(connection_id, path, json_decode(value))
+    async def update(connection_id: body_str, path: body_path, value: body_json):
+        async with async_lock:
+            return storage_api.update(connection_id, path, json_decode(value))
 
     @app.patch("/data")
-    def append(connection_id: body_str, path: body_path, value: body_json):
-        return storage_api.append(connection_id, path, json_decode(value))
+    async def append(connection_id: body_str, path: body_path, value: body_json):
+        async with async_lock:
+            return storage_api.append(connection_id, path, json_decode(value))
 
     @app.get("/search")
-    def search(
+    async def search(
         connection_id: query_str,
         path: query_path,
         query: Annotated[str | None, Query()] = None,
@@ -238,56 +240,67 @@ def create_server():
         as_list: query_bool = False,
         distinct: query_bool = False,
     ):
-        result = storage_api.search(
-            connection_id, str_to_json(path), query, fields, as_list, distinct
-        )
-        return json_encode(result)
+        async with async_lock:
+            result = storage_api.search(
+                connection_id, str_to_json(path), query, fields, as_list, distinct
+            )
+            return json_encode(result)
 
     @app.delete("/search")
-    def search_and_delete(
+    async def search_and_delete(
         connection_id: body_str,
         path: body_path,
         query: Annotated[str | None, Body()] = None,
     ):
-        return storage_api.search_and_delete(connection_id, path, query)
+        async with async_lock:
+            return storage_api.search_and_delete(connection_id, path, query)
 
     @app.get("/distinct")
-    def distinct_values(
+    async def distinct_values(
         connection_id: query_str,
         path: query_path,
         field: query_str,
     ):
-        result = storage_api.distinct_values(connection_id, str_to_json(path), field)
-        return json_encode(result)
+        async with async_lock:
+            result = storage_api.distinct_values(
+                connection_id, str_to_json(path), field
+            )
+            return json_encode(result)
 
     @app.delete("/")
-    def clear_database(
+    async def clear_database(
         connection_id: body_str,
         keep_settings: body_bool,
     ):
-        return storage_api.clear_database(connection_id, keep_settings)
+        async with async_lock:
+            return storage_api.clear_database(connection_id, keep_settings)
 
     @app.get("/has_collection")
-    def has_collection(
+    async def has_collection(
         connection_id: query_str,
         path: query_path,
         collection: query_str,
     ):
-        return storage_api.has_collection(connection_id, str_to_json(path), collection)
+        async with async_lock:
+            return storage_api.has_collection(
+                connection_id, str_to_json(path), collection
+            )
 
     @app.get("/collection_names")
-    def collection_names(
+    async def collection_names(
         connection_id: query_str,
         path: query_path,
     ):
-        return storage_api.collection_names(connection_id, str_to_json(path))
+        async with async_lock:
+            return storage_api.collection_names(connection_id, str_to_json(path))
 
     @app.get("/keys")
-    def keys(
+    async def keys(
         connection_id: query_str,
         path: query_path,
     ):
-        result = storage_api.keys(connection_id, str_to_json(path))
+        async with async_lock:
+            result = storage_api.keys(connection_id, str_to_json(path))
         return list(result)
 
     return app
@@ -309,9 +322,11 @@ if __name__ == "__main__":
 
     parser.add_argument("database")
     parser.add_argument("-b", "--bind", default="0.0.0.0")
+    parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("-p", "--port", default=None)
     parser.add_argument("-u", "--url", default=None)
     parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("-f", "--force", action="store_true")
 
     options = parser.parse_args()
     if options.port:
@@ -332,13 +347,10 @@ if __name__ == "__main__":
         row = cnx.execute(
             f"SELECT _json FROM [{populse_db_table}] WHERE category='server' AND key='url'"
         ).fetchone()
-        if row:
+        if not options.force and row:
             raise RuntimeError(f"{options.database} already have a server in {row[0]}")
         if options.url is None:
-            if options.bind == "0.0.0.0":
-                host = "127.0.0.1"
-            else:
-                host = options.bind
+            host = options.host
             options.url = f"http://{host}:{port}"
     finally:
         cnx.close()
@@ -353,4 +365,5 @@ if __name__ == "__main__":
         port=int(port),
         log_level=("debug" if options.verbose else "critical"),
         factory=True,
+        workers=1,
     )

@@ -81,10 +81,22 @@ class StorageAPI:
         secret: str | None = None,
     ):
         if database_file.startswith("server:"):
-            # Get the server URL from the database
             database_file = database_file[7:]
-            return StorageServerAPI(database_file, secret=secret)
-        return StorageFileAPI(database_file, timeout, create, echo_sql, secret=secret)
+            storage = StorageServerAPI(database_file, secret=secret)
+        elif database_file.startswith("server+file:"):
+            database_file = database_file[12:]
+            url = StorageServerAPI.get_server_url(database_file)
+            if url:
+                storage = StorageServerAPI(database_file, secret=secret)
+            else:
+                storage = StorageFileAPI(
+                    database_file, timeout, create, echo_sql, secret=secret
+                )
+        else:
+            storage = StorageFileAPI(
+                database_file, timeout, create, echo_sql, secret=secret
+            )
+        return storage
 
 
 class BaseStorageAPI:
@@ -131,11 +143,11 @@ class BaseStorageAPI:
                     f"SELECT COUNT(*) FROM [{populse_db_table}] WHERE category='server' AND key=?",
                     [f"write_challenge_{challenge}"],
                 ).fetchone()[0]
-                cnx.execute(
-                    f"DELETE FROM [{populse_db_table}] WHERE category='server' AND key=?",
-                    [f"write_challenge_{challenge}"],
-                )
                 if found_challenge == 1:
+                    cnx.execute(
+                        f"DELETE FROM [{populse_db_table}] WHERE category='server' AND key=?",
+                        [f"write_challenge_{challenge}"],
+                    )
                     return True
             else:
                 cnx = sqlite3.connect(f"file:{self.database_file}?mode=ro", uri=True)
@@ -155,7 +167,7 @@ class BaseStorageAPI:
             granted = self.check_access_challenge(write=write, challenge=challenge)
         if granted:
             f = Fernet(self.secret)
-            access_token = f.encrypt(b"write" if "write" else "read").decode()
+            access_token = f.encrypt(b"write" if write else b"read").decode()
             return access_token
         return ""
 
@@ -228,7 +240,7 @@ class StorageFileAPI(BaseStorageAPI):
             # filesystem raise an exception when a write access is
             # tried on a read only file.
             f = Fernet(self.secret)
-            return f.encrypt(b"write" if "write" else "read").decode()
+            return f.encrypt(b"write" if write else b"read").decode()
         else:
             return super().access_token(write, challenge=challenge)
 
@@ -262,8 +274,8 @@ class StorageFileAPI(BaseStorageAPI):
 
     def close(self):
         with self.lock:
-            for connection_id, dbs_write in self.sessions.items():
-                dbs, write = dbs_write
+            for dbs_write in self.sessions.values():
+                dbs, _write = dbs_write
                 dbs.close()
             self.sessions = None
 
@@ -666,17 +678,18 @@ class StorageServerAPI(BaseStorageAPI):
     def wait_for_server(self, timeout):
         now = time.time()
         end = now + timeout
-        url = self.get_server_url()
+        url = self.get_server_url(self.database_file)
         while not url and now < end:
             time.sleep(0.1)
-            url = self.get_server_url()
+            url = self.get_server_url(self.database_file)
             now = time.time()
         return url
 
-    def get_server_url(self):
+    @staticmethod
+    def get_server_url(database_file):
         import sqlite3
 
-        cnx = sqlite3.connect(self.database_file, timeout=1)
+        cnx = sqlite3.connect(database_file, timeout=1)
         try:
             # Check if storage_server table exists
             cur = cnx.execute(
@@ -713,7 +726,7 @@ class StorageServerAPI(BaseStorageAPI):
         return result
 
     def access_token(self, write):
-        challenge = self.get_access_challenge(write=write)
+        challenge = self.get_access_challenge(write=write) or ""
         return self._call(
             "get",
             "access_token",
