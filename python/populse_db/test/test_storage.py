@@ -467,11 +467,13 @@ def test_storage():
 
     with NamedTemporaryFile(delete=False) as tmp:
         tmp.close()
+        os.remove(tmp.name)
         try:
             store = Storage(f"server+file://{tmp.name}")
             run_storage_tests(store)
         finally:
-            os.remove(tmp.name)
+            if os.path.exists(tmp.name):
+                os.remove(tmp.name)
 
 
 def test_storage_server():
