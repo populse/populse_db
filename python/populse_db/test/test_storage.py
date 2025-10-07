@@ -467,7 +467,7 @@ def test_storage():
 
     with TemporaryDirectory() as tmp:
         tmp_path = os.path.join(tmp, "test_populse.sqlite")
-        store = Storage(f"server+file://{tmp_path}")
+        store = Storage(f"server+file:{tmp_path}")
         run_storage_tests(store)
 
 
