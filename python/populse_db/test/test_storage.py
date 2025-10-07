@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 from datetime import datetime
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import TemporaryDirectory
 
 import pytest
 
