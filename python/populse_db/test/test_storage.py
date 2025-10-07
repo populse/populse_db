@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 from datetime import datetime
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
 
@@ -465,15 +465,10 @@ def test_storage():
         with store.data() as _:
             pass
 
-    with NamedTemporaryFile(delete=False) as tmp:
-        tmp.close()
-        os.remove(tmp.name)
-        try:
-            store = Storage(f"server+file://{tmp.name}")
-            run_storage_tests(store)
-        finally:
-            if os.path.exists(tmp.name):
-                os.remove(tmp.name)
+    with TemporaryDirectory() as tmp:
+        tmp_path = os.path.join(tmp, "test_populse.sqlite")
+        store = Storage(f"server+file://{tmp_path}")
+        run_storage_tests(store)
 
 
 def test_storage_server():
@@ -481,9 +476,8 @@ def test_storage_server():
     pytest.importorskip("uvicorn")
     pytest.importorskip("tblib")
 
-    with NamedTemporaryFile(delete=True) as tmp:
-        tmp_path = tmp.name
-        tmp.close()
+    with TemporaryDirectory() as tmp:
+        tmp_path = os.path.join(tmp, "test_populse.sqlite")
         cmd = [sys.executable, "-m", "populse_db.server", "-v", tmp_path]
         server = subprocess.Popen(
             cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL
