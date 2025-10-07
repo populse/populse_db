@@ -465,7 +465,7 @@ def test_storage():
         with store.data() as _:
             pass
 
-    with NamedTemporaryFile(delete=True) as tmp:
+    with NamedTemporaryFile(delete=True, delete_on_close=False) as tmp:
         tmp.close()
         store = Storage(f"server+file://{tmp.name}")
         run_storage_tests(store)
