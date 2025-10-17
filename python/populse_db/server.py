@@ -3,7 +3,6 @@ import asyncio
 import json
 import os
 import socket
-import threading
 import uuid
 from contextlib import asynccontextmanager
 from typing import Annotated
