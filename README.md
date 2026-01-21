@@ -1,6 +1,6 @@
 # populse_db
 [//]: [![](https://travis-ci.org/populse/populse_db.svg?branch=master)](https://travis-ci.org/populse/populse_db)
-[![Build status](https://ci.appveyor.com/api/projects/status/exyixo4o0osns6tn/branch/master?svg=true)](https://ci.appveyor.com/project/populse/populse-db-6gndf/branch/master)
+[![Build status](https://img.shields.io/appveyor/build/populse/populse-db-6gndf/master.svg)](https://ci.appveyor.com/project/populse/populse-db-6gndf/branch/master)
 [![codecov](https://codecov.io/gh/populse/populse_db/branch/master/graph/badge.svg?token=sTgorGiZ7w)](https://codecov.io/gh/populse/populse_db)
 [![](https://img.shields.io/badge/license-CeCILL--B-blue.svg)](https://github.com/populse/populse_db/blob/master/LICENSE)
 [![](https://img.shields.io/pypi/v/populse_db.svg)](https://pypi.python.org/pypi/populse_db/)
