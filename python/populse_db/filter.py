@@ -122,7 +122,7 @@ _type_to_sql = {
     # datetime.time: lambda x: f"'{x.isoformat()}'",
     # datetime.datetime: lambda x: f"'{x.isoformat()}'",
     # datetime.date: lambda x: f"'{x.isoformat()}'",
-    bool: lambda x: ("1" if x else "0"),
+    bool: lambda x: "1" if x else "0",
     list: _list_to_sql,
 }
 

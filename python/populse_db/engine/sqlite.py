@@ -226,12 +226,12 @@ class SQLiteSession(DatabaseSession):
 class SQLiteCollection(DatabaseCollection):
     _column_encodings = {
         list: (
-            lambda l: (None if l is None else json_dumps(l)),  # noqa: E741
-            lambda l: (None if l is None else json.loads(l)),  # noqa: E741
+            lambda l: None if l is None else json_dumps(l),  # noqa: E741
+            lambda l: None if l is None else json.loads(l),  # noqa: E741
         ),
         dict: (
-            lambda d: (None if d is None else json_dumps(d)),
-            lambda d: (None if d is None else json.loads(d)),
+            lambda d: None if d is None else json_dumps(d),
+            lambda d: None if d is None else json.loads(d),
         ),
     }
 
