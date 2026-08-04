@@ -2,7 +2,7 @@ environment:
 
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      PYTHON: "C:\\Python310"
+      PYTHON: "C:\\Python310-x64"
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
       PYTHON: "Python3.10"
