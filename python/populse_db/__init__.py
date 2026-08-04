@@ -201,5 +201,5 @@ class Database:
 
 # Import here to allow the following import in external
 # modules:
-from .database import json_decode, json_encode  # noqa: F401, E402
-from .storage import Storage  # noqa: F401, E402
+from .database import json_decode, json_encode  # noqa: F401
+from .storage import Storage  # noqa: F401

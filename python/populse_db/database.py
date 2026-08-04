@@ -98,7 +98,6 @@ def str_to_type(str):
         - ``str_to_type('str') == str``
         - ``str_to_type('list[str]') == list[str]``
     """
-    global _str_to_type
 
     if not str:
         return None
@@ -497,7 +496,7 @@ class DatabaseCollection:
     def _encode_column_value(self, field, value):
         encoding = self.fields.get(field, {}).get("encoding")
         if encoding:
-            encode, decode = encoding
+            encode, _ = encoding
             try:
                 column_value = encode(value)
             except TypeError:
@@ -564,7 +563,7 @@ _json_encodings = {
     datetime: lambda d: f"{d.isoformat()}ℹdatetimeℹ",
     date: lambda d: f"{d.isoformat()}ℹdateℹ",
     time: lambda d: f"{d.isoformat()}ℹtimeℹ",
-    list: lambda l: [json_encode(i) for i in l],  # noqa: E741
+    list: lambda values: [json_encode(i) for i in values],
     dict: lambda d: {k: json_encode(v) for k, v in d.items()},
 }
 
@@ -576,7 +575,6 @@ _json_decodings = {
 
 
 def json_encode(value):
-    global _json_encodings
 
     type_ = type(value)
     encode = _json_encodings.get(type_)
@@ -586,21 +584,19 @@ def json_encode(value):
 
 
 def json_decode(value):
-    global _json_decodings
 
     if isinstance(value, list):
         return [json_decode(i) for i in value]
-    elif isinstance(value, dict):
+    if isinstance(value, dict):
         return {k: json_decode(v) for k, v in value.items()}
-    elif isinstance(value, str):
-        if value.endswith("ℹ"):
-            split_value = value[:-1].rsplit("ℹ", 1)
-            if len(split_value) == 2:
-                encoded_value, decoding_name = split_value
-                decode = _json_decodings.get(decoding_name)
-                if decode is None:
-                    raise ValueError(f'Invalid JSON encoding type for value "{value}"')
-                return decode(encoded_value)
+    if isinstance(value, str) and value.endswith("ℹ"):
+        split_value = value[:-1].rsplit("ℹ", 1)
+        if len(split_value) == 2:
+            encoded_value, decoding_name = split_value
+            decode = _json_decodings.get(decoding_name)
+            if decode is None:
+                raise ValueError(f'Invalid JSON encoding type for value "{value}"')
+            return decode(encoded_value)
     return value
 
 
