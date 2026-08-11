@@ -203,7 +203,7 @@ class SQLiteSession(DatabaseSession):
             f"CREATE TABLE [{name}] ("
             f"{','.join(f'[{n}] {t} NOT NULL' for n, t in dict_primary_key.items())},"
             f"{catchall_column} dict,"
-            f"PRIMARY KEY ({','.join(f'[{i}]' for i in dict_primary_key.keys())}))"
+            f"PRIMARY KEY ({','.join(f'[{i}]' for i in dict_primary_key)}))"
         )
         self.execute(sql)
         # Accessing the collection to put it in cache
@@ -226,8 +226,8 @@ class SQLiteSession(DatabaseSession):
 class SQLiteCollection(DatabaseCollection):
     _column_encodings = {
         list: (
-            lambda l: None if l is None else json_dumps(l),  # noqa: E741
-            lambda l: None if l is None else json.loads(l),  # noqa: E741
+            lambda value: None if value is None else json_dumps(value),
+            lambda value: None if value is None else json.loads(value),
         ),
         dict: (
             lambda d: None if d is None else json_dumps(d),
@@ -384,7 +384,7 @@ class SQLiteCollection(DatabaseCollection):
                 for field, value in document.items():
                     encoding = self.fields.get(field, {}).get("encoding")
                     if encoding:
-                        encode, decode = encoding
+                        _, decode = encoding
                         value = decode(value)
                     if field in self.bad_json_fields:
                         value = json_decode(value)

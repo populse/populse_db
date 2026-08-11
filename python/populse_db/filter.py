@@ -212,7 +212,7 @@ class FilterToSQL(Transformer):
                         left_operand, right_operand
                     )
                 else:
-                    raise ValueError(
+                    raise TypeError(
                         "Left operand of IN <list> must be a "
                         f'simple field but "{left_operand}" was used'
                     )
@@ -237,7 +237,7 @@ class FilterToSQL(Transformer):
                     left_operand, operator_str, right_operand
                 )
             else:
-                raise ValueError(
+                raise TypeError(
                     "Either left or right operand of a condition must be a field name"
                 )
 
@@ -323,7 +323,7 @@ class FilterToSQL(Transformer):
         is directly given to the engine and never combined with other
         queries.
         """
-        return None
+        return
 
     def build_condition_literal_in_list_field(self, value, list_field):
         """
