@@ -32,14 +32,6 @@ populse\_db.filter module
     :undoc-members:
     :show-inheritance:
 
-populse\_db.info module
------------------------
-
-.. automodule:: populse_db.info
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 populse\_db.test module
 -----------------------
 
