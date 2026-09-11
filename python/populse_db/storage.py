@@ -108,8 +108,7 @@ class SchemaSession:
         schemas_to_collections = getattr(module, "_schemas_to_collections", None)
         if schemas_to_collections is None:
             schemas_to_collections = {}
-            index = 0
-            for schema_declaration in module.schemas:
+            for index, schema_declaration in enumerate(module.schemas):
                 unknown_items = set(schema_declaration) - {"version", "schema"}
                 if unknown_items:
                     raise ValueError(
@@ -151,7 +150,6 @@ class SchemaSession:
                 short_version = ".".join(sversion[:2])
                 if short_version not in schemas_to_collections:
                     schemas_to_collections[short_version] = schema_to_collections
-                index += 1
             module._schemas_to_collections = schemas_to_collections
         return schemas_to_collections.get(version_selection)
 
