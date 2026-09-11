@@ -454,16 +454,14 @@ def run_storage_tests(store):
         # Test reentrant data session
         with store.data(write=False) as d2:
             assert d2.anything.get() == {}
-        with pytest.raises(RuntimeError):
-            with store.data(write=True) as d2:
-                d2.anything = "something"
+        with pytest.raises(RuntimeError), store.data(write=True) as d2:
+            d2.anything = "something"
 
 
 def test_storage():
     store = Storage("/tmp/i_do_not_exist")
-    with pytest.raises(RuntimeError):
-        with store.data() as _:
-            pass
+    with pytest.raises(RuntimeError), store.data() as _:
+        pass
 
     with TemporaryDirectory() as tmp:
         tmp_path = os.path.join(tmp, "test_populse.sqlite")
