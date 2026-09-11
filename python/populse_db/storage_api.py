@@ -733,10 +733,10 @@ class StorageServerAPI(BaseStorageAPI):
             "post",
             "connection",
             {
-                "access_token":access_token,
-                "exclusive":bool(exclusive),
-                "write":bool(write),
-                "create":bool(create),
+                "access_token": access_token,
+                "exclusive": bool(exclusive),
+                "write": bool(write),
+                "create": bool(create),
             },
         )
 
@@ -744,7 +744,7 @@ class StorageServerAPI(BaseStorageAPI):
         return self._call(
             "delete",
             "connection",
-            {"connection_id":connection_id, "rollback":rollback},
+            {"connection_id": connection_id, "rollback": rollback},
         )
 
     def add_schema_collections(self, connection_id, schema_to_collections):
@@ -752,8 +752,8 @@ class StorageServerAPI(BaseStorageAPI):
             "post",
             "schema_collection",
             {
-                "connection_id":connection_id,
-                "schema_to_collections":schema_to_collections,
+                "connection_id": connection_id,
+                "schema_to_collections": schema_to_collections,
             },
         )
 
@@ -761,7 +761,7 @@ class StorageServerAPI(BaseStorageAPI):
         return self._call(
             "post",
             f"schema/{name}",
-            {"connection_id":connection_id, "primary_key":primary_key},
+            {"connection_id": connection_id, "primary_key": primary_key},
         )
 
     def add_field(
@@ -779,10 +779,10 @@ class StorageServerAPI(BaseStorageAPI):
             "post",
             f"schema/{collection_name}/{field_name}",
             {
-                "connection_id":connection_id,
-                "field_type":field_type,
-                "description":description,
-                "index":index,
+                "connection_id": connection_id,
+                "field_type": field_type,
+                "description": description,
+                "index": index,
             },
         )
 
@@ -795,7 +795,7 @@ class StorageServerAPI(BaseStorageAPI):
         return self._call(
             "delete",
             f"schema/{collection_name}/{field_name}",
-            {"connection_id":connection_id},
+            {"connection_id": connection_id},
         )
 
     def get(
@@ -814,12 +814,12 @@ class StorageServerAPI(BaseStorageAPI):
             "get",
             "data",
             {
-                "connection_id":connection_id,
-                "path":path,
-                "default":default,
-                "fields":fields,
-                "as_list":as_list,
-                "distinct":distinct,
+                "connection_id": connection_id,
+                "path": path,
+                "default": default,
+                "fields": fields,
+                "as_list": as_list,
+                "distinct": distinct,
             },
             decode=True,
         )
@@ -829,7 +829,7 @@ class StorageServerAPI(BaseStorageAPI):
         return self._call(
             "get",
             "count",
-            {"connection_id":connection_id, "path":path, "query":query},
+            {"connection_id": connection_id, "path": path, "query": query},
         )
 
     def primary_key(self, connection_id, path):
@@ -837,33 +837,35 @@ class StorageServerAPI(BaseStorageAPI):
         return self._call(
             "get",
             "primary_key",
-            {"connection_id":connection_id, "path":path},
+            {"connection_id": connection_id, "path": path},
         )
 
     def set(self, connection_id, path, value):
         return self._call(
             "post",
             "data",
-            {"connection_id":connection_id, "path":path, "value":json_encode(value)},
+            {"connection_id": connection_id, "path": path, "value": json_encode(value)},
         )
 
     def delete(self, connection_id, path):
         return self._call(
-            "delete", "data", {"connection_id":connection_id, "path":path},
+            "delete",
+            "data",
+            {"connection_id": connection_id, "path": path},
         )
 
     def update(self, connection_id, path, value):
         return self._call(
             "put",
             "data",
-            {"connection_id":connection_id, "path":path, "value":json_encode(value)},
+            {"connection_id": connection_id, "path": path, "value": json_encode(value)},
         )
 
     def append(self, connection_id, path, value):
         return self._call(
             "patch",
             "data",
-            {"connection_id":connection_id, "path":path, "value":json_encode(value)},
+            {"connection_id": connection_id, "path": path, "value": json_encode(value)},
         )
 
     def search(
@@ -874,12 +876,12 @@ class StorageServerAPI(BaseStorageAPI):
             "get",
             "search",
             {
-                "connection_id":connection_id,
-                "path":path,
-                "query":query,
-                "fields":fields,
-                "as_list":as_list,
-                "distinct":distinct,
+                "connection_id": connection_id,
+                "path": path,
+                "query": query,
+                "fields": fields,
+                "as_list": as_list,
+                "distinct": distinct,
             },
             decode=True,
         )
@@ -888,7 +890,7 @@ class StorageServerAPI(BaseStorageAPI):
         return self._call(
             "delete",
             "search",
-            {"connection_id":connection_id, "path":path, "query":query},
+            {"connection_id": connection_id, "path": path, "query": query},
             decode=True,
         )
 
@@ -897,7 +899,7 @@ class StorageServerAPI(BaseStorageAPI):
         return self._call(
             "get",
             "distinct",
-            {"connection_id":connection_id, "path":path, "field":field},
+            {"connection_id": connection_id, "path": path, "field": field},
             decode=True,
         )
 
@@ -905,7 +907,7 @@ class StorageServerAPI(BaseStorageAPI):
         return self._call(
             "delete",
             "",
-            {"connection_id":connection_id, "keep_settings":keep_settings},
+            {"connection_id": connection_id, "keep_settings": keep_settings},
         )
 
     def has_collection(self, connection_id, path, collection):
@@ -913,7 +915,7 @@ class StorageServerAPI(BaseStorageAPI):
         return self._call(
             "get",
             "has_collection",
-            {"connection_id":connection_id, "path":path, "collection":collection},
+            {"connection_id": connection_id, "path": path, "collection": collection},
         )
 
     def collection_names(self, connection_id, path):
@@ -921,7 +923,7 @@ class StorageServerAPI(BaseStorageAPI):
         return self._call(
             "get",
             "collection_names",
-            {"connection_id":connection_id, "path":path},
+            {"connection_id": connection_id, "path": path},
         )
 
     def keys(self, connection_id, path):
@@ -929,5 +931,5 @@ class StorageServerAPI(BaseStorageAPI):
         return self._call(
             "get",
             "keys",
-            {"connection_id":connection_id, "path":path},
+            {"connection_id": connection_id, "path": path},
         )

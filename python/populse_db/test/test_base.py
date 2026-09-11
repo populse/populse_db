@@ -1261,15 +1261,15 @@ def create_test_case(**database_creation_parameters):
                             ("Freesurfer", "mgz"),
                         ):
                             document = {
-                                "name":f"/{file}_{dt.year}.{ext}",
-                                "format":format,
-                                "strings":list(file),
-                                "datetime":dt,
-                                "has_format":True,
+                                "name": f"/{file}_{dt.year}.{ext}",
+                                "format": format,
+                                "strings": list(file),
+                                "datetime": dt,
+                                "has_format": True,
                             }
                             session.add_document("collection1", document)
                         document = f"/{file}_{dt.year}.none"
-                        d = {"name":document, "strings":list(file)}
+                        d = {"name": document, "strings": list(file)}
                         session.add_document("collection1", d)
 
                 assert (
