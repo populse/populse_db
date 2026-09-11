@@ -398,11 +398,10 @@ class FilterToSQL(Transformer):
                              defined in the grammar (in lowercase)
         :param value: Python value (None, string number, boolean or date/time)
         """
-        if isinstance(value, list):
-            if operator_str in self.no_list_operators:
-                raise ValueError(
-                    f"operator {operator_str} cannot be used with value of list type"
-                )
+        if isinstance(value, list) and operator_str in self.no_list_operators:
+            raise ValueError(
+                f"operator {operator_str} cannot be used with value of list type"
+            )
         if operator_str == "ilike":
             field = f"UPPER({field})"
             if isinstance(value, str):
@@ -422,11 +421,10 @@ class FilterToSQL(Transformer):
                              defined in the grammar (in lowercase)
         :param field: field object as returned by Database.get_field
         """
-        if isinstance(value, list):
-            if operator_str in self.no_list_operators:
-                raise ValueError(
-                    f"operator {operator_str} cannot be used with value of list type"
-                )
+        if isinstance(value, list) and operator_str in self.no_list_operators:
+            raise ValueError(
+                f"operator {operator_str} cannot be used with value of list type"
+            )
         if operator_str == "ilike":
             field = f"UPPER({field})"
             if isinstance(value, str):

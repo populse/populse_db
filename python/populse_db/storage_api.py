@@ -660,9 +660,10 @@ class StorageFileAPI(BaseStorageAPI):
 
 
 def json_to_str(value):
-    if isinstance(value, str):
-        if not value or (value[0] not in {"[", "{", '"'} and not value[0].isdigit()):
-            return value
+    if isinstance(value, str) and (
+        not value or (value[0] not in {"[", "{", '"'} and not value[0].isdigit())
+    ):
+        return value
     return json.dumps(value)
 
 
