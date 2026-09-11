@@ -31,10 +31,7 @@ def check_value_type(value, field_type):
             # because other parameterized types are not
             # supported.
             item_type = field_type.__args__[0]
-            for v in value:
-                if not check_value_type(v, item_type):
-                    return False
-            return True
+            return all(check_value_type(v, item_type) for v in value)
     elif field_type is float:
         return isinstance(value, int | float)
     else:
