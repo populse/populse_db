@@ -475,10 +475,7 @@ class StorageFileAPI(BaseStorageAPI):
                 f'{{{primary_key[i]}}}=="{document_id[i]}"'
                 for i in range(len(document_id))
             )
-            if query:
-                query = f"{query} and {document_query}"
-            else:
-                query = document_query
+            query = f"{query} and {document_query}" if query else document_query
         return collection.count(query)
 
     def primary_key(self, connection_id, path):
@@ -589,10 +586,7 @@ class StorageFileAPI(BaseStorageAPI):
                 f'{{{primary_key[i]}}}=="{document_id[i]}"'
                 for i in range(len(document_id))
             )
-            if query:
-                query = f"{query} and {document_query}"
-            else:
-                query = document_query
+            query = f"{query} and {document_query}" if query else document_query
         result = list(
             collection.filter(query, fields=fields, as_list=as_list, distinct=distinct)
         )
@@ -610,10 +604,7 @@ class StorageFileAPI(BaseStorageAPI):
                 f'{{{primary_key[i]}}}=="{document_id[i]}"'
                 for i in range(len(document_id))
             )
-            if query:
-                query = f"{query} and {document_query}"
-            else:
-                query = document_query
+            query = f"{query} and {document_query}" if query else document_query
         collection.delete(query)
 
     def distinct_values(self, connection_id, path, field):

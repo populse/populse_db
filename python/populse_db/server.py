@@ -328,10 +328,7 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--force", action="store_true")
 
     options = parser.parse_args()
-    if options.port:
-        port = int(options.port)
-    else:
-        port = find_free_port()
+    port = int(options.port) if options.port else find_free_port()
     cnx = sqlite3.connect(options.database, isolation_level="EXCLUSIVE", timeout=10)
     try:
         sql = (

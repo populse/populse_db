@@ -491,11 +491,8 @@ class SQLiteCollection(DatabaseCollection):
         if catchall_column:
             columns.append(catchall_column)
             data.append(catchall_data)
-        if replace:
-            replace = " OR REPLACE"
-        else:
-            replace = ""
-        sql = f"INSERT{replace} INTO [{self.name}] ({','.join(f'[{i}]' for i in columns)}) values ({','.join('?' for i in data)})"
+        replace_clause = " OR REPLACE" if replace else ""
+        sql = f"INSERT{replace_clause} INTO [{self.name}] ({','.join(f'[{i}]' for i in columns)}) values ({','.join('?' for i in data)})"
         self.session.execute(sql, data)
 
     def update_document(self, document_id, partial_document):
