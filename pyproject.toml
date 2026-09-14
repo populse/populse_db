@@ -81,4 +81,5 @@ twine = ">=6.1.0,<7"
 [tool.coverage.run]
 omit = [
     "*/populse_db/test/*",
+    "*/populse_db/tutorial/*",
 ]
