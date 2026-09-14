@@ -36,7 +36,7 @@ def serialize_exception(e):
             kwargs.pop("lineno", None)
             kwargs.pop("colno", None)
             result["kwargs"] = kwargs
-    except Exception as e2:
+    except Exception as e2:  # noqa: BLE001
         result = {
             "class_module": e2.__class__.__module__,
             "class_name": e2.__class__.__name__,

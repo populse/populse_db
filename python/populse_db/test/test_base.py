@@ -14,6 +14,7 @@ from populse_db.filter import FilterToSQL, literal_parser
 class FilterTestError(Exception):
     """Error raised when a filter test fails."""
 
+
 class TestsSQLiteInMemory(unittest.TestCase):
     def test_add_get_document(self):
         now = datetime.now()

@@ -96,7 +96,7 @@ def create_server():
             )
         try:
             return await call_next(request)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             return JSONResponse(
                 status_code=500,
                 content=serialize_exception(exc),
