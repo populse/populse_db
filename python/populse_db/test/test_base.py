@@ -1852,37 +1852,37 @@ def create_test_case(**database_creation_parameters):
                     "collection1", "strings", field_type=list[str], description=None
                 )
                 session["collection1"]["test"] = {"strings": ["a", "b", "c"]}
-                names = list(
+                names = [
                     document["name"]
                     for document in session.filter_documents(
                         "collection1", '"b" IN strings'
                     )
-                )
+                ]
                 self.assertEqual(names, ["test"])
 
                 session["collection1"]["test"] = {"strings": ["x", "y", "z"]}
-                names = list(
+                names = [
                     document["name"]
                     for document in session.filter_documents(
                         "collection1", '"b" IN strings'
                     )
-                )
+                ]
                 self.assertEqual(names, [])
-                names = list(
+                names = [
                     document["name"]
                     for document in session.filter_documents(
                         "collection1", '"z" IN strings'
                     )
-                )
+                ]
                 self.assertEqual(names, ["test"])
 
                 session["collection1"]["test"] = {}
-                names = list(
+                names = [
                     document["name"]
                     for document in session.filter_documents(
                         "collection1", '"y" IN strings'
                     )
-                )
+                ]
                 self.assertEqual(names, [])
 
         def test_filter_literals(self):
