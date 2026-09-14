@@ -129,8 +129,6 @@ _type_to_sql = {
 
 
 def to_sql(value):
-    global _type_to_sql
-
     return _type_to_sql[type(value)](value)
 
 
