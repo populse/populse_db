@@ -231,10 +231,10 @@ class SchemaSession:
     def add_collection(self, name, primary_key):
         # Make primary_key json compatible
         if isinstance(primary_key, dict):
-            primary_key = dict(
-                (k, (v if isinstance(v, str) else type_to_str(v)))
+            primary_key = {
+                k: v if isinstance(v, str) else type_to_str(v)
                 for k, v in primary_key.items()
-            )
+            }
         self._storage_api.add_collection(self._connection_id, name, primary_key)
 
     def add_field(

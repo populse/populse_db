@@ -348,11 +348,11 @@ class StorageFileAPI(BaseStorageAPI):
             if isinstance(primary_key, str):
                 dict_primary_key = {primary_key: str}
             elif not isinstance(primary_key, dict):
-                dict_primary_key = dict((i, str) for i in primary_key)
+                dict_primary_key = {i: str for i in primary_key}
             else:
-                dict_primary_key = dict(
-                    (k, str_to_type(v)) for k, v in primary_key.items()
-                )
+                dict_primary_key = {
+                    k: str_to_type(v) for k, v in primary_key.items()
+                }
             if collection.primary_key != dict_primary_key:
                 raise ValueError(
                     f"primary key {primary_key} is not compatible with the one defined for collection {name}"
