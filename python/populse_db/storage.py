@@ -200,7 +200,7 @@ class SchemaSession:
                 fields = {kk: cls._parse_field(kk, vv) for kk, vv in v[0].items()}
                 primary = False
                 for name, d in fields.items():
-                    type, kwargs = d
+                    _, kwargs = d
                     if name == Storage.default_field:
                         raise ValueError(f'invalid field name: "{name}')
                     if "primary_key" in kwargs:

@@ -480,7 +480,7 @@ class StorageFileAPI(BaseStorageAPI):
 
     def primary_key(self, connection_id, path):
         dbs = self._get_database_session(connection_id, write=False)
-        collection, document_id, field, path = self._parse_path(dbs, path)
+        collection, document_id, _, path = self._parse_path(dbs, path)
         if not collection or document_id:
             raise ValueError("primary_key is only allowed on collections")
         return list(collection.primary_key)
@@ -622,14 +622,14 @@ class StorageFileAPI(BaseStorageAPI):
 
     def has_collection(self, connection_id, path, collection):
         dbs = self._get_database_session(connection_id, write=False)
-        c, document_id, f, path = self._parse_path(dbs, path)
+        c, _, _, path = self._parse_path(dbs, path)
         if c:
             raise ValueError("has_collection can only be called on a whole database")
         return dbs.has_collection(collection)
 
     def collection_names(self, connection_id, path):
         dbs = self._get_database_session(connection_id, write=False)
-        collection, document_id, f, path = self._parse_path(dbs, path)
+        collection, _, _, path = self._parse_path(dbs, path)
         if collection:
             raise ValueError("collection_names can only be called on a whole database")
         return [
