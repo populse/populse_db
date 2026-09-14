@@ -340,12 +340,12 @@ def run_storage_tests(store):
 
         # Find all unique values
         assert set(d.snapshots.distinct_values("data_type")) == {"greywhite", "void"}
-        assert set(
+        assert {
             row[0]
             for row in d.snapshots.get(
                 fields=["data_type"], as_list=True, distinct=True
             )
-        ) == {"greywhite", "void"}
+        } == {"greywhite", "void"}
 
         # Get non existent data
         assert d.nothing.get() is None
