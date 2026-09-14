@@ -335,8 +335,10 @@ class FilterToSQL(Transformer):
 
         """
         return [
-            f"{list_field} IS NOT NULL AND "
-            f"{to_sql(value)} IN (SELECT value FROM json_each({list_field}))"
+            (
+                f"{list_field} IS NOT NULL AND "
+                f"{to_sql(value)} IN (SELECT value FROM json_each({list_field}))"
+            )
         ]
 
     def build_condition_field_in_list_field(self, field, list_field):
@@ -348,8 +350,10 @@ class FilterToSQL(Transformer):
         :param list_field: field object as returned by Database.get_field
         """
         return [
-            f"{list_field} IS NOT NULL AND "
-            f"{field} IN (SELECT value FROM json_each({list_field}))"
+            (
+                f"{list_field} IS NOT NULL AND "
+                f"{field} IN (SELECT value FROM json_each({list_field}))"
+            )
         ]
 
     def build_condition_field_in_list(self, field, list_value):
