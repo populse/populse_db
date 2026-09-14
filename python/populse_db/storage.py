@@ -181,7 +181,7 @@ class SchemaSession:
     @classmethod
     def _parse_schema_content(cls, schema_content):
         if not isinstance(schema_content, dict):
-            raise ValueError("schema must be a dict")
+            raise TypeError("schema must be a dict")
         collections = {}
         for k, v in schema_content.items():
             if isinstance(v, dict):
