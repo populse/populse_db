@@ -3,6 +3,7 @@ import json
 import os
 import sqlite3
 from datetime import date, datetime, time
+from typing import ClassVar
 
 import dateutil
 
@@ -224,7 +225,7 @@ class SQLiteSession(DatabaseSession):
 
 
 class SQLiteCollection(DatabaseCollection):
-    _column_encodings = {
+    _column_encodings: ClassVar = {
         list: (
             lambda value: None if value is None else json_dumps(value),
             lambda value: None if value is None else json.loads(value),

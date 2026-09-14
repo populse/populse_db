@@ -3,6 +3,7 @@ import datetime
 
 import dateutil.parser
 from lark import Lark, Transformer
+from typing import ClassVar
 
 # The grammar (in Lark format) used to parse filter strings:
 filter_grammar = """
@@ -156,19 +157,19 @@ class FilterToSQL(Transformer):
         build_condition_combine_conditions
     """
 
-    keyword_literals = {
+    keyword_literals: ClassVar = {
         "true": True,
         "false": False,
         "null": None,
     }
 
-    sql_operators = {
+    sql_operators: ClassVar = {
         "==": "IS",
         "!=": "IS NOT",
         "ilike": "LIKE",
     }
 
-    no_list_operators = {">", "<", ">=", "<=", "like", "ilike"}
+    no_list_operators: ClassVar = {">", "<", ">=", "<=", "like", "ilike"}
 
     def __init__(self, dbcollection):
         self.dbcollection = dbcollection
