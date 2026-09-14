@@ -187,11 +187,9 @@ class Database:
 
     @property
     @contextmanager
-    def exclusive(self, create=None):
-        if create is None:
-            create = self.create
+    def exclusive(self):
         try:
-            session = self.begin_session(exclusive=True, create=create)
+            session = self.begin_session(exclusive=True)
             yield session
             self.end_session(rollback=False)
         except Exception:
