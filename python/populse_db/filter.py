@@ -1,9 +1,9 @@
 import ast
 import datetime
+from typing import ClassVar
 
 import dateutil.parser
 from lark import Lark, Transformer
-from typing import ClassVar
 
 # The grammar (in Lark format) used to parse filter strings:
 filter_grammar = """
