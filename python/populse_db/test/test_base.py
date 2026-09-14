@@ -2,7 +2,7 @@ import os
 import shutil
 import tempfile
 import unittest
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timezone
 
 from populse_db import Database
 from populse_db.database import check_value_type, populse_db_table
@@ -631,9 +631,9 @@ def create_test_case(**database_creation_parameters):
                 document1["Bits per voxel"] = 1
                 document1["Dataset dimensions"] = [3, 28, 28, 3]
                 document1["Boolean"] = True
-                d = datetime(2014, 2, 11, 8, 5, 7)
+                d = datetime(2014, 2, 11, 8, 5, 7, tzinfo=timezone.utc)
                 document1["AcquisitionDate"] = d
-                t = datetime(2014, 2, 11, 0, 2, 2).time()
+                t = datetime(2014, 2, 11, 0, 2, 2, tzinfo=timezone.utc).time()
                 document1["AcquisitionTime"] = t
                 document1["BandWidth"] = 45
                 collection1["document1"] = document1
@@ -1160,8 +1160,8 @@ def create_test_case(**database_creation_parameters):
                 list_date = [date(2018, 5, 23), date(1899, 12, 31)]
                 list_time = [time(12, 41, 33, 540), time(1, 2, 3)]
                 list_datetime = [
-                    datetime(2018, 5, 23, 12, 41, 33, 540),
-                    datetime(1899, 12, 31, 1, 2, 3),
+                    datetime(2018, 5, 23, 12, 41, 33, 540, tzinfo=timezone.utc),
+                    datetime(1899, 12, 31, 1, 2, 3, tzinfo=timezone.utc),
                 ]
 
                 document["list_date"] = list_date
@@ -1230,9 +1230,9 @@ def create_test_case(**database_creation_parameters):
 
         def test_filters(self):
             list_datetime = [
-                datetime(2018, 5, 23, 12, 41, 33, 540),
-                datetime(1981, 5, 8, 20, 0),
-                datetime(1899, 12, 31, 1, 2, 3),
+                datetime(2018, 5, 23, 12, 41, 33, 540, tzinfo=timezone.utc),
+                datetime(1981, 5, 8, 20, 0, tzinfo=timezone.utc),
+                datetime(1899, 12, 31, 1, 2, 3, tzinfo=timezone.utc),
             ]
 
             database = self.create_database()
@@ -1923,8 +1923,8 @@ def create_test_case(**database_creation_parameters):
                 # with zeroes padded on the right !?
                 "12:34:56.789": time(12, 34, 56, 789000),
                 "12:34:56.000789": time(12, 34, 56, 789),
-                "2018-05-25T12:34:56.000789": datetime(2018, 5, 25, 12, 34, 56, 789),
-                "2018-5-25T12:34": datetime(2018, 5, 25, 12, 34),
+                "2018-05-25T12:34:56.000789": datetime(2018, 5, 25, 12, 34, 56, 789,),  # noqa: DTZ001
+                "2018-5-25T12:34": datetime(2018, 5, 25, 12, 34,),  # noqa: DTZ001
                 "[]": [],
             }
             # Adds the literal for a list of all elements in the dictionary
