@@ -11,6 +11,9 @@ from populse_db.database import check_value_type, populse_db_table
 from populse_db.filter import FilterToSQL, literal_parser
 
 
+class FilterTestError(Exception):
+    """Error raised when a filter test fails."""
+
 class TestsSQLiteInMemory(unittest.TestCase):
     def test_add_get_document(self):
         now = datetime.now()
@@ -1820,8 +1823,8 @@ def create_test_case(**database_creation_parameters):
                             }
                             self.assertEqual(documents, expected)
                         except Exception as e:
-                            raise Exception(
-                                f"Error while testing filter : {tested_filter}"
+                            raise FilterTestError(
+                                f"Error while testing filter: {tested_filter}"
                             ) from e
                     all_documents = {
                         document["name"]
@@ -1840,8 +1843,8 @@ def create_test_case(**database_creation_parameters):
                             }
                             self.assertEqual(documents, all_documents)
                         except Exception as e:
-                            raise Exception(
-                                f"Error while testing filter : {tested_filter}"
+                            raise FilterTestError(
+                                f"Error while testing filter: {tested_filter}"
                             ) from e
 
         def test_modify_list_field(self):
