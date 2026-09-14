@@ -1,7 +1,7 @@
 import os
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from tempfile import TemporaryDirectory
 
 import pytest
@@ -160,7 +160,7 @@ def run_storage_tests(store):
             d.a_name = "a value"
 
     with store.data(write=True) as d:
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
 
         # Set a global value
         d.last_update = now

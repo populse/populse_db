@@ -17,7 +17,7 @@ class FilterTestError(Exception):
 
 class TestsSQLiteInMemory(unittest.TestCase):
     def test_add_get_document(self):
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         db = Database("sqlite://:memory:", create=True)
         with db as dbs:
             dbs.add_collection("test", "index")
@@ -1923,8 +1923,22 @@ def create_test_case(**database_creation_parameters):
                 # with zeroes padded on the right !?
                 "12:34:56.789": time(12, 34, 56, 789000),
                 "12:34:56.000789": time(12, 34, 56, 789),
-                "2018-05-25T12:34:56.000789": datetime(2018, 5, 25, 12, 34, 56, 789,),  # noqa: DTZ001
-                "2018-5-25T12:34": datetime(2018, 5, 25, 12, 34,),  # noqa: DTZ001
+                "2018-05-25T12:34:56.000789": datetime(  # noqa: DTZ001
+                    2018,
+                    5,
+                    25,
+                    12,
+                    34,
+                    56,
+                    789,
+                ),
+                "2018-5-25T12:34": datetime(  # noqa: DTZ001
+                    2018,
+                    5,
+                    25,
+                    12,
+                    34,
+                ),
                 "[]": [],
             }
             # Adds the literal for a list of all elements in the dictionary
@@ -1991,7 +2005,7 @@ def create_test_case(**database_creation_parameters):
             """
             database = self.create_database()
             with database as session:
-                now = datetime.now()
+                now = datetime.now(timezone.utc)
                 session.add_collection("test")
                 base_doc = {
                     "string": "string",
