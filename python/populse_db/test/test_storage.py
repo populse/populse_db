@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from tempfile import TemporaryDirectory
 
@@ -482,7 +483,19 @@ def test_storage_server():
         )
 
         try:
-            store = Storage(f"server:{tmp_path}", echo_sql=sys.stdout)
+            deadline = time.monotonic() + 30
+            while True:
+                try:
+                    store = Storage(f"server:{tmp_path}", echo_sql=sys.stdout)
+                    break
+                except RuntimeError as e:
+                    if "Cannot get server URL" not in str(e):
+                        raise
+                    if server.poll() is not None:
+                        raise
+                    if time.monotonic() >= deadline:
+                        raise
+                    time.sleep(0.1)
             run_storage_tests(store)
             os.chmod(tmp_path, 0o500)
             store = Storage(f"server:{tmp_path}")
