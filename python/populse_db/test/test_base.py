@@ -1923,7 +1923,7 @@ def create_test_case(**database_creation_parameters):
                 # with zeroes padded on the right !?
                 "12:34:56.789": time(12, 34, 56, 789000),
                 "12:34:56.000789": time(12, 34, 56, 789),
-                "2018-05-25T12:34:56.000789": datetime(  # noqa: DTZ001
+                "2018-05-25T12:34:56.000789": datetime(
                     2018,
                     5,
                     25,
@@ -1932,7 +1932,7 @@ def create_test_case(**database_creation_parameters):
                     56,
                     789,
                 ),
-                "2018-5-25T12:34": datetime(  # noqa: DTZ001
+                "2018-5-25T12:34": datetime(
                     2018,
                     5,
                     25,
