@@ -155,27 +155,27 @@ class SchemaSession:
 
     @classmethod
     def _parse_field(cls, name, definition):
-        error = True
         if isinstance(definition, type | types.GenericAlias):
             type_str = type_to_str(definition)
             kwargs = {}
-            error = False
         elif isinstance(definition, str):
             type_str = definition
             kwargs = {}
-            error = False
-        elif isinstance(definition, list) and len(definition) == 2:
-            if isinstance(definition[1], dict):
-                if isinstance(definition[0], type | types.GenericAlias):
-                    type_str = type_to_str(definition[0])
-                    kwargs = definition[1]
-                    error = False
-                elif isinstance(definition[0], str):
-                    type_str = definition[0]
-                    kwargs = definition[1]
-                    error = False
-        if error:
+        elif (
+            isinstance(definition, list)
+            and len(definition) == 2
+            and isinstance(definition[1], dict)
+            and isinstance(definition[0], type | types.GenericAlias | str)
+        ):
+            type_str = (
+                type_to_str(definition[0])
+                if not isinstance(definition[0], str)
+                else definition[0]
+            )
+            kwargs = definition[1]
+        else:
             raise ValueError(f'invalid definition for field "{name}"')
+
         return [type_str, kwargs]
 
     @classmethod
