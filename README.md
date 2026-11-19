@@ -18,26 +18,35 @@ Database API for Populse
 
 From [PyPI](https://pypi.org/project/populse-db/):
 
-    # A compatible version of Python and Pip must be installed
+    - A compatible version of Python and Pip must be installed
 
-    To install pip:
-    sudo apt-get install python-pip # Python2
-    sudo apt-get install python3-pip # Python3
+    - To install pip:
+        sudo apt-get install python3-pip
 
-    # To install the module:
-    sudo pip install populse-db # Beware that it is the Pip version corresponding to the good Python version
-    sudo pipx.x install populse-db # With a precise Pip version
-    sudo pythonx.x -m pip install populse-db # With a precise Python version
+    - To install the module:
+        python3 -m pip install populse-db
+
+        - Or, using a specific Python version:
+            python3.x -m pip install populse-db
 
 From source:
 
-    # A compatible version of Python must be installed
-    sudo apt-get install git
-    git clone https://github.com/populse/populse_db.git /tmp/populse_db
-    cd /tmp/populse_db
-    sudo python setup.py install # Beware that it is the good Python version (use pythonx.x to be sure)
-    cd /tmp
-    sudo rm -r /tmp/populse_db
+    - A compatible version of Python must be installed:
+        sudo apt-get install git
+
+    - Clone from GitHub:
+        git clone https://github.com/populse/populse_db.git /tmp/populse_db
+        cd /tmp/populse_db
+
+    - Install the module:
+        python3 -m pip install .
+
+        - Or, using a specific Python version:
+	    python3.x -m pip install .
+
+    - Delete the tempory data:
+        cd /tmp
+        rm -rf /tmp/populse_db
 
 # Usage
 
@@ -53,7 +62,7 @@ Continuous integration made with Travis (Linux, OSX), and AppVeyor (Windows)
 
 Code coverage calculated by the python module codecov
 
-The module is ensured to work with Python 2.7 and Python >= 3.4
+The module is ensured to work with Python >= 3.10
 
 The module is ensured to work on the platforms Linux, OSX and Windows
 
