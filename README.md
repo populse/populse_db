@@ -42,7 +42,7 @@ From source:
         python3 -m pip install .
 
         - Or, using a specific Python version:
-	    python3.x -m pip install .
+            python3.x -m pip install .
 
     - Delete the tempory data:
         cd /tmp
