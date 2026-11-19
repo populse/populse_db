@@ -1,15 +1,14 @@
 environment:
 
   matrix:
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      PYTHON: "C:\\Python310-x64"
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2026
+      PYTHON: "C:\\Python312-x64"
 
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2204
-      PYTHON: "Python3.10"
- #     APPVEYOR_SSH_KEY:
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2404
+      PYTHON: "$HOME/venv3.12"
 
     - APPVEYOR_BUILD_WORKER_IMAGE: macos-sonoma
-      PYTHON: "Python3.10"
+      PYTHON: "~/venv3.12"
 
 build: off
 
@@ -17,13 +16,12 @@ install:
   - cmd: echo "     ** windows build **"
   - sh: if [[ $(uname -s) == Linux ]]; then echo "     ** linux build **"; fi
   - sh: if [[ $(uname -s) == Darwin ]]; then echo "     ** macos build **"; fi
-
-#  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
-
   - cmd: SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
-  - sh: if [[ $PYTHON == Python3.10 ]]; then export PATH=~/venv3.10/bin:~/venv3.10/lib:$PATH; fi
-
+  - sh: export PATH=~/venv3.12/bin:~/venv3.12/lib:$PATH
   - python --version
+  - python -c "import sys; assert sys.version_info[:2] == (3, 12), f'Expected Python 3.12, got {sys.version}'"
+  - echo "SQLite version:"
+  - python -c "import sqlite3; print('SQLite version:', sqlite3.sqlite_version)"
   - python -m pip install pip --upgrade
   - pip -V
   - pip install setuptools --upgrade
@@ -49,8 +47,6 @@ install:
         sqlite3 --version
         cd ..
       fi
-#  - sh: export APPVEYOR_SSH_BLOCK=true
-#  - sh: curl -sflL 'https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-ssh.sh' | bash -e -
 
 test_script:
   - cmd: python -m populse_db.test -v
