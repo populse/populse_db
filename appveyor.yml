@@ -38,7 +38,7 @@ test_script:
 after_test:
   - sh: if [[ $(uname -s) == Linux ]]; then curl -Os https://uploader.codecov.io/latest/linux/codecov; fi
   - sh: if [[ $(uname -s) == Linux ]]; then chmod +x codecov; fi
-  - sh: if [[ $(uname -s) == Linux ]]; then ./codecov -f "coverage.xml" -t "b88bf18b-b29e-412e-96fe-e0f00832c173"; fi
+  - sh: if [[ $(uname -s) == Linux ]]; then ./codecov -f "coverage.xml" -t "$CODECOV_TOKEN"; fi
 
 notifications:
   - provider: Email
